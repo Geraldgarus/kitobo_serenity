@@ -1,3 +1,31 @@
+
+// Auto-create database tables on startup
+const fs = require('fs');
+const path = require('path');
+const { Pool } = require('pg');
+
+async function initDatabase() {
+  const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false }
+  });
+  
+  try {
+    const schemaPath = path.join(__dirname, 'db', 'schema.sql');
+    const schema = fs.readFileSync(schemaPath, 'utf8');
+    await pool.query(schema);
+    console.log('✅ Database tables verified/created');
+  } catch (err) {
+    console.log('⚠️ Note: ' + err.message);
+  } finally {
+    await pool.end();
+  }
+}
+
+// Run this BEFORE starting your server
+initDatabase();
+
+
 // server.js – Steps Premium Suite API (FIXED DATE HANDLING + CLEAN URLs)
 require('dotenv').config();
 const express = require('express');
