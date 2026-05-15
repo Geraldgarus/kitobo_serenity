@@ -140,7 +140,7 @@
     registerBtn.innerHTML = '⏳ Registering...';
 
     try {
-      const response = await fetch('http://localhost:3000/api/auth/register', {
+      const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ fullName, email, password, role })
@@ -150,7 +150,7 @@
       messageDiv.className = 'success-message';
       messageDiv.innerHTML = '✅ Registration successful! Redirecting to login...';
       setTimeout(() => {
-        window.location.href = 'login.html';
+        window.location.href = '/login';
       }, 2000);
     } catch (err) {
       messageDiv.className = 'error-message';
