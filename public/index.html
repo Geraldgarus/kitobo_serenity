@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover" />
   <title>Steps Premium Suite – Property Management</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -45,6 +45,8 @@
       align-items: center;
       box-shadow: 0 2px 12px rgba(0,0,0,0.05);
       z-index: 1000;
+      flex-wrap: wrap;
+      gap: 10px;
     }
 
     .logo {
@@ -73,10 +75,10 @@
       background: var(--gold);
       color: var(--white);
       border: none;
-      padding: 12px 32px;
+      padding: 10px 28px;
       border-radius: 40px;
       font-weight: 700;
-      font-size: 1rem;
+      font-size: 0.95rem;
       cursor: pointer;
       transition: all 0.2s;
       box-shadow: 0 4px 12px rgba(201,147,58,0.3);
@@ -85,7 +87,6 @@
     .btn-login:hover {
       background: #a87a2c;
       transform: translateY(-2px);
-      box-shadow: 0 6px 16px rgba(168,122,44,0.4);
     }
 
     /* Hero Section */
@@ -95,11 +96,12 @@
       align-items: center;
       justify-content: center;
       text-align: center;
-      padding: 6rem 5% 3rem;
+      padding: 100px 5% 3rem;
     }
 
     .hero-content {
       max-width: 900px;
+      width: 100%;
     }
 
     .hero-content .badge {
@@ -115,7 +117,7 @@
 
     .hero-content h1 {
       font-family: 'Playfair Display', serif;
-      font-size: 3rem;
+      font-size: clamp(2rem, 5vw, 3.5rem);
       line-height: 1.2;
       margin-bottom: 1rem;
       color: var(--navy);
@@ -123,7 +125,7 @@
 
     .hero-content p {
       color: var(--gray-400);
-      font-size: 1.1rem;
+      font-size: clamp(0.95rem, 3vw, 1.1rem);
       line-height: 1.6;
       margin-bottom: 2rem;
     }
@@ -132,7 +134,7 @@
     .apartment-icons {
       display: flex;
       justify-content: center;
-      gap: 2rem;
+      gap: 1.5rem;
       margin: 2rem 0;
       flex-wrap: wrap;
     }
@@ -145,6 +147,7 @@
       min-width: 100px;
       transition: transform 0.2s;
       box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      flex: 0 1 auto;
     }
 
     .apt-icon:hover {
@@ -167,6 +170,7 @@
       justify-content: center;
       gap: 3rem;
       margin: 2rem 0;
+      flex-wrap: wrap;
     }
 
     .stat {
@@ -204,9 +208,11 @@
       max-width: 420px;
       width: 90%;
       border-radius: 32px;
-      padding: 2.5rem;
+      padding: 2rem;
       position: relative;
       animation: fadeUp 0.3s ease;
+      max-height: 90vh;
+      overflow-y: auto;
     }
 
     @keyframes fadeUp {
@@ -216,8 +222,8 @@
 
     .modal-close {
       position: absolute;
-      right: 1.5rem;
-      top: 1.2rem;
+      right: 1.2rem;
+      top: 1rem;
       font-size: 1.5rem;
       cursor: pointer;
       color: var(--gray-400);
@@ -278,6 +284,7 @@
       font-weight: 600;
       cursor: pointer;
       margin-top: 0.5rem;
+      transition: all 0.2s;
     }
 
     .btn-submit:hover {
@@ -311,23 +318,193 @@
       margin-top: 2rem;
     }
 
-    /* Mobile */
+    /* ============================================================
+       MOBILE RESPONSIVE STYLES
+       ============================================================ */
+    
+    /* Tablet and below */
     @media (max-width: 768px) {
-      .hero-content h1 {
-        font-size: 2rem;
+      .navbar {
+        padding: 0.8rem 4%;
       }
+      
+      .logo-icon {
+        font-size: 1.6rem;
+      }
+      
+      .logo-text h1 {
+        font-size: 1.1rem;
+      }
+      
+      .logo-text p {
+        font-size: 0.6rem;
+      }
+      
+      .btn-login {
+        padding: 8px 20px;
+        font-size: 0.85rem;
+      }
+      
       .hero {
-        padding-top: 5rem;
+        padding: 90px 4% 2rem;
+        min-height: auto;
       }
+      
+      .hero-content .badge {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.8rem;
+      }
+      
       .apartment-icons {
-        gap: 1rem;
+        gap: 0.8rem;
       }
+      
       .apt-icon {
-        min-width: 70px;
-        padding: 0.5rem;
+        min-width: 75px;
+        padding: 0.7rem;
       }
+      
       .apt-icon span {
         font-size: 1.8rem;
+      }
+      
+      .apt-icon p {
+        font-size: 0.65rem;
+      }
+      
+      .hero-stats {
+        gap: 1.5rem;
+      }
+      
+      .stat .number {
+        font-size: 1.5rem;
+      }
+      
+      .stat .label {
+        font-size: 0.7rem;
+      }
+      
+      .modal-content {
+        padding: 1.5rem;
+        width: 92%;
+      }
+      
+      .modal h2 {
+        font-size: 1.3rem;
+      }
+      
+      .modal-subtitle {
+        font-size: 0.75rem;
+      }
+      
+      .form-group input {
+        padding: 10px 12px;
+        font-size: 0.85rem;
+      }
+      
+      .btn-submit {
+        padding: 10px;
+        font-size: 0.9rem;
+      }
+    }
+
+    /* Small phones */
+    @media (max-width: 480px) {
+      .navbar {
+        flex-direction: column;
+        padding: 0.8rem 3%;
+      }
+      
+      .logo {
+        margin-bottom: 5px;
+      }
+      
+      .btn-login {
+        width: 100%;
+        max-width: 200px;
+      }
+      
+      .hero {
+        padding: 120px 3% 2rem;
+      }
+      
+      .apartment-icons {
+        gap: 0.5rem;
+      }
+      
+      .apt-icon {
+        min-width: 65px;
+        padding: 0.5rem;
+      }
+      
+      .apt-icon span {
+        font-size: 1.5rem;
+      }
+      
+      .apt-icon p {
+        font-size: 0.55rem;
+      }
+      
+      .hero-stats {
+        gap: 1rem;
+      }
+      
+      .stat .number {
+        font-size: 1.2rem;
+      }
+      
+      .stat .label {
+        font-size: 0.6rem;
+      }
+      
+      .modal-content {
+        padding: 1.2rem;
+      }
+      
+      .form-group {
+        margin-bottom: 0.8rem;
+      }
+      
+      .form-group input {
+        padding: 8px 10px;
+      }
+    }
+
+    /* Touch-friendly improvements */
+    @media (hover: none) and (pointer: coarse) {
+      .btn-login, .btn-submit {
+        min-height: 44px;
+      }
+      
+      .apt-icon {
+        min-height: 85px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+      }
+      
+      button:active {
+        transform: scale(0.97);
+      }
+    }
+
+    /* Very small phones (max-width: 360px) */
+    @media (max-width: 360px) {
+      .apt-icon {
+        min-width: 55px;
+      }
+      
+      .apt-icon span {
+        font-size: 1.3rem;
+      }
+      
+      .apt-icon p {
+        font-size: 0.5rem;
+      }
+      
+      .hero-stats {
+        gap: 0.8rem;
       }
     }
   </style>
@@ -353,7 +530,7 @@
     <h1>Manage Your Luxury Property With Ease</h1>
     <p>Complete property management system for Steps Premium Suite. Manage reservations, housekeeping, inventory, and more.</p>
     
-    <!-- Apartment Icons - Using apartment/hotel icons instead of animal emojis -->
+    <!-- Apartment Icons -->
     <div class="apartment-icons">
       <div class="apt-icon">
         <span>🏢</span>
@@ -375,7 +552,6 @@
         <span>🏭</span>
         <p>Buffalo Suite</p>
       </div>
-     
     </div>
 
     <div class="hero-stats">
@@ -426,8 +602,6 @@
   </div>
 </div>
 
-<script src="js/api.js"></script>
-<script src="js/utils.js"></script>
 <script>
   // Modal elements
   const modal = document.getElementById('loginModal');
@@ -441,13 +615,16 @@
 
   function closeModalFunc() {
     modal.style.display = 'none';
-    document.getElementById('loginError').innerText = '';
-    document.getElementById('loginForm').reset();
+    const loginError = document.getElementById('loginError');
+    if (loginError) loginError.innerText = '';
+    const loginForm = document.getElementById('loginForm');
+    if (loginForm) loginForm.reset();
   }
 
-  loginBtn?.addEventListener('click', openModal);
-  heroLoginBtn?.addEventListener('click', openModal);
-  closeModal?.addEventListener('click', closeModalFunc);
+  if (loginBtn) loginBtn.addEventListener('click', openModal);
+  if (heroLoginBtn) heroLoginBtn.addEventListener('click', openModal);
+  if (closeModal) closeModal.addEventListener('click', closeModalFunc);
+  
   window.addEventListener('click', (e) => {
     if (e.target === modal) closeModalFunc();
   });
@@ -456,41 +633,43 @@
   const loginForm = document.getElementById('loginForm');
   const loginError = document.getElementById('loginError');
 
-  loginForm?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const email = document.getElementById('loginEmail').value.trim();
-    const password = document.getElementById('loginPassword').value;
-    const submitBtn = document.getElementById('submitLogin');
+  if (loginForm) {
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('loginEmail').value.trim();
+      const password = document.getElementById('loginPassword').value;
+      const submitBtn = document.getElementById('submitLogin');
 
-    submitBtn.disabled = true;
-    submitBtn.textContent = 'Logging in...';
-    loginError.innerText = '';
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Logging in...';
+      if (loginError) loginError.innerText = '';
 
-    try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Login failed');
+      try {
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Login failed');
 
-      // Store user session
-      sessionStorage.setItem('pms_user', JSON.stringify({
-        id: data.id,
-        username: data.username,
-        fullName: data.fullName,
-        email: data.email,
-        role: data.role
-      }));
-      // Redirect to dashboard
-      window.location.href = '/dashboard';
-    } catch (err) {
-      loginError.innerText = err.message;
-      submitBtn.disabled = false;
-      submitBtn.textContent = 'Login';
-    }
-  });
+        // Store user session
+        sessionStorage.setItem('pms_user', JSON.stringify({
+          id: data.id,
+          username: data.username,
+          fullName: data.fullName,
+          email: data.email,
+          role: data.role
+        }));
+        // Redirect to dashboard
+        window.location.href = '/dashboard';
+      } catch (err) {
+        if (loginError) loginError.innerText = err.message;
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Login';
+      }
+    });
+  }
 </script>
 </body>
 </html>
