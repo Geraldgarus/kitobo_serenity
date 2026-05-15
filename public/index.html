@@ -421,7 +421,7 @@
       <div class="error-message" id="loginError"></div>
     </form>
     <div class="register-link">
-      Don't have an account? <a href="pages/register.html">Register here</a>
+      Don't have an account? <a href="pages/register">Register here</a>
     </div>
   </div>
 </div>
@@ -467,7 +467,7 @@
     loginError.innerText = '';
 
     try {
-      const response = await fetch('http://localhost:3000/api/auth/login', {
+      const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })

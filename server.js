@@ -1,40 +1,50 @@
-
-// Auto-create database tables on startup
-const fs = require('fs');
-
+// server.js – Steps Premium Suite API
+require('dotenv').config();
+const express = require('express');
+const cors    = require('cors');
+const path    = require('path');
+const fs      = require('fs');
 const { Pool } = require('pg');
+const bcrypt  = require('bcrypt');
 
-async function initDatabase() {
-  const pool = new Pool({
+const pool    = require('./db/pool');
+const app     = express();
+const PORT    = process.env.PORT || 3000;
+
+// ============================================================
+// AUTO DATABASE SETUP - Runs on startup
+// ============================================================
+async function setupDatabase() {
+  console.log('🔄 Checking database setup...');
+  
+  if (!process.env.DATABASE_URL) {
+    console.log('⚠️ DATABASE_URL not set. Skipping auto-migration.');
+    return;
+  }
+  
+  const dbPool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false }
   });
   
   try {
     const schemaPath = path.join(__dirname, 'db', 'schema.sql');
-    const schema = fs.readFileSync(schemaPath, 'utf8');
-    await pool.query(schema);
-    console.log('✅ Database tables verified/created');
+    if (fs.existsSync(schemaPath)) {
+      const schema = fs.readFileSync(schemaPath, 'utf8');
+      await dbPool.query(schema);
+      console.log('✅ Database tables are ready!');
+    } else {
+      console.log('⚠️ schema.sql not found at:', schemaPath);
+    }
   } catch (err) {
-    console.log('⚠️ Note: ' + err.message);
+    console.log('⚠️ Database setup note:', err.message);
   } finally {
-    await pool.end();
+    await dbPool.end();
   }
 }
 
-// Run this BEFORE starting your server
-initDatabase();
-
-
-// server.js – Steps Premium Suite API (FIXED DATE HANDLING + CLEAN URLs)
-require('dotenv').config();
-const express = require('express');
-const cors    = require('cors');
-const path    = require('path');  // ADDED for clean URLs
-const pool    = require('./db/pool');
-
 // ============================================================
-// ACTIVITY LOGGER FUNCTION - MUST BE DEFINED BEFORE ANY ROUTES
+// ACTIVITY LOGGER FUNCTION
 // ============================================================
 async function logActivity(userId, username, action, entityType, entityId, oldData = null, newData = null, req = null) {
   try {
@@ -52,31 +62,27 @@ async function logActivity(userId, username, action, entityType, entityId, oldDa
     console.log(`✅ Activity logged: ${action} ${entityType} #${entityId} by ${username || 'system'}`);
   } catch (err) {
     console.error('Failed to log activity:', err.message);
-    // Don't throw - logging should not break main functionality
   }
 }
 
-const bcrypt  = require('bcrypt');  
-const app  = express();
-const PORT = process.env.PORT || 3000;
-
-// ── Middleware ───────────────────────────────────────────────────────────────
+// ============================================================
+// MIDDLEWARE
+// ============================================================
 app.use(cors({ origin: process.env.CORS_ORIGIN || '*' }));
 app.use(express.json());
-
-// Serve static files from public folder
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ============================================================
 // CLEAN URLS - Access pages without .html extension
 // ============================================================
-
-// List of all your HTML pages (without .html)
 const pages = [
   'dashboard', 'dashboard1', 'reservations', 'apartments', 
-  'apartments-list','apartments-list1', 'housekeeping', 'housekeeping-status', 'reports',
-  'store-main','store-main1', 'store-outlets','store-outlets1', 'outlet-store', 'outlet-store1','store-housekeeping',
-  'store-kitchen', 'store-public', 'users','users1', 'login','activity-logs' ,'register','back-office', 'index2', 'purchase-orders', 'goods-receipt', 'purchase-orders-reports', 'goods-receipt-reports', 'store-inventory-reports', 'point-of-sale', 'sales-report'
+  'apartments-list', 'apartments-list1', 'housekeeping', 'housekeeping-status', 'reports',
+  'store-main', 'store-main1', 'store-outlets', 'store-outlets1', 'outlet-store', 'outlet-store1',
+  'store-housekeeping', 'store-kitchen', 'store-public', 'users', 'users1', 'login',
+  'activity-logs', 'register', 'back-office', 'index2', 'purchase-orders', 'goods-receipt',
+  'purchase-orders-reports', 'goods-receipt-reports', 'store-inventory-reports', 
+  'point-of-sale', 'sales-report', 'add-reservation'
 ];
 
 // Create routes for each page without .html extension
