@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Apartments - Steps PMS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <style>
+    /* Mobile Responsive Styles */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #f4f6fa;
+      color: #1e293b;
+      overflow-x: hidden;
+    }
+
+    /* Mobile-first table styles */
+    .apt-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    
+    .apt-table th, .apt-table td {
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--gray-200, #e2e8f0);
+    }
+    
+    .apt-table th {
+      background: var(--gray-100, #f8fafc);
+      font-weight: 600;
+      color: var(--navy, #1e293b);
+    }
+    
+    .apt-table tr:hover {
+      background: var(--gray-50, #f1f5f9);
+    }
+    
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 12px;
+      margin-right: 6px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .btn-warning {
+      background: #f59e0b;
+      color: white;
+      border: none;
+    }
+    
+    .btn-danger {
+      background: #ef4444;
+      color: white;
+      border: none;
+    }
+    
+    .btn-warning:hover, .btn-danger:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+    
+    .color-preview {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: inline-block;
+      border: 1px solid #e2e8f0;
+    }
+
+    /* ============================================================
+       MOBILE RESPONSIVE STYLES
+    ============================================================ */
+    
+    /* Mobile navigation improvements */
+    @media (max-width: 992px) {
+      .main-content {
+        margin-left: 0;
+        padding: 16px;
+      }
+      
+      .card-header {
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-start;
+      }
+      
+      .card-header .btn-gold {
+        width: 100%;
+        text-align: center;
+      }
+    }
+    
+    /* Small phones (up to 480px) */
+    @media (max-width: 480px) {
+      .main-content {
+        padding: 12px;
+      }
+      
+      .card-header {
+        padding: 16px;
+      }
+      
+      .card-title {
+        font-size: 18px;
+      }
+      
+      /* Make table horizontally scrollable on small screens */
+      .table-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        margin: 0 -16px;
+        padding: 0 16px;
+      }
+      
+      /* Table font size adjustment for mobile */
+      .apt-table th, 
+      .apt-table td {
+        padding: 10px 12px;
+        font-size: 12px;
+      }
+      
+      /* Button size for touch */
+      .btn-sm {
+        padding: 8px 14px;
+        font-size: 12px;
+        margin-right: 8px;
+        min-height: 36px;
+      }
+      
+      /* Action buttons container */
+      td:last-child {
+        white-space: nowrap;
+      }
+      
+      /* Emoji size */
+      .apt-table td:first-child span {
+        font-size: 20px;
+      }
+      
+      /* Color preview size */
+      .color-preview {
+        width: 20px;
+        height: 20px;
+      }
+    }
+    
+    /* Very small phones (up to 360px) */
+    @media (max-width: 360px) {
+      .apt-table th, 
+      .apt-table td {
+        padding: 8px 10px;
+        font-size: 11px;
+      }
+      
+      .btn-sm {
+        padding: 6px 10px;
+        font-size: 11px;
+        min-height: 32px;
+      }
+      
+      .apt-table td:first-child span {
+        font-size: 18px;
+      }
+    }
+    
+    /* Touch-friendly improvements */
+    @media (hover: none) and (pointer: coarse) {
+      .btn-sm {
+        padding: 10px 16px;
+      }
+      
+      .nav-item,
+      .user-pill,
+      button {
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+      }
+      
+      button:active {
+        transform: scale(0.97);
+      }
+    }
+    
+    /* Modal responsive for mobile */
+    @media (max-width: 600px) {
+      .reservation-modal {
+        width: 95%;
+        max-width: 95%;
+        max-height: 90vh;
+        overflow-y: auto;
+      }
+      
+      .reservation-modal-body {
+        padding: 20px;
+      }
+      
+      .form-group-row.cols-2,
+      .form-group-row.cols-3 {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+    }
+    
+    /* Loading state */
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: #94a3b8;
+    }
+  </style>
+</head>
+<body>
+
+<div class="overlay" id="overlay-main"></div>
+
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-top">
+    <a class="sidebar-logo" href="/">
+      <div class="logo-icon">🏨</div>
+      <div class="logo-text">
+        <span>Steps</span>
+        <span>Premium Suite</span>
+      </div>
+    </a>
+    <button class="sidebar-close-btn" id="sidebar-close-btn">✕</button>
+  </div>
+  
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Core Operations</div>
+    <a href="/dashboard" class="nav-item">📊 Stay View</a>
+    <a href="/reservations" class="nav-item">📅 Reservations</a>
+    <a href="/housekeeping" class="nav-item">🧹 Housekeeping</a>
+    
+    <div class="nav-section-label">Property</div>
+    <a href="/apartments" class="nav-item">🏠 Apartments View</a>
+    <a href="/apartments-list" class="nav-item active">📋 Apartments List</a>
+    
+    <div class="nav-section-label">Store & Procurement</div>
+    <a href="/store-main" class="nav-item">🏬 Main Store</a>
+    <a href="/store-outlets" class="nav-item">🏪 Outlets Store</a>
+    <a href="/purchase-orders" class="nav-item">📦 Purchase Orders</a>
+    <a href="/goods-receipt" class="nav-item">✅ Goods Receipt</a>
+    
+    <div class="nav-section-label">Reports</div>
+    <a href="/reports" class="nav-item">📊 Reservations Report</a>
+    <a href="/purchase-orders-reports" class="nav-item">📄 Purchase Orders Report</a>
+    <a href="/goods-receipt-reports" class="nav-item">📋 Goods Receipt Report</a>
+    <a href="/store-inventory-reports" class="nav-item">📦 Store Inventory Report</a>
+    
+    <div class="nav-section-label">Audit</div>
+    <a href="/activity-logs" class="nav-item">📋 Activity Logs</a>
+
+    <div class="nav-section-label">Administration</div>
+    <a href="/users" class="nav-item">👥 User Management</a>
+  </nav>
+  
+  <div class="sidebar-footer">
+    <small>Steps PMS v1.0 · Dar es Salaam</small>
+  </div>
+</aside>
+
+<!-- Navbar -->
+<nav class="navbar">
+  <div class="navbar-left">
+    <button class="hamburger" id="hamburger-btn" aria-label="Toggle menu">
+      <span class="hb-bar"></span><span class="hb-bar"></span><span class="hb-bar"></span>
+    </button>
+    <div>
+      <div class="page-title">Apartment List</div>
+      <div class="page-subtitle">Manage Apartments</div>
+    </div>
+  </div>
+  <div class="navbar-right">
+    <button class="btn-add-reservation" onclick="openReservationModal()">＋ Add Reservation</button>
+    <button class="notif-btn">🔔<span class="badge">3</span></button>
+    
+    <div class="user-dropdown">
+      <div class="user-pill" id="userPill">
+        <div class="user-avatar" id="userAvatar">U</div>
+        <div class="user-info">
+          <span id="userName">Loading...</span>
+          <span id="userRole">Loading...</span>
+        </div>
+        <i class="fas fa-chevron-down"></i>
+      </div>
+      <div class="dropdown-menu" id="dropdownMenu">
+        <button onclick="openChangePasswordModal()"><i class="fas fa-key"></i> Change Password</button>
+        <a href="/users" class="dropdown-item"><i class="fas fa-users"></i> User Management</a>
+        <hr>
+        <button onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<main class="main-content">
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">All Apartments</span>
+      <button class="btn btn-gold" onclick="openAddApartmentModal()">＋ Add Apartment</button>
+    </div>
+    <!-- Mobile-friendly scrollable table wrapper -->
+    <div class="table-wrapper" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+      <table class="apt-table" id="apartments-table">
+        <thead>
+          <tr>
+            <th>Emoji</th><th>Name</th><th>Type</th><th>Max Adults</th><th>Rate/Night</th><th>Color</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="apartments-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<!-- Add/Edit Apartment Modal -->
+<div class="reservation-modal-overlay" id="apt-modal-overlay" onclick="closeApartmentModal()"></div>
+<div class="reservation-modal" id="apt-modal">
+  <div class="reservation-modal-header">
+    <h3 id="apt-modal-title">➕ Add Apartment</h3>
+    <button class="reservation-modal-close" onclick="closeApartmentModal()">✕</button>
+  </div>
+  <div class="reservation-modal-body">
+    <form id="apt-form">
+      <input type="hidden" id="apt-id">
+      <div class="form-group"><label>Apartment Name</label><input type="text" id="apt-name" class="form-control" required></div>
+      <div class="form-group"><label>Type</label><input type="text" id="apt-type" class="form-control" required></div>
+      <div class="form-group"><label>Max Adults</label><input type="number" id="apt-max-adults" class="form-control" required min="1" value="2"></div>
+      <div class="form-group"><label>Rate per Night (TSH)</label><input type="number" id="apt-rate" class="form-control" required min="0" value="90000"></div>
+      <div class="form-group"><label>Emoji (optional)</label><input type="text" id="apt-emoji" class="form-control" placeholder="e.g., 🏠"></div>
+      <div class="form-group"><label>Color (hex)</label><input type="color" id="apt-color" class="form-control" value="#2d9c6e"></div>
+      <hr class="divider" />
+      <button type="submit" class="btn btn-success" id="apt-submit-btn">✅ Save Apartment</button>
+      <button type="button" class="btn btn-outline" style="margin-top:10px; width:100%;" onclick="closeApartmentModal()">Cancel</button>
+    </form>
+  </div>
+</div>
+
+<!-- Change Password Modal -->
+<div class="reservation-modal-overlay" id="change-password-modal-overlay" onclick="closeChangePasswordModal()"></div>
+<div class="reservation-modal" id="change-password-modal">
+  <div class="reservation-modal-header">
+    <h3>🔐 Change Password</h3>
+    <button class="reservation-modal-close" onclick="closeChangePasswordModal()">✕</button>
+  </div>
+  <div class="reservation-modal-body">
+    <form id="change-password-form">
+      <div class="form-group"><label>Current Password</label><input type="password" id="current-password" class="form-control" required></div>
+      <div class="form-group"><label>New Password (min 6)</label><input type="password" id="new-password" class="form-control" required></div>
+      <div class="form-group"><label>Confirm Password</label><input type="password" id="confirm-password" class="form-control" required></div>
+      <hr class="divider" />
+      <button type="submit" class="btn btn-success">✅ Update Password</button>
+      <button type="button" class="btn btn-outline" style="margin-top:10px; width:100%;" onclick="closeChangePasswordModal()">Cancel</button>
+    </form>
+  </div>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+
+<script src="../js/api.js"></script>
+<script src="../js/utils.js"></script>
+<script>
+  // ============================================================
+  // SIDEBAR TOGGLE
+  // ============================================================
+  const hamburgerBtn = document.getElementById('hamburger-btn');
+  const sidebar = document.getElementById('sidebar');
+  const overlayMain = document.getElementById('overlay-main');
+  const sidebarClose = document.getElementById('sidebar-close-btn');
+  
+  function openSidebar() { 
+    sidebar.classList.add('open'); 
+    overlayMain.classList.add('open'); 
+    hamburgerBtn.classList.add('active'); 
+  }
+  
+  function closeSidebar() { 
+    sidebar.classList.remove('open'); 
+    overlayMain.classList.remove('open'); 
+    hamburgerBtn.classList.remove('active'); 
+  }
+  
+  hamburgerBtn?.addEventListener('click', () => sidebar.classList.contains('open') ? closeSidebar() : openSidebar());
+  sidebarClose?.addEventListener('click', closeSidebar);
+  overlayMain?.addEventListener('click', closeSidebar);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSidebar(); });
+
+  // ============================================================
+  // APARTMENT CRUD FUNCTIONS
+  // ============================================================
+  let apartments = [];
+
+  async function loadApartments() {
+    try {
+      const data = await apiGet('/apartments');
+      apartments = data;
+      renderApartments();
+    } catch (err) {
+      showToast('Failed to load apartments: ' + err.message, 'error');
+    }
+  }
+
+  function renderApartments() {
+    const tbody = document.getElementById('apartments-tbody');
+    if (!tbody) return;
+    if (apartments.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" class="empty-state">🏢 No apartments found. Click "Add Apartment" to create one.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = apartments.map(apt => `
+      <tr>
+        <td><span style="font-size:24px">${escapeHtml(apt.emoji) || '🏠'}</span></td>
+        <td><strong>${escapeHtml(apt.name)}</strong></td>
+        <td>${escapeHtml(apt.type)}</td>
+        <td>${apt.maxAdults}</td>
+        <td>${fmtTSH(apt.ratePerNight)}</td>
+        <td><div class="color-preview" style="background:${apt.color || '#2d9c6e'}"></div></td>
+        <td>
+          <button class="btn-sm btn-warning" onclick="openEditApartmentModal(${apt.id})">✏️ Edit</button>
+          <button class="btn-sm btn-danger" onclick="deleteApartment(${apt.id})">🗑 Delete</button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  async function deleteApartment(id) {
+    const apt = apartments.find(a => a.id === id);
+    if (!apt) return;
+    if (!confirm(`Delete apartment "${apt.name}"? This will also delete all its reservations.`)) return;
+    try {
+      await apiDelete(`/apartments/${id}`);
+      showToast('Apartment deleted', 'success');
+      await loadApartments();
+    } catch (err) {
+      showToast('Delete failed: ' + err.message, 'error');
+    }
+  }
+
+  // ============================================================
+  // ADD/EDIT MODAL FUNCTIONS
+  // ============================================================
+  function openAddApartmentModal() {
+    document.getElementById('apt-modal-title').innerText = '➕ Add Apartment';
+    document.getElementById('apt-id').value = '';
+    document.getElementById('apt-name').value = '';
+    document.getElementById('apt-type').value = '';
+    document.getElementById('apt-max-adults').value = '2';
+    document.getElementById('apt-rate').value = '90000';
+    document.getElementById('apt-emoji').value = '';
+    document.getElementById('apt-color').value = '#2d9c6e';
+    document.getElementById('apt-modal').classList.add('open');
+    document.getElementById('apt-modal-overlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function openEditApartmentModal(id) {
+    const apt = apartments.find(a => a.id === id);
+    if (!apt) return;
+    document.getElementById('apt-modal-title').innerText = '✏️ Edit Apartment';
+    document.getElementById('apt-id').value = apt.id;
+    document.getElementById('apt-name').value = apt.name;
+    document.getElementById('apt-type').value = apt.type;
+    document.getElementById('apt-max-adults').value = apt.maxAdults;
+    document.getElementById('apt-rate').value = apt.ratePerNight;
+    document.getElementById('apt-emoji').value = apt.emoji || '';
+    document.getElementById('apt-color').value = apt.color || '#2d9c6e';
+    document.getElementById('apt-modal').classList.add('open');
+    document.getElementById('apt-modal-overlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeApartmentModal() {
+    document.getElementById('apt-modal').classList.remove('open');
+    document.getElementById('apt-modal-overlay').classList.remove('open');
+    document.body.style.overflow = '';
+    document.getElementById('apt-form').reset();
+  }
+
+  // ============================================================
+  // FORM SUBMIT HANDLER
+  // ============================================================
+  document.getElementById('apt-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = document.getElementById('apt-id').value;
+    const name = document.getElementById('apt-name').value.trim();
+    const type = document.getElementById('apt-type').value.trim();
+    const maxAdults = parseInt(document.getElementById('apt-max-adults').value);
+    const ratePerNight = parseInt(document.getElementById('apt-rate').value);
+    const emoji = document.getElementById('apt-emoji').value.trim();
+    const color = document.getElementById('apt-color').value;
+
+    if (!name || !type || !maxAdults || !ratePerNight) {
+      showToast('Please fill all required fields', 'error');
+      return;
+    }
+
+    const payload = { name, type, maxAdults, ratePerNight, emoji, color };
+
+    try {
+      if (id) {
+        await apiPut(`/apartments/${id}`, payload);
+        showToast('Apartment updated successfully!', 'success');
+      } else {
+        await apiPost('/apartments', payload);
+        showToast('Apartment added successfully!', 'success');
+      }
+      closeApartmentModal();
+      await loadApartments();
+    } catch (err) {
+      showToast('Failed to save apartment: ' + err.message, 'error');
+    }
+  });
+
+  // ============================================================
+  // HELPER FUNCTIONS
+  // ============================================================
+  function escapeHtml(str) { 
+    if (!str) return ''; 
+    return String(str).replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); 
+  }
+
+  function showToast(msg, type) {
+    const toast = document.getElementById('toast-container');
+    const bgColor = type === 'error' ? '#ef4444' : '#10b981';
+    toast.innerHTML = `<div style="background:${bgColor};color:white;padding:12px 20px;border-radius:40px;margin-bottom:8px;">${msg}</div>`;
+    setTimeout(() => toast.innerHTML = '', 3000);
+  }
+
+  // ============================================================
+  // USER SESSION MANAGEMENT
+  // ============================================================
+  function getCurrentUser() {
+    const userStr = sessionStorage.getItem('pms_user');
+    if (!userStr) return null;
+    try { return JSON.parse(userStr); } catch(e) { return null; }
+  }
+
+  function logout() {
+    sessionStorage.removeItem('pms_user');
+    window.location.href = '/login';
+  }
+
+  // Redirect if not logged in
+  const currentUser = getCurrentUser();
+  if (!currentUser) {
+    window.location.href = '/login';
+  }
+
+  // Display user info
+  document.getElementById('userName').innerText = currentUser.fullName || currentUser.username;
+  document.getElementById('userRole').innerText = currentUser.role ? currentUser.role.charAt(0).toUpperCase() + currentUser.role.slice(1) : 'User';
+  document.getElementById('userAvatar').innerText = (currentUser.fullName || currentUser.username || 'U').charAt(0).toUpperCase();
+
+  // Dropdown toggle
+  const userPill = document.getElementById('userPill');
+  const dropdownMenu = document.getElementById('dropdownMenu');
+  if (userPill) {
+    userPill.addEventListener('click', (e) => {
+      e.stopPropagation();
+      dropdownMenu.classList.toggle('show');
+      userPill.classList.toggle('active');
+    });
+    document.addEventListener('click', () => {
+      dropdownMenu.classList.remove('show');
+      userPill.classList.remove('active');
+    });
+  }
+
+  // ============================================================
+  // CHANGE PASSWORD MODAL
+  // ============================================================
+  function openChangePasswordModal() {
+    if (!document.getElementById('change-password-modal')) {
+      const modalHTML = `
+        <div class="reservation-modal-overlay" id="change-password-modal-overlay" onclick="closeChangePasswordModal()"></div>
+        <div class="reservation-modal" id="change-password-modal">
+          <div class="reservation-modal-header">
+            <h3>🔐 Change Password</h3>
+            <button class="reservation-modal-close" onclick="closeChangePasswordModal()">✕</button>
+          </div>
+          <div class="reservation-modal-body">
+            <form id="change-password-form">
+              <div class="form-group"><label>Current Password</label><input type="password" id="current-password" class="form-control" required></div>
+              <div class="form-group"><label>New Password (min 6)</label><input type="password" id="new-password" class="form-control" required></div>
+              <div class="form-group"><label>Confirm Password</label><input type="password" id="confirm-password" class="form-control" required></div>
+              <hr class="divider" />
+              <button type="submit" class="btn btn-success">✅ Update Password</button>
+              <button type="button" class="btn btn-outline" style="margin-top:10px; width:100%;" onclick="closeChangePasswordModal()">Cancel</button>
+            </form>
+          </div>
+        </div>
+      `;
+      document.body.insertAdjacentHTML('beforeend', modalHTML);
+      
+      document.getElementById('change-password-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const currentPassword = document.getElementById('current-password').value;
+        const newPassword = document.getElementById('new-password').value;
+        const confirmPassword = document.getElementById('confirm-password').value;
+        
+        if (newPassword !== confirmPassword) {
+          showToast('New passwords do not match', 'error');
+          return;
+        }
+        if (newPassword.length < 6) {
+          showToast('Password must be at least 6 characters', 'error');
+          return;
+        }
+        
+        try {
+          const response = await fetch('/api/auth/change-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId: currentUser.id,
+              oldPassword: currentPassword,
+              newPassword: newPassword
+            })
+          });
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.error);
+          
+          showToast('Password changed successfully! Please login again.', 'success');
+          setTimeout(() => { logout(); }, 1500);
+        } catch (err) {
+          showToast('Failed to change password: ' + err.message, 'error');
+        }
+      });
+    }
+    
+    document.getElementById('change-password-modal').classList.add('open');
+    document.getElementById('change-password-modal-overlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    dropdownMenu.classList.remove('show');
+    userPill.classList.remove('active');
+  }
+
+  function closeChangePasswordModal() {
+    const modal = document.getElementById('change-password-modal');
+    const overlay = document.getElementById('change-password-modal-overlay');
+    if (modal) modal.classList.remove('open');
+    if (overlay) overlay.classList.remove('open');
+    document.body.style.overflow = '';
+    const form = document.getElementById('change-password-form');
+    if (form) form.reset();
+  }
+
+  // ============================================================
+  // RESERVATION MODAL (for the Add Reservation button)
+  // ============================================================
+  function openReservationModal() {
+    window.location.href = '/add-reservation';
+  }
+
+  // ============================================================
+  // INITIALIZE
+  // ============================================================
+  document.addEventListener('DOMContentLoaded', () => {
+    loadApartments();
+  });
+
+  // Make functions global
+  window.openAddApartmentModal = openAddApartmentModal;
+  window.openEditApartmentModal = openEditApartmentModal;
+  window.closeApartmentModal = closeApartmentModal;
+  window.deleteApartment = deleteApartment;
+  window.openReservationModal = openReservationModal;
+  window.logout = logout;
+  window.openChangePasswordModal = openChangePasswordModal;
+  window.closeChangePasswordModal = closeChangePasswordModal;
+</script>
+</body>
+</html>

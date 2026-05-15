@@ -1,0 +1,449 @@
+-- ============================================================
+-- SAFE MIGRATION - Preserves all existing data
+-- Run with: psql -U postgres -d steps_pms -f migrate-safe.sql
+-- ============================================================
+
+-- Create housekeeping_status table if not exists
+CREATE TABLE IF NOT EXISTS housekeeping_status (
+  id              SERIAL PRIMARY KEY,
+  apartment_id    INT NOT NULL REFERENCES apartments(id) ON DELETE CASCADE,
+  status          VARCHAR(20) NOT NULL DEFAULT 'clean',
+  last_updated    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_by      VARCHAR(100),
+  notes           TEXT,
+  UNIQUE(apartment_id)
+);
+
+-- Create indexes
+CREATE INDEX IF NOT EXISTS idx_housekeeping_status_apartment ON housekeeping_status(apartment_id);
+CREATE INDEX IF NOT EXISTS idx_housekeeping_status_status ON housekeeping_status(status);
+
+-- Add missing columns to existing tables
+ALTER TABLE apartments ADD COLUMN IF NOT EXISTS cleaning_status VARCHAR(20) DEFAULT 'clean';
+ALTER TABLE store_items ADD COLUMN IF NOT EXISTS min_stock_level INT DEFAULT 0;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS phone_number VARCHAR(50);
+
+-- Create any missing tables (safe - only creates if not exists)
+CREATE TABLE IF NOT EXISTS store_items (
+  id              SERIAL PRIMARY KEY,
+  name            VARCHAR(200) NOT NULL,
+  category        VARCHAR(50)  NOT NULL,
+  cost            INT          NOT NULL,
+  quantity        VARCHAR(50)  NOT NULL,
+  stock_value     DECIMAL(10,2) DEFAULT 0,
+  unit            VARCHAR(20)  DEFAULT 'units',
+  created_at      TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS store_requests (
+  id                 SERIAL PRIMARY KEY,
+  item_name          VARCHAR(200) NOT NULL,
+  category           VARCHAR(50)  NOT NULL,
+  quantity           VARCHAR(50)  NOT NULL,
+  cost               INT          NOT NULL DEFAULT 0,
+  requested_by       VARCHAR(50)  NOT NULL,
+  status             VARCHAR(20)  NOT NULL DEFAULT 'pending',
+  authorized_quantity VARCHAR(50),
+  created_at         TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+  approved_at        TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS outlet_inventory (
+  id                 SERIAL PRIMARY KEY,
+  outlet             VARCHAR(50)  NOT NULL,
+  item_name          VARCHAR(200) NOT NULL,
+  category           VARCHAR(50)  NOT NULL,
+  quantity           VARCHAR(50)  NOT NULL,
+  cost               INT          NOT NULL,
+  source_request_id  INT REFERENCES store_requests(id) ON DELETE SET NULL,
+  created_at         TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS outlets (
+  id          SERIAL PRIMARY KEY,
+  name        VARCHAR(50) NOT NULL UNIQUE,
+  created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create indexes for store tables
+CREATE INDEX IF NOT EXISTS idx_outlet_inventory_outlet ON outlet_inventory(outlet);
+CREATE INDEX IF NOT EXISTS idx_store_requests_status ON store_requests(status);
+CREATE INDEX IF NOT EXISTS idx_store_items_category ON store_items(category);
+
+-- Insert default outlets only if table is empty
+INSERT INTO outlets (name)
+SELECT 'housekeeping' WHERE NOT EXISTS (SELECT 1 FROM outlets WHERE name = 'housekeeping');
+INSERT INTO outlets (name)
+SELECT 'kitchen' WHERE NOT EXISTS (SELECT 1 FROM outlets WHERE name = 'kitchen');
+INSERT INTO outlets (name)
+SELECT 'public' WHERE NOT EXISTS (SELECT 1 FROM outlets WHERE name = 'public');
+
+-- Function and trigger for users table (safe)
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = CURRENT_TIMESTAMP;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trigger_users_updated_at ON users;
+CREATE TRIGGER trigger_users_updated_at
+  BEFORE UPDATE ON users
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+-- Verification message
+SELECT '✅ Safe migration completed! No data was lost.' as status;
+
+
+-- ============================================================
+-- PURCHASE ORDERS TABLES (Added to existing safe migration)
+-- ============================================================
+
+-- Create vendors table (if not exists)
+CREATE TABLE IF NOT EXISTS vendors (
+  id          SERIAL PRIMARY KEY,
+  name        VARCHAR(100) NOT NULL UNIQUE,
+  type        VARCHAR(50) NOT NULL DEFAULT 'local',
+  created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create purchase_orders table (if not exists)
+CREATE TABLE IF NOT EXISTS purchase_orders (
+  id              SERIAL PRIMARY KEY,
+  po_number       VARCHAR(50) NOT NULL UNIQUE,
+  vendor_id       INT NOT NULL REFERENCES vendors(id) ON DELETE CASCADE,
+  order_date      DATE NOT NULL DEFAULT CURRENT_DATE,
+  status          VARCHAR(20) NOT NULL DEFAULT 'pending',
+  total_amount    INT NOT NULL DEFAULT 0,
+  notes           TEXT,
+  created_by      VARCHAR(100),
+  created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create purchase_order_items table (if not exists)
+CREATE TABLE IF NOT EXISTS purchase_order_items (
+  id              SERIAL PRIMARY KEY,
+  po_id           INT NOT NULL REFERENCES purchase_orders(id) ON DELETE CASCADE,
+  item_name       VARCHAR(200) NOT NULL,
+  category        VARCHAR(50) NOT NULL,
+  unit            VARCHAR(20) DEFAULT 'units',
+  unit_price      INT NOT NULL,
+  quantity        DECIMAL(10,2) NOT NULL,
+  total_price     INT NOT NULL,
+  created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create indexes
+CREATE INDEX IF NOT EXISTS idx_purchase_orders_vendor ON purchase_orders(vendor_id);
+CREATE INDEX IF NOT EXISTS idx_purchase_orders_date ON purchase_orders(order_date);
+CREATE INDEX IF NOT EXISTS idx_purchase_orders_status ON purchase_orders(status);
+CREATE INDEX IF NOT EXISTS idx_po_items_po ON purchase_order_items(po_id);
+
+-- Insert default vendors (only if they don't exist)
+INSERT INTO vendors (name, type)
+SELECT 'Local Vendor', 'local'
+WHERE NOT EXISTS (SELECT 1 FROM vendors WHERE name = 'Local Vendor');
+
+INSERT INTO vendors (name, type)
+SELECT 'International Supplier', 'other'
+WHERE NOT EXISTS (SELECT 1 FROM vendors WHERE name = 'International Supplier');
+
+-- Add updated_at trigger for purchase_orders
+CREATE OR REPLACE FUNCTION update_purchase_orders_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = CURRENT_TIMESTAMP;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trigger_purchase_orders_updated_at ON purchase_orders;
+CREATE TRIGGER trigger_purchase_orders_updated_at
+  BEFORE UPDATE ON purchase_orders
+  FOR EACH ROW
+  EXECUTE FUNCTION update_purchase_orders_updated_at();
+
+-- Verification message
+SELECT '✅ Purchase Orders tables added to safe migration!' as status;
+
+
+
+-- ============================================================
+-- SAFE MIGRATION - Add Goods Receipt Note (GRN) Tables
+-- This will NOT delete any existing data
+-- ============================================================
+
+-- GRN Master table
+CREATE TABLE IF NOT EXISTS goods_receipt_notes (
+  id              SERIAL PRIMARY KEY,
+  grn_number      VARCHAR(50) NOT NULL UNIQUE,
+  po_id           INT NOT NULL REFERENCES purchase_orders(id) ON DELETE CASCADE,
+  vendor_id       INT NOT NULL REFERENCES vendors(id),
+  receipt_date    DATE NOT NULL DEFAULT CURRENT_DATE,
+  status          VARCHAR(20) NOT NULL DEFAULT 'received',
+  notes           TEXT,
+  created_by      VARCHAR(100),
+  created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- GRN Items table
+CREATE TABLE IF NOT EXISTS goods_receipt_items (
+  id              SERIAL PRIMARY KEY,
+  grn_id          INT NOT NULL REFERENCES goods_receipt_notes(id) ON DELETE CASCADE,
+  po_item_id      INT REFERENCES purchase_order_items(id),
+  item_name       VARCHAR(200) NOT NULL,
+  category        VARCHAR(50) NOT NULL,
+  unit            VARCHAR(20) DEFAULT 'units',
+  quantity_received DECIMAL(10,2) NOT NULL,
+  unit_price      INT NOT NULL,
+  total_cost      INT NOT NULL,
+  created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create indexes for better performance
+CREATE INDEX IF NOT EXISTS idx_grn_po ON goods_receipt_notes(po_id);
+CREATE INDEX IF NOT EXISTS idx_grn_date ON goods_receipt_notes(receipt_date);
+CREATE INDEX IF NOT EXISTS idx_grn_vendor ON goods_receipt_notes(vendor_id);
+CREATE INDEX IF NOT EXISTS idx_grn_items_grn ON goods_receipt_items(grn_id);
+CREATE INDEX IF NOT EXISTS idx_grn_items_po_item ON goods_receipt_items(po_item_id);
+
+-- Add columns to purchase_orders table (if not exists)
+ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS received_status VARCHAR(20) DEFAULT 'pending';
+ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS grn_id INT REFERENCES goods_receipt_notes(id);
+
+-- Create trigger for updated_at on goods_receipt_notes
+CREATE OR REPLACE FUNCTION update_grn_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = CURRENT_TIMESTAMP;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trigger_grn_updated_at ON goods_receipt_notes;
+CREATE TRIGGER trigger_grn_updated_at
+  BEFORE UPDATE ON goods_receipt_notes
+  FOR EACH ROW
+  EXECUTE FUNCTION update_grn_updated_at();
+
+-- Add updated_at column if not exists
+ALTER TABLE goods_receipt_notes ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+
+-- Verification message
+SELECT '✅ Goods Receipt Note (GRN) tables created successfully! No data was lost.' as status;
+
+-- Show counts
+SELECT 
+  (SELECT COUNT(*) FROM goods_receipt_notes) as grn_count,
+  (SELECT COUNT(*) FROM goods_receipt_items) as grn_items_count;
+
+
+
+-- ============================================================
+-- FIX: Add unit column to outlet_inventory table
+-- ============================================================
+
+-- Add unit column if it doesn't exist
+ALTER TABLE outlet_inventory ADD COLUMN IF NOT EXISTS unit VARCHAR(20) DEFAULT 'units';
+
+-- Update existing rows to have a default unit
+UPDATE outlet_inventory SET unit = 'units' WHERE unit IS NULL;
+
+-- Create index on unit column for better performance
+CREATE INDEX IF NOT EXISTS idx_outlet_inventory_unit ON outlet_inventory(unit);
+
+-- Verify the column was added
+SELECT column_name, data_type, is_nullable 
+FROM information_schema.columns 
+WHERE table_name = 'outlet_inventory' 
+AND column_name = 'unit';
+
+-- Show completion message
+SELECT '✅ unit column added to outlet_inventory table successfully!' as status;
+
+
+
+-- ============================================================
+-- FIX: Recalculate outlet inventory costs based on Main Store
+-- ============================================================
+
+-- This will update the cost per unit in outlet_inventory
+-- to match the current Main Store cost per unit
+
+-- First, create a temporary function to get Main Store cost
+DO $$
+DECLARE
+    outlet_rec RECORD;
+    main_item RECORD;
+    new_cost INT;
+BEGIN
+    FOR outlet_rec IN 
+        SELECT DISTINCT item_name, outlet, unit, SUM(CAST(SPLIT_PART(quantity, ' ', 1) AS DECIMAL)) as total_qty
+        FROM outlet_inventory 
+        GROUP BY item_name, outlet, unit
+    LOOP
+        -- Get main store item cost
+        SELECT cost INTO main_item FROM store_items WHERE LOWER(TRIM(name)) = LOWER(TRIM(outlet_rec.item_name)) LIMIT 1;
+        
+        IF main_item IS NOT NULL THEN
+            new_cost := main_item * outlet_rec.total_qty;
+            
+            -- Update all entries for this item in this outlet
+            UPDATE outlet_inventory 
+            SET cost = new_cost
+            WHERE LOWER(TRIM(item_name)) = LOWER(TRIM(outlet_rec.item_name)) 
+              AND outlet = outlet_rec.outlet;
+            
+            RAISE NOTICE 'Updated % in %: new total cost = %', outlet_rec.item_name, outlet_rec.outlet, new_cost;
+        END IF;
+    END LOOP;
+END $$;
+
+-- Verify the update
+SELECT 
+    item_name,
+    outlet,
+    SUM(CAST(SPLIT_PART(quantity, ' ', 1) AS DECIMAL)) as total_quantity,
+    SUM(cost) as total_cost,
+    ROUND(SUM(cost) / NULLIF(SUM(CAST(SPLIT_PART(quantity, ' ', 1) AS DECIMAL)), 0)) as cost_per_unit
+FROM outlet_inventory 
+GROUP BY item_name, outlet
+ORDER BY item_name;
+
+SELECT '✅ Outlet inventory costs recalculated based on Main Store prices!' as status;
+
+
+
+-- ============================================================
+-- SALES TABLES FOR POS (Add this to migrate-safe.sql)
+-- ============================================================
+
+-- Sales Orders table (master table for each transaction)
+CREATE TABLE IF NOT EXISTS sales_orders (
+  id              SERIAL PRIMARY KEY,
+  order_number    VARCHAR(50) NOT NULL UNIQUE,
+  cashier_id      INT REFERENCES users(id) ON DELETE SET NULL,
+  cashier_name    VARCHAR(100) NOT NULL,
+  order_date      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  total_amount    INT NOT NULL DEFAULT 0,
+  status          VARCHAR(20) NOT NULL DEFAULT 'completed',
+  created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Sales Items table (items sold in each order)
+CREATE TABLE IF NOT EXISTS sales_items (
+  id              SERIAL PRIMARY KEY,
+  sale_id         INT NOT NULL REFERENCES sales_orders(id) ON DELETE CASCADE,
+  item_id         INT REFERENCES store_items(id) ON DELETE SET NULL,
+  item_name       VARCHAR(200) NOT NULL,
+  category        VARCHAR(50) NOT NULL,
+  unit            VARCHAR(20) DEFAULT 'units',
+  quantity        DECIMAL(10,2) NOT NULL,
+  unit_price      INT NOT NULL,
+  total_price     INT NOT NULL,
+  created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create indexes for faster queries
+CREATE INDEX IF NOT EXISTS idx_sales_orders_date ON sales_orders(order_date);
+CREATE INDEX IF NOT EXISTS idx_sales_orders_cashier ON sales_orders(cashier_id);
+CREATE INDEX IF NOT EXISTS idx_sales_items_sale ON sales_items(sale_id);
+CREATE INDEX IF NOT EXISTS idx_sales_items_item ON sales_items(item_id);
+
+-- Auto-generate order number function
+CREATE OR REPLACE FUNCTION generate_order_number()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.order_number = 'ORD-' || TO_CHAR(NEW.order_date, 'YYYYMMDD') || '-' || LPAD(NEW.id::TEXT, 4, '0');
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Drop trigger if exists and recreate
+DROP TRIGGER IF EXISTS trigger_order_number ON sales_orders;
+CREATE TRIGGER trigger_order_number
+  BEFORE INSERT ON sales_orders
+  FOR EACH ROW
+  EXECUTE FUNCTION generate_order_number();
+
+
+-- ============================================================
+-- SAFE MIGRATION - Add Time Tracking to Reservations
+-- ============================================================
+-- ============================================================
+-- ADD CHECKOUT TIME TRACKING TO RESERVATIONS
+-- ============================================================
+
+
+
+-- ============================================================
+-- ADD CHECKOUT TIME TO RESERVATIONS (11:00 AM default)
+-- ============================================================
+
+-- Add checkout_time column with default 11:00 AM (if not exists)
+ALTER TABLE reservations ADD COLUMN IF NOT EXISTS checkout_time TIME DEFAULT '11:00:00';
+
+-- Create index for faster queries on checkout_time
+CREATE INDEX IF NOT EXISTS idx_reservations_checkout_time ON reservations(checkout_time);
+
+-- Update any existing NULL checkout_time values to default '11:00:00'
+UPDATE reservations SET checkout_time = '11:00:00' WHERE checkout_time IS NULL;
+
+-- ============================================================
+-- VERIFICATION
+-- ============================================================
+DO $$
+BEGIN
+    RAISE NOTICE '✅ Checkout time migration completed!';
+    
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='reservations' AND column_name='checkout_time') THEN
+        RAISE NOTICE '✅ checkout_time column: ADDED (default 11:00:00)';
+    ELSE
+        RAISE NOTICE '❌ checkout_time column: MISSING';
+    END IF;
+END $$;
+
+
+
+
+-- ============================================================
+-- ACTIVITY LOG TABLE (Audit Trail - SAFE MIGRATION)
+-- ============================================================
+
+-- Create activity_logs table if not exists
+CREATE TABLE IF NOT EXISTS activity_logs (
+  id          SERIAL PRIMARY KEY,
+  user_id     INT REFERENCES users(id) ON DELETE SET NULL,
+  username    VARCHAR(100) NOT NULL,
+  action      VARCHAR(50) NOT NULL,
+  entity_type VARCHAR(50) NOT NULL,
+  entity_id   INT,
+  old_data    JSONB,
+  new_data    JSONB,
+  ip_address  INET,
+  user_agent  TEXT,
+  created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create indexes for faster queries (IF NOT EXISTS)
+CREATE INDEX IF NOT EXISTS idx_activity_logs_user ON activity_logs(user_id);
+CREATE INDEX IF NOT EXISTS idx_activity_logs_entity ON activity_logs(entity_type, entity_id);
+CREATE INDEX IF NOT EXISTS idx_activity_logs_action ON activity_logs(action);
+CREATE INDEX IF NOT EXISTS idx_activity_logs_date ON activity_logs(created_at);
+
+-- ============================================================
+-- VERIFICATION
+-- ============================================================
+DO $$
+BEGIN
+    RAISE NOTICE '✅ Activity logs table migration completed!';
+    
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'activity_logs') THEN
+        RAISE NOTICE '✅ activity_logs table: CREATED';
+    ELSE
+        RAISE NOTICE '❌ activity_logs table: MISSING';
+    END IF;
+END $$;

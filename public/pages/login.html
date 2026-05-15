@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Steps PMS</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * { 
+      margin: 0; 
+      padding: 0; 
+      box-sizing: border-box; 
+    }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #f8f6f2 0%, #f0ebe2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    
+    .login-container {
+      max-width: 420px;
+      width: 100%;
+      background: white;
+      border-radius: 32px;
+      box-shadow: 0 25px 45px -12px rgba(0,0,0,0.2);
+      overflow: hidden;
+    }
+    
+    .login-header {
+      background: #1a2c3e;
+      padding: 1.8rem 2rem;
+      text-align: center;
+      color: white;
+    }
+    
+    .login-header i { 
+      font-size: 2.5rem; 
+      color: #c9933a; 
+      margin-bottom: 0.5rem; 
+    }
+    
+    .login-header h1 { 
+      font-family: 'Playfair Display', serif; 
+      font-size: 1.8rem; 
+    }
+    
+    .login-header p { 
+      font-size: 0.85rem; 
+      opacity: 0.8; 
+      margin-top: 5px; 
+    }
+    
+    .login-body { 
+      padding: 2rem; 
+    }
+    
+    .form-group { 
+      margin-bottom: 1.4rem; 
+    }
+    
+    label { 
+      display: block; 
+      font-weight: 500; 
+      font-size: 0.85rem; 
+      margin-bottom: 6px; 
+      color: #2c3e4e; 
+    }
+    
+    input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid #e2e8f0;
+      border-radius: 20px;
+      font-family: inherit;
+      font-size: 0.9rem;
+      background: #fefefe;
+    }
+    
+    input:focus { 
+      outline: none; 
+      border-color: #c9933a; 
+      box-shadow: 0 0 0 3px rgba(201,147,58,0.1); 
+    }
+    
+    .btn-login {
+      width: 100%;
+      background: #c9933a;
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: 40px;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: 0.2s;
+      margin-top: 0.5rem;
+    }
+    
+    .btn-login:hover { 
+      background: #a87a2c; 
+      transform: translateY(-1px); 
+    }
+    
+    .error-message { 
+      color: #e74c3c; 
+      font-size: 0.8rem; 
+      margin-top: 8px; 
+      text-align: center; 
+    }
+    
+    .register-link { 
+      text-align: center; 
+      margin-top: 1rem; 
+      font-size: 0.85rem; 
+    }
+    
+    .register-link a { 
+      color: #c9933a; 
+      text-decoration: none; 
+    }
+    
+    .register-link a:hover {
+      text-decoration: underline;
+    }
+    
+    .loading-spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 0.6s linear infinite;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+    
+    @keyframes spin { 
+      to { transform: rotate(360deg); } 
+    }
+  </style>
+</head>
+<body>
+<div class="login-container">
+  <div class="login-header">
+    <i class="fas fa-crown"></i>
+    <h1>Steps PMS</h1>
+    <p>Property Management System</p>
+  </div>
+  <div class="login-body">
+    <form id="loginForm">
+      <div class="form-group">
+        <label><i class="fas fa-envelope"></i> Email</label>
+        <input type="email" id="email" placeholder="your@email.com" required autofocus>
+      </div>
+      <div class="form-group">
+        <label><i class="fas fa-lock"></i> Password</label>
+        <input type="password" id="password" placeholder="Password" required>
+      </div>
+      <button type="submit" class="btn-login" id="loginBtn">🔐 Login</button>
+      <div id="loginError" class="error-message"></div>
+    </form>
+    <div class="register-link">
+      Don't have an account? <a href="/register">Register here</a>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Get form elements
+  const loginForm = document.getElementById('loginForm');
+  const loginBtn = document.getElementById('loginBtn');
+  const errorDiv = document.getElementById('loginError');
+
+  // Login form submission handler
+  loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    // Disable button and show loading state
+    loginBtn.disabled = true;
+    loginBtn.innerHTML = '<span class="loading-spinner"></span> Authenticating...';
+    errorDiv.innerText = '';
+
+    // Get user input
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+
+    // Validate input
+    if (!email || !password) {
+      errorDiv.innerText = 'Email and password are required.';
+      loginBtn.disabled = false;
+      loginBtn.innerHTML = '🔐 Login';
+      return;
+    }
+
+    try {
+      // Call login API
+      const response = await fetch('http://localhost:3000/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      
+      const data = await response.json();
+      
+      // Handle login error
+      if (!response.ok) throw new Error(data.error || 'Login failed');
+
+      // Store user info in sessionStorage
+      sessionStorage.setItem('pms_user', JSON.stringify({
+        id: data.id,
+        username: data.username,
+        fullName: data.fullName,
+        email: data.email,
+        role: data.role
+      }));
+
+      // ROLE-BASED REDIRECTION
+      // Admin and Manager go to full dashboard (dashboard.html)
+      // All other roles (housekeeping, etc.) go to limited dashboard (dashboard1.html)
+      if (data.role === 'admin' || data.role === 'manager') {
+        window.location.href = '/dashboard';
+      } else {
+        window.location.href = '/dashboard1';
+      }
+      
+    } catch (err) {
+      errorDiv.innerText = err.message;
+      loginBtn.disabled = false;
+      loginBtn.innerHTML = '🔐 Login';
+    }
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reports - Steps PMS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+
+<div class="overlay" id="overlay-main"></div>
+<!-- Sidebar -->
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-top">
+    <a class="sidebar-logo" href="/">
+      <div class="logo-icon">🏨</div>
+      <div class="logo-text">
+        <span>Steps</span>
+        <span>Premium Suite</span>
+      </div>
+    </a>
+    <button class="sidebar-close-btn" id="sidebar-close-btn">✕</button>
+  </div>
+  
+  <nav class="sidebar-nav">
+    
+    <!-- CORE OPERATIONS -->
+    <div class="nav-section-label">Core Operations</div>
+    <a href="/dashboard" class="nav-item ">📊 Stay View</a>
+    <a href="/reservations" class="nav-item">📅 Reservations</a>
+    <a href="/housekeeping" class="nav-item">🧹 Housekeeping</a>
+    
+    <!-- PROPERTY -->
+    <div class="nav-section-label">Property</div>
+    <a href="/apartments" class="nav-item">🏠 Apartments View</a>
+    <a href="/apartments-list" class="nav-item">📋 Apartments List</a>
+    
+    <!-- STORE & PROCUREMENT (COMBINED) -->
+    <div class="nav-section-label">Store & Procurement</div>
+    <a href="/store-main" class="nav-item">🏬 Main Store</a>
+    <a href="/store-outlets" class="nav-item">🏪 Outlets Store</a>
+    <a href="/purchase-orders" class="nav-item">📦 Purchase Orders</a>
+    <a href="/goods-receipt" class="nav-item">✅ Goods Receipt</a>
+    
+    <!-- REPORTS (KEPT SEPARATE) -->
+    <div class="nav-section-label">Reports</div>
+    <a href="/reports" class="nav-item active">📊 Reservations Report</a>
+    <a href="/purchase-orders-reports" class="nav-item">📄 Purchase Orders Report</a>
+    <a href="/goods-receipt-reports" class="nav-item">📋 Goods Receipt Report</a>
+    <a href="/store-inventory-reports" class="nav-item">📦 Store Inventory Report</a>
+    
+    <!-- ADMIN -->
+    <div class="nav-section-label">Administration</div>
+    <a href="/users" class="nav-item">👥 User Management</a>
+    
+  </nav>
+  
+  <div class="sidebar-footer">
+    <small>Steps PMS v1.0 · Dar es Salaam</small>
+  </div>
+</aside>
+
+
+<!-- Navbar -->
+<nav class="navbar">
+  <div class="navbar-left">
+    <button class="hamburger" id="hamburger-btn" aria-label="Toggle menu">
+      <span class="hb-bar"></span><span class="hb-bar"></span><span class="hb-bar"></span>
+    </button>
+    <div>
+      <div class="page-title">Reports View</div>
+      <div class="page-subtitle">Reports Overview</div>
+    </div>
+  </div>
+  <div class="navbar-right">
+    
+    <button class="notif-btn">🔔<span class="badge">3</span></button>
+    
+    <!-- User Dropdown -->
+    <div class="user-dropdown">
+      <div class="user-pill" id="userPill">
+        <div class="user-avatar" id="userAvatar">U</div>
+        <div class="user-info">
+          <span id="userName">Loading...</span>
+          <span id="userRole">Loading...</span>
+        </div>
+        <i class="fas fa-chevron-down"></i>
+      </div>
+      <div class="dropdown-menu" id="dropdownMenu">
+    <button onclick="openChangePasswordModal()"><i class="fas fa-key"></i> Change Password</button>
+    <a href="/users" class="dropdown-item"><i class="fas fa-users"></i> User Management</a>
+        <hr>
+        <button onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<main class="main-content">
+  <div style="margin-bottom:20px"><h2 style="font-family:'Playfair Display',serif;font-size:22px;color:var(--navy)">Reports & Analytics</h2><p style="color:var(--gray-400);font-size:13px;margin-top:4px">Performance overview for Steps Premium Suite</p></div>
+
+  <div class="report-filter-bar">
+    <div class="report-filter-inner">
+      <div class="filter-field"><label>From Date</label><input type="date" id="rpt-from" class="form-control" /></div>
+      <div class="filter-field"><label>To Date</label><input type="date" id="rpt-to" class="form-control" /></div>
+      <button class="btn btn-gold" onclick="applyReportFilter()">🔍 Apply Filter</button>
+      <button class="btn btn-outline" onclick="clearReportFilter()">✕ Clear</button>
+      <button class="btn btn-print" onclick="generatePrintReport()">🖨️ Generate Report</button>
+    </div>
+    <div class="filter-badge-row"><span class="rpt-filter-badge" id="rpt-filter-badge">All time</span></div>
+  </div>
+
+  <div class="stats-row" style="margin-bottom:24px">
+    <div class="stat-card"><div class="stat-icon blue">📋</div><div><div class="stat-label">Total Reservations</div><div class="stat-value" id="rpt-total-res">—</div></div></div>
+    <div class="stat-card"><div class="stat-icon green">💰</div><div><div class="stat-label">Total Revenue</div><div class="stat-value" id="rpt-total-rev" style="font-size:15px">—</div></div></div>
+    <div class="stat-card"><div class="stat-icon gold">🌙</div><div><div class="stat-label">Avg. Stay</div><div class="stat-value" id="rpt-avg-stay" style="font-size:18px">—</div></div></div>
+    <div class="stat-card"><div class="stat-icon red">🏠</div><div><div class="stat-label">Currently Occupied</div><div class="stat-value" id="rpt-occupied" style="font-size:20px">—</div></div></div>
+  </div>
+
+  <div class="reports-grid">
+    <div class="card"><div class="card-header"><span class="card-title">Revenue by Apartment (TSH)</span></div><div class="card-body"><div class="mini-bar-chart" id="revenue-chart"></div></div></div>
+    <div class="card"><div class="card-header"><span class="card-title">Overall Occupancy Rate</span></div><div class="card-body"><div style="text-align:center;margin-bottom:20px"><div style="font-size:56px;font-weight:800;color:var(--navy);font-family:'Playfair Display',serif" id="occ-rate">—</div><div style="color:var(--gray-400);font-size:13px">occupancy for selected period</div></div><div style="height:12px;background:var(--gray-100);border-radius:8px;overflow:hidden"><div id="occ-bar" style="height:100%;background:var(--green);border-radius:8px;width:0%;transition:width 0.8s ease"></div></div><div style="display:flex;justify-content:space-between;margin-top:6px;font-size:11px;color:var(--gray-300)"><span>0%</span><span>50%</span><span>100%</span></div></div></div>
+  </div>
+
+  <div class="card" style="margin-top:20px">
+    <div class="card-header"><span class="card-title">Reservations by Apartment</span></div>
+    <div style="overflow-x:auto"><table class="data-table"><thead><tr><th>Apartment</th><th>Bookings</th><th>Total Nights</th><th>Total Revenue</th><th>Rate/Night</th></tr></thead><tbody id="rpt-apt-table"></tbody></table></div>
+  </div>
+</main>
+
+<script src="../js/api.js"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/reports.js"></script>
+<script>
+
+
+
+// ========== USER SESSION MANAGEMENT ==========
+function getCurrentUser() {
+  const userStr = sessionStorage.getItem('pms_user');
+  if (!userStr) return null;
+  try { return JSON.parse(userStr); } catch(e) { return null; }
+}
+
+function logout() {
+  sessionStorage.removeItem('pms_user');
+  window.location.href = '/login';  // ← Same folder
+}
+
+function switchToBack() {
+  alert('Back office feature coming soon');
+}
+
+// Redirect if not logged in
+const currentUser = getCurrentUser();
+if (!currentUser) {
+  window.location.href = '/login';  // ← Same folder
+}
+
+// Display user info
+document.getElementById('userName').innerText = currentUser.fullName || currentUser.username;
+document.getElementById('userRole').innerText = currentUser.role ? currentUser.role.charAt(0).toUpperCase() + currentUser.role.slice(1) : 'User';
+document.getElementById('userAvatar').innerText = (currentUser.fullName || currentUser.username || 'U').charAt(0).toUpperCase();
+
+// Dropdown toggle
+const userPill = document.getElementById('userPill');
+const dropdownMenu = document.getElementById('dropdownMenu');
+if (userPill) {
+  userPill.addEventListener('click', (e) => {
+    e.stopPropagation();
+    dropdownMenu.classList.toggle('show');
+    userPill.classList.toggle('active');
+  });
+  document.addEventListener('click', () => {
+    dropdownMenu.classList.remove('show');
+    userPill.classList.remove('active');
+  });
+}
+
+// ========== CHANGE PASSWORD MODAL ==========
+function openChangePasswordModal() {
+  if (!document.getElementById('change-password-modal')) {
+    const modalHTML = `
+      <div class="reservation-modal-overlay" id="change-password-modal-overlay" onclick="closeChangePasswordModal()"></div>
+      <div class="reservation-modal" id="change-password-modal">
+        <div class="reservation-modal-header">
+          <h3>🔐 Change Password</h3>
+          <button class="reservation-modal-close" onclick="closeChangePasswordModal()">✕</button>
+        </div>
+        <div class="reservation-modal-body">
+          <form id="change-password-form">
+            <div class="form-group">
+              <label>Current Password</label>
+              <input type="password" id="current-password" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label>New Password (min 6 characters)</label>
+              <input type="password" id="new-password" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label>Confirm New Password</label>
+              <input type="password" id="confirm-password" class="form-control" required>
+            </div>
+            <hr class="divider" />
+            <button type="submit" class="btn btn-success">✅ Update Password</button>
+            <button type="button" class="btn btn-outline" style="margin-top:10px; width:100%;" onclick="closeChangePasswordModal()">Cancel</button>
+          </form>
+        </div>
+      </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    document.getElementById('change-password-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const currentPassword = document.getElementById('current-password').value;
+      const newPassword = document.getElementById('new-password').value;
+      const confirmPassword = document.getElementById('confirm-password').value;
+      
+      if (newPassword !== confirmPassword) {
+        showToast('New passwords do not match', '⚠️');
+        return;
+      }
+      if (newPassword.length < 6) {
+        showToast('Password must be at least 6 characters', '⚠️');
+        return;
+      }
+      
+      try {
+        const response = await fetch('/api/auth/change-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: currentUser.id,
+            oldPassword: currentPassword,
+            newPassword: newPassword
+          })
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error);
+        
+        showToast('Password changed successfully! Please login again.', '✅');
+        setTimeout(() => { logout(); }, 1500);
+      } catch (err) {
+        showToast('Failed to change password: ' + err.message, '❌');
+      }
+    });
+  }
+  
+  document.getElementById('change-password-modal').classList.add('open');
+  document.getElementById('change-password-modal-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  dropdownMenu.classList.remove('show');
+  userPill.classList.remove('active');
+}
+
+function closeChangePasswordModal() {
+  const modal = document.getElementById('change-password-modal');
+  const overlay = document.getElementById('change-password-modal-overlay');
+  if (modal) modal.classList.remove('open');
+  if (overlay) overlay.classList.remove('open');
+  document.body.style.overflow = '';
+  const form = document.getElementById('change-password-form');
+  if (form) form.reset();
+}
+
+// Make functions global
+window.logout = logout;
+window.switchToBack = switchToBack;
+window.openChangePasswordModal = openChangePasswordModal;
+window.closeChangePasswordModal = closeChangePasswordModal;
+
+
+
+
+
+  const hamburgerBtn = document.getElementById('hamburger-btn');
+  const sidebar = document.getElementById('sidebar');
+  const overlayMain = document.getElementById('overlay-main');
+  const sidebarClose = document.getElementById('sidebar-close-btn');
+  function openSidebar() { sidebar.classList.add('open'); overlayMain.classList.add('open'); hamburgerBtn.classList.add('active'); }
+  function closeSidebar() { sidebar.classList.remove('open'); overlayMain.classList.remove('open'); hamburgerBtn.classList.remove('active'); }
+  hamburgerBtn?.addEventListener('click', () => sidebar.classList.contains('open') ? closeSidebar() : openSidebar());
+  sidebarClose?.addEventListener('click', closeSidebar);
+  overlayMain?.addEventListener('click', closeSidebar);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSidebar(); });
+</script>
+</body>
+</html>

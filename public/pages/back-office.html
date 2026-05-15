@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Back Office - Steps PMS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <style>
+    .welcome-card {
+      background: white;
+      border-radius: 24px;
+      padding: 40px;
+      text-align: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .welcome-card h1 {
+      font-size: 28px;
+      margin-bottom: 16px;
+      color: #1e2a3e;
+    }
+    .welcome-card p {
+      color: #64748b;
+      margin-bottom: 24px;
+    }
+    .stats-row {
+      display: flex;
+      gap: 20px;
+      margin-top: 24px;
+      flex-wrap: wrap;
+    }
+    .stat-card {
+      background: white;
+      border-radius: 20px;
+      padding: 20px;
+      flex: 1;
+      min-width: 160px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      text-align: center;
+    }
+    .stat-card .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: #c9933a;
+    }
+    .stat-card .stat-label {
+      font-size: 12px;
+      color: #64748b;
+      margin-top: 8px;
+    }
+    
+    /* User Dropdown Styles */
+    .user-dropdown { position: relative; cursor: pointer; }
+    .dropdown-menu {
+      position: absolute;
+      top: 55px;
+      right: 0;
+      background: white;
+      min-width: 200px;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+      padding: 0.5rem 0;
+      z-index: 100;
+      display: none;
+    }
+    .dropdown-menu.show { display: block; }
+    .dropdown-menu button, .dropdown-menu a {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 18px;
+      text-decoration: none;
+      color: #1e2a3e;
+      font-size: 0.85rem;
+      background: none;
+      border: none;
+      width: 100%;
+      text-align: left;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .dropdown-menu button:hover, .dropdown-menu a:hover { background: #f5f3ef; }
+    .dropdown-menu hr { margin: 0.3rem 0; }
+    .user-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      background: #f8fafc;
+      border-radius: 40px;
+      cursor: pointer;
+    }
+    .user-avatar {
+      width: 32px;
+      height: 32px;
+      background: #c9933a;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+    }
+    .user-info {
+      display: flex;
+      flex-direction: column;
+    }
+    .user-info span:first-child { font-size: 13px; font-weight: 600; }
+    .user-info span:last-child { font-size: 10px; color: #64748b; }
+    .fa-chevron-down { font-size: 10px; color: #94a3b8; transition: transform 0.2s; }
+    .user-pill.active .fa-chevron-down { transform: rotate(180deg); }
+    
+    /* Modal Styles */
+    .reservation-modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.6);
+      z-index: 10000;
+      display: none;
+    }
+    .reservation-modal-overlay.open { display: block; }
+    .reservation-modal {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      border-radius: 24px;
+      width: 90%;
+      max-width: 500px;
+      z-index: 10001;
+      display: none;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+    }
+    .reservation-modal.open { display: block; }
+    .reservation-modal-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #1e2a3e;
+      color: white;
+      border-radius: 24px 24px 0 0;
+    }
+    .reservation-modal-header h3 { margin: 0; font-family: 'Playfair Display', serif; }
+    .reservation-modal-close {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 24px;
+      cursor: pointer;
+    }
+    .reservation-modal-body { padding: 24px; }
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { display: block; margin-bottom: 0.3rem; font-weight: 500; font-size: 0.85rem; color: #2c3e4e; }
+    .form-control { width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 20px; }
+    .divider { margin: 1rem 0; border-top: 1px solid #e2e8f0; }
+    .btn-success { background: #10b981; color: white; border: none; cursor: pointer; padding: 12px; border-radius: 40px; width: 100%; font-weight: 600; }
+    .btn-outline { background: transparent; border: 1px solid #e2e8f0; padding: 12px; border-radius: 40px; width: 100%; cursor: pointer; }
+    .toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 2000; }
+    .main-content { padding: 24px; }
+    
+    /* Sidebar */
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: -280px;
+      width: 280px;
+      height: 100%;
+      background: white;
+      z-index: 1000;
+      transition: 0.3s;
+      box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+      overflow-y: auto;
+    }
+    .sidebar.open { left: 0; }
+    .sidebar-top { padding: 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
+    .sidebar-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .logo-icon { font-size: 28px; }
+    .logo-text span:first-child { font-weight: 700; font-size: 18px; color: #1e2a3e; font-family: 'Playfair Display', serif; }
+    .logo-text span:last-child { font-size: 10px; color: #c9933a; display: block; }
+    .sidebar-close-btn { background: none; border: none; font-size: 20px; cursor: pointer; color: #64748b; }
+    .sidebar-nav { padding: 20px; }
+    .nav-section-label { font-size: 11px; text-transform: uppercase; color: #94a3b8; margin: 15px 0 8px 0; }
+    .nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; text-decoration: none; color: #1e2a3e; border-radius: 12px; transition: 0.2s; font-size: 14px; background: none; border: none; width: 100%; text-align: left; cursor: pointer; }
+    .nav-item:hover, .nav-item.active { background: #fef8e7; color: #c9933a; }
+    .sidebar-footer { padding: 20px; border-top: 1px solid #e2e8f0; font-size: 11px; color: #94a3b8; }
+    
+    /* Navbar */
+    .navbar { background: white; padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 2px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; }
+    .navbar-left { display: flex; align-items: center; gap: 16px; }
+    .hamburger { background: none; border: none; cursor: pointer; width: 32px; height: 32px; display: flex; flex-direction: column; justify-content: center; gap: 4px; }
+    .hb-bar { width: 20px; height: 2px; background: #1e2a3e; display: block; }
+    .page-title { font-size: 20px; font-weight: 700; font-family: 'Playfair Display', serif; color: #1e2a3e; }
+    .page-subtitle { font-size: 12px; color: #64748b; }
+    .navbar-right { display: flex; align-items: center; gap: 16px; }
+    .notif-btn { background: none; border: none; font-size: 18px; cursor: pointer; position: relative; }
+    .badge { position: absolute; top: -5px; right: -8px; background: #ef4444; color: white; font-size: 10px; padding: 2px 5px; border-radius: 10px; }
+  </style>
+</head>
+<body>
+
+<div class="overlay" id="overlay-main"></div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-top">
+    <a class="sidebar-logo" href="/back-office">
+      <div class="logo-icon">🏨</div>
+      <div class="logo-text">
+        <span>Steps</span>
+        <span>Back Office</span>
+      </div>
+    </a>
+    <button class="sidebar-close-btn" id="sidebar-close-btn">✕</button>
+  </div>
+  
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Main</div>
+    <a href="/users1" class="nav-item">👤 User </a>
+    <a href="/store-main1" class="nav-item">🏬 Store Main </a>
+    <a href="/apartments-list1" class="nav-item">📋 Apartments List </a>
+    <a href="/store-outlets1" class="nav-item">🏪 Store Outlets </a>
+  </nav>
+  
+  <div class="sidebar-footer">
+    <small>Steps PMS Back Office v1.0 · Dar es Salaam</small>
+  </div>
+</aside>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="navbar-left">
+    <button class="hamburger" id="hamburger-btn">
+      <span class="hb-bar"></span><span class="hb-bar"></span><span class="hb-bar"></span>
+    </button>
+    <div>
+      <div class="page-title">Back Office</div>
+      <div class="page-subtitle">Administration Panel</div>
+    </div>
+  </div>
+  <div class="navbar-right">
+    <button class="notif-btn">🔔<span class="badge">3</span></button>
+    
+    <div class="user-dropdown">
+      <div class="user-pill" id="userPill">
+        <div class="user-avatar" id="userAvatar">U</div>
+        <div class="user-info">
+          <span id="userName">Loading...</span>
+          <span id="userRole">Loading...</span>
+        </div>
+        <i class="fas fa-chevron-down"></i>
+      </div>
+      <div class="dropdown-menu" id="dropdownMenu">
+        <button onclick="openChangePasswordModal()"><i class="fas fa-key"></i> Change Password</button>
+        <a href="#" onclick="switchToFront()"><i class="fas fa-arrow-right"></i> Switch to Front</a>
+        <hr>
+        <button onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<main class="main-content">
+  <div class="welcome-card">
+    <h1>Welcome to Back Office</h1>
+    <p>Administration and management panel for Steps Premium Suite</p>
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-value">4</div><div class="stat-label">Modules</div></div>
+      <div class="stat-card"><div class="stat-value">—</div><div class="stat-label">Active Users</div></div>
+      <div class="stat-card"><div class="stat-value">—</div><div class="stat-label">System Status</div></div>
+    </div>
+  </div>
+</main>
+
+<!-- Change Password Modal -->
+<div class="reservation-modal-overlay" id="change-password-modal-overlay"></div>
+<div class="reservation-modal" id="change-password-modal">
+  <div class="reservation-modal-header">
+    <h3>🔐 Change Password</h3>
+    <button class="reservation-modal-close" onclick="closeChangePasswordModal()">✕</button>
+  </div>
+  <div class="reservation-modal-body">
+    <form id="change-password-form">
+      <div class="form-group"><label>Current Password</label><input type="password" id="current-password" class="form-control" required></div>
+      <div class="form-group"><label>New Password (min 6)</label><input type="password" id="new-password" class="form-control" required></div>
+      <div class="form-group"><label>Confirm Password</label><input type="password" id="confirm-password" class="form-control" required></div>
+      <hr class="divider" />
+      <button type="submit" class="btn btn-success">✅ Update Password</button>
+      <button type="button" class="btn btn-outline" style="margin-top:10px;" onclick="closeChangePasswordModal()">Cancel</button>
+    </form>
+  </div>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+
+<script>
+  // ============================================================
+  // SIDEBAR TOGGLE
+  // ============================================================
+  const hamburger = document.getElementById('hamburger-btn');
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('overlay-main');
+  const sidebarClose = document.getElementById('sidebar-close-btn');
+  
+  function openSidebar() { sidebar.classList.add('open'); overlay.classList.add('open'); hamburger.classList.add('active'); }
+  function closeSidebar() { sidebar.classList.remove('open'); overlay.classList.remove('open'); hamburger.classList.remove('active'); }
+  
+  hamburger?.addEventListener('click', () => sidebar.classList.contains('open') ? closeSidebar() : openSidebar());
+  sidebarClose?.addEventListener('click', closeSidebar);
+  overlay?.addEventListener('click', closeSidebar);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSidebar(); });
+  
+  // ============================================================
+  // USER AUTHENTICATION
+  // ============================================================
+  function getCurrentUser() { const u = sessionStorage.getItem('pms_user'); return u ? JSON.parse(u) : null; }
+  function logout() { sessionStorage.removeItem('pms_user'); window.location.href = '/login'; }
+  function switchToFront() { window.location.href = '/dashboard'; }
+  
+  const cu = getCurrentUser(); if (!cu) window.location.href = '/login';
+  document.getElementById('userName').innerText = cu.fullName || cu.username;
+  document.getElementById('userRole').innerText = cu.role || 'Admin';
+  document.getElementById('userAvatar').innerText = (cu.fullName || cu.username || 'U')[0];
+  
+  // ============================================================
+  // USER DROPDOWN
+  // ============================================================
+  const up = document.getElementById('userPill');
+  const dd = document.getElementById('dropdownMenu');
+  if (up && dd) {
+    up.addEventListener('click', (e) => { e.stopPropagation(); dd.classList.toggle('show'); up.classList.toggle('active'); });
+    document.addEventListener('click', () => { dd.classList.remove('show'); if (up) up.classList.remove('active'); });
+    dd.addEventListener('click', (e) => e.stopPropagation());
+  }
+  
+  // ============================================================
+  // CHANGE PASSWORD MODAL
+  // ============================================================
+  function openChangePasswordModal() {
+    const modal = document.getElementById('change-password-modal');
+    const modalOverlay = document.getElementById('change-password-modal-overlay');
+    if (modal && modalOverlay) { modal.classList.add('open'); modalOverlay.classList.add('open'); document.body.style.overflow = 'hidden'; }
+    if (dd) dd.classList.remove('show');
+    if (up) up.classList.remove('active');
+  }
+  
+  function closeChangePasswordModal() {
+    const modal = document.getElementById('change-password-modal');
+    const overlayModal = document.getElementById('change-password-modal-overlay');
+    if (modal) modal.classList.remove('open');
+    if (overlayModal) overlayModal.classList.remove('open');
+    document.body.style.overflow = '';
+    const form = document.getElementById('change-password-form');
+    if (form) form.reset();
+  }
+  
+  document.getElementById('change-password-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const oldPass = document.getElementById('current-password').value;
+    const newPass = document.getElementById('new-password').value;
+    const confirmPass = document.getElementById('confirm-password').value;
+    if (newPass !== confirmPass) { showToast('Passwords do not match', 'error'); return; }
+    if (newPass.length < 6) { showToast('Password must be at least 6 characters', 'error'); return; }
+    try {
+      const res = await fetch('http://localhost:3000/api/auth/change-password', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: cu.id, oldPassword: oldPass, newPassword: newPass })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      showToast('Password changed! Please login again.', 'success');
+      setTimeout(() => logout(), 1500);
+    } catch(err) { showToast('Failed: ' + err.message, 'error'); }
+  });
+  
+  function showToast(msg, type) {
+    const toast = document.getElementById('toast-container');
+    const bg = type === 'error' ? '#ef4444' : '#10b981';
+    toast.innerHTML = `<div style="background:${bg};color:white;padding:12px 20px;border-radius:40px;">${msg}</div>`;
+    setTimeout(() => toast.innerHTML = '', 3000);
+  }
+  
+  window.logout = logout;
+  window.switchToFront = switchToFront;
+  window.openChangePasswordModal = openChangePasswordModal;
+  window.closeChangePasswordModal = closeChangePasswordModal;
+</script>
+</body>
+</html>

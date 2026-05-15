@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Housekeeping Status - Steps PMS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <style>
+    .rooms-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 24px;
+      padding: 8px 0;
+    }
+    
+    .room-card {
+      background: white;
+      border-radius: 20px;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      border: 1px solid #eef2f6;
+    }
+    
+    .room-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    }
+    
+    /* Simple accent colors - only top border */
+    .room-card.clean {
+      border-top: 3px solid #10b981;
+    }
+    
+    .room-card.dirty {
+      border-top: 3px solid #ef4444;
+    }
+    
+    .room-card.checkout {
+      border-top: 3px solid #f59e0b;
+    }
+    
+    .room-card.occupied {
+      border-top: 3px solid #3b82f6;
+    }
+    
+    .room-header {
+      padding: 18px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #fafbfc;
+      border-bottom: 1px solid #eef2f6;
+    }
+    
+    .room-icon {
+      font-size: 40px;
+    }
+    
+    .room-status {
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    
+    .room-status.clean { background: #d1fae5; color: #065f46; }
+    .room-status.dirty { background: #fee2e2; color: #dc2626; }
+    .room-status.checkout { background: #fef3c7; color: #d97706; }
+    .room-status.occupied { background: #dbeafe; color: #1e40af; }
+    
+    .room-body {
+      padding: 20px;
+      background: white;
+    }
+    
+    .room-name {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: #1e293b;
+    }
+    
+    .room-details {
+      font-size: 12px;
+      color: #64748b;
+      margin-bottom: 16px;
+      display: flex;
+      gap: 16px;
+    }
+    
+    .guest-info {
+      background: #f8fafc;
+      border-radius: 12px;
+      padding: 14px;
+      margin: 14px 0;
+      border: 1px solid #eef2f6;
+    }
+    
+    .guest-info-title {
+      font-size: 10px;
+      font-weight: 600;
+      color: #64748b;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .guest-name {
+      font-size: 15px;
+      font-weight: 600;
+      color: #1e293b;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .guest-details {
+      display: flex;
+      gap: 16px;
+      font-size: 11px;
+      color: #64748b;
+      flex-wrap: wrap;
+    }
+    
+    .guest-details span {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    
+    .checkout-timer {
+      background: #fef3c7;
+      border-radius: 10px;
+      padding: 10px;
+      margin-top: 12px;
+      text-align: center;
+      font-size: 12px;
+      color: #d97706;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    
+    .room-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 16px;
+    }
+    
+    .btn-clean {
+      background: #10b981;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 40px;
+      cursor: pointer;
+      font-weight: 500;
+      flex: 1;
+      transition: all 0.2s;
+      font-size: 13px;
+    }
+    
+    .btn-clean:hover {
+      background: #059669;
+    }
+    
+    .btn-dirty {
+      background: #ef4444;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 40px;
+      cursor: pointer;
+      font-weight: 500;
+      flex: 1;
+      transition: all 0.2s;
+      font-size: 13px;
+    }
+    
+    .btn-dirty:hover {
+      background: #dc2626;
+    }
+    
+    .filter-bar {
+      display: flex;
+      gap: 10px;
+      padding: 0 0 20px 0;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    
+    .filter-btn {
+      padding: 6px 18px;
+      border-radius: 40px;
+      border: 1px solid #e2e8f0;
+      background: white;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    
+    .filter-btn.active {
+      background: #c9933a;
+      color: white;
+      border-color: #c9933a;
+    }
+    
+    .filter-btn:hover:not(.active) {
+      background: #f8fafc;
+      border-color: #cbd5e1;
+    }
+    
+    .stats-summary {
+      display: flex;
+      gap: 12px;
+      padding: 0 0 20px 0;
+      flex-wrap: wrap;
+    }
+    
+    .stat-pill {
+      background: #f8fafc;
+      padding: 6px 16px;
+      border-radius: 40px;
+      font-size: 12px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .loading-overlay {
+      text-align: center;
+      padding: 60px;
+      color: #94a3b8;
+    }
+    
+    .toast-container {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 2000;
+    }
+    
+    .last-updated {
+      font-size: 10px;
+      color: #94a3b8;
+      margin-top: 12px;
+      text-align: right;
+      border-top: 1px solid #eef2f6;
+      padding-top: 8px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="overlay" id="overlay-main"></div>
+
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-top">
+    <a class="sidebar-logo" href="/">
+      <div class="logo-icon">🏨</div>
+      <div class="logo-text">
+        <span>Steps</span>
+        <span>Premium Suite</span>
+      </div>
+    </a>
+    <button class="sidebar-close-btn" id="sidebar-close-btn">✕</button>
+  </div>
+  
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Core Operations</div>
+    <a href="/dashboard" class="nav-item">📊 Stay View</a>
+    <a href="/reservations" class="nav-item">📅 Reservations</a>
+    <a href="/housekeeping" class="nav-item active">🧹 Housekeeping</a>
+    
+    <div class="nav-section-label">Property</div>
+    <a href="/apartments" class="nav-item">🏠 Apartments View</a>
+    <a href="/apartments-list" class="nav-item">📋 Apartments List</a>
+    
+    <div class="nav-section-label">Store & Procurement</div>
+    <a href="/store-main" class="nav-item">🏬 Main Store</a>
+    <a href="/store-outlets" class="nav-item">🏪 Outlets Store</a>
+    <a href="/purchase-orders" class="nav-item">📦 Purchase Orders</a>
+    <a href="/goods-receipt" class="nav-item">✅ Goods Receipt</a>
+    
+    <div class="nav-section-label">Reports</div>
+    <a href="/reports" class="nav-item">📊 Reservations Report</a>
+    <a href="/purchase-orders-reports" class="nav-item">📄 Purchase Orders Report</a>
+    <a href="/goods-receipt-reports" class="nav-item">📋 Goods Receipt Report</a>
+    <a href="/store-inventory-reports" class="nav-item">📦 Store Inventory Report</a>
+    
+    <div class="nav-section-label">Administration</div>
+    <a href="/users" class="nav-item">👥 User Management</a>
+  </nav>
+  
+  <div class="sidebar-footer">
+    <small>Steps PMS v1.0 · Dar es Salaam</small>
+  </div>
+</aside>
+
+<!-- Navbar -->
+<nav class="navbar">
+  <div class="navbar-left">
+    <button class="hamburger" id="hamburger-btn"><span class="hb-bar"></span><span class="hb-bar"></span><span class="hb-bar"></span></button>
+    <div><div class="page-title">Housekeeping Status</div><div class="page-subtitle">Room cleanliness management</div></div>
+  </div>
+  <div class="navbar-right">
+    <button class="" onclick="alert('Add reservation')"></button>
+    <button class="notif-btn">🔔<span class="badge">3</span></button>
+    
+    <div class="user-dropdown">
+      <div class="user-pill" id="userPill">
+        <div class="user-avatar" id="userAvatar">U</div>
+        <div class="user-info">
+          <span id="userName">Loading...</span>
+          <span id="userRole">Loading...</span>
+        </div>
+        <i class="fas fa-chevron-down"></i>
+      </div>
+      <div class="dropdown-menu" id="dropdownMenu">
+        <button onclick="openChangePasswordModal()"><i class="fas fa-key"></i> Change Password</button>
+        <a href="/users"><i class="fas fa-users"></i> User Management</a>
+        <hr>
+        <button onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<main class="main-content">
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Room Status Overview</span>
+      <button class="btn btn-outline" onclick="refreshStatus()">🔄 Refresh</button>
+    </div>
+    
+    <div class="stats-summary" id="stats-summary">
+      <span class="stat-pill"><i class="fas fa-check-circle" style="color:#10b981;"></i> Clean: <strong id="stat-clean">0</strong></span>
+      <span class="stat-pill"><i class="fas fa-broom" style="color:#ef4444;"></i> Dirty: <strong id="stat-dirty">0</strong></span>
+      <span class="stat-pill"><i class="fas fa-clock" style="color:#f59e0b;"></i> Checkout: <strong id="stat-checkout">0</strong></span>
+      <span class="stat-pill"><i class="fas fa-user-friends" style="color:#3b82f6;"></i> Occupied: <strong id="stat-occupied">0</strong></span>
+    </div>
+    
+    <div class="filter-bar">
+      <button class="filter-btn active" data-filter="all">All Rooms</button>
+      <button class="filter-btn" data-filter="clean">Clean</button>
+      <button class="filter-btn" data-filter="dirty">Dirty</button>
+      <button class="filter-btn" data-filter="checkout">Checkout</button>
+      <button class="filter-btn" data-filter="occupied">Occupied</button>
+    </div>
+    
+    <div id="hk-status-grid" class="rooms-grid">
+      <div class="loading-overlay">📋 Loading room status...</div>
+    </div>
+  </div>
+</main>
+
+<div class="toast-container" id="toast-container"></div>
+
+<script src="../js/api.js"></script>
+<script src="../js/utils.js"></script>
+<script>
+  // ============================================================
+  // HELPER FUNCTIONS
+  // ============================================================
+  function escapeHtml(str) { if (!str) return ''; return String(str).replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
+  function formatDate(date) { if (!date) return ''; return new Date(date).toLocaleDateString(); }
+  function showToast(msg, type) { 
+    const toast = document.getElementById('toast-container'); 
+    const bgColor = type === 'error' ? '#ef4444' : '#10b981';
+    toast.innerHTML = `<div style="background:${bgColor};color:white;padding:12px 20px;border-radius:40px;margin-bottom:8px;">${msg}</div>`; 
+    setTimeout(() => toast.innerHTML = '', 3000); 
+  }
+  
+  // ============================================================
+  // SIDEBAR TOGGLE
+  // ============================================================
+  const hamburgerBtn = document.getElementById('hamburger-btn');
+  const sidebar = document.getElementById('sidebar');
+  const overlayMain = document.getElementById('overlay-main');
+  const sidebarClose = document.getElementById('sidebar-close-btn');
+  
+  function openSidebar() { sidebar.classList.add('open'); overlayMain.classList.add('open'); hamburgerBtn.classList.add('active'); }
+  function closeSidebar() { sidebar.classList.remove('open'); overlayMain.classList.remove('open'); hamburgerBtn.classList.remove('active'); }
+  
+  hamburgerBtn?.addEventListener('click', () => sidebar.classList.contains('open') ? closeSidebar() : openSidebar());
+  sidebarClose?.addEventListener('click', closeSidebar);
+  overlayMain?.addEventListener('click', closeSidebar);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSidebar(); });
+  
+  // ============================================================
+  // USER AUTHENTICATION
+  // ============================================================
+  function getCurrentUser() { const u = sessionStorage.getItem('pms_user'); return u ? JSON.parse(u) : null; }
+  function logout() { sessionStorage.removeItem('pms_user'); window.location.href = '/login'; }
+  
+  const cu = getCurrentUser(); if (!cu) window.location.href = '/login';
+  document.getElementById('userName').innerText = cu.fullName || cu.username;
+  document.getElementById('userRole').innerText = cu.role || 'User';
+  document.getElementById('userAvatar').innerText = (cu.fullName || cu.username || 'U')[0];
+  
+  // User Dropdown Toggle
+  const up = document.getElementById('userPill');
+  const dd = document.getElementById('dropdownMenu');
+  if (up && dd) {
+    up.addEventListener('click', (e) => { e.stopPropagation(); dd.classList.toggle('show'); up.classList.toggle('active'); });
+    document.addEventListener('click', () => { dd.classList.remove('show'); if (up) up.classList.remove('active'); });
+    dd.addEventListener('click', (e) => e.stopPropagation());
+  }
+  
+  // ============================================================
+  // CHANGE PASSWORD MODAL
+  // ============================================================
+  function openChangePasswordModal() {
+    if (!document.getElementById('change-password-modal')) {
+      const modalHTML = `
+        <div class="reservation-modal-overlay" id="change-password-modal-overlay" onclick="closeChangePasswordModal()"></div>
+        <div class="reservation-modal" id="change-password-modal">
+          <div class="reservation-modal-header">
+            <h3>🔐 Change Password</h3>
+            <button class="reservation-modal-close" onclick="closeChangePasswordModal()">✕</button>
+          </div>
+          <div class="reservation-modal-body">
+            <form id="change-password-form">
+              <div class="form-group"><label>Current Password</label><input type="password" id="current-password" class="form-control" required></div>
+              <div class="form-group"><label>New Password (min 6)</label><input type="password" id="new-password" class="form-control" required></div>
+              <div class="form-group"><label>Confirm Password</label><input type="password" id="confirm-password" class="form-control" required></div>
+              <hr class="divider" />
+              <button type="submit" class="btn btn-success">✅ Update Password</button>
+              <button type="button" class="btn btn-outline" style="margin-top:10px; width:100%;" onclick="closeChangePasswordModal()">Cancel</button>
+            </form>
+          </div>
+        </div>
+      `;
+      document.body.insertAdjacentHTML('beforeend', modalHTML);
+      
+      document.getElementById('change-password-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const oldPass = document.getElementById('current-password').value;
+        const newPass = document.getElementById('new-password').value;
+        const confirmPass = document.getElementById('confirm-password').value;
+        if (newPass !== confirmPass) { showToast('Passwords do not match', 'error'); return; }
+        if (newPass.length < 6) { showToast('Password must be at least 6 characters', 'error'); return; }
+        try {
+          const res = await fetch('/api/auth/change-password', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: cu.id, oldPassword: oldPass, newPassword: newPass })
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error);
+          showToast('Password changed! Please login again.', 'success');
+          setTimeout(() => logout(), 1500);
+        } catch(err) { showToast('Failed: ' + err.message, 'error'); }
+      });
+    }
+    document.getElementById('change-password-modal').classList.add('open');
+    document.getElementById('change-password-modal-overlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    if (dd) dd.classList.remove('show'); if (up) up.classList.remove('active');
+  }
+  
+  function closeChangePasswordModal() {
+    const modal = document.getElementById('change-password-modal');
+    const overlay = document.getElementById('change-password-modal-overlay');
+    if (modal) modal.classList.remove('open');
+    if (overlay) overlay.classList.remove('open');
+    document.body.style.overflow = '';
+    const form = document.getElementById('change-password-form');
+    if (form) form.reset();
+  }
+  
+  // ============================================================
+  // HOUSEKEEPING STATUS FUNCTIONS
+  // ============================================================
+  let allStatuses = [];
+  let currentFilter = 'all';
+  const userName = cu.fullName || cu.username;
+  
+  async function loadHousekeepingStatus() {
+    const grid = document.getElementById('hk-status-grid');
+    grid.innerHTML = '<div class="loading-overlay">⏳ Loading room status...</div>';
+    
+    try {
+      const data = await apiGet('/housekeeping/status');
+      console.log('Loaded statuses:', data);
+      allStatuses = data;
+      updateStats();
+      renderStatusGrid();
+    } catch (err) {
+      console.error('Load error:', err);
+      grid.innerHTML = '<div class="loading-overlay">❌ Failed to load room status. Please refresh.</div>';
+      showToast('Failed to load status: ' + err.message, 'error');
+    }
+  }
+  
+  function updateStats() {
+    const clean = allStatuses.filter(s => s.status === 'clean').length;
+    const dirty = allStatuses.filter(s => s.status === 'dirty').length;
+    const checkout = allStatuses.filter(s => s.reservation_status === 'checkout').length;
+    const occupied = allStatuses.filter(s => s.reservation_status === 'occupied').length;
+    
+    document.getElementById('stat-clean').innerHTML = clean;
+    document.getElementById('stat-dirty').innerHTML = dirty;
+    document.getElementById('stat-checkout').innerHTML = checkout;
+    document.getElementById('stat-occupied').innerHTML = occupied;
+  }
+  
+  function renderStatusGrid() {
+    const grid = document.getElementById('hk-status-grid');
+    let filtered = allStatuses;
+    
+    if (currentFilter !== 'all') {
+      if (currentFilter === 'checkout') {
+        filtered = allStatuses.filter(s => s.reservation_status === 'checkout');
+      } else if (currentFilter === 'occupied') {
+        filtered = allStatuses.filter(s => s.reservation_status === 'occupied');
+      } else if (currentFilter === 'clean') {
+        filtered = allStatuses.filter(s => s.status === 'clean');
+      } else if (currentFilter === 'dirty') {
+        filtered = allStatuses.filter(s => s.status === 'dirty');
+      }
+    }
+    
+    if (filtered.length === 0) {
+      grid.innerHTML = '<div class="loading-overlay">📭 No rooms match the selected filter.</div>';
+      return;
+    }
+    
+    const currentHour = new Date().getHours();
+    const CHECKOUT_HOUR = 11;
+    
+    let html = '';
+    for (let i = 0; i < filtered.length; i++) {
+      const apt = filtered[i];
+      const isCheckout = apt.reservation_status === 'checkout';
+      const isOccupied = apt.reservation_status === 'occupied';
+      const currentStatus = apt.status;
+      
+      let cardClass = '', statusClass = '', statusIcon = '', statusText = '';
+      let showClean = false, showDirty = false;
+      let guestName = apt.guest_name || '';
+      let checkinDate = apt.checkin_date || '';
+      let checkoutDate = apt.checkout_date || '';
+      let showCheckoutTimer = false;
+      let hoursLeft = '';
+      
+      if (isCheckout) {
+        cardClass = 'checkout';
+        statusClass = 'checkout';
+        statusIcon = '⏰';
+        statusText = 'Checkout Today';
+        showClean = true;
+        showDirty = false;
+        
+        if (currentHour < CHECKOUT_HOUR) {
+          showCheckoutTimer = true;
+          hoursLeft = CHECKOUT_HOUR - currentHour;
+        }
+      } else if (isOccupied) {
+        cardClass = 'occupied';
+        statusClass = 'occupied';
+        statusIcon = '🔵';
+        statusText = 'Occupied';
+        showClean = false;
+        showDirty = true;
+      } else if (currentStatus === 'dirty') {
+        cardClass = 'dirty';
+        statusClass = 'dirty';
+        statusIcon = '🔴';
+        statusText = 'Needs Cleaning';
+        showClean = true;
+        showDirty = false;
+      } else {
+        cardClass = 'clean';
+        statusClass = 'clean';
+        statusIcon = '✅';
+        statusText = 'Clean & Ready';
+        showClean = false;
+        showDirty = true;
+      }
+      
+      html += `
+        <div class="room-card ${cardClass}" data-apt-id="${apt.apartment_id}">
+          <div class="room-header">
+            <span class="room-icon">${apt.emoji || '🏠'}</span>
+            <span class="room-status ${statusClass}">${statusIcon} ${statusText}</span>
+          </div>
+          <div class="room-body">
+            <div class="room-name">${escapeHtml(apt.name)}</div>
+            <div class="room-details">
+              <span><i class="fas fa-users"></i> Max ${apt.max_adults || 2}</span>
+              <span><i class="fas fa-tag"></i> ${apt.type || 'Suite'}</span>
+            </div>
+      `;
+      
+      if ((isOccupied || isCheckout) && guestName) {
+        html += `
+          <div class="guest-info">
+            <div class="guest-info-title"><i class="fas fa-user"></i> Current Guest</div>
+            <div class="guest-name">
+              <i class="fas fa-user-circle"></i> ${escapeHtml(guestName)}
+            </div>
+            <div class="guest-details">
+              <span><i class="fas fa-calendar-check"></i> In: ${formatDate(checkinDate)}</span>
+              <span><i class="fas fa-calendar-times"></i> Out: ${formatDate(checkoutDate)}</span>
+            </div>
+          </div>
+        `;
+      }
+      
+      if (showCheckoutTimer) {
+        html += `
+          <div class="checkout-timer">
+            <i class="fas fa-hourglass-half"></i> Checkout in ${hoursLeft} hour${hoursLeft !== 1 ? 's' : ''}
+          </div>
+        `;
+      }
+      
+      html += `
+            <div class="room-actions">
+              ${showClean ? `<button class="btn-clean" onclick="markAsClean(${apt.apartment_id}, '${escapeHtml(apt.name)}')"><i class="fas fa-check"></i> Mark Clean</button>` : ''}
+              ${showDirty ? `<button class="btn-dirty" onclick="markAsDirty(${apt.apartment_id}, '${escapeHtml(apt.name)}')"><i class="fas fa-broom"></i> Mark Dirty</button>` : ''}
+            </div>
+            ${apt.last_updated ? `<div class="last-updated"><i class="fas fa-clock"></i> ${new Date(apt.last_updated).toLocaleString()}</div>` : ''}
+          </div>
+        </div>
+      `;
+    }
+    grid.innerHTML = html;
+  }
+  
+  async function markAsClean(apartmentId, aptName) {
+    if (!confirm(`Mark "${aptName}" as clean?`)) return;
+    
+    try {
+      await apiPut(`/housekeeping/status/${apartmentId}`, { status: 'clean', updated_by: userName, notes: null });
+      showToast(`✅ ${aptName} marked as clean!`, 'success');
+      setTimeout(() => loadHousekeepingStatus(), 500);
+    } catch (err) {
+      showToast('Failed to update status: ' + err.message, 'error');
+    }
+  }
+  
+  async function markAsDirty(apartmentId, aptName) {
+    if (!confirm(`Mark "${aptName}" as dirty?`)) return;
+    
+    try {
+      await apiPut(`/housekeeping/status/${apartmentId}`, { status: 'dirty', updated_by: userName, notes: null });
+      showToast(`🔴 ${aptName} marked as dirty!`, 'success');
+      setTimeout(() => loadHousekeepingStatus(), 500);
+    } catch (err) {
+      showToast('Failed to update status: ' + err.message, 'error');
+    }
+  }
+  
+  function refreshStatus() {
+    loadHousekeepingStatus();
+    showToast('Refreshing room status...', 'success');
+  }
+  
+  // Filter buttons
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentFilter = btn.getAttribute('data-filter');
+      renderStatusGrid();
+    });
+  });
+  
+  // Initialize
+  document.addEventListener('DOMContentLoaded', () => {
+    loadHousekeepingStatus();
+  });
+  
+  // Make functions global
+  window.markAsClean = markAsClean;
+  window.markAsDirty = markAsDirty;
+  window.refreshStatus = refreshStatus;
+  window.openChangePasswordModal = openChangePasswordModal;
+  window.closeChangePasswordModal = closeChangePasswordModal;
+  window.logout = logout;
+</script>
+</body>
+</html>

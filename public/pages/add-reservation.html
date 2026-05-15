@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>New Reservation - Steps PMS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <style>
+    /* Additional styles to ensure proper display */
+    .form-page-wrap {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .form-card {
+      background: white;
+      border-radius: 24px;
+      padding: 32px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+    .form-card-title {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: #1e293b;
+    }
+    .form-card-sub {
+      color: #64748b;
+      margin-bottom: 24px;
+      font-size: 14px;
+    }
+    .form-group-row {
+      display: grid;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .cols-2 {
+      grid-template-columns: 1fr 1fr;
+    }
+    .cols-3 {
+      grid-template-columns: 1fr 1fr 1fr;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .form-group label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #334155;
+    }
+    .form-control {
+      padding: 10px 14px;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+    .form-control:focus {
+      outline: none;
+      border-color: #c9933a;
+      box-shadow: 0 0 0 3px rgba(201, 147, 58, 0.1);
+    }
+    .stepper {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .stepper button {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      background: white;
+      cursor: pointer;
+      font-size: 18px;
+      transition: all 0.2s;
+    }
+    .stepper button:hover {
+      background: #f8fafc;
+      border-color: #c9933a;
+    }
+    .stepper input {
+      width: 70px;
+      text-align: center;
+      padding: 8px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+    }
+    .rate-display {
+      padding: 10px 14px;
+      background: #f8fafc;
+      border-radius: 12px;
+      font-weight: 600;
+      color: #c9933a;
+      text-align: center;
+    }
+    .divider {
+      margin: 24px 0;
+      border: none;
+      border-top: 1px solid #e2e8f0;
+    }
+    .btn {
+      padding: 12px 24px;
+      border-radius: 40px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+      font-size: 14px;
+    }
+    .btn-success {
+      background: #c9933a;
+      color: white;
+      width: 100%;
+    }
+    .btn-success:hover {
+      background: #b07e2c;
+      transform: translateY(-1px);
+    }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid #e2e8f0;
+    }
+    .btn-outline:hover {
+      background: #f8fafc;
+    }
+    @media (max-width: 768px) {
+      .cols-2, .cols-3 {
+        grid-template-columns: 1fr;
+      }
+      .form-card {
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="overlay" id="overlay-main"></div>
+
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-top">
+    <a class="sidebar-logo" href="/">
+      <div class="logo-icon">🏨</div>
+      <div class="logo-text"><span>Steps</span><span>Premium Suite</span></div>
+    </a>
+    <button class="sidebar-close-btn" id="sidebar-close-btn">✕</button>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Main</div>
+    <a href="/dashboard" class="nav-item">📊 Stay View</a>
+    <a href="/apartments" class="nav-item">🏠 Apartments View</a>
+    <a href="/apartments-list" class="nav-item">📋 Apartments List</a>
+    <a href="/reservations" class="nav-item">📅 Reservations</a>
+    <a href="/users" class="nav-item">👥 User Management</a>
+    <div class="nav-section-label">Operations</div>
+    <a href="/housekeeping" class="nav-item">🧹 Housekeeping</a>
+    <div class="nav-section-label">Store & Procurement</div>
+    <a href="/store-main" class="nav-item">🏬 Main Store</a>
+    <a href="/store-outlets" class="nav-item">🏪 Outlets Store</a>
+    <a href="/purchase-orders" class="nav-item">📦 Purchase Orders</a>
+    <a href="/goods-receipt" class="nav-item">✅ Goods Receipt</a>
+    <div class="nav-section-label">Reports</div>
+    <a href="/reports" class="nav-item">📊 Reservations Report</a>
+    <a href="/purchase-orders-reports" class="nav-item">📄 PO Report</a>
+    <a href="/goods-receipt-reports" class="nav-item">📋 GRN Report</a>
+    <a href="/store-inventory-reports" class="nav-item">📦 Store Report</a>
+    <div class="nav-section-label">Sales</div>
+    <a href="/point-of-sale" class="nav-item">🛒 Point of Sale</a>
+    <div class="nav-section-label">Booking</div>
+    <a href="/add-reservation" class="nav-item active">➕ New Reservation</a>
+  </nav>
+  <div class="sidebar-footer"><small>Steps PMS v1.0 · Dar es Salaam</small></div>
+</aside>
+
+<nav class="navbar">
+  <div class="navbar-left">
+    <button class="hamburger" id="hamburger-btn"><span class="hb-bar"></span><span class="hb-bar"></span><span class="hb-bar"></span></button>
+    <div><div class="page-title">New Reservation</div><div class="page-subtitle">Create a new booking</div></div>
+  </div>
+  <div class="navbar-right">
+    <button class="btn-add-reservation" onclick="alert('Add reservation')">＋ Add Reservation</button>
+    <button class="notif-btn">🔔<span class="badge">3</span></button>
+    
+    <div class="user-dropdown">
+      <div class="user-pill" id="userPill">
+        <div class="user-avatar" id="userAvatar">U</div>
+        <div class="user-info">
+          <span id="userName">Loading...</span>
+          <span id="userRole">Loading...</span>
+        </div>
+        <i class="fas fa-chevron-down"></i>
+      </div>
+      <div class="dropdown-menu" id="dropdownMenu">
+        <button onclick="openChangePasswordModal()"><i class="fas fa-key"></i> Change Password</button>
+        <a href="/users"><i class="fas fa-users"></i> User Management</a>
+        <hr>
+        <button onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<main class="main-content">
+  <div class="form-page-wrap">
+    <div class="form-card">
+      <div class="form-card-title">Add Reservation</div>
+      <div class="form-card-sub">Fill in the details below to create a new apartment reservation.</div>
+      <form id="reservation-form">
+        <div class="form-group-row cols-2">
+          <div class="form-group"><label>📅 Check-in Date</label><input type="date" id="f-checkin" class="form-control" required /></div>
+          <div class="form-group"><label>📅 Check-out Date</label><input type="date" id="f-checkout" class="form-control" required /></div>
+        </div>
+        <div class="form-group-row cols-2">
+          <div class="form-group"><label>🏠 Apartment</label><select id="f-apt" class="form-control" required><option value="">Select Apartment</option></select></div>
+          <div class="form-group"><label>💰 Rate Type</label><select id="f-ratetype" class="form-control"><option value="Full">Full (100%)</option><option value="Partial">Partial (60%)</option></select></div>
+        </div>
+        <div class="form-group-row" style="grid-template-columns:1fr 1fr 1.2fr">
+          <div class="form-group"><label>👤 Adults</label><div class="stepper"><button type="button" onclick="stepperChange('f-adults', -1)">−</button><input type="number" id="f-adults" value="1" min="1" max="6" /><button type="button" onclick="stepperChange('f-adults', 1)">+</button></div></div>
+          <div class="form-group"><label>🧒 Children</label><div class="stepper"><button type="button" onclick="stepperChange('f-children', -1)">−</button><input type="number" id="f-children" value="0" min="0" max="6" /><button type="button" onclick="stepperChange('f-children', 1)">+</button></div></div>
+          <div class="form-group"><label>💰 Total Rate (TSH)</label><div class="rate-display" id="f-total">—</div><input type="hidden" id="f-total-hidden" value="0" /></div>
+        </div>
+        <hr class="divider" />
+        <div class="form-group-row cols-3">
+          <div class="form-group"><label>👤 Guest Name</label><input type="text" id="f-guest" class="form-control" placeholder="Full name" required /></div>
+          <div class="form-group"><label>📧 Email</label><input type="email" id="f-email" class="form-control" placeholder="Email address" required /></div>
+          <div class="form-group"><label>📱 Mobile</label><input type="tel" id="f-mobile" class="form-control" placeholder="+255 XXX XXX" required /></div>
+        </div>
+        <div class="form-group-row cols-2">
+          <div class="form-group"><label>🌍 Country</label><select id="f-country" class="form-control"><option value="">Select Country</option><option>Tanzania</option><option>Kenya</option><option>Uganda</option><option>Rwanda</option><option>Ethiopia</option><option>South Africa</option><option>United Kingdom</option><option>United States</option><option>Germany</option><option>France</option><option>China</option><option>India</option><option>Other</option></select></div>
+          <div class="form-group"><label>🏙️ City</label><input type="text" id="f-city" class="form-control" placeholder="City" /></div>
+        </div>
+        <hr class="divider" />
+        <button type="submit" class="btn btn-success">✅ Confirm Reservation</button>
+        <button type="button" class="btn btn-outline" style="margin-top:10px; width:100%;" onclick="window.location.href='/dashboard'">Cancel</button>
+      </form>
+    </div>
+  </div>
+</main>
+
+<!-- Change Password Modal -->
+<div class="reservation-modal-overlay" id="change-password-modal-overlay"></div>
+<div class="reservation-modal" id="change-password-modal">
+  <div class="reservation-modal-header">
+    <h3>🔐 Change Password</h3>
+    <button class="reservation-modal-close" onclick="closeChangePasswordModal()">✕</button>
+  </div>
+  <div class="reservation-modal-body">
+    <form id="change-password-form">
+      <div class="form-group"><label>Current Password</label><input type="password" id="current-password" class="form-control" required></div>
+      <div class="form-group"><label>New Password (min 6)</label><input type="password" id="new-password" class="form-control" required></div>
+      <div class="form-group"><label>Confirm Password</label><input type="password" id="confirm-password" class="form-control" required></div>
+      <hr class="divider" />
+      <button type="submit" class="btn btn-success">✅ Update Password</button>
+      <button type="button" class="btn btn-outline" style="margin-top:10px;" onclick="closeChangePasswordModal()">Cancel</button>
+    </form>
+  </div>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+
+<script src="../js/api.js"></script>
+<script src="../js/utils.js"></script>
+<script>
+  // ============================================================
+  // GLOBAL VARIABLES
+  // ============================================================
+  let APARTMENTS = [];
+
+  // ============================================================
+  // HELPER FUNCTIONS
+  // ============================================================
+  function escapeHtml(str) { if (!str) return ''; return String(str).replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
+  function fmtTSH(v) { return 'TSh ' + (v || 0).toLocaleString(); }
+  function showToast(msg, type) { 
+    const toast = document.getElementById('toast-container'); 
+    const bgColor = type === 'error' ? '#ef4444' : '#10b981';
+    toast.innerHTML = `<div style="background:${bgColor};color:white;padding:12px 20px;border-radius:40px;margin-bottom:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);">${msg}</div>`; 
+    setTimeout(() => toast.innerHTML = '', 3000); 
+  }
+  function isoDate(date) { return date.toISOString().split('T')[0]; }
+  function addDays(date, days) { const result = new Date(date); result.setDate(result.getDate() + days); return result; }
+  function daysBetween(start, end) { return Math.ceil((new Date(end) - new Date(start)) / (1000 * 60 * 60 * 24)); }
+  function getApt(id) { return APARTMENTS.find(a => a.id === id); }
+
+  // ============================================================
+  // USER SESSION MANAGEMENT (MUST BE DEFINED FIRST)
+  // ============================================================
+  function getCurrentUser() { 
+    const u = sessionStorage.getItem('pms_user'); 
+    if (!u) return null;
+    try { return JSON.parse(u); } catch(e) { return null; }
+  }
+  
+  function logout() { 
+    sessionStorage.removeItem('pms_user'); 
+    window.location.href = '/login'; 
+  }
+  
+  // Check if user is logged in
+  const currentUser = getCurrentUser();
+  if (!currentUser) {
+    window.location.href = '/login';
+  }
+  
+  // Display user info in navbar
+  document.getElementById('userName').innerText = currentUser.fullName || currentUser.username;
+  document.getElementById('userRole').innerText = currentUser.role ? currentUser.role.charAt(0).toUpperCase() + currentUser.role.slice(1) : 'User';
+  document.getElementById('userAvatar').innerText = (currentUser.fullName || currentUser.username || 'U')[0];
+  
+  console.log('✅ Logged in as STAFF:', currentUser.fullName || currentUser.username, '(Role:', currentUser.role, ')');
+  
+  // User Dropdown Toggle
+  const userPill = document.getElementById('userPill');
+  const dropdownMenu = document.getElementById('dropdownMenu');
+  if (userPill && dropdownMenu) {
+    userPill.addEventListener('click', (e) => { 
+      e.stopPropagation(); 
+      dropdownMenu.classList.toggle('show'); 
+      userPill.classList.toggle('active'); 
+    });
+    document.addEventListener('click', () => { 
+      dropdownMenu.classList.remove('show'); 
+      if (userPill) userPill.classList.remove('active'); 
+    });
+    dropdownMenu.addEventListener('click', (e) => e.stopPropagation());
+  }
+
+  // ============================================================
+  // RATE CALCULATION
+  // ============================================================
+  function updateRate() {
+    const aptId = parseInt(document.getElementById('f-apt')?.value);
+    const rateType = document.getElementById('f-ratetype')?.value;
+    const checkin = document.getElementById('f-checkin')?.value;
+    const checkout = document.getElementById('f-checkout')?.value;
+    if (!aptId || !checkin || !checkout) { 
+      document.getElementById('f-total').textContent = '—'; 
+      return; 
+    }
+    const apt = getApt(aptId);
+    const nights = Math.max(0, daysBetween(checkin, checkout));
+    const total = apt ? Math.round(apt.ratePerNight * nights * (rateType === 'Partial' ? 0.6 : 1)) : 0;
+    document.getElementById('f-total').textContent = total > 0 ? fmtTSH(total) : '—';
+    document.getElementById('f-total-hidden').value = total;
+  }
+
+  function stepperChange(id, delta) {
+    const inp = document.getElementById(id);
+    if (inp) {
+      inp.value = Math.max(parseInt(inp.min || 0), Math.min(parseInt(inp.max || 999), parseInt(inp.value) + delta));
+      updateRate();
+    }
+  }
+
+  // ============================================================
+  // FORM INITIALIZATION
+  // ============================================================
+  async function initForm() {
+    if (!APARTMENTS.length) {
+      try { 
+        APARTMENTS = await apiGet('/apartments'); 
+      } catch(err) { 
+        showToast('Failed to load apartments', 'error'); 
+        return;
+      }
+    }
+    const sel = document.getElementById('f-apt');
+    sel.innerHTML = '<option value="">Select Apartment</option>';
+    APARTMENTS.forEach(apt => {
+      const opt = document.createElement('option');
+      opt.value = apt.id;
+      opt.textContent = `${apt.emoji || '🏠'} ${apt.name} – Max ${apt.maxAdults} Adults – ${fmtTSH(apt.ratePerNight)}/night`;
+      sel.appendChild(opt);
+    });
+    const today = new Date();
+    document.getElementById('f-checkin').value = isoDate(today);
+    document.getElementById('f-checkout').value = isoDate(addDays(today, 1));
+    updateRate();
+
+    const triggerIds = ['f-checkin', 'f-checkout', 'f-apt', 'f-ratetype', 'f-adults', 'f-children'];
+    triggerIds.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.removeEventListener('change', updateRate);
+        el.removeEventListener('input', updateRate);
+        el.addEventListener('change', updateRate);
+        el.addEventListener('input', updateRate);
+      }
+    });
+  }
+
+  // ============================================================
+  // FORM SUBMISSION WITH CORRECT USER LOGGING
+  // ============================================================
+  document.getElementById('reservation-form')?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const checkin = document.getElementById('f-checkin').value;
+    const checkout = document.getElementById('f-checkout').value;
+    
+    console.log('📅 Form submitted with dates:', { checkin, checkout });
+    
+    if (checkin >= checkout) { 
+      showToast('Check-out must be after check-in', 'error'); 
+      return; 
+    }
+
+    // ========== GET CURRENT LOGGED-IN USER (STAFF) ==========
+    // This gets the staff/admin user from sessionStorage, NOT the guest name
+    const loggedInUser = getCurrentUser();
+    
+    console.log('👤 Logged-in staff user (DOER):', loggedInUser);
+    
+    // Build the payload
+    const payload = {
+      aptId: parseInt(document.getElementById('f-apt').value),
+      guest: document.getElementById('f-guest').value,      // Guest name (person staying)
+      email: document.getElementById('f-email').value,
+      mobile: document.getElementById('f-mobile').value,
+      country: document.getElementById('f-country').value,
+      city: document.getElementById('f-city').value,
+      checkin: checkin,
+      checkout: checkout,
+      adults: parseInt(document.getElementById('f-adults').value) || 1,
+      children: parseInt(document.getElementById('f-children').value) || 0,
+      rateType: document.getElementById('f-ratetype').value,
+      total: parseInt(document.getElementById('f-total-hidden').value) || 0,
+      // ========== CRITICAL: USE LOGGED-IN STAFF USER FOR AUDIT ==========
+      userId: loggedInUser?.id,
+      username: loggedInUser?.fullName || loggedInUser?.username || loggedInUser?.email
+    };
+
+    console.log('📤 Sending payload:');
+    console.log('   - STAFF (DOER):', payload.userId, payload.username);
+    console.log('   - GUEST:', payload.guest);
+    console.log('   - Dates:', payload.checkin, '→', payload.checkout);
+
+    try {
+      const response = await apiPost('/reservations', payload);
+      console.log('✅ Reservation created successfully:', response);
+      showToast(`✅ Reservation created for ${payload.guest} by ${payload.username}!`, 'success');
+      setTimeout(() => {
+        window.location.href = '/dashboard';
+      }, 1500);
+    } catch (err) {
+      console.error('❌ Error creating reservation:', err);
+      showToast(err.message || 'Failed to create reservation', 'error');
+    }
+  });
+
+  // ============================================================
+  // CHANGE PASSWORD MODAL FUNCTIONS
+  // ============================================================
+  function openChangePasswordModal() {
+    const modal = document.getElementById('change-password-modal');
+    const modalOverlay = document.getElementById('change-password-modal-overlay');
+    if (modal && modalOverlay) { 
+      modal.classList.add('open'); 
+      modalOverlay.classList.add('open'); 
+      document.body.style.overflow = 'hidden'; 
+    }
+    if (dropdownMenu) dropdownMenu.classList.remove('show');
+    if (userPill) userPill.classList.remove('active');
+  }
+  
+  function closeChangePasswordModal() {
+    const modal = document.getElementById('change-password-modal');
+    const modalOverlay = document.getElementById('change-password-modal-overlay');
+    if (modal) modal.classList.remove('open');
+    if (modalOverlay) modalOverlay.classList.remove('open');
+    document.body.style.overflow = '';
+    const form = document.getElementById('change-password-form');
+    if (form) form.reset();
+  }
+  
+  document.getElementById('change-password-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const oldPass = document.getElementById('current-password').value;
+    const newPass = document.getElementById('new-password').value;
+    const confirmPass = document.getElementById('confirm-password').value;
+    if (newPass !== confirmPass) { showToast('Passwords do not match', 'error'); return; }
+    if (newPass.length < 6) { showToast('Password must be at least 6 characters', 'error'); return; }
+    try {
+      const res = await fetch('/api/auth/change-password', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: currentUser.id, oldPassword: oldPass, newPassword: newPass })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      showToast('Password changed! Please login again.', 'success');
+      setTimeout(() => logout(), 1500);
+    } catch(err) { showToast('Failed: ' + err.message, 'error'); }
+  });
+
+  // ============================================================
+  // SIDEBAR TOGGLE
+  // ============================================================
+  const hamburgerBtn = document.getElementById('hamburger-btn');
+  const sidebar = document.getElementById('sidebar');
+  const overlayMain = document.getElementById('overlay-main');
+  const sidebarClose = document.getElementById('sidebar-close-btn');
+  
+  function openSidebar() { sidebar.classList.add('open'); overlayMain.classList.add('open'); hamburgerBtn.classList.add('active'); }
+  function closeSidebar() { sidebar.classList.remove('open'); overlayMain.classList.remove('open'); hamburgerBtn.classList.remove('active'); }
+  
+  hamburgerBtn?.addEventListener('click', () => sidebar.classList.contains('open') ? closeSidebar() : openSidebar());
+  sidebarClose?.addEventListener('click', closeSidebar);
+  overlayMain?.addEventListener('click', closeSidebar);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSidebar(); });
+
+  // ============================================================
+  // INITIALIZE
+  // ============================================================
+  document.addEventListener('DOMContentLoaded', async () => {
+    try { 
+      APARTMENTS = await apiGet('/apartments'); 
+      await initForm();
+    } catch (err) { 
+      showToast('⚠️ Cannot reach API server', 'error'); 
+    }
+  });
+
+  // Make functions global
+  window.stepperChange = stepperChange;
+  window.openChangePasswordModal = openChangePasswordModal;
+  window.closeChangePasswordModal = closeChangePasswordModal;
+  window.logout = logout;
+</script>
+</body>
+</html>

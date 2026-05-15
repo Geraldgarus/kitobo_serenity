@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Goods Receipt Note - Steps PMS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    .grn-container {
+      display: flex;
+      gap: 24px;
+      min-height: calc(100vh - 150px);
+      flex-wrap: wrap;
+    }
+    .grn-left {
+      width: 350px;
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .grn-right {
+      flex: 1;
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .calendar-box {
+      background: var(--gray-100, #f5f5f5);
+      border-radius: 12px;
+      padding: 15px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .calendar-box input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid var(--gray-200, #e5e5e5);
+      border-radius: 8px;
+      font-size: 14px;
+    }
+    .grn-list {
+      max-height: calc(100vh - 300px);
+      overflow-y: auto;
+    }
+    .grn-item {
+      padding: 12px;
+      border-bottom: 1px solid var(--gray-200, #e5e5e5);
+      cursor: pointer;
+      transition: background 0.2s;
+      border-radius: 8px;
+    }
+    .grn-item:hover {
+      background: var(--gray-100, #f5f5f5);
+    }
+    .grn-item.active {
+      background: #e8c99e;
+      border-left: 3px solid #c9933a;
+    }
+    .grn-number {
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .grn-date {
+      font-size: 11px;
+      color: var(--gray-400, #737373);
+    }
+    .grn-vendor {
+      font-size: 12px;
+    }
+    .items-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+    .items-table th, .items-table td {
+      padding: 8px;
+      text-align: left;
+      border-bottom: 1px solid var(--gray-200, #e5e5e5);
+    }
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: var(--gray-400, #737373);
+    }
+    .btn-gold {
+      background: #c9933a;
+      color: white;
+      border: none;
+      padding: 8px 20px;
+      border-radius: 40px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-gold:hover {
+      background: #b07e2c;
+    }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid #e2e8f0;
+      padding: 8px 20px;
+      border-radius: 40px;
+      cursor: pointer;
+    }
+    .btn-sm {
+      padding: 4px 10px;
+      font-size: 12px;
+    }
+    .toast-container {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 1100;
+    }
+
+    /* ============================================================
+       CHANGE PASSWORD MODAL - SLIDE FROM RIGHT
+       ============================================================ */
+    #changePwOverlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 10000;
+      display: none;
+    }
+    #changePwOverlay.show {
+      display: block;
+    }
+    #changePwModal {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 100%;
+      max-width: 450px;
+      height: 100vh;
+      background: white;
+      z-index: 10001;
+      display: none;
+      box-shadow: -5px 0 30px rgba(0, 0, 0, 0.2);
+      overflow-y: auto;
+      transform: translateX(100%);
+      transition: transform 0.3s ease-in-out;
+    }
+    #changePwModal.show {
+      display: block;
+      transform: translateX(0);
+    }
+    @media (max-width: 768px) {
+      #changePwModal {
+        max-width: 100%;
+        width: 100%;
+      }
+    }
+    .change-pw-header {
+      padding: 20px 28px;
+      background: #1e2a3e;
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .change-pw-header h3 {
+      margin: 0;
+      font-size: 18px;
+      font-family: 'Playfair Display', serif;
+    }
+    .change-pw-header button {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 24px;
+      cursor: pointer;
+    }
+    .change-pw-body {
+      padding: 28px;
+    }
+    .form-group {
+      margin-bottom: 18px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
+      font-size: 13px;
+      color: #334155;
+    }
+    .form-control {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid #e2e8f0;
+      border-radius: 28px;
+      font-size: 14px;
+    }
+    .divider {
+      margin: 20px 0;
+      border-top: 1px solid #e2e8f0;
+    }
+    .btn-pw-success {
+      background: #10b981;
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: 40px;
+      width: 100%;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    /* ============================================================
+       MOBILE RESPONSIVE STYLES
+       ============================================================ */
+    @media (max-width: 992px) {
+      .main-content {
+        margin-left: 0;
+        padding: 16px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .grn-container {
+        flex-direction: column;
+        gap: 16px;
+      }
+      
+      .grn-left {
+        width: 100%;
+        order: 2;
+      }
+      
+      .grn-right {
+        width: 100%;
+        order: 1;
+      }
+      
+      .grn-list {
+        max-height: 300px;
+      }
+      
+      .items-table {
+        display: block;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      
+      .items-table th,
+      .items-table td {
+        white-space: nowrap;
+        padding: 8px 10px;
+        font-size: 12px;
+      }
+      
+      .change-pw-body {
+        padding: 20px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .grn-left, .grn-right {
+        padding: 16px;
+      }
+      
+      .grn-number {
+        font-size: 14px;
+      }
+      
+      .grn-date, .grn-vendor {
+        font-size: 10px;
+      }
+      
+      .items-table th,
+      .items-table td {
+        padding: 6px 8px;
+        font-size: 11px;
+      }
+      
+      .btn-gold, .btn-outline {
+        padding: 8px 16px;
+        font-size: 13px;
+      }
+      
+      .change-pw-body {
+        padding: 16px;
+      }
+      
+      .change-pw-header {
+        padding: 16px 20px;
+      }
+      
+      .change-pw-header h3 {
+        font-size: 16px;
+      }
+      
+      .form-control {
+        padding: 10px 14px;
+        font-size: 13px;
+      }
+      
+      .empty-state {
+        padding: 30px;
+        font-size: 13px;
+      }
+    }
+
+    @media (hover: none) and (pointer: coarse) {
+      .btn-gold, .btn-outline, button {
+        min-height: 44px;
+      }
+      
+      .grn-item {
+        padding: 14px;
+      }
+      
+      button:active {
+        transform: scale(0.97);
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="overlay" id="overlay-main"></div>
+
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-top">
+    <a class="sidebar-logo" href="/">
+      <div class="logo-icon">🏨</div>
+      <div class="logo-text">
+        <span>Steps</span>
+        <span>Premium Suite</span>
+      </div>
+    </a>
+    <button class="sidebar-close-btn" id="sidebar-close-btn">✕</button>
+  </div>
+  
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Core Operations</div>
+    <a href="/dashboard" class="nav-item">📊 Stay View</a>
+    <a href="/reservations" class="nav-item">📅 Reservations</a>
+    <a href="/housekeeping" class="nav-item">🧹 Housekeeping</a>
+    
+    <div class="nav-section-label">Property</div>
+    <a href="/apartments" class="nav-item">🏠 Apartments View</a>
+    <a href="/apartments-list" class="nav-item">📋 Apartments List</a>
+    
+    <div class="nav-section-label">Store & Procurement</div>
+    <a href="/store-main" class="nav-item">🏬 Main Store</a>
+    <a href="/store-outlets" class="nav-item">🏪 Outlets Store</a>
+    <a href="/purchase-orders" class="nav-item">📦 Purchase Orders</a>
+    <a href="/goods-receipt" class="nav-item active">✅ Goods Receipt</a>
+    
+    <div class="nav-section-label">Reports</div>
+    <a href="/reports" class="nav-item">📊 Reservations Report</a>
+    <a href="/purchase-orders-reports" class="nav-item">📄 Purchase Orders Report</a>
+    <a href="/goods-receipt-reports" class="nav-item">📋 Goods Receipt Report</a>
+    <a href="/store-inventory-reports" class="nav-item">📦 Store Inventory Report</a>
+    
+    <div class="nav-section-label">Administration</div>
+    <a href="/users" class="nav-item">👥 User Management</a>
+  </nav>
+  
+  <div class="sidebar-footer">
+    <small>Steps PMS v1.0 · Dar es Salaam</small>
+  </div>
+</aside>
+
+<nav class="navbar">
+  <div class="navbar-left">
+    <button class="hamburger" id="hamburger-btn" aria-label="Toggle menu">
+      <span class="hb-bar"></span><span class="hb-bar"></span><span class="hb-bar"></span>
+    </button>
+    <div><div class="page-title">Goods Receipt Note</div><div class="page-subtitle">Track received goods</div></div>
+  </div>
+  <div class="navbar-right">
+    <button class="notif-btn">🔔<span class="badge">3</span></button>
+    
+    <div class="user-dropdown">
+      <div class="user-pill" id="userPill">
+        <div class="user-avatar" id="userAvatar">U</div>
+        <div class="user-info">
+          <span id="userName">Loading...</span>
+          <span id="userRole">Loading...</span>
+        </div>
+        <i class="fas fa-chevron-down"></i>
+      </div>
+      <div class="dropdown-menu" id="dropdownMenu">
+        <button id="openChangePwBtn"><i class="fas fa-key"></i> Change Password</button>
+        <a href="/users" class="dropdown-item"><i class="fas fa-users"></i> User Management</a>
+        <hr>
+        <button onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<main class="main-content">
+  <div class="grn-container">
+    <!-- LEFT SIDE - GRN List -->
+    <div class="grn-left">
+      <div class="calendar-box">
+        <label style="display: block; margin-bottom: 8px; font-weight: 500;">📅 Filter by Date</label>
+        <input type="date" id="filter-date" value="">
+      </div>
+      <div style="margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
+        <strong>Goods Receipt Notes</strong>
+        <button class="btn btn-outline btn-sm" onclick="loadGRNs()">🔄 Refresh</button>
+      </div>
+      <div id="grn-list" class="grn-list">
+        <div class="empty-state">Loading GRNs...</div>
+      </div>
+    </div>
+
+    <!-- RIGHT SIDE - GRN Details -->
+    <div class="grn-right">
+      <div id="grn-details">
+        <div class="empty-state" style="padding: 60px;">
+          <i class="fas fa-receipt" style="font-size: 48px; margin-bottom: 15px; display: block;"></i>
+          <h3>Goods Receipt Note</h3>
+          <p>Select a GRN from the left to view details</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="toast-container" id="toast-container"></div>
+
+<!-- Change Password Modal -->
+<div id="changePwOverlay"></div>
+<div id="changePwModal">
+  <div class="change-pw-header">
+    <h3>🔐 Change Password</h3>
+    <button id="closeChangePwBtn">✕</button>
+  </div>
+  <div class="change-pw-body">
+    <form id="change-password-form">
+      <div class="form-group">
+        <label>Current Password</label>
+        <input type="password" id="current-password" class="form-control" required>
+      </div>
+      <div class="form-group">
+        <label>New Password (min 6 characters)</label>
+        <input type="password" id="new-password" class="form-control" required>
+      </div>
+      <div class="form-group">
+        <label>Confirm New Password</label>
+        <input type="password" id="confirm-password" class="form-control" required>
+      </div>
+      <hr class="divider" />
+      <button type="submit" class="btn-pw-success">✅ Update Password</button>
+      <button type="button" id="cancelChangePwBtn" style="background:transparent;border:1px solid #e2e8f0;padding:12px;border-radius:40px;width:100%;cursor:pointer;margin-top:10px;">Cancel</button>
+    </form>
+  </div>
+</div>
+
+<script src="../js/api.js"></script>
+<script src="../js/utils.js"></script>
+<script>
+  // Sidebar toggle
+  var hamburgerBtn = document.getElementById('hamburger-btn');
+  var sidebar = document.getElementById('sidebar');
+  var overlayMain = document.getElementById('overlay-main');
+  var sidebarClose = document.getElementById('sidebar-close-btn');
+  
+  function openSidebar() { 
+    sidebar.classList.add('open'); 
+    overlayMain.classList.add('open'); 
+    if (hamburgerBtn) hamburgerBtn.classList.add('active'); 
+  }
+  
+  function closeSidebar() { 
+    sidebar.classList.remove('open'); 
+    overlayMain.classList.remove('open'); 
+    if (hamburgerBtn) hamburgerBtn.classList.remove('active'); 
+  }
+  
+  if (hamburgerBtn) {
+    hamburgerBtn.addEventListener('click', function() { 
+      sidebar.classList.contains('open') ? closeSidebar() : openSidebar(); 
+    });
+  }
+  if (sidebarClose) sidebarClose.addEventListener('click', closeSidebar);
+  if (overlayMain) overlayMain.addEventListener('click', closeSidebar);
+  document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeSidebar(); });
+
+  // ========== USER SESSION MANAGEMENT ==========
+  function getCurrentUser() {
+    var userStr = sessionStorage.getItem('pms_user');
+    if (!userStr) return null;
+    try { return JSON.parse(userStr); } catch(e) { return null; }
+  }
+
+  function logout() {
+    sessionStorage.removeItem('pms_user');
+    window.location.href = '/login';
+  }
+
+  // ========== CHANGE PASSWORD MODAL ==========
+  var changePwOverlay = document.getElementById('changePwOverlay');
+  var changePwModal = document.getElementById('changePwModal');
+  var openChangePwBtn = document.getElementById('openChangePwBtn');
+  var closeChangePwBtn = document.getElementById('closeChangePwBtn');
+  var cancelChangePwBtn = document.getElementById('cancelChangePwBtn');
+  
+  function openChangePasswordModal() {
+    changePwOverlay.classList.add('show');
+    changePwModal.classList.add('show');
+    document.body.style.overflow = 'hidden';
+    if (dropdownMenu) dropdownMenu.classList.remove('show');
+    if (userPill) userPill.classList.remove('active');
+  }
+  
+  function closeChangePasswordModal() {
+    changePwOverlay.classList.remove('show');
+    changePwModal.classList.remove('show');
+    document.body.style.overflow = '';
+    document.getElementById('change-password-form').reset();
+  }
+  
+  if (openChangePwBtn) openChangePwBtn.addEventListener('click', openChangePasswordModal);
+  if (closeChangePwBtn) closeChangePwBtn.addEventListener('click', closeChangePasswordModal);
+  if (cancelChangePwBtn) cancelChangePwBtn.addEventListener('click', closeChangePasswordModal);
+  if (changePwOverlay) changePwOverlay.addEventListener('click', closeChangePasswordModal);
+  
+  document.getElementById('change-password-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    var currentPassword = document.getElementById('current-password').value;
+    var newPassword = document.getElementById('new-password').value;
+    var confirmPassword = document.getElementById('confirm-password').value;
+    
+    if (newPassword !== confirmPassword) { showToast('New passwords do not match', 'error'); return; }
+    if (newPassword.length < 6) { showToast('Password must be at least 6 characters', 'error'); return; }
+    
+    var currentUserData = getCurrentUser();
+    if (!currentUserData) { showToast('User not found. Please login again.', 'error'); return; }
+    
+    try {
+      var response = await fetch('/api/auth/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: currentUserData.id, oldPassword: currentPassword, newPassword: newPassword })
+      });
+      var data = await response.json();
+      if (!response.ok) throw new Error(data.error);
+      showToast('Password changed successfully! Please login again.', 'success');
+      setTimeout(function() { logout(); }, 1500);
+    } catch(err) { showToast('Failed to change password: ' + err.message, 'error'); }
+  });
+
+  var currentUser = getCurrentUser();
+  if (!currentUser) {
+    window.location.href = '/login';
+  }
+
+  document.getElementById('userName').innerText = currentUser.fullName || currentUser.username;
+  document.getElementById('userRole').innerText = currentUser.role ? currentUser.role.charAt(0).toUpperCase() + currentUser.role.slice(1) : 'User';
+  document.getElementById('userAvatar').innerText = (currentUser.fullName || currentUser.username || 'U').charAt(0).toUpperCase();
+
+  var userPill = document.getElementById('userPill');
+  var dropdownMenu = document.getElementById('dropdownMenu');
+  if (userPill) {
+    userPill.addEventListener('click', function(e) {
+      e.stopPropagation();
+      dropdownMenu.classList.toggle('show');
+      userPill.classList.toggle('active');
+    });
+    document.addEventListener('click', function() {
+      dropdownMenu.classList.remove('show');
+      if (userPill) userPill.classList.remove('active');
+    });
+  }
+
+  // Global variables
+  var grns = [];
+  var currentFilterDate = new Date().toISOString().split('T')[0];
+  
+  document.getElementById('filter-date').value = currentFilterDate;
+  
+  // Load GRNs
+  async function loadGRNs() {
+    var date = document.getElementById('filter-date').value;
+    if (!date) date = currentFilterDate;
+    currentFilterDate = date;
+    
+    try {
+      var data = await apiGet('/grn?date=' + date);
+      grns = data;
+      renderGRNList();
+    } catch(err) {
+      showToast('Failed to load GRNs: ' + err.message, 'error');
+      document.getElementById('grn-list').innerHTML = '<div class="empty-state">Error loading GRNs</div>';
+    }
+  }
+  
+  function renderGRNList() {
+    var container = document.getElementById('grn-list');
+    if (grns.length === 0) {
+      container.innerHTML = '<div class="empty-state">📭 No goods receipt notes for this date</div>';
+      return;
+    }
+    var html = '';
+    for (var i = 0; i < grns.length; i++) {
+      var grn = grns[i];
+      html += '<div class="grn-item" data-grn-id="' + grn.id + '" onclick="viewGRNDetails(' + grn.id + ')">';
+      html += '<div class="grn-number">📋 ' + escapeHtml(grn.grn_number) + '</div>';
+      html += '<div class="grn-date">📅 ' + grn.receipt_date + ' | PO: ' + escapeHtml(grn.po_number) + '</div>';
+      html += '<div class="grn-vendor">🏪 ' + escapeHtml(grn.vendor_name) + '</div>';
+      html += '</div>';
+    }
+    container.innerHTML = html;
+  }
+  
+  // View GRN details
+  async function viewGRNDetails(id) {
+    try {
+      var data = await apiGet('/grn/' + id);
+      var rightPanel = document.getElementById('grn-details');
+      
+      var itemsHtml = '<div style="margin-bottom: 20px;">';
+      itemsHtml += '<h3 style="margin-bottom: 15px;">📋 ' + escapeHtml(data.grn_number) + '</h3>';
+      itemsHtml += '<div style="background: #f5f5f5; padding: 15px; border-radius: 12px; margin-bottom: 20px;">';
+      itemsHtml += '<p><strong>PO Number:</strong> ' + escapeHtml(data.po_number) + '</p>';
+      itemsHtml += '<p><strong>Vendor:</strong> ' + escapeHtml(data.vendor_name) + '</p>';
+      itemsHtml += '<p><strong>Receipt Date:</strong> ' + data.receipt_date + '</p>';
+      itemsHtml += '<p><strong>Status:</strong> <span style="color: #059669;">✓ ' + data.status.toUpperCase() + '</span></p>';
+      itemsHtml += '<p><strong>Notes:</strong> ' + (data.notes || 'None') + '</p>';
+      itemsHtml += '<p><strong>Created By:</strong> ' + (data.created_by || 'system') + '</p>';
+      itemsHtml += '</div>';
+      
+      itemsHtml += '<h4>Received Items</h4>';
+      itemsHtml += '<div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">';
+      itemsHtml += '<table class="items-table"><thead><tr><th>Item</th><th>Unit</th><th>Unit Price</th><th>Quantity Received</th><th>Total Cost</th></tr></thead><tbody>';
+      
+      var totalValue = 0;
+      for (var i = 0; i < data.items.length; i++) {
+        var item = data.items[i];
+        itemsHtml += '<tr>';
+        itemsHtml += '<td><strong>' + escapeHtml(item.item_name) + '</strong><br><small>' + escapeHtml(item.category) + '</small></td>';
+        itemsHtml += '<td>' + escapeHtml(item.unit) + '</td>';
+        itemsHtml += '<td>' + fmtTSH(item.unit_price) + '</td>';
+        itemsHtml += '<td>' + item.quantity_received + '</td>';
+        itemsHtml += '<td>' + fmtTSH(item.total_cost) + '</td>';
+        itemsHtml += '</tr>';
+        totalValue += item.total_cost;
+      }
+      itemsHtml += '<tr style="font-weight:bold; background: #f5f5f5;"><td colspan="4">Total Value</td><td>' + fmtTSH(totalValue) + '</td></tr>';
+      itemsHtml += '</tbody></table></div>';
+      
+      itemsHtml += '<div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">';
+      itemsHtml += '<button class="btn-gold" onclick="printGRN(' + data.id + ')">🖨️ Print GRN</button>';
+      itemsHtml += '</div>';
+      
+      rightPanel.innerHTML = itemsHtml;
+      
+      // Highlight selected
+      var items = document.querySelectorAll('.grn-item');
+      for (var j = 0; j < items.length; j++) {
+        items[j].classList.remove('active');
+      }
+      var selectedItem = document.querySelector('.grn-item[data-grn-id="' + id + '"]');
+      if (selectedItem) selectedItem.classList.add('active');
+    } catch(err) {
+      showToast('Failed to load GRN details: ' + err.message, 'error');
+    }
+  }
+  
+  // Print GRN
+  async function printGRN(id) {
+    try {
+      var data = await apiGet('/grn/' + id);
+      var printWindow = window.open('', '_blank');
+      printWindow.document.write('<html><head><title>GRN #' + data.grn_number + '</title>');
+      printWindow.document.write('<style>body{font-family:Arial,sans-serif;padding:20px;} table{width:100%;border-collapse:collapse;} th,td{border:1px solid #ddd;padding:8px;text-align:left;} .header{text-align:center;margin-bottom:30px;}</style>');
+      printWindow.document.write('</head><body>');
+      printWindow.document.write('<div class="header"><h1>Steps Premium Suite</h1><h2>Goods Receipt Note</h2></div>');
+      printWindow.document.write('<p><strong>GRN Number:</strong> ' + data.grn_number + '</p>');
+      printWindow.document.write('<p><strong>PO Number:</strong> ' + data.po_number + '</p>');
+      printWindow.document.write('<p><strong>Vendor:</strong> ' + escapeHtml(data.vendor_name) + '</p>');
+      printWindow.document.write('<p><strong>Receipt Date:</strong> ' + data.receipt_date + '</p>');
+      printWindow.document.write('<p><strong>Notes:</strong> ' + (data.notes || 'N/A') + '</p>');
+      printWindow.document.write('<h3>Received Items</h3>');
+      printWindow.document.write('<table border="1" cellpadding="8" cellspacing="0" width="100%"><thead><tr><th>Item</th><th>Unit</th><th>Unit Price</th><th>Quantity</th><th>Total</th></tr></thead><tbody>');
+      for (var i = 0; i < data.items.length; i++) {
+        var item = data.items[i];
+        printWindow.document.write('<tr>');
+        printWindow.document.write('<td>' + item.item_name + '<br><small>' + item.category + '</small></td>');
+        printWindow.document.write('<td>' + item.unit + '</td>');
+        printWindow.document.write('<td>' + fmtTSH(item.unit_price) + '</td>');
+        printWindow.document.write('<td>' + item.quantity_received + '</td>');
+        printWindow.document.write('<td>' + fmtTSH(item.total_cost) + '</td>');
+        printWindow.document.write('</tr>');
+      }
+      printWindow.document.write('<tr style="font-weight:bold;"><td colspan="4">Total Value</td><td>' + fmtTSH(data.items.reduce(function(sum, item) { return sum + item.total_cost; }, 0)) + '</td></tr>');
+      printWindow.document.write('</tbody></table>');
+      printWindow.document.write('<p style="margin-top:30px;text-align:center;">Goods received and verified. Stock updated in Main Store.</p>');
+      printWindow.document.write('</body></html>');
+      printWindow.document.close();
+      printWindow.print();
+    } catch(err) {
+      showToast('Failed to print: ' + err.message, 'error');
+    }
+  }
+  
+  // Date filter change
+  document.getElementById('filter-date').addEventListener('change', function() {
+    loadGRNs();
+  });
+  
+  function escapeHtml(str) { 
+    if (!str) return ''; 
+    return str.replace(/[&<>]/g, function(m) {
+      if (m === '&') return '&amp;';
+      if (m === '<') return '&lt;';
+      if (m === '>') return '&gt;';
+      return m;
+    }); 
+  }
+  
+  function fmtTSH(value) {
+    return 'TSh ' + (value || 0).toLocaleString();
+  }
+  
+  function showToast(msg, type) {
+    var toast = document.getElementById('toast-container');
+    var bg = type === 'error' ? '#ef4444' : '#10b981';
+    toast.innerHTML = '<div style="background:' + bg + ';color:white;padding:12px 20px;border-radius:40px;">' + msg + '</div>';
+    setTimeout(function() { toast.innerHTML = ''; }, 3000);
+  }
+  
+  // Initialize
+  document.addEventListener('DOMContentLoaded', function() {
+    loadGRNs();
+  });
+  
+  window.loadGRNs = loadGRNs;
+  window.viewGRNDetails = viewGRNDetails;
+  window.printGRN = printGRN;
+  window.openChangePasswordModal = openChangePasswordModal;
+  window.closeChangePasswordModal = closeChangePasswordModal;
+  window.logout = logout;
+</script>
+</body>
+</html>

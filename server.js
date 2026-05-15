@@ -1,0 +1,2157 @@
+// server.js – Steps Premium Suite API (FIXED DATE HANDLING + CLEAN URLs)
+require('dotenv').config();
+const express = require('express');
+const cors    = require('cors');
+const path    = require('path');  // ADDED for clean URLs
+const pool    = require('./db/pool');
+
+// ============================================================
+// ACTIVITY LOGGER FUNCTION - MUST BE DEFINED BEFORE ANY ROUTES
+// ============================================================
+async function logActivity(userId, username, action, entityType, entityId, oldData = null, newData = null, req = null) {
+  try {
+    const ipAddress = req ? req.ip || req.connection?.remoteAddress || null : null;
+    const userAgent = req ? req.headers['user-agent'] : null;
+    
+    await pool.query(
+      `INSERT INTO activity_logs (user_id, username, action, entity_type, entity_id, old_data, new_data, ip_address, user_agent)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+      [userId || null, username || 'system', action, entityType, entityId, 
+       oldData ? JSON.stringify(oldData) : null, 
+       newData ? JSON.stringify(newData) : null, 
+       ipAddress, userAgent]
+    );
+    console.log(`✅ Activity logged: ${action} ${entityType} #${entityId} by ${username || 'system'}`);
+  } catch (err) {
+    console.error('Failed to log activity:', err.message);
+    // Don't throw - logging should not break main functionality
+  }
+}
+
+const bcrypt  = require('bcrypt');  
+const app  = express();
+const PORT = process.env.PORT || 3000;
+
+// ── Middleware ───────────────────────────────────────────────────────────────
+app.use(cors({ origin: process.env.CORS_ORIGIN || '*' }));
+app.use(express.json());
+
+// Serve static files from public folder
+app.use(express.static(path.join(__dirname, 'public')));
+
+// ============================================================
+// CLEAN URLS - Access pages without .html extension
+// ============================================================
+
+// List of all your HTML pages (without .html)
+const pages = [
+  'dashboard', 'dashboard1', 'reservations', 'apartments', 
+  'apartments-list','apartments-list1', 'housekeeping', 'housekeeping-status', 'reports',
+  'store-main','store-main1', 'store-outlets','store-outlets1', 'outlet-store', 'outlet-store1','store-housekeeping',
+  'store-kitchen', 'store-public', 'users','users1', 'login','activity-logs' ,'register','back-office', 'index2', 'purchase-orders', 'goods-receipt', 'purchase-orders-reports', 'goods-receipt-reports', 'store-inventory-reports', 'point-of-sale', 'sales-report'
+];
+
+// Create routes for each page without .html extension
+pages.forEach(page => {
+  app.get(`/${page}`, (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'pages', `${page}.html`));
+  });
+});
+
+// Redirect root to dashboard
+app.get('/', (req, res) => {
+  res.redirect('/dashboard');
+});
+
+// ── Health check ─────────────────────────────────────────────────────────────
+app.get('/api/health', async (req, res) => {
+  try {
+    await pool.query('SELECT 1');
+    res.json({ status: 'ok', database: 'connected' });
+  } catch (err) {
+    res.status(500).json({ status: 'error', message: err.message });
+  }
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+//  APARTMENTS
+// ════════════════════════════════════════════════════════════════════════════
+
+// GET /api/apartments – list all apartments with today's occupancy status
+app.get('/api/apartments', async (req, res) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT
+        a.*,
+        CASE
+          WHEN EXISTS (
+            SELECT 1 FROM reservations r
+            WHERE r.apt_id = a.id
+              AND r.checkin  <= CURRENT_DATE
+              AND r.checkout  > CURRENT_DATE
+          ) THEN TRUE ELSE FALSE
+        END AS occupied
+      FROM apartments a
+      ORDER BY a.id
+    `);
+    res.json(rows.map(camelApt));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/apartments/:id
+app.get('/api/apartments/:id', async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM apartments WHERE id = $1', [req.params.id]);
+    if (!rows.length) return res.status(404).json({ error: 'Apartment not found' });
+    res.json(camelApt(rows[0]));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT /api/apartments/:id – update rate or details
+app.put('/api/apartments/:id', async (req, res) => {
+  const { name, type, maxAdults, emoji, color, ratePerNight } = req.body;
+  try {
+    const { rows } = await pool.query(`
+      UPDATE apartments
+        SET name           = COALESCE($1, name),
+            type           = COALESCE($2, type),
+            max_adults     = COALESCE($3, max_adults),
+            emoji          = COALESCE($4, emoji),
+            color          = COALESCE($5, color),
+            rate_per_night = COALESCE($6, rate_per_night)
+      WHERE id = $7
+      RETURNING *
+    `, [name, type, maxAdults, emoji, color, ratePerNight, req.params.id]);
+    if (!rows.length) return res.status(404).json({ error: 'Apartment not found' });
+    res.json(camelApt(rows[0]));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/apartments – create new apartment
+app.post('/api/apartments', async (req, res) => {
+  const { name, type, maxAdults, emoji, color, ratePerNight } = req.body;
+  if (!name || !type || !maxAdults || !ratePerNight) {
+    return res.status(400).json({ error: 'Name, type, maxAdults, ratePerNight are required' });
+  }
+  try {
+    const { rows } = await pool.query(
+      `INSERT INTO apartments (name, type, max_adults, emoji, color, rate_per_night)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING *`,
+      [name, type, maxAdults, emoji || '', color || '#2d9c6e', ratePerNight]
+    );
+    res.status(201).json(camelApt(rows[0]));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE /api/apartments/:id – delete apartment
+app.delete('/api/apartments/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    // First check if any reservations exist for this apartment
+    const { rowCount: resCount } = await pool.query('SELECT id FROM reservations WHERE apt_id = $1 LIMIT 1', [id]);
+    if (resCount > 0) {
+      return res.status(400).json({ error: 'Cannot delete apartment with existing reservations. Remove reservations first.' });
+    }
+    const { rowCount } = await pool.query('DELETE FROM apartments WHERE id = $1', [id]);
+    if (rowCount === 0) return res.status(404).json({ error: 'Apartment not found' });
+    res.json({ message: 'Apartment deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+//  RESERVATIONS - FIXED DATE HANDLING
+// ════════════════════════════════════════════════════════════════════════════
+
+// GET /api/reservations – with checkout time info
+app.get('/api/reservations', async (req, res) => {
+  const { aptId, from, to } = req.query;
+  const conditions = [];
+  const values     = [];
+
+  if (aptId) { values.push(aptId); conditions.push(`r.apt_id = $${values.length}`); }
+  if (from)  { values.push(from);  conditions.push(`r.checkout + COALESCE(r.checkout_time, '11:00:00') > $${values.length}::timestamp`); }
+  if (to)    { values.push(to);    conditions.push(`r.checkin <= $${values.length}::date`); }
+
+  const where = conditions.length ? 'WHERE ' + conditions.join(' AND ') : '';
+
+  try {
+    const { rows } = await pool.query(`
+      SELECT 
+        r.*, 
+        a.name AS apt_name, 
+        a.type AS apt_type, 
+        a.emoji AS apt_emoji, 
+        a.color AS apt_color,
+        TO_CHAR(r.checkin, 'YYYY-MM-DD') as checkin_str,
+        TO_CHAR(r.checkout, 'YYYY-MM-DD') as checkout_str,
+        TO_CHAR(r.checkout_time, 'HH24:MI:SS') as checkout_time_str,
+        CASE 
+          WHEN (r.checkout + COALESCE(r.checkout_time, '11:00:00')) <= CURRENT_TIMESTAMP THEN 'checked_out'
+          WHEN r.checkin <= CURRENT_DATE THEN 'active'
+          ELSE 'upcoming'
+        END as current_status
+      FROM reservations r
+      JOIN apartments a ON a.id = r.apt_id
+      ${where}
+      ORDER BY r.checkin DESC
+    `, values);
+    
+    // Format dates as YYYY-MM-DD strings without timezone conversion
+    const formattedRows = rows.map(row => ({
+      ...row,
+      checkin: row.checkin_str,
+      checkout: row.checkout_str,
+      checkoutTime: row.checkout_time_str || '11:00:00',
+      currentStatus: row.current_status
+    }));
+    
+    res.json(formattedRows.map(camelRes));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/reservations/:id
+app.get('/api/reservations/:id', async (req, res) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT 
+        r.*, 
+        a.name AS apt_name, 
+        a.type AS apt_type, 
+        a.emoji AS apt_emoji, 
+        a.color AS apt_color,
+        TO_CHAR(r.checkin, 'YYYY-MM-DD') as checkin_str,
+        TO_CHAR(r.checkout, 'YYYY-MM-DD') as checkout_str
+      FROM reservations r
+      JOIN apartments a ON a.id = r.apt_id
+      WHERE r.id = $1
+    `, [req.params.id]);
+    if (!rows.length) return res.status(404).json({ error: 'Reservation not found' });
+    
+    const row = rows[0];
+    const formattedRow = {
+      ...row,
+      checkin: row.checkin_str,
+      checkout: row.checkout_str
+    };
+    
+    res.json(camelRes(formattedRow));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/reservations – create new reservation (FIXED)
+// POST /api/reservations – create new reservation (with checkout time only)
+// POST /api/reservations – create new reservation (with checkout time and logging)
+// POST /api/reservations – create new reservation (with checkout time and logging)
+app.post('/api/reservations', async (req, res) => {
+  let { aptId, guest, email, mobile, country, city, checkin, checkout, adults, children, rateType, total, checkoutTime, userId, username } = req.body;
+
+  // CRITICAL FIX: Ensure dates are pure YYYY-MM-DD strings
+  if (checkin) checkin = String(checkin).split('T')[0];
+  if (checkout) checkout = String(checkout).split('T')[0];
+  
+  // Set default checkout time to 11:00 AM if not provided
+  const finalCheckoutTime = checkoutTime || '11:00:00';
+  
+  console.log('📅 Creating reservation with dates and checkout time:', { checkin, checkout, checkoutTime: finalCheckoutTime });
+
+  // Basic validation
+  if (!aptId || !guest || !email || !checkin || !checkout) {
+    return res.status(400).json({ error: 'aptId, guest, email, checkin, checkout are required' });
+  }
+  if (checkin >= checkout) {
+    return res.status(400).json({ error: 'checkout must be after checkin' });
+  }
+
+  try {
+    // Check for conflicting reservation in same apartment
+    const conflict = await pool.query(`
+      SELECT id FROM reservations
+      WHERE apt_id = $1
+        AND checkin < $3::date
+        AND (checkout + COALESCE(checkout_time, '11:00:00')) > ($2::date + $4::time)
+    `, [aptId, checkin, checkout, finalCheckoutTime]);
+
+    if (conflict.rows.length) {
+      return res.status(409).json({ error: 'Apartment is already booked for those dates' });
+    }
+
+    const { rows } = await pool.query(`
+      INSERT INTO reservations (apt_id, guest, email, mobile, country, city, checkin, checkout, checkout_time, adults, children, rate_type, total)
+      VALUES ($1,$2,$3,$4,$5,$6,$7::date,$8::date,$9::time,$10,$11,$12,$13)
+      RETURNING *
+    `, [aptId, guest, email, mobile || null, country || null, city || null,
+        checkin, checkout, finalCheckoutTime, adults || 1, children || 0, rateType || 'Full', total || 0]);
+
+    const result = camelRes(rows[0]);
+    
+    // ========== LOG ACTIVITY - FIXED ==========
+    // Get user info from request body or use 'system' as fallback
+    const loggedInUserId = userId || req.body.userId || null;
+    const loggedInUsername = username || req.body.username || req.body.created_by || guest || 'system';
+    await logActivity(loggedInUserId, loggedInUsername, 'CREATE', 'reservation', result.id, null, result, req);
+    
+    console.log('✅ Reservation created:', result.id, result.checkin, result.checkout, 'Checkout time:', finalCheckoutTime);
+    res.status(201).json(result);
+  } catch (err) {
+    console.error('❌ Error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT /api/reservations/:id – update a reservation (FIXED)
+// PUT /api/reservations/:id – update a reservation (with logging)
+app.put('/api/reservations/:id', async (req, res) => {
+  let { aptId, guest, email, mobile, country, city, checkin, checkout, adults, children, rateType, total, userId, username } = req.body;
+  
+  // CRITICAL FIX: Ensure dates are pure YYYY-MM-DD strings
+  if (checkin) checkin = String(checkin).split('T')[0];
+  if (checkout) checkout = String(checkout).split('T')[0];
+
+  try {
+    // Get old data BEFORE update for logging
+    const oldDataResult = await pool.query('SELECT * FROM reservations WHERE id = $1', [req.params.id]);
+    if (oldDataResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Reservation not found' });
+    }
+    const oldData = oldDataResult.rows[0];
+    
+    // Conflict check excluding current reservation
+    if (aptId && checkin && checkout) {
+      const conflict = await pool.query(`
+        SELECT id FROM reservations
+        WHERE apt_id   = $1
+          AND id      != $4
+          AND checkin  < $3::date
+          AND checkout > $2::date
+      `, [aptId, checkin, checkout, req.params.id]);
+
+      if (conflict.rows.length) {
+        return res.status(409).json({ error: 'Apartment is already booked for those dates' });
+      }
+    }
+
+    const { rows } = await pool.query(`
+      UPDATE reservations SET
+        apt_id    = COALESCE($1,  apt_id),
+        guest     = COALESCE($2,  guest),
+        email     = COALESCE($3,  email),
+        mobile    = COALESCE($4,  mobile),
+        country   = COALESCE($5,  country),
+        city      = COALESCE($6,  city),
+        checkin   = COALESCE($7::date,  checkin),
+        checkout  = COALESCE($8::date,  checkout),
+        adults    = COALESCE($9,  adults),
+        children  = COALESCE($10, children),
+        rate_type = COALESCE($11, rate_type),
+        total     = COALESCE($12, total)
+      WHERE id = $13
+      RETURNING *
+    `, [aptId, guest, email, mobile, country, city, checkin, checkout, adults, children, rateType, total, req.params.id]);
+
+    if (!rows.length) return res.status(404).json({ error: 'Reservation not found' });
+    
+    const newData = rows[0];
+    
+    // ========== LOG ACTIVITY ==========
+    const loggedInUserId = userId || req.body.userId;
+    const loggedInUsername = username || req.body.username || 'system';
+    await logActivity(loggedInUserId, loggedInUsername, 'UPDATE', 'reservation', req.params.id, oldData, newData, req);
+    
+    res.json(camelRes(newData));
+  } catch (err) {
+    console.error('Error updating reservation:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE /api/reservations/:id
+// DELETE /api/reservations/:id (with logging)
+// DELETE /api/reservations/:id
+app.delete('/api/reservations/:id', async (req, res) => {
+  try {
+    // Get data before delete for logging
+    const oldDataResult = await pool.query('SELECT * FROM reservations WHERE id = $1', [req.params.id]);
+    const oldData = oldDataResult.rows[0];
+    
+    const { rowCount } = await pool.query('DELETE FROM reservations WHERE id = $1', [req.params.id]);
+    if (!rowCount) return res.status(404).json({ error: 'Reservation not found' });
+    
+    // LOG ACTIVITY
+    if (oldData) {
+      const userId = req.body.userId || null;
+      const username = req.body.username || 'system';
+      await logActivity(userId, username, 'DELETE', 'reservation', req.params.id, oldData, null, req);
+    }
+    
+    res.json({ message: 'Reservation deleted' });
+  } catch (err) {
+    console.error('Error deleting reservation:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+//  REPORTS
+// ════════════════════════════════════════════════════════════════════════════
+
+// GET /api/reports/summary?from=&to=
+app.get('/api/reports/summary', async (req, res) => {
+  const { from, to } = req.query;
+  const conditions = [];
+  const values     = [];
+  if (from) { values.push(from); conditions.push(`r.checkout > $${values.length}`); }
+  if (to)   { values.push(to);   conditions.push(`r.checkin <= $${values.length}`); }
+  const where = conditions.length ? 'WHERE ' + conditions.join(' AND ') : '';
+
+  try {
+    const { rows: summary } = await pool.query(`
+      SELECT
+        COUNT(*)::int                                        AS total_reservations,
+        COALESCE(SUM(total), 0)::int                         AS total_revenue,
+        COALESCE(AVG(checkout - checkin), 0)::numeric(6,2)  AS avg_stay_nights,
+        COALESCE(SUM(checkout - checkin), 0)::int            AS total_nights
+      FROM reservations r
+      ${where}
+    `, values);
+
+    const { rows: byApt } = await pool.query(`
+      SELECT
+        a.id, a.name, a.type, a.color, a.emoji, a.rate_per_night,
+        COUNT(r.id)::int                                     AS bookings,
+        COALESCE(SUM(r.checkout - r.checkin), 0)::int        AS nights,
+        COALESCE(SUM(r.total), 0)::int                       AS revenue
+      FROM apartments a
+      LEFT JOIN reservations r ON r.apt_id = a.id
+        ${conditions.length ? 'AND ' + conditions.join(' AND ') : ''}
+      GROUP BY a.id
+      ORDER BY a.id
+    `, values);
+
+    res.json({
+      summary: {
+        totalReservations: summary[0].total_reservations,
+        totalRevenue:      summary[0].total_revenue,
+        avgStayNights:     parseFloat(summary[0].avg_stay_nights),
+        totalNights:       summary[0].total_nights,
+      },
+      byApartment: byApt.map(r => ({
+        id:           r.id,
+        name:         r.name,
+        type:         r.type,
+        color:        r.color,
+        emoji:        r.emoji,
+        ratePerNight: r.rate_per_night,
+        bookings:     r.bookings,
+        nights:       r.nights,
+        revenue:      r.revenue,
+      })),
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+//  HELPERS – snake_case → camelCase (FIXED DATE HANDLING)
+// ════════════════════════════════════════════════════════════════════════════
+
+function camelApt(r) {
+  return {
+    id:           r.id,
+    name:         r.name,
+    type:         r.type,
+    maxAdults:    r.max_adults,
+    emoji:        r.emoji,
+    color:        r.color,
+    ratePerNight: r.rate_per_night,
+    occupied:     r.occupied ?? undefined,
+  };
+}
+
+function camelRes(r) {
+  // CRITICAL FIX: Return dates as-is without any conversion
+  // They should already be YYYY-MM-DD strings from the query
+  return {
+    id:        r.id,
+    aptId:     r.apt_id,
+    guest:     r.guest,
+    email:     r.email,
+    mobile:    r.mobile,
+    country:   r.country,
+    city:      r.city,
+    checkin:   r.checkin,   // Already formatted as YYYY-MM-DD
+    checkout:  r.checkout,  // Already formatted as YYYY-MM-DD
+    adults:    r.adults,
+    children:  r.children,
+    rateType:  r.rate_type,
+    total:     r.total,
+    createdAt: r.created_at,
+    aptName:   r.apt_name  ?? undefined,
+    aptType:   r.apt_type  ?? undefined,
+    aptEmoji:  r.apt_emoji ?? undefined,
+    aptColor:  r.apt_color ?? undefined,
+  };
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  MAIN STORE API
+// ════════════════════════════════════════════════════════════════════════════
+
+// GET all main store items
+app.get('/api/store/items', async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM store_items ORDER BY id DESC');
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST add item to main store
+app.post('/api/store/items', async (req, res) => {
+  const { name, category, cost, quantity } = req.body;
+  if (!name || !category || !cost || !quantity) {
+    return res.status(400).json({ error: 'All fields required' });
+  }
+  const parts = quantity.trim().split(' ');
+  const stock_value = parseFloat(parts[0]);
+  const unit = parts[1] || 'units';
+  try {
+    const { rows } = await pool.query(
+      `INSERT INTO store_items (name, category, cost, quantity, stock_value, unit)
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      [name, category, cost, quantity, stock_value, unit]
+    );
+    res.status(201).json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT update main store item
+app.put('/api/store/items/:id', async (req, res) => {
+  const { name, category, cost, quantity } = req.body;
+  const id = req.params.id;
+  const parts = quantity.trim().split(' ');
+  const stock_value = parseFloat(parts[0]);
+  const unit = parts[1] || 'units';
+  try {
+    const { rows } = await pool.query(
+      `UPDATE store_items SET name=$1, category=$2, cost=$3, quantity=$4, stock_value=$5, unit=$6
+       WHERE id=$7 RETURNING *`,
+      [name, category, cost, quantity, stock_value, unit, id]
+    );
+    if (rows.length === 0) return res.status(404).json({ error: 'Item not found' });
+    res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE main store item
+app.delete('/api/store/items/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const { rowCount } = await pool.query('DELETE FROM store_items WHERE id = $1', [id]);
+    if (rowCount === 0) return res.status(404).json({ error: 'Item not found' });
+    res.json({ message: 'Item deleted' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ============================================================
+// REQUESTS API (outlets request from main store)
+// ============================================================
+
+// GET all requests
+app.get('/api/store/requests', async (req, res) => {
+  const { status, outlet } = req.query;
+  let query = 'SELECT * FROM store_requests WHERE 1=1';
+  const params = [];
+  if (status) {
+    params.push(status);
+    query += ` AND status = $${params.length}`;
+  }
+  if (outlet) {
+    params.push(outlet);
+    query += ` AND requested_by = $${params.length}`;
+  }
+  query += ' ORDER BY created_at DESC';
+  try {
+    const { rows } = await pool.query(query, params);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST create request from outlet
+app.post('/api/store/requests', async (req, res) => {
+  const { item_name, category, quantity_value, quantity_unit, requested_by } = req.body;
+  if (!item_name || !category || !quantity_value || !quantity_unit || !requested_by) {
+    return res.status(400).json({ error: 'All fields required' });
+  }
+  const quantity = `${quantity_value} ${quantity_unit}`;
+  try {
+    const { rows } = await pool.query(
+      `INSERT INTO store_requests (item_name, category, quantity, cost, requested_by, status)
+       VALUES ($1, $2, $3, $4, $5, 'pending') RETURNING *`,
+      [item_name, category, quantity, 0, requested_by]
+    );
+    res.status(201).json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT approve request - SIMPLIFIED (no units needed)
+// PUT approve request - MODIFIED to update existing outlet inventory
+// PUT approve request - FIXED: Cost based on Main Store average cost
+app.put('/api/store/requests/:id/approve', async (req, res) => {
+  const { id } = req.params;
+  const { authorizedQuantity } = req.body;
+  
+  if (!authorizedQuantity) {
+    return res.status(400).json({ error: 'Authorized quantity required' });
+  }
+  
+  const authValue = parseFloat(authorizedQuantity);
+  if (isNaN(authValue) || authValue <= 0) {
+    return res.status(400).json({ error: 'Please enter a valid positive number' });
+  }
+  
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    
+    // Get the request
+    const { rows: reqRows } = await client.query('SELECT * FROM store_requests WHERE id = $1 FOR UPDATE', [id]);
+    if (reqRows.length === 0) return res.status(404).json({ error: 'Request not found' });
+    const request = reqRows[0];
+    if (request.status !== 'pending') return res.status(400).json({ error: 'Request already processed' });
+    
+    // Get the unit from the request
+    const reqParts = request.quantity.trim().split(' ');
+    const unit = reqParts[1] || 'units';
+    
+    // Find item in main store
+    const { rows: itemRows } = await client.query(
+      `SELECT * FROM store_items WHERE LOWER(TRIM(name)) = LOWER(TRIM($1)) FOR UPDATE`,
+      [request.item_name]
+    );
+    if (itemRows.length === 0) {
+      return res.status(404).json({ error: `Item "${request.item_name}" not found in main store` });
+    }
+    const mainItem = itemRows[0];
+    const mainParts = mainItem.quantity.trim().split(' ');
+    const mainValue = parseFloat(mainParts[0]);
+    const mainUnit = mainParts[1];
+    
+    // Check if units match
+    if (mainUnit !== unit) {
+      return res.status(400).json({ 
+        error: `Unit mismatch. Main store uses ${mainUnit}. Please use the same unit.`,
+        availableUnit: mainUnit
+      });
+    }
+    
+    if (mainValue < authValue) {
+      return res.status(400).json({ 
+        error: `Insufficient stock. Available: ${mainItem.quantity}, requested: ${authValue} ${unit}` 
+      });
+    }
+    
+    // Calculate cost based on MAIN STORE's current cost per unit
+    // This ensures consistency across all transfers
+    const costPerUnit = mainItem.cost;
+    const calculatedCost = Math.round(costPerUnit * authValue);
+    
+    console.log('Cost calculation:', {
+      item: request.item_name,
+      mainStoreCostPerUnit: costPerUnit,
+      quantity: authValue,
+      totalCost: calculatedCost
+    });
+    
+    // Deduct from main store
+    const newValue = mainValue - authValue;
+    const newQuantity = `${newValue} ${mainUnit}`;
+    await client.query(
+      'UPDATE store_items SET quantity = $1, stock_value = $2 WHERE id = $3',
+      [newQuantity, newValue, mainItem.id]
+    );
+    
+    const authorizedDisplay = `${authValue} ${unit}`;
+    
+    // Check if item already exists in outlet inventory
+    const existingOutletItem = await client.query(
+      `SELECT * FROM outlet_inventory WHERE outlet = $1 AND LOWER(TRIM(item_name)) = LOWER(TRIM($2)) FOR UPDATE`,
+      [request.requested_by, request.item_name]
+    );
+    
+    if (existingOutletItem.rows.length > 0) {
+      // UPDATE EXISTING ITEM - add quantity and update cost using MAIN STORE cost
+      const existingItem = existingOutletItem.rows[0];
+      const existingParts = existingItem.quantity.split(' ');
+      const existingQty = parseFloat(existingParts[0]);
+      const existingTotalCost = existingItem.cost;
+      const newTotalQty = existingQty + authValue;
+      // Use the MAIN STORE cost per unit for consistency
+      const newTotalCost = existingTotalCost + calculatedCost;
+      const newQuantityStr = newTotalQty + ' ' + unit;
+      
+      await client.query(
+        `UPDATE outlet_inventory 
+         SET quantity = $1, cost = $2, unit = $3, source_request_id = $4, created_at = CURRENT_TIMESTAMP
+         WHERE id = $5`,
+        [newQuantityStr, newTotalCost, unit, id, existingItem.id]
+      );
+    } else {
+      // INSERT NEW ITEM
+      await client.query(
+        `INSERT INTO outlet_inventory (outlet, item_name, category, quantity, cost, unit, source_request_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        [request.requested_by, request.item_name, request.category, authorizedDisplay, calculatedCost, unit, id]
+      );
+    }
+    
+    // Update request
+    await client.query(
+      `UPDATE store_requests SET status = 'approved', approved_at = NOW(), authorized_quantity = $1, cost = $2 WHERE id = $3`,
+      [authorizedDisplay, calculatedCost, id]
+    );
+    
+    await client.query('COMMIT');
+    res.json({ 
+      message: 'Approved, stock deducted, item transferred',
+      transferred: authorizedDisplay,
+      newStock: newQuantity,
+      costPerUnit: costPerUnit,
+      totalCost: calculatedCost
+    });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  } finally {
+    client.release();
+  }
+});
+// ============================================================
+// OUTLET INVENTORY API
+// ============================================================
+
+// GET items for specific outlet
+// GET items for specific outlet - GROUPED by item name
+// ============================================================
+// OUTLET INVENTORY API (FIXED)
+// ============================================================
+
+// GET items for specific outlet - GROUPED by item name
+app.get('/api/outlet-inventory', async (req, res) => {
+  const { outlet } = req.query;
+  if (!outlet) {
+    return res.status(400).json({ error: 'Outlet parameter required' });
+  }
+  try {
+    const { rows } = await pool.query(`
+      SELECT 
+        item_name,
+        category,
+        COALESCE(unit, 'units') as unit,
+        SUM(CAST(SPLIT_PART(quantity, ' ', 1) AS DECIMAL)) as total_quantity,
+        SUM(cost) as total_cost,
+        MAX(created_at) as last_received,
+        array_agg(id) as item_ids,
+        array_agg(quantity) as all_quantities
+      FROM outlet_inventory 
+      WHERE outlet = $1
+      GROUP BY item_name, category, unit
+      ORDER BY last_received DESC
+    `, [outlet]);
+    
+    const formatted = rows.map(row => ({
+      id: row.item_ids[0],
+      item_name: row.item_name,
+      category: row.category,
+      unit: row.unit,
+      quantity: row.total_quantity + ' ' + row.unit,
+      cost: Math.round(row.total_cost),
+      created_at: row.last_received,
+      source_ids: row.item_ids,
+      all_quantities: row.all_quantities
+    }));
+    
+    res.json(formatted);
+  } catch (err) {
+    console.error('Error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE bulk items from outlet inventory
+app.delete('/api/outlet-inventory/bulk/:outlet/:itemName', async (req, res) => {
+  const { outlet, itemName } = req.params;
+  try {
+    const decodedItemName = decodeURIComponent(itemName);
+    await pool.query(
+      'DELETE FROM outlet_inventory WHERE outlet = $1 AND LOWER(TRIM(item_name)) = LOWER(TRIM($2))',
+      [outlet, decodedItemName]
+    );
+    res.json({ message: 'Items deleted successfully' });
+  } catch(err) {
+    console.error('Error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE single item from outlet inventory
+app.delete('/api/outlet-inventory/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const { rowCount } = await pool.query('DELETE FROM outlet_inventory WHERE id = $1', [id]);
+    if (rowCount === 0) return res.status(404).json({ error: 'Item not found' });
+    res.json({ message: 'Item deleted successfully' });
+  } catch(err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET all outlets
+app.get('/api/outlets', async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM outlets ORDER BY id');
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST create new outlet
+app.post('/api/outlets', async (req, res) => {
+  const { name } = req.body;
+  if (!name || !/^[a-z][a-z0-9_]*$/.test(name)) {
+    return res.status(400).json({ error: 'Invalid outlet name. Use lowercase letters, numbers, underscores.' });
+  }
+  try {
+    const { rows } = await pool.query('INSERT INTO outlets (name) VALUES ($1) RETURNING *', [name]);
+    res.status(201).json(rows[0]);
+  } catch (err) {
+    if (err.code === '23505') return res.status(409).json({ error: 'Outlet already exists' });
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ============================================================
+// AUTHENTICATION API
+// ============================================================
+
+// POST /api/auth/register – create a new user
+app.post('/api/auth/register', async (req, res) => {
+  const { fullName, email, password, role } = req.body;
+  
+  console.log('Registration attempt:', { fullName, email, role });
+  
+  if (!fullName || !email || !password || !role) {
+    return res.status(400).json({ error: 'All fields are required' });
+  }
+  if (password.length < 6) {
+    return res.status(400).json({ error: 'Password must be at least 6 characters' });
+  }
+  try {
+    // Check if user already exists
+    const existing = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
+    if (existing.rows.length > 0) {
+      return res.status(409).json({ error: 'Email already registered' });
+    }
+    
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(password, 10);
+    
+    // Generate username from email (before @)
+    const username = email.split('@')[0];
+    
+    // Insert new user
+    const result = await pool.query(
+      `INSERT INTO users (username, email, password_hash, role, full_name)
+       VALUES ($1, $2, $3, $4, $5) 
+       RETURNING id, username, email, role, full_name`,
+      [username, email, hashedPassword, role, fullName]
+    );
+    
+    console.log('User registered successfully:', result.rows[0]);
+    res.status(201).json({
+      message: 'User registered successfully',
+      user: result.rows[0]
+    });
+  } catch (err) {
+    console.error('Registration error:', err);
+    res.status(500).json({ error: 'Registration failed: ' + err.message });
+  }
+});
+
+// POST /api/auth/login – email and password only
+app.post('/api/auth/login', async (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Email and password are required' });
+  }
+  try {
+    const { rows } = await pool.query(
+      'SELECT id, username, email, password_hash, role, full_name FROM users WHERE email = $1',
+      [email]
+    );
+    if (rows.length === 0) {
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
+    const user = rows[0];
+    const match = await bcrypt.compare(password, user.password_hash);
+    if (!match) {
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
+    res.json({
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      role: user.role,
+      fullName: user.full_name,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Login failed' });
+  }
+});
+
+// POST /api/auth/change-password
+app.post('/api/auth/change-password', async (req, res) => {
+  const { userId, oldPassword, newPassword } = req.body;
+  if (!userId || !oldPassword || !newPassword) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+  if (newPassword.length < 6) {
+    return res.status(400).json({ error: 'Password must be at least 6 characters' });
+  }
+  try {
+    const { rows } = await pool.query('SELECT password_hash FROM users WHERE id = $1', [userId]);
+    if (rows.length === 0) return res.status(404).json({ error: 'User not found' });
+    const valid = await bcrypt.compare(oldPassword, rows[0].password_hash);
+    if (!valid) return res.status(401).json({ error: 'Current password is incorrect' });
+    const newHash = await bcrypt.hash(newPassword, 10);
+    await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [newHash, userId]);
+    res.json({ message: 'Password updated successfully' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to change password' });
+  }
+});
+
+// ============================================================
+// USER MANAGEMENT API (admin only)
+// ============================================================
+
+// GET all users
+app.get('/api/users', async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      'SELECT id, username, email, role, full_name, created_at, updated_at FROM users ORDER BY id'
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error('GET /api/users error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET single user
+app.get('/api/users/:id', async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      'SELECT id, username, email, role, full_name, created_at, updated_at FROM users WHERE id = $1',
+      [req.params.id]
+    );
+    if (rows.length === 0) return res.status(404).json({ error: 'User not found' });
+    res.json(rows[0]);
+  } catch (err) {
+    console.error('GET /api/users/:id error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST create new user
+app.post('/api/users', async (req, res) => {
+  const { username, email, password, role, full_name } = req.body;
+  
+  console.log('Create user request:', { username, email, role, full_name });
+  
+  if (!username || !email || !password || !role) {
+    return res.status(400).json({ error: 'Username, email, password and role are required' });
+  }
+  if (password.length < 6) {
+    return res.status(400).json({ error: 'Password must be at least 6 characters' });
+  }
+  try {
+    // Check if email already exists
+    const existing = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
+    if (existing.rows.length > 0) {
+      return res.status(409).json({ error: 'Email already registered' });
+    }
+    // Check if username already exists
+    const existingUsername = await pool.query('SELECT id FROM users WHERE username = $1', [username]);
+    if (existingUsername.rows.length > 0) {
+      return res.status(409).json({ error: 'Username already taken' });
+    }
+    
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const { rows } = await pool.query(
+      `INSERT INTO users (username, email, password_hash, role, full_name)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING id, username, email, role, full_name, created_at, updated_at`,
+      [username, email, hashedPassword, role, full_name || null]
+    );
+    
+    console.log('User created successfully:', rows[0]);
+    res.status(201).json(rows[0]);
+  } catch (err) {
+    console.error('POST /api/users error:', err);
+    res.status(500).json({ error: 'Failed to create user: ' + err.message });
+  }
+});
+
+// PUT update user
+app.put('/api/users/:id', async (req, res) => {
+  const { id } = req.params;
+  const { username, email, role, full_name, password } = req.body;
+  
+  console.log('Update user request:', { id, username, email, role });
+  
+  try {
+    // Check if user exists
+    const existing = await pool.query('SELECT id FROM users WHERE id = $1', [id]);
+    if (existing.rows.length === 0) return res.status(404).json({ error: 'User not found' });
+    
+    // Build update query dynamically
+    let updateFields = [];
+    let values = [];
+    let paramCount = 1;
+    
+    if (username) {
+      updateFields.push(`username = $${paramCount++}`);
+      values.push(username);
+    }
+    if (email) {
+      updateFields.push(`email = $${paramCount++}`);
+      values.push(email);
+    }
+    if (role) {
+      updateFields.push(`role = $${paramCount++}`);
+      values.push(role);
+    }
+    if (full_name !== undefined) {
+      updateFields.push(`full_name = $${paramCount++}`);
+      values.push(full_name);
+    }
+    if (password && password.length >= 6) {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      updateFields.push(`password_hash = $${paramCount++}`);
+      values.push(hashedPassword);
+    }
+    
+    if (updateFields.length === 0) {
+      return res.status(400).json({ error: 'No fields to update' });
+    }
+    
+    values.push(id);
+    const query = `UPDATE users SET ${updateFields.join(', ')} WHERE id = $${paramCount} RETURNING id, username, email, role, full_name, created_at, updated_at`;
+    const { rows } = await pool.query(query, values);
+    
+    console.log('User updated successfully:', rows[0]);
+    res.json(rows[0]);
+  } catch (err) {
+    console.error('PUT /api/users/:id error:', err);
+    res.status(500).json({ error: 'Failed to update user: ' + err.message });
+  }
+});
+
+// DELETE user
+app.delete('/api/users/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    // Prevent deleting the last admin
+    const adminCount = await pool.query('SELECT COUNT(*) FROM users WHERE role = $1', ['admin']);
+    const userCheck = await pool.query('SELECT role FROM users WHERE id = $1', [id]);
+    
+    if (userCheck.rows.length === 0) return res.status(404).json({ error: 'User not found' });
+    if (userCheck.rows[0].role === 'admin' && parseInt(adminCount.rows[0].count) <= 1) {
+      return res.status(400).json({ error: 'Cannot delete the last admin user' });
+    }
+    
+    const { rowCount } = await pool.query('DELETE FROM users WHERE id = $1', [id]);
+    if (rowCount === 0) return res.status(404).json({ error: 'User not found' });
+    res.json({ message: 'User deleted successfully' });
+  } catch (err) {
+    console.error('DELETE /api/users/:id error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ============================================================
+// HOUSEKEEPING STATUS API
+// ============================================================
+
+// GET housekeeping status for all apartments
+// GET housekeeping status for all apartments (with checkout_time)
+app.get('/api/housekeeping/status', async (req, res) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT 
+        a.id as apartment_id,
+        a.name,
+        a.type,
+        a.emoji,
+        a.color,
+        a.max_adults,
+        COALESCE(hs.status, 'clean') as status,
+        hs.last_updated,
+        hs.updated_by,
+        hs.notes,
+        -- Get current reservation with checkout time
+        (
+          SELECT jsonb_build_object(
+            'guest', r.guest,
+            'email', r.email,
+            'mobile', r.mobile,
+            'checkin', r.checkin,
+            'checkout', r.checkout,
+            'checkout_time', r.checkout_time
+          )
+          FROM reservations r
+          WHERE r.apt_id = a.id
+            AND r.checkin <= CURRENT_DATE
+            AND (r.checkout + COALESCE(r.checkout_time, '11:00:00')) > CURRENT_TIMESTAMP
+          ORDER BY r.checkin DESC
+          LIMIT 1
+        ) as current_reservation,
+        -- Check if checkout today (considering checkout time)
+        EXISTS (
+          SELECT 1 FROM reservations r 
+          WHERE r.apt_id = a.id 
+            AND DATE(r.checkout) = CURRENT_DATE
+        ) as is_checkout_today
+      FROM apartments a
+      LEFT JOIN housekeeping_status hs ON a.id = hs.apartment_id
+      ORDER BY a.id
+    `);
+    
+    // Get current hour for time comparison
+    const currentHour = new Date().getHours();
+    const CHECKOUT_HOUR = 11;
+    
+    // Process each row
+    const processedRows = rows.map(row => {
+      const result = {
+        apartment_id: row.apartment_id,
+        name: row.name,
+        type: row.type,
+        emoji: row.emoji,
+        color: row.color,
+        max_adults: row.max_adults,
+        status: row.status,
+        last_updated: row.last_updated,
+        updated_by: row.updated_by,
+        notes: row.notes
+      };
+      
+      // Add guest info if occupied
+      if (row.current_reservation) {
+        result.guest_name = row.current_reservation.guest;
+        result.guest_email = row.current_reservation.email;
+        result.guest_mobile = row.current_reservation.mobile;
+        result.checkin_date = row.current_reservation.checkin;
+        result.checkout_date = row.current_reservation.checkout;
+        result.checkout_time = row.current_reservation.checkout_time || '11:00:00';
+        result.reservation_status = 'occupied';
+      } 
+      // Check if checkout today
+      else if (row.is_checkout_today) {
+        // Determine if after checkout time (11:00 AM)
+        if (currentHour >= CHECKOUT_HOUR) {
+          result.reservation_status = 'checkout_completed';
+        } else {
+          result.reservation_status = 'checkout';
+          result.hours_until_checkout = CHECKOUT_HOUR - currentHour;
+        }
+      } 
+      else {
+        result.reservation_status = 'vacant';
+      }
+      
+      return result;
+    });
+    
+    res.json(processedRows);
+  } catch (err) {
+    console.error('Error fetching housekeeping status:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// UPDATE housekeeping status for an apartment
+app.put('/api/housekeeping/status/:apartmentId', async (req, res) => {
+  const { apartmentId } = req.params;
+  const { status, notes, updated_by } = req.body;
+  
+  console.log('Updating housekeeping status:', { apartmentId, status, notes, updated_by });
+  
+  if (!status || !['clean', 'dirty', 'checkout'].includes(status)) {
+    return res.status(400).json({ error: 'Invalid status. Must be clean, dirty, or checkout' });
+  }
+  
+  try {
+    // First check if apartment exists
+    const aptCheck = await pool.query('SELECT id FROM apartments WHERE id = $1', [apartmentId]);
+    if (aptCheck.rows.length === 0) {
+      return res.status(404).json({ error: 'Apartment not found' });
+    }
+    
+    // Insert or update status
+    const { rows } = await pool.query(`
+      INSERT INTO housekeeping_status (apartment_id, status, updated_by, notes, last_updated)
+      VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
+      ON CONFLICT (apartment_id) 
+      DO UPDATE SET 
+        status = EXCLUDED.status,
+        updated_by = EXCLUDED.updated_by,
+        notes = EXCLUDED.notes,
+        last_updated = CURRENT_TIMESTAMP
+      RETURNING *
+    `, [apartmentId, status, updated_by || 'system', notes || null]);
+    
+    console.log('Status updated successfully:', rows[0]);
+    res.json({ 
+      success: true, 
+      message: `Status updated to ${status}`,
+      data: rows[0]
+    });
+  } catch (err) {
+    console.error('Error updating status:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Force reset status for testing (optional)
+app.post('/api/housekeeping/reset/:apartmentId', async (req, res) => {
+  const { apartmentId } = req.params;
+  try {
+    await pool.query(`
+      INSERT INTO housekeeping_status (apartment_id, status, updated_by, last_updated)
+      VALUES ($1, 'dirty', 'system', CURRENT_TIMESTAMP)
+      ON CONFLICT (apartment_id) 
+      DO UPDATE SET 
+        status = 'dirty',
+        updated_by = 'system',
+        last_updated = CURRENT_TIMESTAMP
+    `, [apartmentId]);
+    
+    res.json({ message: 'Status reset to dirty' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Start ────────────────────────────────────────────────────────────────────
+app.listen(PORT, () => {
+  console.log(`✅ Steps PMS API running on http://localhost:${PORT}`);
+  console.log(`📄 Clean URLs enabled - access pages without .html`);
+  console.log(`   Example: http://localhost:${PORT}/dashboard`);
+});
+
+
+
+
+// ============================================================
+// PURCHASE ORDERS API
+// ============================================================
+
+// GET all vendors
+app.get('/api/vendors', async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM vendors ORDER BY id');
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST create new vendor
+app.post('/api/vendors', async (req, res) => {
+  const { name, type } = req.body;
+  if (!name) {
+    return res.status(400).json({ error: 'Vendor name required' });
+  }
+  try {
+    const { rows } = await pool.query(
+      'INSERT INTO vendors (name, type) VALUES ($1, $2) RETURNING *',
+      [name, type || 'local']
+    );
+    res.status(201).json(rows[0]);
+  } catch (err) {
+    if (err.code === '23505') {
+      return res.status(409).json({ error: 'Vendor already exists' });
+    }
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET all purchase orders (with optional date filter)
+app.get('/api/purchase-orders', async (req, res) => {
+  const { date } = req.query;
+  let query = `
+    SELECT po.*, v.name as vendor_name, v.type as vendor_type
+    FROM purchase_orders po
+    JOIN vendors v ON po.vendor_id = v.id
+  `;
+  const params = [];
+  if (date) {
+    query += ' WHERE po.order_date = $1';
+    params.push(date);
+  }
+  query += ' ORDER BY po.order_date DESC, po.id DESC';
+  try {
+    const { rows } = await pool.query(query, params);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET single purchase order with items
+app.get('/api/purchase-orders/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const poResult = await pool.query(`
+      SELECT po.*, v.name as vendor_name, v.type as vendor_type
+      FROM purchase_orders po
+      JOIN vendors v ON po.vendor_id = v.id
+      WHERE po.id = $1
+    `, [id]);
+    
+    if (poResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Purchase order not found' });
+    }
+    
+    const itemsResult = await pool.query(`
+      SELECT * FROM purchase_order_items WHERE po_id = $1 ORDER BY id
+    `, [id]);
+    
+    res.json({
+      ...poResult.rows[0],
+      items: itemsResult.rows
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST create new purchase order
+app.post('/api/purchase-orders', async (req, res) => {
+  const { vendor_id, order_date, notes, items, created_by } = req.body;
+  
+  if (!vendor_id || !items || items.length === 0) {
+    return res.status(400).json({ error: 'Vendor and at least one item required' });
+  }
+  
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    
+    // Generate PO number
+    const dateStr = new Date().toISOString().slice(0,10).replace(/-/g, '');
+    const countResult = await client.query('SELECT COUNT(*) FROM purchase_orders');
+    const poNumber = `PO-${dateStr}-${(parseInt(countResult.rows[0].count) + 1).toString().padStart(4, '0')}`;
+    
+    // Calculate total amount
+    let totalAmount = 0;
+    for (const item of items) {
+      totalAmount += item.unit_price * item.quantity;
+    }
+    
+    // Insert purchase order
+    const poResult = await client.query(`
+      INSERT INTO purchase_orders (po_number, vendor_id, order_date, status, total_amount, notes, created_by)
+      VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *
+    `, [poNumber, vendor_id, order_date || new Date().toISOString().slice(0,10), 'pending', totalAmount, notes || null, created_by || 'system']);
+    
+    const poId = poResult.rows[0].id;
+    
+    // Insert items
+    for (const item of items) {
+      await client.query(`
+        INSERT INTO purchase_order_items (po_id, item_name, category, unit, unit_price, quantity, total_price)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `, [poId, item.item_name, item.category, item.unit, item.unit_price, item.quantity, item.unit_price * item.quantity]);
+    }
+    
+    await client.query('COMMIT');
+    
+    res.status(201).json(poResult.rows[0]);
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  } finally {
+    client.release();
+  }
+});
+
+// PUT update purchase order status
+app.put('/api/purchase-orders/:id/status', async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+  try {
+    const { rows } = await pool.query(`
+      UPDATE purchase_orders SET status = $1, updated_at = CURRENT_TIMESTAMP
+      WHERE id = $2 RETURNING *
+    `, [status, id]);
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Purchase order not found' });
+    }
+    res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+
+// DELETE purchase order item
+app.delete('/api/purchase-order-items/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    await pool.query('DELETE FROM purchase_order_items WHERE id = $1', [id]);
+    res.json({ message: 'Item removed' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST add item to existing purchase order
+app.post('/api/purchase-order-items', async (req, res) => {
+  const { po_id, item_name, category, unit, unit_price, quantity } = req.body;
+  const total_price = unit_price * quantity;
+  try {
+    const { rows } = await pool.query(`
+      INSERT INTO purchase_order_items (po_id, item_name, category, unit, unit_price, quantity, total_price)
+      VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *
+    `, [po_id, item_name, category, unit, unit_price, quantity, total_price]);
+    
+    // Update PO total amount
+    await pool.query(`
+      UPDATE purchase_orders SET total_amount = (
+        SELECT COALESCE(SUM(total_price), 0) FROM purchase_order_items WHERE po_id = $1
+      ) WHERE id = $1
+    `, [po_id]);
+    
+    res.status(201).json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT update purchase order (status, notes, items)
+app.put('/api/purchase-orders/:id', async (req, res) => {
+  const { id } = req.params;
+  const { status, notes, items } = req.body;
+  
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    
+    // Update status and notes
+    await client.query(`
+      UPDATE purchase_orders SET status = $1, notes = $2, updated_at = CURRENT_TIMESTAMP
+      WHERE id = $3
+    `, [status, notes, id]);
+    
+    // Update item prices and quantities
+    for (const item of items) {
+      await client.query(`
+        UPDATE purchase_order_items SET unit_price = $1, quantity = $2, total_price = $1 * $2
+        WHERE id = $3
+      `, [item.unit_price, item.quantity, item.item_id]);
+    }
+    
+    // Update total amount
+    await client.query(`
+      UPDATE purchase_orders SET total_amount = (
+        SELECT COALESCE(SUM(total_price), 0) FROM purchase_order_items WHERE po_id = $1
+      ) WHERE id = $1
+    `, [id]);
+    
+    await client.query('COMMIT');
+    res.json({ message: 'Purchase order updated' });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    res.status(500).json({ error: err.message });
+  } finally {
+    client.release();
+  }
+});
+
+
+
+// ============================================================
+// GOODS RECEIPT NOTE (GRN) API
+// ============================================================
+
+// GET all GRNs (with optional date filter)
+app.get('/api/grn', async (req, res) => {
+  const { date } = req.query;
+  let query = `
+    SELECT grn.*, v.name as vendor_name, po.po_number
+    FROM goods_receipt_notes grn
+    JOIN vendors v ON grn.vendor_id = v.id
+    JOIN purchase_orders po ON grn.po_id = po.id
+  `;
+  const params = [];
+  if (date) {
+    query += ' WHERE grn.receipt_date = $1';
+    params.push(date);
+  }
+  query += ' ORDER BY grn.receipt_date DESC, grn.id DESC';
+  try {
+    const { rows } = await pool.query(query, params);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET single GRN with items
+app.get('/api/grn/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const grnResult = await pool.query(`
+      SELECT grn.*, v.name as vendor_name, po.po_number
+      FROM goods_receipt_notes grn
+      JOIN vendors v ON grn.vendor_id = v.id
+      JOIN purchase_orders po ON grn.po_id = po.id
+      WHERE grn.id = $1
+    `, [id]);
+    
+    if (grnResult.rows.length === 0) {
+      return res.status(404).json({ error: 'GRN not found' });
+    }
+    
+    const itemsResult = await pool.query(`
+      SELECT * FROM goods_receipt_items WHERE grn_id = $1 ORDER BY id
+    `, [id]);
+    
+    res.json({
+      ...grnResult.rows[0],
+      items: itemsResult.rows
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST create GRN from purchase order (Receive goods)
+app.post('/api/grn/receive/:poId', async (req, res) => {
+  const { poId } = req.params;
+  const { notes, created_by } = req.body;
+  
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    
+    // Get purchase order details
+    const poResult = await client.query(`
+      SELECT po.*, v.name as vendor_name, v.id as vendor_id
+      FROM purchase_orders po
+      JOIN vendors v ON po.vendor_id = v.id
+      WHERE po.id = $1 AND po.status = 'pending'
+    `, [poId]);
+    
+    if (poResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Purchase order not found or already processed' });
+    }
+    const po = poResult.rows[0];
+    
+    // Get PO items
+    const itemsResult = await client.query(`
+      SELECT * FROM purchase_order_items WHERE po_id = $1
+    `, [poId]);
+    
+    if (itemsResult.rows.length === 0) {
+      return res.status(400).json({ error: 'No items in this purchase order' });
+    }
+    
+    // Generate GRN number
+    const dateStr = new Date().toISOString().slice(0,10).replace(/-/g, '');
+    const countResult = await client.query('SELECT COUNT(*) FROM goods_receipt_notes');
+    const grnNumber = `GRN-${dateStr}-${(parseInt(countResult.rows[0].count) + 1).toString().padStart(4, '0')}`;
+    
+    // Create GRN
+    const grnResult = await client.query(`
+      INSERT INTO goods_receipt_notes (grn_number, po_id, vendor_id, receipt_date, status, notes, created_by)
+      VALUES ($1, $2, $3, CURRENT_DATE, 'received', $4, $5) RETURNING *
+    `, [grnNumber, poId, po.vendor_id, notes, created_by || 'system']);
+    const grn = grnResult.rows[0];
+    
+    // Create GRN items and update main store inventory
+    for (const item of itemsResult.rows) {
+      // Insert GRN item
+      await client.query(`
+        INSERT INTO goods_receipt_items (grn_id, po_item_id, item_name, category, unit, quantity_received, unit_price, total_cost)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      `, [grn.id, item.id, item.item_name, item.category, item.unit, item.quantity, item.unit_price, item.total_price]);
+      
+      // Update main store inventory (store_items)
+      const existingItem = await client.query(`
+        SELECT * FROM store_items WHERE LOWER(TRIM(name)) = LOWER(TRIM($1))
+      `, [item.item_name]);
+      
+      if (existingItem.rows.length > 0) {
+        // Update existing item in main store
+        const stockItem = existingItem.rows[0];
+        const currentQtyParts = (stockItem.quantity || '0 units').split(' ');
+        const currentQty = parseFloat(currentQtyParts[0]) || 0;
+        const unit = currentQtyParts[1] || item.unit;
+        const newQty = currentQty + parseFloat(item.quantity);
+        const newQuantityStr = newQty + ' ' + unit;
+        
+        // Calculate new average cost
+        const currentTotalValue = currentQty * stockItem.cost;
+        const newTotalValue = currentTotalValue + item.total_price;
+        const newAvgCost = newTotalValue / newQty;
+        
+        await client.query(`
+          UPDATE store_items 
+          SET quantity = $1, stock_value = $2, cost = $3 
+          WHERE id = $4
+        `, [newQuantityStr, newQty, Math.round(newAvgCost), stockItem.id]);
+      } else {
+        // Create new item in main store
+        await client.query(`
+          INSERT INTO store_items (name, category, cost, quantity, stock_value, unit)
+          VALUES ($1, $2, $3, $4, $5, $6)
+        `, [item.item_name, item.category, item.unit_price, item.quantity + ' ' + item.unit, parseFloat(item.quantity), item.unit]);
+      }
+    }
+    
+    // Update purchase order status to 'received'
+    await client.query(`
+      UPDATE purchase_orders SET status = 'received', received_status = 'received', grn_id = $1 WHERE id = $2
+    `, [grn.id, poId]);
+    
+    await client.query('COMMIT');
+    
+    res.status(201).json({ 
+      message: 'Goods received successfully! Stock updated in Main Store.',
+      grn: grn,
+      items_received: itemsResult.rows.length
+    });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  } finally {
+    client.release();
+  }
+});
+
+
+
+// ============================================================
+// REPORTS API - For the report pages
+// ============================================================
+// ============================================================
+// REPORTS API - Add these to your server.js
+// ============================================================
+
+// GET /api/reports/purchase-orders - Filter by date range and status
+app.get('/api/reports/purchase-orders', async (req, res) => {
+  const { from, to, status, vendorId } = req.query;
+  let query = `
+    SELECT 
+      po.id, po.po_number, po.order_date, po.status, po.total_amount, 
+      po.created_by, po.created_at,
+      v.name as vendor_name,
+      (SELECT COUNT(*) FROM purchase_order_items WHERE po_id = po.id) as items_count
+    FROM purchase_orders po
+    JOIN vendors v ON po.vendor_id = v.id
+    WHERE 1=1
+  `;
+  const params = [];
+  let paramCount = 1;
+  
+  if (from) {
+    query += ` AND po.order_date >= $${paramCount++}`;
+    params.push(from);
+  }
+  if (to) {
+    query += ` AND po.order_date <= $${paramCount++}`;
+    params.push(to);
+  }
+  if (status && status !== 'all') {
+    query += ` AND po.status = $${paramCount++}`;
+    params.push(status);
+  }
+  if (vendorId && vendorId !== 'all') {
+    query += ` AND po.vendor_id = $${paramCount++}`;
+    params.push(parseInt(vendorId));
+  }
+  
+  query += ` ORDER BY po.order_date DESC, po.id DESC`;
+  
+  try {
+    const { rows } = await pool.query(query, params);
+    res.json(rows);
+  } catch (err) {
+    console.error('Error fetching PO report:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/reports/goods-receipt - Filter by date range and vendor
+// GET /api/reports/goods-receipt - CORRECTED with proper total calculation
+// GET /api/reports/goods-receipt - FIXED with proper numeric totals
+app.get('/api/reports/goods-receipt', async (req, res) => {
+  const { from, to, vendorId } = req.query;
+  let query = `
+    SELECT 
+      grn.id, 
+      grn.grn_number, 
+      grn.receipt_date, 
+      grn.status, 
+      grn.created_by,
+      po.po_number,
+      v.name as vendor_name,
+      COALESCE((
+        SELECT SUM(total_cost)::INTEGER
+        FROM goods_receipt_items 
+        WHERE grn_id = grn.id
+      ), 0) as total_value,
+      COALESCE((
+        SELECT COUNT(*) 
+        FROM goods_receipt_items 
+        WHERE grn_id = grn.id
+      ), 0) as items_count
+    FROM goods_receipt_notes grn
+    JOIN purchase_orders po ON grn.po_id = po.id
+    JOIN vendors v ON grn.vendor_id = v.id
+    WHERE 1=1
+  `;
+  const params = [];
+  let paramCount = 1;
+  
+  if (from) {
+    query += ` AND grn.receipt_date >= $${paramCount++}::date`;
+    params.push(from);
+  }
+  if (to) {
+    query += ` AND grn.receipt_date <= $${paramCount++}::date`;
+    params.push(to);
+  }
+  if (vendorId && vendorId !== 'all') {
+    query += ` AND grn.vendor_id = $${paramCount++}`;
+    params.push(parseInt(vendorId));
+  }
+  
+  query += ` ORDER BY grn.receipt_date DESC, grn.id DESC`;
+  
+  try {
+    const { rows } = await pool.query(query, params);
+    // Ensure total_value is a number
+    const formattedRows = rows.map(row => ({
+      ...row,
+      total_value: parseInt(row.total_value) || 0
+    }));
+    res.json(formattedRows);
+  } catch (err) {
+    console.error('Error fetching GRN report:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/grn/:id/items - Get items for a specific GRN
+app.get('/api/grn/:id/items', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const { rows } = await pool.query(`
+      SELECT * FROM goods_receipt_items WHERE grn_id = $1 ORDER BY id
+    `, [id]);
+    res.json(rows);
+  } catch (err) {
+    console.error('Error fetching GRN items:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/purchase-orders/:id/items - Get items for a specific PO
+app.get('/api/purchase-orders/:id/items', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const { rows } = await pool.query(`
+      SELECT * FROM purchase_order_items WHERE po_id = $1 ORDER BY id
+    `, [id]);
+    res.json(rows);
+  } catch (err) {
+    console.error('Error fetching PO items:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+// ============================================================
+// SALES API ENDPOINTS
+// ============================================================
+// ============================================================
+// SALES API ENDPOINTS (FIXED DATE HANDLING)
+// ============================================================
+
+// POST /api/sales - Save a completed sale
+app.post('/api/sales', async (req, res) => {
+  const { items, total_amount, cashier_id, cashier_name } = req.body;
+  
+  if (!items || items.length === 0) {
+    return res.status(400).json({ error: 'No items in sale' });
+  }
+  
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    
+    const orderResult = await client.query(`
+      INSERT INTO sales_orders (cashier_id, cashier_name, total_amount, status, order_date)
+      VALUES ($1, $2, $3, 'completed', CURRENT_TIMESTAMP)
+      RETURNING id, order_number
+    `, [cashier_id || null, cashier_name, total_amount]);
+    
+    const saleId = orderResult.rows[0].id;
+    const orderNumber = orderResult.rows[0].order_number;
+    
+    for (const item of items) {
+      await client.query(`
+        INSERT INTO sales_items (sale_id, item_id, item_name, category, unit, quantity, unit_price, total_price)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      `, [saleId, item.item_id || null, item.item_name, item.category, item.unit, item.quantity, item.unit_price, item.total_price]);
+    }
+    
+    await client.query('COMMIT');
+    
+    res.status(201).json({ 
+      success: true, 
+      order_number: orderNumber,
+      message: 'Sale saved successfully' 
+    });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('Error saving sale:', err);
+    res.status(500).json({ error: err.message });
+  } finally {
+    client.release();
+  }
+});
+
+// GET /api/sales - Get sales with date filter (FIXED - includes full end date)
+app.get('/api/sales', async (req, res) => {
+  const { from, to } = req.query;
+  let query = `
+    SELECT 
+      so.id, so.order_number, so.cashier_name, so.total_amount, 
+      so.order_date, so.status,
+      COALESCE((
+        SELECT SUM(si.quantity)::INTEGER
+        FROM sales_items si
+        WHERE si.sale_id = so.id
+      ), 0) as total_items
+    FROM sales_orders so
+    WHERE 1=1
+  `;
+  const params = [];
+  let paramCount = 1;
+  
+  if (from) {
+    query += ` AND so.order_date >= $${paramCount++}::date`;
+    params.push(from);
+  }
+  if (to) {
+    // FIX: Add 1 day to include the entire end date
+    query += ` AND so.order_date < ($${paramCount++}::date + INTERVAL '1 day')`;
+    params.push(to);
+  }
+  
+  query += ` ORDER BY so.order_date DESC`;
+  
+  try {
+    const { rows } = await pool.query(query, params);
+    res.json(rows);
+  } catch (err) {
+    console.error('Error fetching sales:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/sales/:id/items - Get items for a specific sale
+app.get('/api/sales/:id/items', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const { rows } = await pool.query(`
+      SELECT * FROM sales_items WHERE sale_id = $1 ORDER BY id
+    `, [id]);
+    res.json(rows);
+  } catch (err) {
+    console.error('Error fetching sale items:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/sales/stats/summary - Get sales summary statistics
+app.get('/api/sales/stats/summary', async (req, res) => {
+  const { from, to } = req.query;
+  let query = `
+    SELECT 
+      COUNT(*)::INTEGER as total_orders,
+      COALESCE(SUM(total_amount), 0)::INTEGER as total_revenue,
+      COALESCE(AVG(total_amount), 0)::INTEGER as avg_order_value
+    FROM sales_orders
+    WHERE 1=1
+  `;
+  const params = [];
+  let paramCount = 1;
+  
+  if (from) {
+    query += ` AND order_date >= $${paramCount++}::date`;
+    params.push(from);
+  }
+  if (to) {
+    query += ` AND order_date < ($${paramCount++}::date + INTERVAL '1 day')`;
+    params.push(to);
+  }
+  
+  try {
+    const { rows } = await pool.query(query, params);
+    res.json(rows[0]);
+  } catch (err) {
+    console.error('Error fetching sales stats:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/sales/top-products - Get best selling products
+app.get('/api/sales/top-products', async (req, res) => {
+  const { from, to, limit = 10 } = req.query;
+  let query = `
+    SELECT 
+      si.item_name,
+      si.category,
+      SUM(si.quantity)::INTEGER as total_quantity,
+      SUM(si.total_price)::INTEGER as total_revenue
+    FROM sales_items si
+    JOIN sales_orders so ON si.sale_id = so.id
+    WHERE 1=1
+  `;
+  const params = [];
+  let paramCount = 1;
+  
+  if (from) {
+    query += ` AND so.order_date >= $${paramCount++}::date`;
+    params.push(from);
+  }
+  if (to) {
+    query += ` AND so.order_date < ($${paramCount++}::date + INTERVAL '1 day')`;
+    params.push(to);
+  }
+  
+  query += ` GROUP BY si.item_name, si.category
+             ORDER BY total_quantity DESC
+             LIMIT $${paramCount}`;
+  params.push(limit);
+  
+  try {
+    const { rows } = await pool.query(query, params);
+    res.json(rows);
+  } catch (err) {
+    console.error('Error fetching top products:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+
+// ============================================================
+// CATEGORIES API
+// ============================================================
+
+// GET all categories
+app.get('/api/categories', async (req, res) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT c.*, 
+        (SELECT COUNT(*) FROM store_items WHERE category = c.name) as items_count
+      FROM categories c
+      ORDER BY c.name
+    `);
+    res.json(rows);
+  } catch (err) {
+    console.error('Error fetching categories:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST create new category
+app.post('/api/categories', async (req, res) => {
+  const { name, type } = req.body;
+  if (!name) {
+    return res.status(400).json({ error: 'Category name is required' });
+  }
+  try {
+    const { rows } = await pool.query(
+      'INSERT INTO categories (name, type) VALUES ($1, $2) RETURNING *',
+      [name.trim(), type || 'store']
+    );
+    res.status(201).json(rows[0]);
+  } catch (err) {
+    if (err.code === '23505') {
+      return res.status(409).json({ error: 'Category already exists' });
+    }
+    console.error('Error creating category:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT update category
+app.put('/api/categories/:id', async (req, res) => {
+  const { id } = req.params;
+  const { name, type } = req.body;
+  try {
+    const { rows } = await pool.query(
+      'UPDATE categories SET name = $1, type = $2 WHERE id = $3 RETURNING *',
+      [name, type, id]
+    );
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Category not found' });
+    }
+    res.json(rows[0]);
+  } catch (err) {
+    if (err.code === '23505') {
+      return res.status(409).json({ error: 'Category name already exists' });
+    }
+    console.error('Error updating category:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE category
+app.delete('/api/categories/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    // First check if category has any items
+    const categoryCheck = await pool.query(
+      'SELECT name FROM categories WHERE id = $1',
+      [id]
+    );
+    if (categoryCheck.rows.length === 0) {
+      return res.status(404).json({ error: 'Category not found' });
+    }
+    
+    const categoryName = categoryCheck.rows[0].name;
+    
+    // Update items with this category to NULL or a default?
+    // Set to NULL (will show as uncategorized)
+    await pool.query(
+      'UPDATE store_items SET category = NULL WHERE category = $1',
+      [categoryName]
+    );
+    
+    // Delete the category
+    const { rowCount } = await pool.query('DELETE FROM categories WHERE id = $1', [id]);
+    if (rowCount === 0) {
+      return res.status(404).json({ error: 'Category not found' });
+    }
+    res.json({ message: 'Category deleted successfully' });
+  } catch (err) {
+    console.error('Error deleting category:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+
+
+// ============================================================
+// ACTIVITY LOGGER FUNCTION
+// ============================================================
+// ============================================================
+// ACTIVITY LOGS API
+// ============================================================
+// GET /api/activity-logs - Get all activity logs with proper date filtering
+app.get('/api/activity-logs', async (req, res) => {
+  const { from, to, action, entityType, limit = 500 } = req.query;
+  let query = `
+    SELECT 
+      al.id,
+      al.user_id,
+      al.username,
+      al.action,
+      al.entity_type,
+      al.entity_id,
+      al.old_data,
+      al.new_data,
+      al.ip_address,
+      al.user_agent,
+      al.created_at
+    FROM activity_logs al
+    WHERE 1=1
+  `;
+  const params = [];
+  let paramCount = 1;
+  
+  // FIX: Compare date only, not time
+  if (from) {
+    query += ` AND DATE(al.created_at) >= $${paramCount++}`;
+    params.push(from);
+  }
+  if (to) {
+    query += ` AND DATE(al.created_at) <= $${paramCount++}`;
+    params.push(to);
+  }
+  if (action && action !== '') {
+    query += ` AND al.action = $${paramCount++}`;
+    params.push(action);
+  }
+  if (entityType && entityType !== '') {
+    query += ` AND al.entity_type = $${paramCount++}`;
+    params.push(entityType);
+  }
+  
+  query += ` ORDER BY al.created_at DESC LIMIT $${paramCount}`;
+  params.push(parseInt(limit));
+  
+  try {
+    const { rows } = await pool.query(query, params);
+    console.log(`📋 Found ${rows.length} activity logs for date range: ${from || 'start'} to ${to || 'end'}`);
+    res.json(rows);
+  } catch (err) {
+    console.error('Error fetching activity logs:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+

@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Goods Receipt Report - Steps PMS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Filter Bar */
+.filter-bar {
+  background: white;
+  border-radius: 20px;
+  padding: 16px 24px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: flex-end;
+  margin-bottom: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.filter-group label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.filter-group input,
+.filter-group select {
+  padding: 8px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  min-width: 160px;
+}
+
+.btn-gold {
+  background: #c9933a;
+  color: white;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 40px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-gold:hover {
+  background: #b07e2c;
+}
+
+.btn-outline {
+  background: transparent;
+  border: 1px solid #e2e8f0;
+  padding: 8px 20px;
+  border-radius: 40px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-outline:hover {
+  background: #f8fafc;
+}
+
+/* Stats Row */
+.stats-row {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.stat-card {
+  background: white;
+  border-radius: 20px;
+  padding: 20px;
+  flex: 1;
+  min-width: 160px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.stat-card .stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-top: 8px;
+}
+
+.stat-card .stat-label {
+  font-size: 12px;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+/* Data Table */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.data-table th,
+.data-table td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.data-table th {
+  background: #f8fafc;
+  font-weight: 600;
+}
+
+/* Card */
+.card {
+  background: white;
+  border-radius: 24px;
+  margin-bottom: 24px;
+}
+
+.card-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid #e2e8f0;
+  font-weight: 700;
+  font-size: 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-body {
+  padding: 20px 24px;
+  overflow-x: auto;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 48px;
+  color: #94a3b8;
+}
+
+/* Items Modal */
+.items-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.items-modal-content {
+  background: white;
+  border-radius: 20px;
+  width: 85%;
+  max-width: 900px;
+  max-height: 85%;
+  overflow: auto;
+}
+
+.items-modal-header {
+  padding: 20px;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #1e2a3e;
+  color: white;
+  border-radius: 20px 20px 0 0;
+}
+
+.items-modal-header button {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.items-modal-body {
+  padding: 20px;
+  overflow-x: auto;
+}
+
+/* User Dropdown */
+.user-dropdown {
+  position: relative;
+  cursor: pointer;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 55px;
+  right: 0;
+  background: white;
+  min-width: 200px;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  padding: 0.5rem 0;
+  z-index: 100;
+  display: none;
+}
+
+.dropdown-menu.show {
+  display: block;
+}
+
+.dropdown-menu button,
+.dropdown-menu a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 18px;
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  text-decoration: none;
+  color: #1e293b;
+  font-family: inherit;
+}
+
+.dropdown-menu button:hover,
+.dropdown-menu a:hover {
+  background: #f5f3ef;
+}
+
+.dropdown-menu hr {
+  margin: 0.3rem 0;
+}
+
+.user-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: #f5f5f5;
+  border-radius: 40px;
+  cursor: pointer;
+}
+
+.fa-chevron-down {
+  transition: transform 0.2s;
+}
+
+.user-pill.active .fa-chevron-down {
+  transform: rotate(180deg);
+}
+
+/* ============================================================
+   CHANGE PASSWORD MODAL - DESKTOP (top-right) / MOBILE (centered)
+   ============================================================ */
+#changePwOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 10000;
+  display: none;
+}
+
+#changePwOverlay.show {
+  display: block;
+}
+
+#changePwModal {
+  position: fixed;
+  background: white;
+  border-radius: 24px;
+  width: 90%;
+  max-width: 450px;
+  z-index: 10001;
+  display: none;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+
+/* Desktop (screen width > 768px) - position near user dropdown */
+@media (min-width: 769px) {
+  #changePwModal {
+    top: 70px;
+    right: 20px;
+    left: auto;
+    bottom: auto;
+    transform: none;
+  }
+}
+
+/* Mobile (screen width <= 768px) - center the modal */
+@media (max-width: 768px) {
+  #changePwModal {
+    top: 50%;
+    left: 50%;
+    right: auto;
+    bottom: auto;
+    transform: translate(-50%, -50%);
+  }
+}
+
+@media (max-width: 480px) {
+  #changePwModal {
+    width: 95%;
+    max-width: 95%;
+  }
+}
+
+#changePwModal.show {
+  display: block;
+}
+
+.change-pw-header {
+  padding: 20px 28px;
+  background: #1e2a3e;
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.change-pw-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-family: 'Playfair Display', serif;
+}
+
+.change-pw-header button {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.change-pw-body {
+  padding: 28px;
+}
+
+/* Form styles inside modal */
+.form-group {
+  margin-bottom: 18px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+  font-size: 13px;
+  color: #334155;
+}
+
+.form-control {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 28px;
+  font-size: 14px;
+  font-family: 'Inter', sans-serif;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: #c9933a;
+  box-shadow: 0 0 0 3px rgba(201, 147, 58, 0.1);
+}
+
+.btn-pw-success {
+  background: #10b981;
+  color: white;
+  border: none;
+  padding: 12px;
+  border-radius: 40px;
+  width: 100%;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 14px;
+  transition: background 0.2s;
+}
+
+.btn-pw-success:hover {
+  background: #059669;
+}
+
+.divider {
+  margin: 20px 0;
+  border-top: 1px solid #e2e8f0;
+}
+
+.btn-pw-cancel {
+  background: transparent;
+  border: 1px solid #e2e8f0;
+  padding: 12px;
+  border-radius: 40px;
+  width: 100%;
+  cursor: pointer;
+  font-weight: 500;
+  margin-top: 10px;
+  transition: background 0.2s;
+}
+
+.btn-pw-cancel:hover {
+  background: #f8fafc;
+}
+
+.toast-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1100;
+}
+
+/* ============================================================
+   MOBILE RESPONSIVE STYLES
+   ============================================================ */
+
+/* Tablet and below */
+@media (max-width: 992px) {
+  .main-content {
+    margin-left: 0;
+    padding: 16px;
+  }
+}
+
+/* Mobile styles */
+@media (max-width: 768px) {
+  /* Filter bar - stack vertically */
+  .filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 16px;
+  }
+
+  .filter-group {
+    width: 100%;
+  }
+
+  .filter-group input,
+  .filter-group select {
+    width: 100%;
+    min-width: auto;
+  }
+
+  .filter-bar .btn-gold,
+  .filter-bar .btn-outline {
+    width: 100%;
+    margin-top: 4px;
+  }
+
+  /* Stats row - 2 columns */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .stat-card {
+    padding: 12px;
+    min-width: auto;
+  }
+
+  .stat-card .stat-value {
+    font-size: 20px;
+  }
+
+  .stat-card .stat-label {
+    font-size: 10px;
+  }
+
+  /* Card header - stack */
+  .card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 16px;
+  }
+
+  /* Make table horizontally scrollable */
+  .card-body {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 16px;
+    margin: 0;
+  }
+
+  .data-table {
+    min-width: 650px;
+    width: 100%;
+  }
+
+  .data-table th,
+  .data-table td {
+    white-space: nowrap;
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+
+  /* Modal responsive */
+  .items-modal-content {
+    width: 95%;
+    max-width: 95%;
+    max-height: 90vh;
+  }
+
+  .items-modal-header {
+    padding: 16px;
+  }
+
+  .items-modal-header h3 {
+    font-size: 16px;
+  }
+
+  .items-modal-body {
+    padding: 16px;
+    overflow-x: auto;
+  }
+
+  /* Items table in modal - scrollable */
+  .items-modal-body table {
+    min-width: 500px;
+  }
+
+  .items-modal-body th,
+  .items-modal-body td {
+    padding: 8px;
+    font-size: 11px;
+    white-space: nowrap;
+  }
+
+  /* Change password modal body padding */
+  .change-pw-body {
+    padding: 20px;
+  }
+}
+
+/* Very small phones */
+@media (max-width: 480px) {
+  .stats-row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .stat-card .stat-value {
+    font-size: 18px;
+  }
+
+  .btn-gold,
+  .btn-outline {
+    padding: 10px;
+    font-size: 13px;
+  }
+
+  .filter-group label {
+    font-size: 10px;
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: 8px 10px;
+    font-size: 11px;
+  }
+
+  .change-pw-body {
+    padding: 16px;
+  }
+
+  .change-pw-header {
+    padding: 16px 20px;
+  }
+
+  .change-pw-header h3 {
+    font-size: 16px;
+  }
+
+  .form-control {
+    padding: 10px 14px;
+    font-size: 13px;
+  }
+
+  .items-modal-body th,
+  .items-modal-body td {
+    padding: 6px;
+    font-size: 10px;
+  }
+}
+
+/* Touch-friendly improvements */
+@media (hover: none) and (pointer: coarse) {
+  .btn-gold,
+  .btn-outline,
+  button {
+    min-height: 44px;
+  }
+
+  .filter-group input,
+  .filter-group select {
+    min-height: 44px;
+    font-size: 14px;
+  }
+
+  button:active {
+    transform: scale(0.97);
+  }
+}
+  </style>
+</head>
+<body>
+<div class="overlay" id="overlay-main"></div>
+
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-top">
+    <a class="sidebar-logo" href="/">
+      <div class="logo-icon">🏨</div>
+      <div class="logo-text">
+        <span>Steps</span>
+        <span>Premium Suite</span>
+      </div>
+    </a>
+    <button class="sidebar-close-btn" id="sidebar-close-btn">✕</button>
+  </div>
+  
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Core Operations</div>
+    <a href="/dashboard" class="nav-item">📊 Stay View</a>
+    <a href="/reservations" class="nav-item">📅 Reservations</a>
+    <a href="/housekeeping" class="nav-item">🧹 Housekeeping</a>
+    
+    <div class="nav-section-label">Property</div>
+    <a href="/apartments" class="nav-item">🏠 Apartments View</a>
+    <a href="/apartments-list" class="nav-item">📋 Apartments List</a>
+    
+    <div class="nav-section-label">Store & Procurement</div>
+    <a href="/store-main" class="nav-item">🏬 Main Store</a>
+    <a href="/store-outlets" class="nav-item">🏪 Outlets Store</a>
+    <a href="/purchase-orders" class="nav-item">📦 Purchase Orders</a>
+    <a href="/goods-receipt" class="nav-item">✅ Goods Receipt</a>
+    
+    <div class="nav-section-label">Reports</div>
+    <a href="/reports" class="nav-item">📊 Reservations Report</a>
+    <a href="/purchase-orders-reports" class="nav-item">📄 Purchase Orders Report</a>
+    <a href="/goods-receipt-reports" class="nav-item active">📋 Goods Receipt Report</a>
+    <a href="/store-inventory-reports" class="nav-item">📦 Store Inventory Report</a>
+    
+    <div class="nav-section-label">Administration</div>
+    <a href="/users" class="nav-item">👥 User Management</a>
+  </nav>
+  
+  <div class="sidebar-footer">
+    <small>Steps PMS v1.0 · Dar es Salaam</small>
+  </div>
+</aside>
+
+<nav class="navbar">
+  <div class="navbar-left">
+    <button class="hamburger" id="hamburger-btn"><span class="hb-bar"></span><span class="hb-bar"></span><span class="hb-bar"></span></button>
+    <div><div class="page-title">Goods Receipt Report</div><div class="page-subtitle">Track received goods</div></div>
+  </div>
+  <div class="navbar-right">
+    <button class="notif-btn">🔔<span class="badge">3</span></button>
+    <div class="user-dropdown">
+      <div class="user-pill" id="userPill">
+        <div class="user-avatar" id="userAvatar">U</div>
+        <div class="user-info"><span id="userName">Loading...</span><span id="userRole">Loading...</span></div>
+        <i class="fas fa-chevron-down"></i>
+      </div>
+      <div class="dropdown-menu" id="dropdownMenu">
+        <button onclick="openChangePasswordModal()"><i class="fas fa-key"></i> Change Password</button>
+        <a href="/users" class="dropdown-item"><i class="fas fa-users"></i> User Management</a>
+        <hr>
+        <button onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<main class="main-content">
+  <div class="filter-bar">
+    <div class="filter-group"><label>From Date</label><input type="date" id="filter-from"></div>
+    <div class="filter-group"><label>To Date</label><input type="date" id="filter-to"></div>
+    <div class="filter-group"><label>Vendor</label><select id="filter-vendor"><option value="all">All Vendors</option></select></div>
+    <button class="btn-gold" onclick="loadReport()">🔍 Apply</button>
+    <button class="btn-outline" onclick="clearFilters()">Clear</button>
+    <button class="btn-outline" onclick="exportToCSV()">📎 Export</button>
+  </div>
+  
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-label">Total GRNs</div><div class="stat-value" id="stat-total">—</div></div>
+    <div class="stat-card"><div class="stat-label">Total Value</div><div class="stat-value" id="stat-value">—</div></div>
+    <div class="stat-card"><div class="stat-label">Avg GRN Value</div><div class="stat-value" id="stat-avg">—</div></div>
+  </div>
+  
+  <div class="card">
+    <div class="card-header"><span>📋 Goods Receipt Details</span><span id="result-count"></span></div>
+    <div class="card-body">
+      <table class="data-table" id="grn-table">
+        <thead>
+          <tr><th>GRN Number</th><th>Date</th><th>PO Number</th><th>Vendor</th><th>Total Value</th><th>Actions</th></tr>
+        </thead>
+        <tbody id="grn-body"><tr><td colspan="6" class="empty-state">Loading... Please wait</tr</tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<!-- Items Modal -->
+<div id="itemsModal" class="items-modal">
+  <div class="items-modal-content">
+    <div class="items-modal-header">
+      <h3 id="modalTitle">GRN Items</h3>
+      <button onclick="closeModal()">✕</button>
+    </div>
+    <div class="items-modal-body" id="modalBody">Loading...</div>
+  </div>
+</div>
+
+<!-- Change Password Modal -->
+<div class="reservation-modal-overlay" id="change-password-modal-overlay"></div>
+<div class="reservation-modal" id="change-password-modal">
+  <div class="reservation-modal-header">
+    <h3>🔐 Change Password</h3>
+    <button class="reservation-modal-close" onclick="closeChangePasswordModal()">✕</button>
+  </div>
+  <div class="reservation-modal-body">
+    <form id="change-password-form">
+      <div class="form-group">
+        <label>Current Password</label>
+        <input type="password" id="current-password" class="form-control" required>
+      </div>
+      <div class="form-group">
+        <label>New Password (min 6 characters)</label>
+        <input type="password" id="new-password" class="form-control" required>
+      </div>
+      <div class="form-group">
+        <label>Confirm New Password</label>
+        <input type="password" id="confirm-password" class="form-control" required>
+      </div>
+      <hr class="divider" />
+      <button type="submit" class="btn-success">✅ Update Password</button>
+      <button type="button" class="btn-outline" style="margin-top:10px; width:100%;" onclick="closeChangePasswordModal()">Cancel</button>
+    </form>
+  </div>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+
+<script>
+  // ============================================================
+  // HELPER FUNCTIONS
+  // ============================================================
+  function escapeHtml(str) { if (!str) return ''; return String(str).replace(/[&<>]/g, function(m) { if (m === '&') return '&amp;'; if (m === '<') return '&lt;'; if (m === '>') return '&gt;'; return m; }); }
+  function fmtTSH(value) { return 'TSh ' + (value || 0).toLocaleString(); }
+  function showToast(msg, type) { 
+    var toast = document.getElementById('toast-container'); 
+    var bg = type === 'error' ? '#ef4444' : '#10b981';
+    toast.innerHTML = '<div style="background:' + bg + ';color:white;padding:12px 20px;border-radius:40px;margin-bottom:8px;">' + msg + '</div>'; 
+    setTimeout(function() { toast.innerHTML = ''; }, 3000); 
+  }
+  
+  // ============================================================
+  // SIDEBAR TOGGLE
+  // ============================================================
+  var hamburger = document.getElementById('hamburger-btn');
+  var sidebar = document.getElementById('sidebar');
+  var overlay = document.getElementById('overlay-main');
+  var sidebarClose = document.getElementById('sidebar-close-btn');
+  
+  function openSidebar() { sidebar.classList.add('open'); overlay.classList.add('open'); }
+  function closeSidebar() { sidebar.classList.remove('open'); overlay.classList.remove('open'); }
+  
+  if (hamburger) { hamburger.addEventListener('click', function() { sidebar.classList.contains('open') ? closeSidebar() : openSidebar(); }); }
+  if (sidebarClose) { sidebarClose.addEventListener('click', closeSidebar); }
+  if (overlay) { overlay.addEventListener('click', closeSidebar); }
+  document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeSidebar(); });
+  
+  // ============================================================
+  // USER AUTHENTICATION
+  // ============================================================
+  function getCurrentUser() { var u = sessionStorage.getItem('pms_user'); return u ? JSON.parse(u) : null; }
+  function logout() { sessionStorage.removeItem('pms_user'); window.location.href = '/login'; }
+  
+  var currentUser = getCurrentUser(); 
+  if (!currentUser) { window.location.href = '/login'; }
+  
+  document.getElementById('userName').innerText = currentUser.fullName || currentUser.username;
+  document.getElementById('userRole').innerText = currentUser.role || 'User';
+  document.getElementById('userAvatar').innerText = (currentUser.fullName || currentUser.username || 'U')[0];
+  
+  // Dropdown toggle
+  var userPill = document.getElementById('userPill');
+  var dropdownMenu = document.getElementById('dropdownMenu');
+  if (userPill) { 
+    userPill.addEventListener('click', function(e) { e.stopPropagation(); dropdownMenu.classList.toggle('show'); userPill.classList.toggle('active'); }); 
+  }
+  document.addEventListener('click', function() { dropdownMenu.classList.remove('show'); if (userPill) userPill.classList.remove('active'); });
+  
+  // ============================================================
+  // API FUNCTIONS
+  // ============================================================
+  var API_BASE = 'http://localhost:3000';
+  async function apiGet(url) { var res = await fetch(API_BASE + url); if (!res.ok) throw new Error(await res.text()); return res.json(); }
+  
+  // ============================================================
+  // LOAD VENDORS
+  // ============================================================
+  async function loadVendors() { 
+    try { 
+      var vendors = await apiGet('/api/vendors'); 
+      var sel = document.getElementById('filter-vendor'); 
+      sel.innerHTML = '<option value="all">All Vendors</option>'; 
+      for (var i = 0; i < vendors.length; i++) { 
+        sel.innerHTML += '<option value="' + vendors[i].id + '">' + escapeHtml(vendors[i].name) + '</option>'; 
+      } 
+    } catch(e) { console.error(e); } 
+  }
+  
+  // ============================================================
+  // LOAD REPORT
+  // ============================================================
+  async function loadReport() {
+    var from = document.getElementById('filter-from').value;
+    var to = document.getElementById('filter-to').value;
+    var vid = document.getElementById('filter-vendor').value;
+    var url = '/api/reports/goods-receipt?';
+    if (from) url += 'from=' + from + '&';
+    if (to) url += 'to=' + to + '&';
+    if (vid !== 'all') url += 'vendorId=' + vid;
+    try { 
+      var data = await apiGet(url); 
+      renderTable(data); 
+      calculateStatsCorrectly(data); 
+    } catch(err) { 
+      document.getElementById('grn-body').innerHTML = '<tr><td colspan="6" class="empty-state">Error: ' + err.message + '</td</tr>'; 
+      showToast('Failed to load: ' + err.message, 'error'); 
+    }
+  }
+  
+  // ============================================================
+  // RENDER TABLE
+  // ============================================================
+  function renderTable(grns) {
+    var tbody = document.getElementById('grn-body');
+    if (!grns || grns.length === 0) { 
+      tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No GRNs found for selected criteria</td</tr>'; 
+      document.getElementById('result-count').innerText = ''; 
+      return; 
+    }
+    var html = '';
+    for (var i = 0; i < grns.length; i++) {
+      var g = grns[i];
+      html += '<tr>';
+      html += '<td><strong>' + escapeHtml(g.grn_number) + '</strong></td>';
+      html += '<td>' + g.receipt_date + '</td>';
+      html += '<td>' + escapeHtml(g.po_number) + '</td>';
+      html += '<td>' + escapeHtml(g.vendor_name) + '</td>';
+      html += '<td>' + fmtTSH(g.total_value) + '</td>';
+      html += '<td><button class="btn-outline" style="padding:4px 12px" onclick="viewItems(' + g.id + ', \'' + escapeHtml(g.grn_number) + '\')">📋 View Items</button></td>';
+      html += '</tr>';
+    }
+    tbody.innerHTML = html;
+    document.getElementById('result-count').innerText = 'Showing ' + grns.length + ' records';
+  }
+  
+  // ============================================================
+  // CALCULATE STATISTICS
+  // ============================================================
+  function calculateStatsCorrectly(grns) {
+    var totalCount = grns.length;
+    var totalValue = 0;
+    for (var i = 0; i < grns.length; i++) {
+      totalValue += (grns[i].total_value || 0);
+    }
+    var avgValue = totalCount > 0 ? totalValue / totalCount : 0;
+    
+    document.getElementById('stat-total').innerText = totalCount;
+    document.getElementById('stat-value').innerHTML = fmtTSH(totalValue);
+    document.getElementById('stat-avg').innerHTML = fmtTSH(Math.round(avgValue));
+  }
+  
+  // ============================================================
+  // VIEW ITEMS IN MODAL
+  // ============================================================
+  async function viewItems(grnId, grnNumber) {
+    var modal = document.getElementById('itemsModal');
+    var modalTitle = document.getElementById('modalTitle');
+    var modalBody = document.getElementById('modalBody');
+    modalTitle.innerHTML = '📋 ' + grnNumber + ' - Received Items';
+    modalBody.innerHTML = '<div style="text-align:center;padding:40px;">Loading items...</div>';
+    modal.style.display = 'flex';
+    try {
+      var items = await apiGet('/api/grn/' + grnId + '/items');
+      if (!items || items.length === 0) {
+        modalBody.innerHTML = '<div style="text-align:center;padding:40px;color:#64748b;">No items found for this GRN</div>';
+        return;
+      }
+      var html = '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;">';
+      html += '<thead><tr style="background:#f1f5f9;">';
+      html += '<th style="padding:12px;text-align:left;">Item Name</th>';
+      html += '<th style="padding:12px;text-align:left;">Category</th>';
+      html += '<th style="padding:12px;text-align:left;">Unit</th>';
+      html += '<th style="padding:12px;text-align:left;">Quantity</th>';
+      html += '<th style="padding:12px;text-align:left;">Unit Price</th>';
+      html += '<th style="padding:12px;text-align:left;">Total</th>';
+      html += '</tr></thead><tbody>';
+      var grandTotal = 0;
+      for (var i = 0; i < items.length; i++) {
+        var item = items[i];
+        var qty = item.quantity_received || item.quantity || 0;
+        var unitPrice = item.unit_price || 0;
+        var total = item.total_cost || (qty * unitPrice);
+        grandTotal += total;
+        html += '<tr>';
+        html += '<td style="padding:10px;border-bottom:1px solid #e2e8f0;"><strong>' + escapeHtml(item.item_name) + '</strong></td>';
+        html += '<td style="padding:10px;border-bottom:1px solid #e2e8f0;">' + escapeHtml(item.category) + '</td>';
+        html += '<td style="padding:10px;border-bottom:1px solid #e2e8f0;">' + escapeHtml(item.unit || 'units') + '</td>';
+        html += '<td style="padding:10px;border-bottom:1px solid #e2e8f0;">' + qty + '</td>';
+        html += '<td style="padding:10px;border-bottom:1px solid #e2e8f0;">' + fmtTSH(unitPrice) + '</td>';
+        html += '<td style="padding:10px;border-bottom:1px solid #e2e8f0;">' + fmtTSH(total) + '</td>';
+        html += '</tr>';
+      }
+      html += '<tr style="background:#f1f5f9;font-weight:bold;">';
+      html += '<td colspan="5" style="padding:12px;">GRAND TOTAL</td>';
+      html += '<td style="padding:12px;">' + fmtTSH(grandTotal) + '</td>';
+      html += '</tr></tbody></table></div>';
+      modalBody.innerHTML = html;
+    } catch(err) {
+      console.error('Error:', err);
+      modalBody.innerHTML = '<div style="text-align:center;padding:40px;color:#dc2626;">Failed to load items: ' + err.message + '</div>';
+      showToast('Failed to load items: ' + err.message, 'error');
+    }
+  }
+  
+  function closeModal() { document.getElementById('itemsModal').style.display = 'none'; }
+  
+  // ============================================================
+  // CLEAR FILTERS
+  // ============================================================
+  function clearFilters() { 
+    document.getElementById('filter-from').value = ''; 
+    document.getElementById('filter-to').value = ''; 
+    document.getElementById('filter-vendor').value = 'all'; 
+    loadReport(); 
+  }
+  
+  // ============================================================
+  // EXPORT TO CSV
+  // ============================================================
+  function exportToCSV() { 
+    var csv = 'GRN Number,Date,PO Number,Vendor,Total Value\n'; 
+    var rows = document.querySelectorAll('#grn-body tr'); 
+    for (var i = 0; i < rows.length; i++) { 
+      var cells = rows[i].querySelectorAll('td'); 
+      if (cells.length && cells[0] && cells[0].innerText !== 'No GRNs found for selected criteria') { 
+        csv += '"' + cells[0].innerText + '","' + cells[1].innerText + '","' + cells[2].innerText + '","' + cells[3].innerText + '","' + cells[4].innerText + '"\n'; 
+      } 
+    }
+    var blob = new Blob([csv], {type: 'text/csv'}); 
+    var a = document.createElement('a'); 
+    a.href = URL.createObjectURL(blob); 
+    a.download = 'grn_report_' + new Date().toISOString().split('T')[0] + '.csv'; 
+    a.click(); 
+    URL.revokeObjectURL(a.href); 
+    showToast('Exported successfully!', 'success'); 
+  }
+  
+  // ============================================================
+  // CHANGE PASSWORD MODAL FUNCTIONS
+  // ============================================================
+  function openChangePasswordModal() {
+    var modal = document.getElementById('change-password-modal');
+    var modalOverlay = document.getElementById('change-password-modal-overlay');
+    if (modal && modalOverlay) {
+      modal.classList.add('open');
+      modalOverlay.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+    if (dropdownMenu) dropdownMenu.classList.remove('show');
+    if (userPill) userPill.classList.remove('active');
+  }
+  
+  function closeChangePasswordModal() {
+    var modal = document.getElementById('change-password-modal');
+    var modalOverlay = document.getElementById('change-password-modal-overlay');
+    if (modal) modal.classList.remove('open');
+    if (modalOverlay) modalOverlay.classList.remove('open');
+    document.body.style.overflow = '';
+    var form = document.getElementById('change-password-form');
+    if (form) form.reset();
+  }
+  
+  var changePasswordForm = document.getElementById('change-password-form');
+  if (changePasswordForm) {
+    changePasswordForm.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      var currentPassword = document.getElementById('current-password').value;
+      var newPassword = document.getElementById('new-password').value;
+      var confirmPassword = document.getElementById('confirm-password').value;
+      
+      if (newPassword !== confirmPassword) { showToast('New passwords do not match', 'error'); return; }
+      if (newPassword.length < 6) { showToast('Password must be at least 6 characters', 'error'); return; }
+      
+      var currentUserData = getCurrentUser();
+      if (!currentUserData) { showToast('User not found. Please login again.', 'error'); return; }
+      
+      try {
+        var response = await fetch('/api/auth/change-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: currentUserData.id, oldPassword: currentPassword, newPassword: newPassword })
+        });
+        var data = await response.json();
+        if (!response.ok) throw new Error(data.error);
+        showToast('Password changed successfully! Please login again.', 'success');
+        setTimeout(function() { logout(); }, 1500);
+      } catch(err) { showToast('Failed to change password: ' + err.message, 'error'); }
+    });
+  }
+  
+  // ============================================================
+  // INITIALIZE
+  // ============================================================
+  var today = new Date();
+  var thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(today.getDate() - 30);
+  document.getElementById('filter-from').value = thirtyDaysAgo.toISOString().split('T')[0];
+  document.getElementById('filter-to').value = today.toISOString().split('T')[0];
+  loadVendors(); 
+  loadReport();
+  
+  // Make functions global
+  window.loadReport = loadReport; 
+  window.clearFilters = clearFilters; 
+  window.exportToCSV = exportToCSV; 
+  window.viewItems = viewItems;
+  window.closeModal = closeModal;
+  window.openChangePasswordModal = openChangePasswordModal;
+  window.closeChangePasswordModal = closeChangePasswordModal;
+  window.logout = logout;
+</script>
+</body>
+</html>

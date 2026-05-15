@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Dashboard - Steps PMS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <style>
+    .user-dropdown { position: relative; cursor: pointer; }
+    .dropdown-menu {
+      position: absolute;
+      top: 55px;
+      right: 0;
+      background: white;
+      min-width: 200px;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+      padding: 0.5rem 0;
+      z-index: 100;
+      display: none;
+    }
+    .dropdown-menu.show { display: block; }
+    .dropdown-menu a, .dropdown-menu button {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 18px;
+      text-decoration: none;
+      color: #1e2a3e;
+      font-size: 0.85rem;
+      transition: background 0.2s;
+      background: none;
+      border: none;
+      width: 100%;
+      text-align: left;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .dropdown-menu a:hover, .dropdown-menu button:hover { background: #f5f3ef; }
+    .dropdown-menu hr { margin: 0.3rem 0; }
+    .user-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      background: var(--gray-100);
+      border-radius: 40px;
+      cursor: pointer;
+    }
+    .user-pill:hover { background: var(--gray-200); }
+    .fa-chevron-down { font-size: 12px; color: #aaa; transition: transform 0.2s; }
+    .user-pill.active .fa-chevron-down { transform: rotate(180deg); }
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { display: block; margin-bottom: 0.3rem; font-weight: 500; font-size: 0.85rem; color: #2c3e4e; }
+    .form-control { width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 20px; font-size: 0.9rem; }
+    .form-control:focus { outline: none; border-color: #c9933a; }
+    .quantity-control { display: flex; gap: 8px; align-items: center; }
+    .quantity-control input { width: 80px; padding: 6px 8px; border: 1px solid #e2e8f0; border-radius: 20px; }
+    .quantity-control select { padding: 6px 8px; border: 1px solid #e2e8f0; border-radius: 20px; background: white; }
+    
+    /* Checkout timer badge */
+    .checkout-timer-badge {
+      background: #fef3c7;
+      color: #d97706;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 10px;
+      font-weight: 600;
+      margin-left: 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    
+    .gantt-bar.checkout-today {
+      background: linear-gradient(135deg, #f59e0b, #f97316);
+      animation: pulse-warning 1.5s infinite;
+    }
+    
+    @keyframes pulse-warning {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="overlay" id="overlay-main"></div>
+
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-top">
+    <a class="sidebar-logo" href="/">
+      <div class="logo-icon">🏨</div>
+      <div class="logo-text">
+        <span>Steps</span>
+        <span>Premium Suite</span>
+      </div>
+    </a>
+    <button class="sidebar-close-btn" id="sidebar-close-btn">✕</button>
+  </div>
+  
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Core Operations</div>
+    <a href="/dashboard" class="nav-item active">📊 Stay View</a>
+    <a href="/reservations" class="nav-item">📅 Reservations</a>
+    <a href="/housekeeping" class="nav-item">🧹 Housekeeping</a>
+    
+    <div class="nav-section-label">Property</div>
+    <a href="/apartments" class="nav-item">🏠 Apartments View</a>
+    <a href="/apartments-list" class="nav-item">📋 Apartments List</a>
+    
+    <div class="nav-section-label">Store & Procurement</div>
+    <a href="/store-main" class="nav-item">🏬 Main Store</a>
+    <a href="/store-outlets" class="nav-item">🏪 Outlets Store</a>
+    <a href="/purchase-orders" class="nav-item">📦 Purchase Orders</a>
+    <a href="/goods-receipt" class="nav-item">✅ Goods Receipt</a>
+    
+    <div class="nav-section-label">Reports</div>
+    <a href="/reports" class="nav-item">📊 Reservations Report</a>
+    <a href="/purchase-orders-reports" class="nav-item">📄 Purchase Orders Report</a>
+    <a href="/goods-receipt-reports" class="nav-item">📋 Goods Receipt Report</a>
+    <a href="/store-inventory-reports" class="nav-item">📦 Store Inventory Report</a>
+    
+    <div class="nav-section-label">Audit</div>
+    <a href="/activity-logs" class="nav-item">📋 Activity Logs</a>
+
+    <div class="nav-section-label">Administration</div>
+    <a href="/users" class="nav-item">👥 User Management</a>
+  </nav>
+  
+  <div class="sidebar-footer">
+    <small>Steps PMS v1.0 · Dar es Salaam</small>
+  </div>
+</aside>
+
+<!-- Navbar -->
+<nav class="navbar">
+  <div class="navbar-left">
+    <button class="hamburger" id="hamburger-btn" aria-label="Toggle menu">
+      <span class="hb-bar"></span><span class="hb-bar"></span><span class="hb-bar"></span>
+    </button>
+    <div><div class="page-title">Stay View</div><div class="page-subtitle">Dashboard Overview</div></div>
+  </div>
+  <div class="navbar-right">
+    <button class="btn-add-reservation" onclick="openReservationModal()">＋ Add Reservation</button>
+    <button class="notif-btn">🔔<span class="badge">3</span></button>
+    <div class="user-dropdown" id="userDropdown">
+      <div class="user-pill" id="userPill">
+        <div class="user-avatar" id="userAvatar">U</div>
+        <div class="user-info">
+          <span id="userName">Loading...</span>
+          <span id="userRole">Loading...</span>
+        </div>
+        <i class="fas fa-chevron-down"></i>
+      </div>
+      <div class="dropdown-menu" id="dropdownMenu">
+        <button onclick="openChangePasswordModal()"><i class="fas fa-key"></i> Change Password</button>
+        <a href="/users" class="dropdown-item"><i class="fas fa-users"></i> User Management</a>
+        <hr>
+        <button onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<main class="main-content">
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-icon red">🔴</div><div><div class="stat-label">Occupied Today</div><div class="stat-value" id="stat-occupied">—</div><div class="stat-change">rooms occupied</div></div></div>
+    <div class="stat-card"><div class="stat-icon green">🟢</div><div><div class="stat-label">Available Today</div><div class="stat-value" id="stat-available">—</div><div class="stat-change">rooms free</div></div></div>
+    <div class="stat-card"><div class="stat-icon gold">🏷️</div><div><div class="stat-label">Check-outs Today</div><div class="stat-value" id="stat-checkouts">—</div><div class="stat-change">departures</div></div></div>
+    <div class="stat-card"><div class="stat-icon blue">📅</div><div><div class="stat-label">Upcoming</div><div class="stat-value" id="stat-upcoming">—</div><div class="stat-change">future reservations</div></div></div>
+    <div class="stat-card"><div class="stat-icon blue">💰</div><div><div class="stat-label">Total Revenue</div><div class="stat-value" id="stat-revenue" style="font-size:16px">—</div><div class="stat-change">all time</div></div></div>
+  </div>
+
+  <div class="card full-width-card">
+    <div class="gantt-header">
+      <div class="gantt-nav">
+        <button class="btn-today" onclick="ganttToday()">Today</button>
+        <button class="btn-nav" onclick="ganttPrev()">‹</button>
+        <button class="btn-nav" onclick="ganttNext()">›</button>
+      </div>
+      <div class="date-range-label" id="gantt-date-range">—</div>
+      <div></div>
+    </div>
+    <div id="gantt-body"></div>
+  </div>
+</main>
+
+<!-- Reservation Modal (Right Side Panel) -->
+<div class="reservation-modal-overlay" id="reservation-modal-overlay" onclick="closeReservationModal()"></div>
+<div class="reservation-modal" id="reservation-modal">
+  <div class="reservation-modal-header">
+    <h3>➕ New Reservation</h3>
+    <button class="reservation-modal-close" onclick="closeReservationModal()">✕</button>
+  </div>
+  <div class="reservation-modal-body">
+    <form id="reservation-form-modal">
+      <div class="form-group-row cols-2">
+        <div class="form-group"><label>📅 Check-in Date</label><input type="date" id="modal-f-checkin" class="form-control" required /></div>
+        <div class="form-group"><label>📅 Check-out Date</label><input type="date" id="modal-f-checkout" class="form-control" required /></div>
+      </div>
+      <div class="form-group-row cols-2">
+        <div class="form-group"><label>🏠 Apartment</label><select id="modal-f-apt" class="form-control" required><option value="">Select Apartment</option></select></div>
+        <div class="form-group"><label>💰 Rate Type</label><select id="modal-f-ratetype" class="form-control"><option value="Full">Full (100%)</option><option value="Partial">Partial (60%)</option></select></div>
+      </div>
+      <div class="form-group-row" style="grid-template-columns:1fr 1fr 1.2fr">
+        <div class="form-group"><label>👤 Adults</label><div class="stepper"><button type="button" onclick="modalStepperChange('modal-f-adults', -1)">−</button><input type="number" id="modal-f-adults" value="1" min="1" max="6" /><button type="button" onclick="modalStepperChange('modal-f-adults', 1)">+</button></div></div>
+        <div class="form-group"><label>🧒 Children</label><div class="stepper"><button type="button" onclick="modalStepperChange('modal-f-children', -1)">−</button><input type="number" id="modal-f-children" value="0" min="0" max="6" /><button type="button" onclick="modalStepperChange('modal-f-children', 1)">+</button></div></div>
+        <div class="form-group"><label>💰 Total Rate</label><div class="rate-display" id="modal-f-total">—</div><input type="hidden" id="modal-f-total-hidden" value="0" /></div>
+      </div>
+      <hr class="divider" />
+      <div class="form-group-row cols-3">
+        <div class="form-group"><label>👤 Guest Name</label><input type="text" id="modal-f-guest" class="form-control" placeholder="Full name" required /></div>
+        <div class="form-group"><label>📧 Email</label><input type="email" id="modal-f-email" class="form-control" placeholder="Email address" required /></div>
+        <div class="form-group"><label>📱 Mobile</label><input type="tel" id="modal-f-mobile" class="form-control" placeholder="+255 XXX XXX" required /></div>
+      </div>
+      <div class="form-group-row cols-2">
+        <div class="form-group"><label>🌍 Country</label><select id="modal-f-country" class="form-control"><option value="">Select Country</option><option>Tanzania</option><option>Kenya</option><option>Uganda</option><option>Rwanda</option><option>Ethiopia</option><option>South Africa</option><option>United Kingdom</option><option>United States</option><option>Germany</option><option>France</option><option>China</option><option>India</option><option>Other</option></select></div>
+        <div class="form-group"><label>🏙️ City</label><input type="text" id="modal-f-city" class="form-control" placeholder="City" /></div>
+      </div>
+      <hr class="divider" />
+      <button type="submit" class="btn btn-success">✅ Confirm Reservation</button>
+      <button type="button" class="btn btn-outline" style="margin-top:10px; width:100%;" onclick="closeReservationModal()">Cancel</button>
+    </form>
+  </div>
+</div>
+
+<!-- Edit Reservation Modal -->
+<div class="reservation-modal-overlay" id="edit-modal-overlay" onclick="closeEditModal()"></div>
+<div class="reservation-modal" id="edit-modal">
+  <div class="reservation-modal-header">
+    <h3>✏️ Edit Reservation</h3>
+    <button class="reservation-modal-close" onclick="closeEditModal()">✕</button>
+  </div>
+  <div class="reservation-modal-body">
+    <form id="edit-form-modal">
+      <input type="hidden" id="edit-res-id" />
+      <div class="form-group-row cols-2">
+        <div class="form-group"><label>📅 Check-in Date</label><input type="date" id="edit-f-checkin" class="form-control" required /></div>
+        <div class="form-group"><label>📅 Check-out Date</label><input type="date" id="edit-f-checkout" class="form-control" required /></div>
+      </div>
+      <div class="form-group-row cols-2">
+        <div class="form-group"><label>🏠 Apartment</label><select id="edit-f-apt" class="form-control" required><option value="">Select Apartment</option></select></div>
+        <div class="form-group"><label>💰 Rate Type</label><select id="edit-f-ratetype" class="form-control"><option value="Full">Full (100%)</option><option value="Partial">Partial (60%)</option></select></div>
+      </div>
+      <div class="form-group-row" style="grid-template-columns:1fr 1fr 1.2fr">
+        <div class="form-group"><label>👤 Adults</label><div class="stepper"><button type="button" onclick="editStepperChange('edit-f-adults', -1)">−</button><input type="number" id="edit-f-adults" value="1" min="1" max="6" /><button type="button" onclick="editStepperChange('edit-f-adults', 1)">+</button></div></div>
+        <div class="form-group"><label>🧒 Children</label><div class="stepper"><button type="button" onclick="editStepperChange('edit-f-children', -1)">−</button><input type="number" id="edit-f-children" value="0" min="0" max="6" /><button type="button" onclick="editStepperChange('edit-f-children', 1)">+</button></div></div>
+        <div class="form-group"><label>💰 Total Rate</label><div class="rate-display" id="edit-f-total">—</div><input type="hidden" id="edit-f-total-hidden" value="0" /></div>
+      </div>
+      <hr class="divider" />
+      <div class="form-group-row cols-3">
+        <div class="form-group"><label>👤 Guest Name</label><input type="text" id="edit-f-guest" class="form-control" placeholder="Full name" required /></div>
+        <div class="form-group"><label>📧 Email</label><input type="email" id="edit-f-email" class="form-control" placeholder="Email address" required /></div>
+        <div class="form-group"><label>📱 Mobile</label><input type="tel" id="edit-f-mobile" class="form-control" placeholder="+255 XXX XXX" required /></div>
+      </div>
+      <div class="form-group-row cols-2">
+        <div class="form-group"><label>🌍 Country</label><select id="edit-f-country" class="form-control"><option value="">Select Country</option><option>Tanzania</option><option>Kenya</option><option>Uganda</option><option>Rwanda</option><option>Ethiopia</option><option>South Africa</option><option>United Kingdom</option><option>United States</option><option>Germany</option><option>France</option><option>China</option><option>India</option><option>Other</option></select></div>
+        <div class="form-group"><label>🏙️ City</label><input type="text" id="edit-f-city" class="form-control" placeholder="City" /></div>
+      </div>
+      <hr class="divider" />
+      <button type="submit" class="btn btn-gold">💾 Update Reservation</button>
+      <button type="button" class="btn btn-outline" style="margin-top:10px; width:100%;" onclick="closeEditModal()">Cancel</button>
+    </form>
+  </div>
+</div>
+
+<!-- Change Password Modal -->
+<div class="reservation-modal-overlay" id="change-password-modal-overlay" onclick="closeChangePasswordModal()"></div>
+<div class="reservation-modal" id="change-password-modal">
+  <div class="reservation-modal-header">
+    <h3>🔐 Change Password</h3>
+    <button class="reservation-modal-close" onclick="closeChangePasswordModal()">✕</button>
+  </div>
+  <div class="reservation-modal-body">
+    <form id="change-password-form">
+      <div class="form-group">
+        <label>Current Password</label>
+        <input type="password" id="current-password" class="form-control" required>
+      </div>
+      <div class="form-group">
+        <label>New Password (min 6 characters)</label>
+        <input type="password" id="new-password" class="form-control" required>
+      </div>
+      <div class="form-group">
+        <label>Confirm New Password</label>
+        <input type="password" id="confirm-password" class="form-control" required>
+      </div>
+      <hr class="divider" />
+      <button type="submit" class="btn btn-success">✅ Update Password</button>
+      <button type="button" class="btn btn-outline" style="margin-top:10px; width:100%;" onclick="closeChangePasswordModal()">Cancel</button>
+    </form>
+  </div>
+</div>
+
+<!-- Detail Panel -->
+<div class="overlay" id="panel-overlay"></div>
+<div class="detail-panel" id="detail-panel">
+  <div class="detail-panel-header">
+    <h3>Reservation Details</h3>
+    <button class="close-panel" onclick="closeDetailPanel()">✕</button>
+  </div>
+  <div class="detail-panel-body" id="detail-body"></div>
+  <div class="detail-panel-footer">
+    <button class="btn btn-outline" style="flex:1" onclick="closeDetailPanel()">Close</button>
+    <button class="btn btn-gold" onclick="openEditFromDetail()">✏️ Edit</button>
+    <button class="btn btn-danger" onclick="deleteSelectedReservation()">🗑 Delete</button>
+  </div>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+
+<!-- User Management Modal -->
+<div class="reservation-modal-overlay" id="user-management-modal-overlay"></div>
+<div class="reservation-modal" id="user-management-modal" style="max-width: 800px;">
+  <div class="reservation-modal-header">
+    <h3>👥 User Management</h3>
+    <button class="reservation-modal-close" onclick="closeUserManagementModal()">✕</button>
+  </div>
+  <div class="reservation-modal-body" style="max-height: 500px; overflow-y: auto;">
+    <div style="margin-bottom: 15px; text-align: right;">
+      <button class="btn btn-gold" onclick="showAddUserForm()" style="padding: 6px 12px; font-size: 12px;">➕ Add New User</button>
+    </div>
+    <div id="users-list-container">
+      <div style="text-align: center; padding: 20px;">Loading users...</div>
+    </div>
+  </div>
+</div>
+
+<script src="../js/api.js"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/dashboard.js"></script>
+<script>
+
+// ============================================================
+// CHECKOUT TIME CONSTANTS
+// ============================================================
+const CHECKOUT_HOUR = 11; // 11:00 AM checkout time
+const CHECKOUT_MINUTE = 0;
+
+// Function to check if a reservation is still considered "active" for checkout
+function isReservationActiveForCheckout(reservation) {
+  const today = new Date();
+  const checkoutDate = new Date(reservation.checkout);
+  const checkoutDateTime = new Date(reservation.checkout);
+  checkoutDateTime.setHours(CHECKOUT_HOUR, CHECKOUT_MINUTE, 0, 0);
+  
+  // If checkout is in the future
+  if (checkoutDate > today) return true;
+  
+  // If checkout is today AND current time is before checkout time (11:00 AM)
+  if (checkoutDate.toDateString() === today.toDateString() && today < checkoutDateTime) {
+    return true;
+  }
+  
+  return false;
+}
+
+// Function to get checkout status for display
+function getCheckoutStatus(reservation) {
+  const today = new Date();
+  const checkoutDate = new Date(reservation.checkout);
+  const checkoutDateTime = new Date(reservation.checkout);
+  checkoutDateTime.setHours(CHECKOUT_HOUR, CHECKOUT_MINUTE, 0, 0);
+  
+  if (checkoutDate.toDateString() === today.toDateString()) {
+    if (today < checkoutDateTime) {
+      const hoursLeft = Math.ceil((checkoutDateTime - today) / (1000 * 60 * 60));
+      return { isCheckoutToday: true, hoursLeft, isActive: true };
+    } else {
+      return { isCheckoutToday: false, hoursLeft: 0, isActive: false };
+    }
+  }
+  return { isCheckoutToday: false, hoursLeft: 0, isActive: false };
+}
+
+// ============================================================
+// USER MANAGEMENT MODAL FUNCTIONS
+// ============================================================
+
+function openUserManagementModal() {
+  const modal = document.getElementById('user-management-modal');
+  const modalOverlay = document.getElementById('user-management-modal-overlay');
+  if (modal && modalOverlay) {
+    modal.classList.add('open');
+    modalOverlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    loadUsersList();
+  }
+  const dd = document.getElementById('dropdownMenu');
+  const up = document.getElementById('userPill');
+  if (dd) dd.classList.remove('show');
+  if (up) up.classList.remove('active');
+}
+
+function closeUserManagementModal() {
+  const modal = document.getElementById('user-management-modal');
+  const modalOverlay = document.getElementById('user-management-modal-overlay');
+  if (modal) modal.classList.remove('open');
+  if (modalOverlay) modalOverlay.classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+async function loadUsersList() {
+  const container = document.getElementById('users-list-container');
+  try {
+    const users = await apiGet('/users');
+    if (!users.length) {
+      container.innerHTML = '<div style="text-align: center; padding: 20px;">No users found</div>';
+      return;
+    }
+    
+    let html = '<div class="user-cards-grid">';
+    users.forEach(user => {
+      const roleClass = user.role === 'admin' ? '👑' : (user.role === 'manager' ? '⭐' : '👤');
+      html += `
+        <div class="user-card" data-user-id="${user.id}">
+          <div class="user-card-header">
+            <div class="user-avatar-lg">${user.full_name ? user.full_name.charAt(0).toUpperCase() : user.username.charAt(0).toUpperCase()}</div>
+            <div class="user-info">
+              <h4>${escapeHtml(user.full_name || user.username)}</h4>
+              <p>@${escapeHtml(user.username)}</p>
+            </div>
+          </div>
+          <div class="user-details">
+            <div><i class="fas fa-envelope"></i> ${escapeHtml(user.email)}</div>
+            <div><i class="fas fa-tag"></i> ${roleClass} ${escapeHtml(user.role)}</div>
+            <div><i class="fas fa-calendar"></i> Joined: ${new Date(user.created_at).toLocaleDateString()}</div>
+          </div>
+          <div class="user-actions">
+            <button class="btn-edit" onclick="editUser(${user.id})">✏️ Edit</button>
+            <button class="btn-delete" onclick="deleteUser(${user.id}, '${escapeHtml(user.full_name || user.username)}')">🗑 Delete</button>
+          </div>
+        </div>
+      `;
+    });
+    html += '</div>';
+    container.innerHTML = html;
+  } catch (err) {
+    container.innerHTML = `<div style="text-align: center; padding: 20px; color: red;">Error loading users: ${err.message}</div>`;
+  }
+}
+
+async function deleteUser(userId, userName) {
+  if (!confirm(`Delete user "${userName}"? This action cannot be undone.`)) return;
+  try {
+    await apiDelete(`/users/${userId}`);
+    showToast(`User "${userName}" deleted successfully`, '✅');
+    loadUsersList();
+  } catch (err) {
+    showToast('Failed to delete user: ' + err.message, '❌');
+  }
+}
+
+function editUser(userId) {
+  showToast('Edit functionality coming soon', 'ℹ️');
+}
+
+function showAddUserForm() {
+  showToast('Add user functionality coming soon', 'ℹ️');
+}
+
+// ========== USER SESSION ==========
+function getCurrentUser() {
+  const userStr = sessionStorage.getItem('pms_user');
+  if (!userStr) return null;
+  try { return JSON.parse(userStr); } catch(e) { return null; }
+}
+
+function logout() {
+  sessionStorage.removeItem('pms_user');
+  window.location.href = '/login';
+}
+
+// Check login
+const currentUser = getCurrentUser();
+if (!currentUser) {
+  window.location.href = '/login';
+}
+
+// Display user info
+document.getElementById('userName').innerText = currentUser.fullName || currentUser.username;
+document.getElementById('userRole').innerText = currentUser.role ? currentUser.role.charAt(0).toUpperCase() + currentUser.role.slice(1) : 'User';
+document.getElementById('userAvatar').innerText = (currentUser.fullName || currentUser.username || 'U').charAt(0).toUpperCase();
+
+// Dropdown toggle
+const userPill = document.getElementById('userPill');
+const dropdownMenu = document.getElementById('dropdownMenu');
+if (userPill) {
+  userPill.addEventListener('click', (e) => {
+    e.stopPropagation();
+    dropdownMenu.classList.toggle('show');
+    userPill.classList.toggle('active');
+  });
+  document.addEventListener('click', () => {
+    dropdownMenu.classList.remove('show');
+    userPill.classList.remove('active');
+  });
+}
+
+// ========== LOAD DASHBOARD STATS WITH CHECKOUT TIME LOGIC ==========
+async function loadDashboardStats() {
+  try {
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+    const checkoutDateTime = new Date(today);
+    checkoutDateTime.setHours(CHECKOUT_HOUR, CHECKOUT_MINUTE, 0, 0);
+    
+    // Get all reservations
+    const allReservations = reservations || [];
+    
+    // ACTIVE: Currently checked in (checkin <= today AND reservation is still active considering checkout time)
+    const active = allReservations.filter(r => {
+      const rCheckin = new Date(r.checkin);
+      const rCheckout = new Date(r.checkout);
+      rCheckout.setHours(CHECKOUT_HOUR, CHECKOUT_MINUTE, 0, 0);
+      return rCheckin <= today && rCheckout > today;
+    }).length;
+    
+    // AVAILABLE: Total apartments - active
+    const totalApartments = apartments.length;
+    const available = totalApartments - active;
+    
+    // CHECKOUTS TODAY: Reservations ending today AND before 11:00 AM
+    const checkoutsToday = allReservations.filter(r => {
+      const rCheckout = new Date(r.checkout);
+      const isToday = rCheckout.toDateString() === today.toDateString();
+      return isToday && today < checkoutDateTime;
+    }).length;
+    
+    // UPCOMING: Reservations with check-in date IN THE FUTURE
+    const upcoming = allReservations.filter(r => {
+      const rCheckin = new Date(r.checkin);
+      return rCheckin > today;
+    }).length;
+    
+    // TOTAL REVENUE
+    const totalRevenue = allReservations.reduce((sum, r) => sum + (r.total || 0), 0);
+    
+    // Update UI
+    document.getElementById('stat-occupied').innerText = active;
+    document.getElementById('stat-available').innerText = available;
+    document.getElementById('stat-checkouts').innerText = checkoutsToday;
+    document.getElementById('stat-upcoming').innerText = upcoming;
+    document.getElementById('stat-revenue').innerHTML = fmtTSH(totalRevenue);
+    
+  } catch (err) {
+    console.error('Failed to load stats:', err);
+  }
+}
+
+// ========== CHANGE PASSWORD MODAL ==========
+function openChangePasswordModal() {
+  document.getElementById('change-password-modal').classList.add('open');
+  document.getElementById('change-password-modal-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  dropdownMenu.classList.remove('show');
+  userPill.classList.remove('active');
+}
+
+function closeChangePasswordModal() {
+  document.getElementById('change-password-modal').classList.remove('open');
+  document.getElementById('change-password-modal-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+  document.getElementById('change-password-form').reset();
+}
+
+document.getElementById('change-password-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const currentPassword = document.getElementById('current-password').value;
+  const newPassword = document.getElementById('new-password').value;
+  const confirmPassword = document.getElementById('confirm-password').value;
+  
+  if (newPassword !== confirmPassword) {
+    showToast('New passwords do not match', '⚠️');
+    return;
+  }
+  if (newPassword.length < 6) {
+    showToast('Password must be at least 6 characters', '⚠️');
+    return;
+  }
+  
+  try {
+    const response = await fetch('/api/auth/change-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId: currentUser.id,
+        oldPassword: currentPassword,
+        newPassword: newPassword
+      })
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error);
+    
+    showToast('Password changed successfully! Please login again.', '✅');
+    setTimeout(() => { logout(); }, 1500);
+  } catch (err) {
+    showToast('Failed to change password: ' + err.message, '❌');
+  }
+});
+
+// ========== MODAL FUNCTIONS ==========
+let modalAPARTMENTS = [], editAPARTMENTS = [], currentEditReservation = null;
+
+async function initModalForm() {
+  if (!modalAPARTMENTS.length) {
+    try { modalAPARTMENTS = await apiGet('/apartments'); } catch(e) { showToast('Failed to load apartments', '❌'); return; }
+  }
+  const sel = document.getElementById('modal-f-apt');
+  sel.innerHTML = '<option value="">Select Apartment</option>';
+  modalAPARTMENTS.forEach(apt => {
+    const opt = document.createElement('option');
+    opt.value = apt.id;
+    opt.textContent = `${apt.emoji} ${apt.name} – Max ${apt.maxAdults} Adults – ${fmtTSH(apt.ratePerNight)}/night`;
+    sel.appendChild(opt);
+  });
+  const today = new Date();
+  document.getElementById('modal-f-checkin').value = isoDate(today);
+  document.getElementById('modal-f-checkout').value = isoDate(addDays(today, 1));
+  modalUpdateRate();
+  ['modal-f-checkin','modal-f-checkout','modal-f-apt','modal-f-ratetype','modal-f-adults','modal-f-children'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) { el.removeEventListener('change', modalUpdateRate); el.removeEventListener('input', modalUpdateRate);
+            el.addEventListener('change', modalUpdateRate); el.addEventListener('input', modalUpdateRate); }
+  });
+}
+
+function modalStepperChange(id, delta) {
+  const inp = document.getElementById(id);
+  if(inp) { inp.value = Math.max(parseInt(inp.min||0), Math.min(parseInt(inp.max||999), parseInt(inp.value)+delta)); modalUpdateRate(); }
+}
+
+function modalUpdateRate() {
+  const aptId = parseInt(document.getElementById('modal-f-apt')?.value);
+  const rateType = document.getElementById('modal-f-ratetype')?.value;
+  const checkin = document.getElementById('modal-f-checkin')?.value;
+  const checkout = document.getElementById('modal-f-checkout')?.value;
+  if(!aptId || !checkin || !checkout) { document.getElementById('modal-f-total').textContent = '—'; return; }
+  const apt = modalAPARTMENTS.find(a=>a.id===aptId);
+  const nights = Math.max(0, daysBetween(checkin, checkout));
+  const total = apt ? Math.round(apt.ratePerNight * nights * (rateType==='Partial'?0.6:1)) : 0;
+  document.getElementById('modal-f-total').innerHTML = total>0?fmtTSH(total):'—';
+  document.getElementById('modal-f-total-hidden').value = total;
+}
+
+function openReservationModal() {
+  document.getElementById('reservation-modal').classList.add('open');
+  document.getElementById('reservation-modal-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  initModalForm();
+}
+
+function closeReservationModal() {
+  document.getElementById('reservation-modal').classList.remove('open');
+  document.getElementById('reservation-modal-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+  document.getElementById('reservation-form-modal').reset();
+}
+
+async function initEditForm(reservationId) {
+  try {
+    const reservation = await apiGet(`/reservations/${reservationId}`);
+    currentEditReservation = reservation;
+    if(!editAPARTMENTS.length) editAPARTMENTS = await apiGet('/apartments');
+    const sel = document.getElementById('edit-f-apt');
+    sel.innerHTML = '<option value="">Select Apartment</option>';
+    editAPARTMENTS.forEach(apt => {
+      const opt = document.createElement('option');
+      opt.value = apt.id;
+      opt.textContent = `${apt.emoji} ${apt.name} – Max ${apt.maxAdults} Adults – ${fmtTSH(apt.ratePerNight)}/night`;
+      if(apt.id===reservation.aptId) opt.selected=true;
+      sel.appendChild(opt);
+    });
+    document.getElementById('edit-res-id').value = reservation.id;
+    document.getElementById('edit-f-guest').value = reservation.guest;
+    document.getElementById('edit-f-email').value = reservation.email;
+    document.getElementById('edit-f-mobile').value = reservation.mobile||'';
+    document.getElementById('edit-f-country').value = reservation.country||'';
+    document.getElementById('edit-f-city').value = reservation.city||'';
+    document.getElementById('edit-f-checkin').value = isoDate(reservation.checkin);
+    document.getElementById('edit-f-checkout').value = isoDate(reservation.checkout);
+    document.getElementById('edit-f-adults').value = reservation.adults;
+    document.getElementById('edit-f-children').value = reservation.children;
+    document.getElementById('edit-f-ratetype').value = reservation.rateType;
+    editUpdateRate();
+  } catch(err) { showToast('Failed to load reservation data: '+err.message, '❌'); }
+}
+
+function editStepperChange(id, delta) {
+  const inp = document.getElementById(id);
+  if(inp) { inp.value = Math.max(parseInt(inp.min||0), Math.min(parseInt(inp.max||999), parseInt(inp.value)+delta)); editUpdateRate(); }
+}
+
+function editUpdateRate() {
+  const aptId = parseInt(document.getElementById('edit-f-apt')?.value);
+  const rateType = document.getElementById('edit-f-ratetype')?.value;
+  const checkin = document.getElementById('edit-f-checkin')?.value;
+  const checkout = document.getElementById('edit-f-checkout')?.value;
+  if(!aptId||!checkin||!checkout) { document.getElementById('edit-f-total').textContent='—'; return; }
+  const apt = editAPARTMENTS.find(a=>a.id===aptId);
+  const nights = Math.max(0, daysBetween(checkin, checkout));
+  const total = apt ? Math.round(apt.ratePerNight * nights * (rateType==='Partial'?0.6:1)) : 0;
+  document.getElementById('edit-f-total').innerHTML = total>0?fmtTSH(total):'—';
+  document.getElementById('edit-f-total-hidden').value = total;
+}
+
+async function openEditModal(reservationId) {
+  closeDetailPanel();
+  document.getElementById('edit-modal').classList.add('open');
+  document.getElementById('edit-modal-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  await initEditForm(reservationId);
+}
+
+function closeEditModal() {
+  document.getElementById('edit-modal').classList.remove('open');
+  document.getElementById('edit-modal-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+  currentEditReservation = null;
+  document.getElementById('edit-form-modal').reset();
+}
+
+function openEditFromDetail() {
+  if(selectedReservation && selectedReservation.id) openEditModal(selectedReservation.id);
+  else showToast('No reservation selected', '⚠️');
+}
+
+document.getElementById('edit-form-modal')?.addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const id = document.getElementById('edit-res-id').value;
+  const checkin = document.getElementById('edit-f-checkin').value;
+  const checkout = document.getElementById('edit-f-checkout').value;
+  if(checkin>=checkout) { showToast('Check-out must be after check-in','⚠️'); return; }
+  const payload = {
+    aptId: parseInt(document.getElementById('edit-f-apt').value),
+    guest: document.getElementById('edit-f-guest').value,
+    email: document.getElementById('edit-f-email').value,
+    mobile: document.getElementById('edit-f-mobile').value,
+    country: document.getElementById('edit-f-country').value,
+    city: document.getElementById('edit-f-city').value,
+    checkin, checkout,
+    adults: parseInt(document.getElementById('edit-f-adults').value),
+    children: parseInt(document.getElementById('edit-f-children').value),
+    rateType: document.getElementById('edit-f-ratetype').value,
+    total: parseInt(document.getElementById('edit-f-total-hidden').value)||0,
+    userId: currentUser.id,
+    username: currentUser.fullName || currentUser.username
+  };
+  try {
+    await apiPut(`/reservations/${id}`, payload);
+    showToast('✅ Reservation updated!', '📝');
+    closeEditModal();
+    setTimeout(()=>loadAndRenderDashboard(),100);
+  } catch(err) { showToast('Update failed: '+err.message,'⚠️'); }
+});
+
+document.getElementById('reservation-form-modal')?.addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const checkin = document.getElementById('modal-f-checkin').value;
+  const checkout = document.getElementById('modal-f-checkout').value;
+  if(checkin>=checkout) { showToast('Check-out after check-in','⚠️'); return; }
+  const payload = {
+    aptId: parseInt(document.getElementById('modal-f-apt').value),
+    guest: document.getElementById('modal-f-guest').value,
+    email: document.getElementById('modal-f-email').value,
+    mobile: document.getElementById('modal-f-mobile').value,
+    country: document.getElementById('modal-f-country').value,
+    city: document.getElementById('modal-f-city').value,
+    checkin, checkout,
+    adults: parseInt(document.getElementById('modal-f-adults').value),
+    children: parseInt(document.getElementById('modal-f-children').value),
+    rateType: document.getElementById('modal-f-ratetype').value,
+    total: parseInt(document.getElementById('modal-f-total-hidden').value)||0,
+    userId: currentUser.id,
+    username: currentUser.fullName || currentUser.username
+  };
+  try {
+    await apiPost('/reservations', payload);
+    showToast('✅ Reservation confirmed!','🎉');
+    closeReservationModal();
+    document.getElementById('reservation-form-modal').reset();
+    setTimeout(()=>loadAndRenderDashboard(),100);
+  } catch(err) { showToast(err.message,'⚠️'); }
+});
+
+// Sidebar toggle
+const hamburgerBtn = document.getElementById('hamburger-btn');
+const sidebar = document.getElementById('sidebar');
+const overlayMain = document.getElementById('overlay-main');
+const sidebarClose = document.getElementById('sidebar-close-btn');
+function openSidebar() { sidebar.classList.add('open'); overlayMain.classList.add('open'); hamburgerBtn.classList.add('active'); }
+function closeSidebar() { sidebar.classList.remove('open'); overlayMain.classList.remove('open'); hamburgerBtn.classList.remove('active'); }
+hamburgerBtn?.addEventListener('click',()=>sidebar.classList.contains('open')?closeSidebar():openSidebar());
+sidebarClose?.addEventListener('click',closeSidebar);
+overlayMain?.addEventListener('click',closeSidebar);
+document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ closeSidebar(); closeDetailPanel(); closeReservationModal(); closeEditModal(); closeChangePasswordModal(); } });
+
+// Expose functions globally
+window.openReservationModal = openReservationModal;
+window.closeReservationModal = closeReservationModal;
+window.modalStepperChange = modalStepperChange;
+window.openEditModal = openEditModal;
+window.closeEditModal = closeEditModal;
+window.openEditFromDetail = openEditFromDetail;
+window.editStepperChange = editStepperChange;
+window.logout = logout;
+window.openChangePasswordModal = openChangePasswordModal;
+window.closeChangePasswordModal = closeChangePasswordModal;
+window.openUserManagementModal = openUserManagementModal;
+window.closeUserManagementModal = closeUserManagementModal;
+window.isReservationActiveForCheckout = isReservationActiveForCheckout;
+window.getCheckoutStatus = getCheckoutStatus;
+window.CHECKOUT_HOUR = CHECKOUT_HOUR;
+
+// Initial load
+loadAndRenderDashboard();
+
+// Auto-refresh every minute to update checkout timers
+setInterval(() => {
+  loadAndRenderDashboard();
+}, 60000);
+</script>
+
+
+</body>
+</html>
