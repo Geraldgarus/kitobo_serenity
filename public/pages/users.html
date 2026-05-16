@@ -68,6 +68,104 @@
     }
     .fa-chevron-down { font-size: 12px; color: #aaa; transition: transform 0.2s; }
     .user-pill.active .fa-chevron-down { transform: rotate(180deg); }
+
+
+    /* ============================================================
+   MOBILE RESPONSIVE ADDITIONS FOR USER MANAGEMENT PAGE
+   ============================================================ */
+
+/* Make table horizontally scrollable on mobile */
+@media (max-width: 768px) {
+  /* Table container - ensure horizontal scroll */
+  .card-body {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding: 0 16px 16px 16px !important;
+  }
+  
+  /* Table minimum width to force scroll */
+  .users-table {
+    min-width: 700px !important;
+    width: 100% !important;
+  }
+  
+  /* Prevent text wrapping in table cells */
+  .users-table th,
+  .users-table td {
+    white-space: nowrap !important;
+    padding: 10px 12px !important;
+    font-size: 12px !important;
+  }
+  
+  /* Card header - stack vertically */
+  .card-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+    padding: 16px !important;
+  }
+  
+  /* Action buttons in table - smaller on mobile */
+  .btn-sm {
+    padding: 4px 8px !important;
+    font-size: 10px !important;
+    margin-right: 4px !important;
+  }
+  
+  /* Role badges - smaller on mobile */
+  .role-badge {
+    padding: 2px 8px !important;
+    font-size: 9px !important;
+  }
+  
+  /* Add New User button - full width on mobile */
+  .btn-gold {
+    width: 100% !important;
+    text-align: center !important;
+  }
+  
+  /* Fix main content spacing */
+  .main-content {
+    padding: 12px !important;
+  }
+}
+
+/* For very small phones (max-width: 480px) */
+@media (max-width: 480px) {
+  .users-table th,
+  .users-table td {
+    padding: 6px 8px !important;
+    font-size: 10px !important;
+  }
+  
+  .btn-sm {
+    padding: 3px 6px !important;
+    font-size: 9px !important;
+  }
+  
+  .card-header .card-title {
+    font-size: 16px !important;
+  }
+  
+  .empty-state {
+    padding: 20px !important;
+    font-size: 12px !important;
+  }
+}
+
+/* Touch-friendly button sizes for mobile */
+@media (hover: none) and (pointer: coarse) {
+  .btn-sm,
+  .btn-gold,
+  .btn-outline,
+  button {
+    min-height: 36px !important;
+  }
+  
+  button:active {
+    transform: scale(0.97);
+  }
+}
   </style>
 </head>
 <body>

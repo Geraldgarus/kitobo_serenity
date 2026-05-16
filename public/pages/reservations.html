@@ -7,6 +7,90 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/style.css" />
+
+  <style>
+  /* Force proper table layout */
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+  }
+  
+  .data-table th,
+  .data-table td {
+    padding: 12px 8px;
+    text-align: left;
+    border-bottom: 1px solid #e2e8f0;
+    vertical-align: middle;
+  }
+  
+  .data-table th {
+    background: #f8fafc;
+    font-weight: 600;
+    color: #1e2a3e;
+  }
+  
+  /* Set fixed column widths */
+  .data-table th:nth-child(1) { width: 18%; }  /* Guest */
+  .data-table th:nth-child(2) { width: 12%; }  /* Apartment */
+  .data-table th:nth-child(3) { width: 10%; }  /* Check-in */
+  .data-table th:nth-child(4) { width: 15%; }  /* Check-out */
+  .data-table th:nth-child(5) { width: 8%; }   /* Nights */
+  .data-table th:nth-child(6) { width: 8%; }   /* Guests */
+  .data-table th:nth-child(7) { width: 12%; }  /* Total */
+  .data-table th:nth-child(8) { width: 10%; }  /* Status */
+  .data-table th:nth-child(9) { width: 7%; }   /* Actions */
+  
+  /* Guest cell with stacked content */
+  .guest-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  
+  .guest-name {
+    font-weight: 600;
+  }
+  
+  .guest-email {
+    font-size: 11px;
+    color: #64748b;
+    word-break: break-all;
+  }
+  
+  /* Prevent wrapping in other columns */
+  .data-table td:nth-child(4),
+  .data-table td:nth-child(5),
+  .data-table td:nth-child(6),
+  .data-table td:nth-child(7),
+  .data-table td:nth-child(8),
+  .data-table td:nth-child(9) {
+    white-space: nowrap;
+  }
+  
+  .chip {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  
+  .chip-green {
+    background: #d1fae5;
+    color: #065f46;
+  }
+  
+  .chip-blue {
+    background: #dbeafe;
+    color: #1e40af;
+  }
+  
+  .chip-gray {
+    background: #f1f5f9;
+    color: #475569;
+  }
+</style>
 </head>
 <body>
 
@@ -561,16 +645,39 @@ function openEditFromDetail() {
 
 // ========== UPDATE STATS FUNCTION ==========
 function updateReservationStats() {
-  const today = formatDateForAPI(new Date());
-  const active = reservations.filter(r => 
-    formatDateForAPI(r.checkin) <= today && formatDateForAPI(r.checkout) > today
-  ).length;
-  const upcoming = reservations.filter(r => formatDateForAPI(r.checkin) > today).length;
-  const checkoutToday = reservations.filter(r => formatDateForAPI(r.checkout) === today).length;
+  const now = new Date();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const checkoutTimeToday = new Date(today);
+  checkoutTimeToday.setHours(11, 0, 0, 0);
+  
+  // Active: checkin <= now AND checkout+time > now (11:00 AM checkout)
+  const active = reservations.filter(r => {
+    const rCheckin = new Date(r.checkin);
+    const rCheckout = new Date(r.checkout);
+    rCheckout.setHours(11, 0, 0, 0);
+    return rCheckin <= now && rCheckout > now;
+  }).length;
+  
+  // Upcoming: checkin > today (future)
+  const upcoming = reservations.filter(r => {
+    const rCheckin = new Date(r.checkin);
+    rCheckin.setHours(0, 0, 0, 0);
+    return rCheckin > today;
+  }).length;
+  
+  // Checkouts today: checkout date is today AND current time is BEFORE 11:00 AM
+  const checkoutToday = reservations.filter(r => {
+    const rCheckout = new Date(r.checkout);
+    const isToday = rCheckout.toDateString() === today.toDateString();
+    return isToday && now < checkoutTimeToday;
+  }).length;
   
   document.getElementById('stat-active-count').textContent = active;
   document.getElementById('stat-upcoming-count').textContent = upcoming;
   document.getElementById('stat-checkout-today-count').textContent = checkoutToday;
+  
+  console.log(`📊 Stats: Active=${active}, Checkouts Today=${checkoutToday}, Time=${now.toLocaleTimeString()}`);
 }
 
 // Override loadAndRenderReservations to also update stats

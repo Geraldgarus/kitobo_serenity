@@ -84,6 +84,133 @@
       0%, 100% { opacity: 1; }
       50% { opacity: 0.7; }
     }
+
+
+
+
+    /* Mobile responsive stats cards - 2 per row */
+@media (max-width: 768px) {
+  .stats-row {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px !important;
+  }
+  
+  .stat-card {
+    min-width: auto !important;
+    padding: 12px !important;
+  }
+  
+  .stat-card .stat-value {
+    font-size: 20px !important;
+  }
+  
+  .stat-card .stat-label {
+    font-size: 10px !important;
+  }
+  
+  .stat-icon {
+    width: 36px !important;
+    height: 36px !important;
+    font-size: 18px !important;
+  }
+}
+
+/* Very small phones (below 480px) - single column */
+@media (max-width: 480px) {
+  .stats-row {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+/* For extremely small phones (below 360px) - keep 2 columns */
+@media (max-width: 360px) {
+  .stats-row {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+  }
+  
+  .stat-card {
+    padding: 8px !important;
+  }
+  
+  .stat-card .stat-value {
+    font-size: 16px !important;
+  }
+  
+  .stat-card .stat-label {
+    font-size: 9px !important;
+  }
+  
+  .stat-icon {
+    width: 28px !important;
+    height: 28px !important;
+    font-size: 14px !important;
+  }
+}
+
+
+/* Make stat cards more compact on phones */
+@media (max-width: 768px) {
+  .stat-card {
+    padding: 8px 10px !important;
+    gap: 8px !important;
+  }
+  
+  .stat-card .stat-icon {
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 16px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  
+  .stat-card .stat-value {
+    font-size: 18px !important;
+    margin-bottom: 2px !important;
+  }
+  
+  .stat-card .stat-label {
+    font-size: 9px !important;
+    white-space: nowrap !important;
+  }
+  
+  .stat-card .stat-change {
+    font-size: 8px !important;
+    white-space: nowrap !important;
+  }
+  
+  /* Shorter text for mobile */
+  .stat-card .stat-label {
+    letter-spacing: 0px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .stat-card {
+    padding: 6px 8px !important;
+    gap: 6px !important;
+  }
+  
+  .stat-card .stat-icon {
+    width: 28px !important;
+    height: 28px !important;
+    font-size: 14px !important;
+  }
+  
+  .stat-card .stat-value {
+    font-size: 16px !important;
+  }
+  
+  .stat-card .stat-label {
+    font-size: 8px !important;
+  }
+  
+  .stat-card .stat-change {
+    display: none !important; /* Hide the subtitle text on very small phones */
+  }
+}
   </style>
 </head>
 <body>
@@ -506,36 +633,28 @@ if (userPill) {
 async function loadDashboardStats() {
   try {
     const today = new Date();
-    const todayStr = today.toISOString().split('T')[0];
-    const checkoutDateTime = new Date(today);
-    checkoutDateTime.setHours(CHECKOUT_HOUR, CHECKOUT_MINUTE, 0, 0);
+    const now = new Date();
     
     // Get all reservations
     const allReservations = reservations || [];
     
-    // ACTIVE: Currently checked in (checkin <= today AND reservation is still active considering checkout time)
-    const active = allReservations.filter(r => {
-      const rCheckin = new Date(r.checkin);
-      const rCheckout = new Date(r.checkout);
-      rCheckout.setHours(CHECKOUT_HOUR, CHECKOUT_MINUTE, 0, 0);
-      return rCheckin <= today && rCheckout > today;
-    }).length;
+    // ACTIVE: Use your checkout time function
+    const active = allReservations.filter(r => isReservationActiveForCheckout(r)).length;
     
     // AVAILABLE: Total apartments - active
     const totalApartments = apartments.length;
     const available = totalApartments - active;
     
-    // CHECKOUTS TODAY: Reservations ending today AND before 11:00 AM
+    // CHECKOUTS TODAY: Use your getCheckoutStatus function
     const checkoutsToday = allReservations.filter(r => {
-      const rCheckout = new Date(r.checkout);
-      const isToday = rCheckout.toDateString() === today.toDateString();
-      return isToday && today < checkoutDateTime;
+      const status = getCheckoutStatus(r);
+      return status.isCheckoutToday === true;
     }).length;
     
     // UPCOMING: Reservations with check-in date IN THE FUTURE
     const upcoming = allReservations.filter(r => {
       const rCheckin = new Date(r.checkin);
-      return rCheckin > today;
+      return rCheckin > now;
     }).length;
     
     // TOTAL REVENUE
@@ -547,6 +666,8 @@ async function loadDashboardStats() {
     document.getElementById('stat-checkouts').innerText = checkoutsToday;
     document.getElementById('stat-upcoming').innerText = upcoming;
     document.getElementById('stat-revenue').innerHTML = fmtTSH(totalRevenue);
+    
+    console.log(`📊 Stats: Active=${active}, Available=${available}, Checkouts=${checkoutsToday}, Now=${now.toLocaleTimeString()}`);
     
   } catch (err) {
     console.error('Failed to load stats:', err);

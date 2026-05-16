@@ -2158,3 +2158,52 @@ h1, h2, h3, .logo-text, .card-title {
     border-bottom-color: #0f3460;
   }
 }
+
+
+
+
+/* Make reservation stats display in a row */
+.reservation-stats {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+  gap: 16px !important;
+  align-items: center !important;
+}
+
+/* On mobile, keep them in a row but allow wrapping if needed */
+@media (max-width: 640px) {
+  .reservation-stats {
+    gap: 12px !important;
+  }
+  
+  .stat-badge {
+    font-size: 12px !important;
+  }
+}
+
+/* On very small phones, if they don't fit, they will wrap to next line */
+@media (max-width: 480px) {
+  .reservation-stats {
+    gap: 8px !important;
+  }
+  
+  .stat-badge {
+    font-size: 11px !important;
+  }
+  
+  .stat-dot {
+    width: 8px !important;
+    height: 8px !important;
+  }
+}
+
+
+/* Global fix for card spacing */
+.main-content > .card:first-child {
+  margin-top: 0;
+}
+
+.card-header {
+  padding: 12px 24px;
+}

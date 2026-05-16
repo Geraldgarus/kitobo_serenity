@@ -7,6 +7,7 @@ async function loadAndRenderReservations() {
       apiGet('/reservations'),
     ]);
     renderReservationsTable();
+    updateReservationStats();
   } catch (err) {
     showToast('Failed to load reservations: ' + err.message, '❌');
   }
@@ -14,28 +15,98 @@ async function loadAndRenderReservations() {
 
 function renderReservationsTable() {
   const tbody = document.getElementById('res-table-body');
-  const today = isoDate(new Date());
-  if (!reservations.length) {
+  const now = new Date();
+  
+  if (!reservations || !reservations.length) {
     tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><div class="empty-icon">📋</div><p>No reservations yet</p></div></td></tr>`;
     return;
   }
-  tbody.innerHTML = reservations.map(res => {
-    const aptName = getApt(res.aptId)?.name || res.aptName || '—';
+  
+  let html = '';
+  
+  for (const res of reservations) {
+    const apt = getApt(res.aptId);
+    const aptName = apt?.name || res.aptName || '—';
     const nights = daysBetween(res.checkin, res.checkout);
-    const status = res.checkout <= today ? 'Checked Out' : res.checkin <= today ? 'Active' : 'Upcoming';
-    const chipClass = status === 'Active' ? 'chip-green' : status === 'Upcoming' ? 'chip-blue' : 'chip-gray';
-    return `<tr>
-      <td><strong>${res.guest}</strong><br><small style="color:var(--gray-400)">${res.email}</small></td>
-      <td>${aptName}</td>
+    
+    // Calculate status with 11:00 AM checkout time
+    const rCheckin = new Date(res.checkin);
+    const rCheckout = new Date(res.checkout);
+    rCheckout.setHours(11, 0, 0, 0);
+    
+    let status = '';
+    let chipClass = '';
+    
+    if (rCheckout <= now) {
+      status = 'Checked Out';
+      chipClass = 'chip-gray';
+    } else if (rCheckin <= now) {
+      status = 'Active';
+      chipClass = 'chip-green';
+    } else {
+      status = 'Upcoming';
+      chipClass = 'chip-blue';
+    }
+    
+    html += `<tr>
+      <td>
+        <div class="guest-cell">
+          <span class="guest-name">${escapeHtml(res.guest)}</span>
+          <span class="guest-email">${escapeHtml(res.email)}</span>
+        </div>
+       </td>
+      <td>${escapeHtml(aptName)}</td>
       <td>${fmtDate(res.checkin)}</td>
-      <td>${fmtDate(res.checkout)}</td>
+      <td>${fmtDate(res.checkout)} at 11:00 AM</td>
       <td>${nights}n</td>
       <td>${res.adults}A ${res.children}C</td>
-      <td><strong style="color:var(--navy)">${fmtTSH(res.total)}</strong></td>
+      <td class="total-cell">${fmtTSH(res.total)}</td>
       <td><span class="chip ${chipClass}">${status}</span></td>
-      <td><button class="btn btn-outline" style="padding:6px 12px;font-size:12px" onclick="openDetail(${res.id})">View</button></td>
+      <td><button class="btn btn-outline" style="padding:6px 12px; font-size:12px;" onclick="openDetail(${res.id})">View</button></td>
     </tr>`;
-  }).join('');
+  }
+  
+  tbody.innerHTML = html;
+}
+
+function updateReservationStats() {
+  const now = new Date();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const checkoutTimeToday = new Date(today);
+  checkoutTimeToday.setHours(11, 0, 0, 0);
+  
+  // Active: checkin <= now AND checkout+time > now (11:00 AM checkout)
+  const active = reservations.filter(r => {
+    const rCheckin = new Date(r.checkin);
+    const rCheckout = new Date(r.checkout);
+    rCheckout.setHours(11, 0, 0, 0);
+    return rCheckin <= now && rCheckout > now;
+  }).length;
+  
+  // Upcoming: checkin > today (future)
+  const upcoming = reservations.filter(r => {
+    const rCheckin = new Date(r.checkin);
+    rCheckin.setHours(0, 0, 0, 0);
+    return rCheckin > today;
+  }).length;
+  
+  // Checkouts today: checkout date is today AND current time is BEFORE 11:00 AM
+  const checkoutToday = reservations.filter(r => {
+    const rCheckout = new Date(r.checkout);
+    const isToday = rCheckout.toDateString() === today.toDateString();
+    return isToday && now < checkoutTimeToday;
+  }).length;
+  
+  const activeCountElem = document.getElementById('stat-active-count');
+  const upcomingCountElem = document.getElementById('stat-upcoming-count');
+  const checkoutTodayCountElem = document.getElementById('stat-checkout-today-count');
+  
+  if (activeCountElem) activeCountElem.textContent = active;
+  if (upcomingCountElem) upcomingCountElem.textContent = upcoming;
+  if (checkoutTodayCountElem) checkoutTodayCountElem.textContent = checkoutToday;
+  
+  console.log(`📊 Stats: Active=${active}, Upcoming=${upcoming}, Checkouts Today=${checkoutToday}, Time=${now.toLocaleTimeString()}`);
 }
 
 async function openDetail(resId) {
@@ -43,21 +114,29 @@ async function openDetail(resId) {
     const res = await apiGet(`/reservations/${resId}`);
     selectedReservation = res;
     const apt = getApt(res.aptId) || { name: res.aptName || '—' };
+    
+    // Calculate if active with 11:00 AM checkout
+    const now = new Date();
+    const rCheckout = new Date(res.checkout);
+    rCheckout.setHours(11, 0, 0, 0);
+    const isActive = rCheckout > now;
 
     document.getElementById('detail-body').innerHTML = [
-      { icon: '👤', label: 'Guest Name', value: res.guest },
-      { icon: '📧', label: 'Email', value: res.email },
-      { icon: '📱', label: 'Mobile', value: res.mobile },
-      { icon: '🌍', label: 'Country', value: res.country },
-      { icon: '🏙️', label: 'City', value: res.city },
-      { icon: '🏠', label: 'Apartment', value: apt.name },
-      { icon: '💳', label: 'Rate Type', value: res.rateType },
+      { icon: '👤', label: 'Guest Name', value: escapeHtml(res.guest) },
+      { icon: '📧', label: 'Email', value: escapeHtml(res.email) },
+      { icon: '📱', label: 'Mobile', value: escapeHtml(res.mobile || '—') },
+      { icon: '🌍', label: 'Country', value: escapeHtml(res.country || '—') },
+      { icon: '🏙️', label: 'City', value: escapeHtml(res.city || '—') },
+      { icon: '🏠', label: 'Apartment', value: escapeHtml(apt.name) },
+      { icon: '💳', label: 'Rate Type', value: escapeHtml(res.rateType) },
       { icon: '📅', label: 'Check-in', value: fmtDate(res.checkin) },
-      { icon: '📅', label: 'Check-out', value: fmtDate(res.checkout) },
+      { icon: '📅', label: 'Check-out', value: fmtDate(res.checkout) + ' at 11:00 AM' },
       { icon: '🌙', label: 'Nights', value: daysBetween(res.checkin, res.checkout) + ' nights' },
       { icon: '👨‍👩‍👧', label: 'Adults / Children', value: `${res.adults} Adults, ${res.children} Children` },
     ].map(r => `<div class="detail-row"><div class="detail-icon">${r.icon}</div><div><div class="detail-label">${r.label}</div><div class="detail-value">${r.value}</div></div></div>`).join('') +
-    `<div class="detail-total"><span>Total Rate</span><span>${fmtTSH(res.total)}</span></div>`;
+    `<div class="detail-total"><span>Total Rate</span><span>${fmtTSH(res.total)}</span></div>` +
+    (isActive ? `<div style="margin-top:16px;padding:12px;background:#e8f5e9;border-radius:8px;text-align:center;">🟢 Currently staying - Checkout at 11:00 AM</div>` : 
+                 `<div style="margin-top:16px;padding:12px;background:#f5f5f5;border-radius:8px;text-align:center;">✅ Reservation completed</div>`);
 
     document.getElementById('panel-overlay').classList.add('open');
     document.getElementById('detail-panel').classList.add('open');
@@ -85,6 +164,54 @@ async function deleteSelectedReservation() {
   }
 }
 
+// Checkout function for reservations page
+async function checkoutReservation() {
+  if (!selectedReservation) {
+    showToast('No reservation selected', '⚠️');
+    return;
+  }
+  
+  const now = new Date();
+  const rCheckout = new Date(selectedReservation.checkout);
+  rCheckout.setHours(11, 0, 0, 0);
+  
+  if (rCheckout <= now) {
+    showToast('Guest is already checked out (after 11:00 AM)', 'ℹ️');
+    closeDetailPanel();
+    await loadAndRenderReservations();
+    return;
+  }
+  
+  const today = isoDate(now);
+  const nightsOriginal = daysBetween(selectedReservation.checkin, selectedReservation.checkout);
+  const nightsNew = daysBetween(selectedReservation.checkin, today);
+  const pricePerNight = selectedReservation.total / nightsOriginal;
+  const newTotal = Math.round(pricePerNight * nightsNew);
+  
+  if (!confirm(`Checkout ${selectedReservation.guest} today at 11:00 AM?\nOriginal total: ${fmtTSH(selectedReservation.total)}\nNew total: ${fmtTSH(newTotal)}`)) return;
+  
+  try {
+    const payload = { ...selectedReservation, checkout: today, total: newTotal };
+    await apiPut(`/reservations/${selectedReservation.id}`, payload);
+    showToast(`✅ ${selectedReservation.guest} checked out! New total: ${fmtTSH(newTotal)}`, '🚪');
+    closeDetailPanel();
+    await loadAndRenderReservations();
+  } catch (err) {
+    showToast('Checkout failed: ' + err.message, '❌');
+  }
+}
+
+// Escape HTML helper
+function escapeHtml(str) {
+  if (!str) return '';
+  return str.replace(/[&<>]/g, function(m) {
+    if (m === '&') return '&amp;';
+    if (m === '<') return '&lt;';
+    if (m === '>') return '&gt;';
+    return m;
+  });
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   try {
     APARTMENTS = await apiGet('/apartments');
@@ -97,3 +224,4 @@ document.addEventListener('DOMContentLoaded', async () => {
 window.openDetail = openDetail;
 window.closeDetailPanel = closeDetailPanel;
 window.deleteSelectedReservation = deleteSelectedReservation;
+window.checkoutReservation = checkoutReservation;

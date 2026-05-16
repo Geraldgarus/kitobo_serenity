@@ -15,28 +15,35 @@ async function loadAndRenderDashboard() {
 }
 
 function renderStats() {
-  const today = formatDateForAPI(new Date());
+  const now = new Date();
+  const todayDate = new Date();
+  todayDate.setHours(0, 0, 0, 0);
+  const checkoutTimeToday = new Date(todayDate);
+  checkoutTimeToday.setHours(11, 0, 0, 0);
   
-  // Occupied: checkin <= today < checkout
+  // Occupied: checkin <= now AND checkout+time > now (11:00 AM checkout)
   const occupied = reservations.filter(r => {
-    const checkin = formatDateForAPI(r.checkin);
-    const checkout = formatDateForAPI(r.checkout);
-    return checkin <= today && checkout > today;
+    const rCheckin = new Date(r.checkin);
+    const rCheckout = new Date(r.checkout);
+    rCheckout.setHours(11, 0, 0, 0);
+    return rCheckin <= now && rCheckout > now;
   }).length;
   
   // Available: total apartments - occupied
   const available = APARTMENTS.length - occupied;
   
-  // Checkouts today: checkout == today
+  // Checkouts today: checkout date is today AND current time is BEFORE 11:00 AM
   const checkoutsToday = reservations.filter(r => {
-    const checkout = formatDateForAPI(r.checkout);
-    return checkout === today;
+    const rCheckout = new Date(r.checkout);
+    const isToday = rCheckout.toDateString() === todayDate.toDateString();
+    return isToday && now < checkoutTimeToday;
   }).length;
   
   // Upcoming: checkin > today (future)
   const upcoming = reservations.filter(r => {
-    const checkin = formatDateForAPI(r.checkin);
-    return checkin > today;
+    const rCheckin = new Date(r.checkin);
+    rCheckin.setHours(0, 0, 0, 0);
+    return rCheckin > todayDate;
   }).length;
   
   // Total Revenue: sum of all totals
@@ -47,13 +54,14 @@ function renderStats() {
   document.getElementById('stat-checkouts').textContent = checkoutsToday;
   document.getElementById('stat-upcoming').textContent = upcoming;
   document.getElementById('stat-revenue').textContent = fmtTSH(totalRevenue);
+  
+  console.log(`📊 Stats: Occupied=${occupied}, Checkouts=${checkoutsToday}, Time=${now.toLocaleTimeString()}`);
 }
 
 function renderGantt() {
   const wrap = document.getElementById('gantt-body');
   if (!wrap) return;
   
-  const today = formatDateForAPI(new Date());
   const apts = APARTMENTS;
   
   // Generate days for Gantt chart
@@ -80,10 +88,12 @@ function renderGantt() {
   html += '</td></thead><tbody>';
 
   apts.forEach(apt => {
-    const aptReservations = reservations.filter(r => 
-      r.aptId === apt.id && 
-      formatDateForAPI(r.checkout) > today
-    );
+    const aptReservations = reservations.filter(r => {
+      if (r.aptId !== apt.id) return false;
+      const rCheckout = new Date(r.checkout);
+      rCheckout.setHours(11, 0, 0, 0);
+      return rCheckout > new Date();
+    });
     
     html += `<tr>
       <td style="padding:0 12px; min-width:100px; border-right:2px solid ${apt.color}; background:#fafafa;">
@@ -91,7 +101,7 @@ function renderGantt() {
           <span style="font-size:20px;">${apt.emoji || '🏠'}</span>
           <span style="font-weight:600;">${escapeHtml(apt.name)}</span>
         </div>
-        </td>`;
+       </td>`;
     
     let i = 0;
     while (i < days.length) {
@@ -152,7 +162,7 @@ function renderGantt() {
         i++;
       }
     }
-    html += '<tr>';
+    html += '</tr>';
   });
   
   html += '</tbody></table></div>';
@@ -195,8 +205,10 @@ async function openDetail(resId) {
     selectedReservation = res;
     const apt = getApt(res.aptId) || { name: res.aptName || '—' };
     const nights = daysBetween(res.checkin, res.checkout);
-    const today = formatDateForAPI(new Date());
-    const isActive = formatDateForAPI(res.checkout) > today;
+    const now = new Date();
+    const rCheckout = new Date(res.checkout);
+    rCheckout.setHours(11, 0, 0, 0);
+    const isActive = rCheckout > now;
     
     const checkoutBtn = document.getElementById('checkout-btn');
     if (checkoutBtn) checkoutBtn.style.display = isActive ? 'flex' : 'none';
@@ -211,11 +223,11 @@ async function openDetail(resId) {
         <div class="detail-row"><div class="detail-icon">🏠</div><div><div class="detail-label">Apartment</div><div class="detail-value">${escapeHtml(apt.name)}</div></div></div>
         <div class="detail-row"><div class="detail-icon">💳</div><div><div class="detail-label">Rate Type</div><div class="detail-value">${escapeHtml(res.rateType)}</div></div></div>
         <div class="detail-row"><div class="detail-icon">📅</div><div><div class="detail-label">Check-in</div><div class="detail-value">${fmtDate(res.checkin)}</div></div></div>
-        <div class="detail-row"><div class="detail-icon">📅</div><div><div class="detail-label">Check-out</div><div class="detail-value">${fmtDate(res.checkout)}</div></div></div>
+        <div class="detail-row"><div class="detail-icon">📅</div><div><div class="detail-label">Check-out</div><div class="detail-value">${fmtDate(res.checkout)} at 11:00 AM</div></div></div>
         <div class="detail-row"><div class="detail-icon">🌙</div><div><div class="detail-label">Nights</div><div class="detail-value">${nights} night${nights !== 1 ? 's' : ''}</div></div></div>
         <div class="detail-row"><div class="detail-icon">👨‍👩‍👧</div><div><div class="detail-label">Adults / Children</div><div class="detail-value">${res.adults} Adults, ${res.children} Children</div></div></div>
         <div class="detail-total"><span>Total Rate</span><span>${fmtTSH(res.total)}</span></div>
-        ${isActive ? `<div style="margin-top:16px;padding:12px;background:#e8f5e9;border-radius:8px;text-align:center;">🟢 Currently staying - Click Checkout to make room available</div>` : `<div style="margin-top:16px;padding:12px;background:#f5f5f5;border-radius:8px;text-align:center;">✅ Reservation completed</div>`}
+        ${isActive ? `<div style="margin-top:16px;padding:12px;background:#e8f5e9;border-radius:8px;text-align:center;">🟢 Currently staying - Checkout at 11:00 AM</div>` : `<div style="margin-top:16px;padding:12px;background:#f5f5f5;border-radius:8px;text-align:center;">✅ Reservation completed</div>`}
       `;
     }
   } catch (err) {

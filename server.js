@@ -840,21 +840,28 @@ app.get('/api/outlet-inventory', async (req, res) => {
 });
 
 // DELETE bulk items from outlet inventory
-app.delete('/api/outlet-inventory/bulk/:outlet/:itemName', async (req, res) => {
-  const { outlet, itemName } = req.params;
+// DELETE /api/outlets/:id – delete an outlet
+app.delete('/api/outlets/:id', async (req, res) => {
+  const { id } = req.params;
   try {
-    const decodedItemName = decodeURIComponent(itemName);
-    await pool.query(
-      'DELETE FROM outlet_inventory WHERE outlet = $1 AND LOWER(TRIM(item_name)) = LOWER(TRIM($2))',
-      [outlet, decodedItemName]
-    );
-    res.json({ message: 'Items deleted successfully' });
-  } catch(err) {
-    console.error('Error:', err);
+    // First check if outlet exists
+    const outletCheck = await pool.query('SELECT id FROM outlets WHERE id = $1', [id]);
+    if (outletCheck.rows.length === 0) {
+      return res.status(404).json({ error: 'Outlet not found' });
+    }
+    
+    // Delete the outlet
+    const { rowCount } = await pool.query('DELETE FROM outlets WHERE id = $1', [id]);
+    if (rowCount === 0) {
+      return res.status(404).json({ error: 'Outlet not found' });
+    }
+    
+    res.json({ message: 'Outlet deleted successfully' });
+  } catch (err) {
+    console.error('Delete outlet error:', err);
     res.status(500).json({ error: err.message });
   }
 });
-
 // DELETE single item from outlet inventory
 app.delete('/api/outlet-inventory/:id', async (req, res) => {
   const { id } = req.params;

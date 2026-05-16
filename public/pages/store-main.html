@@ -125,6 +125,135 @@ Here is an HTML document that adds a search placeholder to the Main Store page, 
         width: 100%;
       }
     }
+
+
+
+    /* ============================================================
+   FIX BUTTON SIZES AND SPACING - CORRECTED VERSION
+   ============================================================ */
+
+/* Fix the big gap between navbar and content */
+.main-content {
+  margin-top: 60px !important;
+  padding: 16px 24px !important;
+}
+
+.card {
+  margin-top: 0 !important;
+}
+
+.card-header {
+  padding: 12px 20px !important;
+}
+
+/* Make ALL buttons smaller */
+.btn, 
+.btn-sm, 
+.btn-gold, 
+.btn-outline, 
+.btn-success, 
+.btn-warning, 
+.btn-danger {
+  padding: 4px 10px !important;
+  font-size: 11px !important;
+  min-height: 28px !important;
+  line-height: 1.2 !important;
+  border-radius: 20px !important;
+}
+
+/* Make Add/Remove buttons have + and - icons only */
+.stock-control .btn-success.btn-sm {
+  padding: 4px 8px !important;
+  font-size: 10px !important;
+  min-width: 28px !important;
+  width: auto !important;
+}
+
+/* Make Edit button smaller */
+.btn-warning.btn-sm {
+  padding: 4px 8px !important;
+  font-size: 10px !important;
+}
+
+/* Make Delete button smaller */
+.btn-danger.btn-sm {
+  padding: 4px 8px !important;
+  font-size: 10px !important;
+}
+
+/* Make Approve button smaller */
+#requests-tbody .btn-success.btn-sm {
+  padding: 4px 8px !important;
+  font-size: 10px !important;
+}
+
+/* Make Reject button smaller */
+#requests-tbody .btn-danger.btn-sm {
+  padding: 4px 8px !important;
+  font-size: 10px !important;
+}
+
+/* Top action buttons (Import Excel, Add New Item) */
+.action-buttons .btn-outline,
+.action-buttons .btn-gold {
+  padding: 5px 12px !important;
+  font-size: 12px !important;
+}
+
+/* Reduce spacing in table cells */
+.store-table th,
+.store-table td {
+  padding: 8px 10px !important;
+}
+
+/* Make stock control inputs smaller */
+.stock-control input {
+  width: 50px !important;
+  padding: 3px 4px !important;
+  font-size: 10px !important;
+}
+
+.stock-control {
+  gap: 3px !important;
+}
+
+/* Reduce tab padding */
+.store-tabs {
+  margin: 0 12px !important;
+}
+
+.tab-btn {
+  padding: 6px 14px !important;
+  font-size: 12px !important;
+}
+
+/* Reduce search container padding */
+.search-container {
+  padding: 8px 16px 12px 16px !important;
+}
+
+/* Fix navbar to content gap */
+.main-content {
+  padding-top: 8px !important;
+  margin-top: 60px !important;
+}
+
+.card {
+  margin-top: 0 !important;
+}
+
+.card-header {
+  padding: 10px 20px !important;
+}
+
+.store-tabs {
+  margin: 0 16px !important;
+  padding-top: 8px !important;
+}
+
+.search-container {
+  padding: 6px 20px 10px 20px !important;
+}
   </style>
 </head>
 <body>
@@ -740,23 +869,27 @@ document.getElementById('excel-file-input')?.addEventListener('change', previewE
       tbody.innerHTML = `<tr><td colspan="6" class="empty-state">🔎 No items match "${escapeHtml(currentSearchTerm)}". Try another search or add new item.</td></tr>`;
       return;
     }
-    var html = '';
-    for (var i = 0; i < filtered.length; i++) {
-      var item = filtered[i];
-      var currentQty = parseFloat(item.quantity) || 0;
-      var totalValue = currentQty * parseFloat(item.cost);
-      html += '<tr>';
-      html += '<td><strong>' + escapeHtml(item.name) + '</strong></td>';
-      html += '<td>' + escapeHtml(item.category) + '</td>';
-      html += '<td>' + fmtTSH(item.cost) + ' per ' + escapeHtml(item.unit || 'unit') + '</td>';
-      html += '<td><div class="stock-control"><span style="font-weight:bold;">' + escapeHtml(currentQty.toString()) + ' ' + escapeHtml(item.unit || 'units') + '</span>';
-      html += '<button class="btn btn-success btn-sm" onclick="openAddStockModal(' + item.id + ', \'' + escapeHtml(item.name) + '\', ' + item.cost + ', \'' + escapeHtml(item.unit || 'units') + '\')">➕ Add</button>';
-      html += '<button class="btn btn-warning btn-sm" onclick="removeStock(' + item.id + ', \'' + escapeHtml(item.name) + '\')">➖ Remove</button></div></td>';
-      html += '<td>' + fmtTSH(totalValue) + '</td>';
-      html += '<td><button class="btn btn-warning btn-sm" onclick="openEditItemModal(' + item.id + ')">✏️ Edit</button>';
-      html += '<button class="btn btn-danger btn-sm" onclick="deleteStoreItem(' + item.id + ')">🗑 Delete</button></td>';
-      html += '</tr>';
-    }
+   var html = '';
+var html = '';
+for (var i = 0; i < filtered.length; i++) {
+  var item = filtered[i];
+  var currentQty = parseFloat(item.quantity) || 0;
+  var totalValue = currentQty * parseFloat(item.cost);
+  html += '<tr>';
+  html += '<td><strong>' + escapeHtml(item.name) + '</strong></td>';
+  html += '<td>' + escapeHtml(item.category) + '</td>';
+  html += '<td>' + fmtTSH(item.cost) + ' per ' + escapeHtml(item.unit || 'unit') + '</td>';
+  // Simple + and - buttons with quantity
+  html += '<td>';
+  html += '<button class="btn-add-stock" onclick="openAddStockModal(' + item.id + ', \'' + escapeHtml(item.name) + '\', ' + item.cost + ', \'' + escapeHtml(item.unit || 'units') + '\')" style="background:none; border:1px solid #ccc; border-radius:4px; padding:2px 8px; margin-right:4px; cursor:pointer; font-weight:bold;">+</button>';
+  html += '<button class="btn-remove-stock" onclick="removeStock(' + item.id + ', \'' + escapeHtml(item.name) + '\')" style="background:none; border:1px solid #ccc; border-radius:4px; padding:2px 8px; margin-right:8px; cursor:pointer; font-weight:bold;">-</button>';
+  html += '<span style="font-weight:bold;">' + escapeHtml(currentQty.toString()) + ' ' + escapeHtml(item.unit || 'units') + '</span>';
+  html += '</div></td>';
+  html += '<td>' + fmtTSH(totalValue) + '</td>';
+  html += '<td><button class="btn-edit" onclick="openEditItemModal(' + item.id + ')" style="background:none; border:1px solid #ccc; border-radius:4px; padding:2px 8px; margin-right:4px; cursor:pointer;">✏️</button>';
+  html += '<button class="btn-delete" onclick="deleteStoreItem(' + item.id + ')" style="background:none; border:1px solid #ccc; border-radius:4px; padding:2px 8px; cursor:pointer;">🗑</button></td>';
+  html += '</tr>';
+}
     tbody.innerHTML = html;
   }
 
@@ -924,17 +1057,34 @@ document.getElementById('excel-file-input')?.addEventListener('change', previewE
     try { var data = await apiGet('/store/requests?status=pending'); requests = data; renderRequests(); } 
     catch(err) { showToast('Failed to load requests: ' + err.message, '❌'); }
   }
-  function renderRequests() {
-    var tbody = document.getElementById('requests-tbody'); if (!tbody) return;
-    if (requests.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="empty-state">📭 No pending requests.</td></tr>'; return; }
+ function renderRequests() {
+    var tbody = document.getElementById('requests-tbody'); 
+    if (!tbody) return;
+    
+    if (requests.length === 0) { 
+        tbody.innerHTML = '<tr><td colspan="7" class="empty-state">📭 No pending requests.穷</td>'; 
+        return; 
+    }
+    
     var html = '';
     for (var i = 0; i < requests.length; i++) {
-      var req = requests[i];
-      html += '<tr><td><strong>' + escapeHtml(req.item_name) + '</strong></td><td>' + escapeHtml(req.category) + '</td><td>' + escapeHtml(req.quantity) + '</td><td>' + escapeHtml(req.requested_by) + '</td><td>' + new Date(req.created_at).toLocaleDateString() + '</td><td><span class="request-badge status-pending">pending</span></td>';
-      html += '<td><button class="btn btn-success btn-sm" onclick="approveRequest(' + req.id + ')">✅ Approve</button><button class="btn btn-danger btn-sm" onclick="rejectRequest(' + req.id + ')">❌ Reject</button></td></tr>';
+        var req = requests[i];
+        html += '<tr>';
+        html += '<td><strong>' + escapeHtml(req.item_name) + '</strong></td>';
+        html += '<td>' + escapeHtml(req.category) + '</td>';
+        html += '<td>' + escapeHtml(req.quantity) + '</td>';
+        html += '<td>' + escapeHtml(req.requested_by) + '</td>';
+        html += '<td>' + new Date(req.created_at).toLocaleDateString() + '</td>';
+        html += '<td><span class="request-badge status-pending">pending</span></td>';
+        // Plain buttons with ✓ and ✗
+        html += '<td>';
+        html += '<button onclick="approveRequest(' + req.id + ')" style="border:1px solid #aaa; background:#fff; padding:4px 12px; margin-right:5px; cursor:pointer; border-radius:4px;">✓ Approve</button>';
+        html += '<button onclick="rejectRequest(' + req.id + ')" style="border:1px solid #aaa; background:#fff; padding:4px 12px; cursor:pointer; border-radius:4px;">✗ Reject</button>';
+        html += '</div></td>';
+        html += '</table>';
     }
     tbody.innerHTML = html;
-  }
+}
   async function approveRequest(id) { var authorized = prompt('Enter authorized quantity to transfer (e.g., "5 kg"):'); if (!authorized) return; if (!confirm('Approve request with quantity ' + authorized + '?')) return; try { await apiPut('/store/requests/' + id + '/approve', { authorizedQuantity: authorized }); showToast('Request approved, stock deducted', '✅'); await loadRequests(); await loadStoreItems(); } catch (err) { showToast('Approve failed: ' + err.message, '❌'); } }
   async function rejectRequest(id) { if (!confirm('Reject this request?')) return; try { await apiPut('/store/requests/' + id + '/reject', {}); showToast('Request rejected', '❌'); await loadRequests(); } catch (err) { showToast('Reject failed: ' + err.message, '❌'); } }
   function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, function(m) { if (m === '&') return '&amp;'; if (m === '<') return '&lt;'; if (m === '>') return '&gt;'; return m; }); }
