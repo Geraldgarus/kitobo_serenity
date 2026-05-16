@@ -983,24 +983,83 @@ app.post('/api/auth/register', async (req, res) => {
 
 // POST /api/auth/login – email and password only
 // POST /api/auth/login – email and password only (RETURNS TOKEN)
+// ============================================================
+// ACCOUNT LOCKOUT - Brute Force Protection
+// ============================================================
+// Store failed attempts in memory
+const failedAttempts = new Map();
+
+// Lockout settings
+const MAX_ATTEMPTS = 5;
+const LOCKOUT_MINUTES = 15;
+
+async function checkAccountLockout(email) {
+  const record = failedAttempts.get(email);
+  
+  if (!record) return; // No failed attempts
+  
+  if (record.count >= MAX_ATTEMPTS) {
+    const timeElapsed = Date.now() - record.lockUntil;
+    const lockoutMs = LOCKOUT_MINUTES * 60 * 1000;
+    
+    if (timeElapsed < lockoutMs) {
+      const minutesLeft = Math.ceil((lockoutMs - timeElapsed) / 60000);
+      throw new Error(`Account locked. Try again in ${minutesLeft} minutes.`);
+    } else {
+      // Lockout expired, reset attempts
+      failedAttempts.delete(email);
+    }
+  }
+}
+
+function recordFailedAttempt(email) {
+  const record = failedAttempts.get(email) || { count: 0, lockUntil: null };
+  record.count++;
+  record.lockUntil = Date.now();
+  failedAttempts.set(email, record);
+  console.log(`⚠️ Failed login attempt for ${email} (${record.count}/${MAX_ATTEMPTS})`);
+}
+
+function resetFailedAttempts(email) {
+  if (failedAttempts.has(email)) {
+    failedAttempts.delete(email);
+    console.log(`✅ Lockout reset for ${email}`);
+  }
+}
+
+// POST /api/auth/login – email and password only (RETURNS TOKEN) WITH ACCOUNT LOCKOUT
 app.post('/api/auth/login', async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
     return res.status(400).json({ error: 'Email and password are required' });
   }
+  
   try {
+    // ========== CHECK ACCOUNT LOCKOUT ==========
+    await checkAccountLockout(email);
+    
     const { rows } = await pool.query(
       'SELECT id, username, email, password_hash, role, full_name FROM users WHERE email = $1',
       [email]
     );
+    
     if (rows.length === 0) {
+      // Record failed attempt (email doesn't exist - prevents email enumeration)
+      recordFailedAttempt(email);
       return res.status(401).json({ error: 'Invalid email or password' });
     }
+    
     const user = rows[0];
     const match = await bcrypt.compare(password, user.password_hash);
+    
     if (!match) {
+      // Record failed attempt
+      recordFailedAttempt(email);
       return res.status(401).json({ error: 'Invalid email or password' });
     }
+    
+    // ========== LOGIN SUCCESSFUL - RESET LOCKOUT ==========
+    resetFailedAttempts(email);
     
     // ========== GENERATE JWT TOKEN ==========
     const token = jwt.sign(
@@ -1015,7 +1074,7 @@ app.post('/api/auth/login', async (req, res) => {
     
     // Return user data WITH token
     res.json({
-      token,  // <-- THIS IS THE KEY ADDITION
+      token,
       id: user.id,
       username: user.username,
       email: user.email,
@@ -1023,8 +1082,9 @@ app.post('/api/auth/login', async (req, res) => {
       fullName: user.full_name,
     });
   } catch (err) {
+    // This catches lockout errors from checkAccountLockout
     console.error(err);
-    res.status(500).json({ error: 'Login failed' });
+    res.status(403).json({ error: err.message });
   }
 });
 
@@ -1050,6 +1110,8 @@ app.post('/api/auth/change-password', async (req, res) => {
     res.status(500).json({ error: 'Failed to change password' });
   }
 });
+
+
 
 // ============================================================
 // USER MANAGEMENT API (admin only)
