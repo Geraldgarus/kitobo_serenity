@@ -298,13 +298,13 @@
   
   function logout() { 
     sessionStorage.removeItem('pms_user'); 
-    window.location.href = '/login'; 
+    window.location.href = '/'; 
   }
   
   // Check if user is logged in
   const currentUser = getCurrentUser();
   if (!currentUser) {
-    window.location.href = '/login';
+    window.location.href = '/';
   }
   
   // Display user info in navbar
@@ -485,17 +485,19 @@
     const confirmPass = document.getElementById('confirm-password').value;
     if (newPass !== confirmPass) { showToast('Passwords do not match', 'error'); return; }
     if (newPass.length < 6) { showToast('Password must be at least 6 characters', 'error'); return; }
-    try {
-      const res = await fetch('/api/auth/change-password', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: currentUser.id, oldPassword: oldPass, newPassword: newPass })
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      showToast('Password changed! Please login again.', 'success');
-      setTimeout(() => logout(), 1500);
-    } catch(err) { showToast('Failed: ' + err.message, 'error'); }
+     try {
+  await apiPost('/auth/change-password', {
+    userId: currentUser.id,
+    oldPassword: currentPassword,
+    newPassword: newPassword
   });
+  
+  showToast('Password changed successfully! Please login again.', '✅');
+  setTimeout(() => { logout(); }, 1500);
+} catch (err) {
+  showToast('Failed to change password: ' + err.message, '❌');
+}
+});
 
   // ============================================================
   // SIDEBAR TOGGLE

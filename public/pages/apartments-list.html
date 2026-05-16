@@ -403,15 +403,31 @@
   // ============================================================
   let apartments = [];
 
-  async function loadApartments() {
-    try {
-      const data = await apiGet('/apartments');
-      apartments = data;
-      renderApartments();
-    } catch (err) {
-      showToast('Failed to load apartments: ' + err.message, 'error');
+async function loadApartments() {
+  try {
+    const token = sessionStorage.getItem('token');
+    const response = await fetch('/api/apartments', {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    if (response.status === 401 || response.status === 403) {
+      sessionStorage.clear();
+      window.location.href = '/';
+      return;
     }
+    
+    if (!response.ok) throw new Error('Failed to load');
+    
+    const data = await response.json();
+    apartments = data;
+    renderApartments();
+  } catch (err) {
+    showToast('Failed to load apartments: ' + err.message, 'error');
   }
+}
 
   function renderApartments() {
     const tbody = document.getElementById('apartments-tbody');
@@ -435,6 +451,58 @@
       </tr>
     `).join('');
   }
+
+async function apiPost(endpoint, data) {
+  const token = sessionStorage.getItem('token');
+  const response = await fetch(`/api${endpoint}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify(data)
+  });
+  
+  if (response.status === 401 || response.status === 403) {
+    sessionStorage.clear();
+    window.location.href = '/';
+    throw new Error('Session expired');
+  }
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Request failed');
+  }
+  
+  return response.json();
+}
+
+
+
+async function apiPut(endpoint, data) {
+  const token = sessionStorage.getItem('token');
+  const response = await fetch(`/api${endpoint}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify(data)
+  });
+  
+  if (response.status === 401 || response.status === 403) {
+    sessionStorage.clear();
+    window.location.href = '/';
+    throw new Error('Session expired');
+  }
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Request failed');
+  }
+  
+  return response.json();
+}
 
   async function deleteApartment(id) {
     const apt = apartments.find(a => a.id === id);
@@ -605,40 +673,45 @@
       `;
       document.body.insertAdjacentHTML('beforeend', modalHTML);
       
-      document.getElementById('change-password-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const currentPassword = document.getElementById('current-password').value;
-        const newPassword = document.getElementById('new-password').value;
-        const confirmPassword = document.getElementById('confirm-password').value;
-        
-        if (newPassword !== confirmPassword) {
-          showToast('New passwords do not match', 'error');
-          return;
-        }
-        if (newPassword.length < 6) {
-          showToast('Password must be at least 6 characters', 'error');
-          return;
-        }
-        
-        try {
-          const response = await fetch('/api/auth/change-password', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              userId: currentUser.id,
-              oldPassword: currentPassword,
-              newPassword: newPassword
-            })
-          });
-          const data = await response.json();
-          if (!response.ok) throw new Error(data.error);
-          
-          showToast('Password changed successfully! Please login again.', 'success');
-          setTimeout(() => { logout(); }, 1500);
-        } catch (err) {
-          showToast('Failed to change password: ' + err.message, 'error');
-        }
-      });
+document.getElementById('change-password-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const currentPassword = document.getElementById('current-password').value;
+  const newPassword = document.getElementById('new-password').value;
+  const confirmPassword = document.getElementById('confirm-password').value;
+  
+  if (newPassword !== confirmPassword) {
+    showToast('New passwords do not match', 'error');
+    return;
+  }
+  if (newPassword.length < 6) {
+    showToast('Password must be at least 6 characters', 'error');
+    return;
+  }
+  
+  try {
+    const token = sessionStorage.getItem('token');
+    const response = await fetch('/api/auth/change-password', {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ 
+        userId: currentUser.id, 
+        oldPassword: currentPassword, 
+        newPassword: newPassword 
+      })
+    });
+    
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error);
+    
+    showToast('Password changed successfully! Please login again.', 'success');
+    setTimeout(() => { logout(); }, 1500);
+  } catch (err) {
+    showToast('Failed to change password: ' + err.message, 'error');
+  }
+});
     }
     
     document.getElementById('change-password-modal').classList.add('open');

@@ -343,12 +343,12 @@
       <button class="btn btn-outline" onclick="refreshStatus()">🔄 Refresh</button>
     </div>
     
-    <div class="stats-summary" id="stats-summary">
-      <span class="stat-pill"><i class="fas fa-check-circle" style="color:#10b981;"></i> Clean: <strong id="stat-clean">0</strong></span>
-      <span class="stat-pill"><i class="fas fa-broom" style="color:#ef4444;"></i> Dirty: <strong id="stat-dirty">0</strong></span>
-      
-      <span class="stat-pill"><i class="fas fa-user-friends" style="color:#3b82f6;"></i> Occupied: <strong id="stat-occupied">0</strong></span>
-    </div>
+  <div class="stats-summary" id="stats-summary">
+  <span class="stat-pill"><i class="fas fa-check-circle" style="color:#10b981;"></i> Clean: <strong id="stat-clean">0</strong></span>
+  <span class="stat-pill"><i class="fas fa-broom" style="color:#ef4444;"></i> Dirty: <strong id="stat-dirty">0</strong></span>
+  <span class="stat-pill"><i class="fas fa-clock" style="color:#f59e0b;"></i> Checkout: <strong id="stat-checkout">0</strong></span>
+  <span class="stat-pill"><i class="fas fa-user-friends" style="color:#3b82f6;"></i> Occupied: <strong id="stat-occupied">0</strong></span>
+</div>
     
     <div class="filter-bar">
       <button class="filter-btn active" data-filter="all">All Rooms</button>
@@ -401,9 +401,9 @@
   // USER AUTHENTICATION
   // ============================================================
   function getCurrentUser() { const u = sessionStorage.getItem('pms_user'); return u ? JSON.parse(u) : null; }
-  function logout() { sessionStorage.removeItem('pms_user'); window.location.href = '/login'; }
+  function logout() { sessionStorage.removeItem('pms_user'); window.location.href = '/'; }
   
-  const cu = getCurrentUser(); if (!cu) window.location.href = '/login';
+  const cu = getCurrentUser(); if (!cu) window.location.href = '/';
   document.getElementById('userName').innerText = cu.fullName || cu.username;
   document.getElementById('userRole').innerText = cu.role || 'User';
   document.getElementById('userAvatar').innerText = (cu.fullName || cu.username || 'U')[0];
@@ -443,24 +443,31 @@
       `;
       document.body.insertAdjacentHTML('beforeend', modalHTML);
       
-      document.getElementById('change-password-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const oldPass = document.getElementById('current-password').value;
-        const newPass = document.getElementById('new-password').value;
-        const confirmPass = document.getElementById('confirm-password').value;
-        if (newPass !== confirmPass) { showToast('Passwords do not match', 'error'); return; }
-        if (newPass.length < 6) { showToast('Password must be at least 6 characters', 'error'); return; }
-        try {
-          const res = await fetch('/api/auth/change-password', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId: cu.id, oldPassword: oldPass, newPassword: newPass })
-          });
-          const data = await res.json();
-          if (!res.ok) throw new Error(data.error);
-          showToast('Password changed! Please login again.', 'success');
-          setTimeout(() => logout(), 1500);
-        } catch(err) { showToast('Failed: ' + err.message, 'error'); }
-      });
+     document.getElementById('change-password-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const oldPass = document.getElementById('current-password').value;
+  const newPass = document.getElementById('new-password').value;
+  const confirmPass = document.getElementById('confirm-password').value;
+  if (newPass !== confirmPass) { showToast('Passwords do not match', 'error'); return; }
+  if (newPass.length < 6) { showToast('Password must be at least 6 characters', 'error'); return; }
+  try {
+    const token = sessionStorage.getItem('token');
+    const response = await fetch('/api/auth/change-password', {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ userId: cu.id, oldPassword: oldPass, newPassword: newPass })
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error);
+    showToast('Password changed! Please login again.', 'success');
+    setTimeout(() => logout(), 1500);
+  } catch(err) { 
+    showToast('Failed: ' + err.message, 'error'); 
+  }
+});
     }
     document.getElementById('change-password-modal').classList.add('open');
     document.getElementById('change-password-modal-overlay').classList.add('open');
@@ -485,22 +492,44 @@
   let currentFilter = 'all';
   const userName = cu.fullName || cu.username;
   
-  async function loadHousekeepingStatus() {
-    const grid = document.getElementById('hk-status-grid');
-    grid.innerHTML = '<div class="loading-overlay">⏳ Loading room status...</div>';
+ async function loadHousekeepingStatus() {
+  const grid = document.getElementById('hk-status-grid');
+  grid.innerHTML = '<div class="loading-overlay">⏳ Loading room status...</div>';
+  
+  try {
+    // Get token from session storage
+    const token = sessionStorage.getItem('token');
     
-    try {
-      const data = await apiGet('/housekeeping/status');
-      console.log('Loaded statuses:', data);
-      allStatuses = data;
-      updateStats();
-      renderStatusGrid();
-    } catch (err) {
-      console.error('Load error:', err);
-      grid.innerHTML = '<div class="loading-overlay">❌ Failed to load room status. Please refresh.</div>';
-      showToast('Failed to load status: ' + err.message, 'error');
+    // Make fetch request with token
+    const response = await fetch('/api/housekeeping/status', {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    // Handle unauthorized
+    if (response.status === 401 || response.status === 403) {
+      sessionStorage.clear();
+      window.location.href = '/login';
+      return;
     }
+    
+    if (!response.ok) {
+      throw new Error('Server returned ' + response.status);
+    }
+    
+    const data = await response.json();
+    console.log('Loaded statuses:', data);
+    allStatuses = data;
+    updateStats();
+    renderStatusGrid();
+  } catch (err) {
+    console.error('Load error:', err);
+    grid.innerHTML = '<div class="loading-overlay">❌ Failed to load room status. Please refresh.</div>';
+    showToast('Failed to load status: ' + err.message, 'error');
   }
+}
   
   function updateStats() {
     const clean = allStatuses.filter(s => s.status === 'clean').length;
@@ -638,29 +667,63 @@
     grid.innerHTML = html;
   }
   
-  async function markAsClean(apartmentId, aptName) {
-    if (!confirm(`Mark "${aptName}" as clean?`)) return;
-    
-    try {
-      await apiPut(`/housekeeping/status/${apartmentId}`, { status: 'clean', updated_by: userName, notes: null });
-      showToast(`✅ ${aptName} marked as clean!`, 'success');
-      setTimeout(() => loadHousekeepingStatus(), 500);
-    } catch (err) {
-      showToast('Failed to update status: ' + err.message, 'error');
-    }
-  }
+async function markAsClean(apartmentId, aptName) {
+  if (!confirm(`Mark "${aptName}" as clean?`)) return;
   
-  async function markAsDirty(apartmentId, aptName) {
-    if (!confirm(`Mark "${aptName}" as dirty?`)) return;
+  try {
+    const token = sessionStorage.getItem('token');
+    const response = await fetch(`/api/housekeeping/status/${apartmentId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ status: 'clean', updated_by: userName, notes: null })
+    });
     
-    try {
-      await apiPut(`/housekeeping/status/${apartmentId}`, { status: 'dirty', updated_by: userName, notes: null });
-      showToast(`🔴 ${aptName} marked as dirty!`, 'success');
-      setTimeout(() => loadHousekeepingStatus(), 500);
-    } catch (err) {
-      showToast('Failed to update status: ' + err.message, 'error');
+    if (response.status === 401 || response.status === 403) {
+      sessionStorage.clear();
+      window.location.href = '/login';
+      return;
     }
+    
+    if (!response.ok) throw new Error('Update failed');
+    
+    showToast(`✅ ${aptName} marked as clean!`, 'success');
+    setTimeout(() => loadHousekeepingStatus(), 500);
+  } catch (err) {
+    showToast('Failed to update status: ' + err.message, 'error');
   }
+}
+
+async function markAsDirty(apartmentId, aptName) {
+  if (!confirm(`Mark "${aptName}" as dirty?`)) return;
+  
+  try {
+    const token = sessionStorage.getItem('token');
+    const response = await fetch(`/api/housekeeping/status/${apartmentId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ status: 'dirty', updated_by: userName, notes: null })
+    });
+    
+    if (response.status === 401 || response.status === 403) {
+      sessionStorage.clear();
+      window.location.href = '/login';
+      return;
+    }
+    
+    if (!response.ok) throw new Error('Update failed');
+    
+    showToast(`🔴 ${aptName} marked as dirty!`, 'success');
+    setTimeout(() => loadHousekeepingStatus(), 500);
+  } catch (err) {
+    showToast('Failed to update status: ' + err.message, 'error');
+  }
+}
   
   function refreshStatus() {
     loadHousekeepingStatus();

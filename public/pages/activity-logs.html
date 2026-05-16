@@ -782,7 +782,7 @@
         currentUser = getCurrentUser();
         if (!currentUser) {
             // Redirect to login if no user found
-            window.location.href = '/login';
+            window.location.href = '/';
             return;
         }
         document.getElementById('userName').innerText = currentUser.fullName || currentUser.username;
@@ -794,7 +794,7 @@
     
     function logout() {
         sessionStorage.removeItem('pms_user');
-        window.location.href = '/login';
+        window.location.href = '/';
     }
     
     // ============================================================
@@ -999,24 +999,19 @@
                     return;
                 }
                 
-                try {
-                    const response = await fetch('/api/auth/change-password', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            userId: currentUser.id,
-                            oldPassword: document.getElementById('currentPass').value,
-                            newPassword: newPassword
-                        })
-                    });
-                    const data = await response.json();
-                    if (!response.ok) throw new Error(data.error);
-                    showToast('Password changed successfully! Please login again.', 'success');
-                    setTimeout(() => logout(), 2000);
-                } catch (err) {
-                    showToast('Failed: ' + err.message, 'error');
-                }
-            });
+                 try {
+  await apiPost('/auth/change-password', {
+    userId: currentUser.id,
+    oldPassword: currentPassword,
+    newPassword: newPassword
+  });
+  
+  showToast('Password changed successfully! Please login again.', '✅');
+  setTimeout(() => { logout(); }, 1500);
+} catch (err) {
+  showToast('Failed to change password: ' + err.message, '❌');
+}
+});
             
             document.getElementById('modalCloseBtn').onclick = closeChangePasswordModal;
             document.getElementById('cancelPwdBtn').onclick = closeChangePasswordModal;

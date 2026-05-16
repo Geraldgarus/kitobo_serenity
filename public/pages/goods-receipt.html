@@ -508,7 +508,7 @@
 
   function logout() {
     sessionStorage.removeItem('pms_user');
-    window.location.href = '/login';
+    window.location.href = '/';
   }
 
   // ========== CHANGE PASSWORD MODAL ==========
@@ -550,22 +550,23 @@
     var currentUserData = getCurrentUser();
     if (!currentUserData) { showToast('User not found. Please login again.', 'error'); return; }
     
-    try {
-      var response = await fetch('/api/auth/change-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: currentUserData.id, oldPassword: currentPassword, newPassword: newPassword })
-      });
-      var data = await response.json();
-      if (!response.ok) throw new Error(data.error);
-      showToast('Password changed successfully! Please login again.', 'success');
-      setTimeout(function() { logout(); }, 1500);
-    } catch(err) { showToast('Failed to change password: ' + err.message, 'error'); }
+     try {
+  await apiPost('/auth/change-password', {
+    userId: currentUser.id,
+    oldPassword: currentPassword,
+    newPassword: newPassword
   });
+  
+  showToast('Password changed successfully! Please login again.', '✅');
+  setTimeout(() => { logout(); }, 1500);
+} catch (err) {
+  showToast('Failed to change password: ' + err.message, '❌');
+}
+});
 
   var currentUser = getCurrentUser();
   if (!currentUser) {
-    window.location.href = '/login';
+    window.location.href = '/';
   }
 
   document.getElementById('userName').innerText = currentUser.fullName || currentUser.username;

@@ -226,8 +226,8 @@
 <script>
   // ========== USER SESSION ==========
   function getCurrentUser() { const u = sessionStorage.getItem('pms_user'); return u ? JSON.parse(u) : null; }
-  function logout() { sessionStorage.removeItem('pms_user'); window.location.href = '/login'; }
-  const currentUser = getCurrentUser(); if (!currentUser) window.location.href = '/login';
+  function logout() { sessionStorage.removeItem('pms_user'); window.location.href = '/'; }
+  const currentUser = getCurrentUser(); if (!currentUser) window.location.href = '/';
   document.getElementById('userName').innerText = currentUser.fullName || currentUser.username;
   document.getElementById('userRole').innerText = currentUser.role || 'User';
   document.getElementById('userAvatar').innerText = (currentUser.fullName || currentUser.username || 'U')[0];

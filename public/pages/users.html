@@ -353,7 +353,7 @@
   
   function logout() {
     sessionStorage.removeItem('pms_user');
-    window.location.href = '/login';
+    window.location.href = '/';
   }
   
   function switchToBack() {
@@ -362,7 +362,7 @@
   
   const currentUser = getCurrentUser();
   if (!currentUser) {
-    window.location.href = '/login';
+    window.location.href = '/';
   }
   
   // Only admin can access this page
@@ -422,25 +422,19 @@
       return;
     }
     
-    try {
-      const response = await fetch('/api/auth/change-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: currentUser.id,
-          oldPassword: currentPassword,
-          newPassword: newPassword
-        })
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error);
-      
-      showToast('Password changed successfully! Please login again.', '✅');
-      setTimeout(() => { logout(); }, 1500);
-    } catch (err) {
-      showToast('Failed to change password: ' + err.message, '❌');
-    }
+     try {
+  await apiPost('/auth/change-password', {
+    userId: currentUser.id,
+    oldPassword: currentPassword,
+    newPassword: newPassword
   });
+  
+  showToast('Password changed successfully! Please login again.', '✅');
+  setTimeout(() => { logout(); }, 1500);
+} catch (err) {
+  showToast('Failed to change password: ' + err.message, '❌');
+}
+});
   
   // ========== USER CRUD ==========
   let users = [];

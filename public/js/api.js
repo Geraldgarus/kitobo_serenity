@@ -1,11 +1,38 @@
 // API Configuration
 const API_BASE = '/api';
 
+// Get token from session storage
+function getAuthToken() {
+  return sessionStorage.getItem('token');
+}
+
+// Handle unauthorized responses - redirect to login
+function handleUnauthorized(response) {
+  if (response.status === 401 || response.status === 403) {
+    sessionStorage.clear();
+    window.location.href = '/login';
+    throw new Error('Session expired. Please login again.');
+  }
+  return response;
+}
+
 async function apiFetch(path, opts = {}) {
+  const token = getAuthToken();
+  
+  // Build headers with authentication
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(token && { 'Authorization': `Bearer ${token}` }),
+    ...opts.headers
+  };
+  
   const res = await fetch(API_BASE + path, {
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     ...opts,
   });
+  
+  // Handle unauthorized before checking ok
+  handleUnauthorized(res);
   
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'API error');

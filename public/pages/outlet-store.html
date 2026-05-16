@@ -370,7 +370,7 @@
 
   function logout() {
     sessionStorage.removeItem('pms_user');
-    window.location.href = '/login';
+    window.location.href = '/';
   }
 
   function switchToBack() { alert('Back office feature coming soon'); }
@@ -433,25 +433,19 @@ if (changePasswordForm) {
       return;
     }
     
-    try {
-      var response = await fetch('/api/auth/change-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: currentUserData.id,
-          oldPassword: currentPassword,
-          newPassword: newPassword
-        })
-      });
-      var data = await response.json();
-      if (!response.ok) throw new Error(data.error);
-      
-      showToast('Password changed successfully! Please login again.', '✅');
-      setTimeout(function() { logout(); }, 1500);
-    } catch (err) {
-      showToast('Failed to change password: ' + err.message, '❌');
-    }
+  try {
+  await apiPost('/auth/change-password', {
+    userId: currentUser.id,
+    oldPassword: currentPassword,
+    newPassword: newPassword
   });
+  
+  showToast('Password changed successfully! Please login again.', '✅');
+  setTimeout(() => { logout(); }, 1500);
+} catch (err) {
+  showToast('Failed to change password: ' + err.message, '❌');
+}
+});
 }
 
 // Make sure window functions are updated
@@ -459,7 +453,7 @@ window.openChangePasswordModal = openChangePasswordModal;
 window.closeChangePasswordModal = closeChangePasswordModal;
 
   var currentUser = getCurrentUser();
-  if (!currentUser) window.location.href = '/login';
+  if (!currentUser) window.location.href = '/';
 
   document.getElementById('userName').innerText = currentUser.fullName || currentUser.username;
   document.getElementById('userRole').innerText = currentUser.role ? currentUser.role.charAt(0).toUpperCase() + currentUser.role.slice(1) : 'User';

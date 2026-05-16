@@ -878,10 +878,10 @@
   // USER AUTHENTICATION
   // ============================================================
   function getCurrentUser() { var u = sessionStorage.getItem('pms_user'); return u ? JSON.parse(u) : null; }
-  function logout() { sessionStorage.removeItem('pms_user'); window.location.href = '/login'; }
+  function logout() { sessionStorage.removeItem('pms_user'); window.location.href = '/'; }
   
   var currentUser = getCurrentUser(); 
-  if (!currentUser) { window.location.href = '/login'; }
+  if (!currentUser) { window.location.href = '/'; }
   
   document.getElementById('userName').innerText = currentUser.fullName || currentUser.username;
   document.getElementById('userRole').innerText = currentUser.role || 'User';
@@ -898,8 +898,53 @@
   // ============================================================
   // API FUNCTIONS
   // ============================================================
-  var API_BASE = '';
-  async function apiGet(url) { var res = await fetch(API_BASE + url); if (!res.ok) throw new Error(await res.text()); return res.json(); }
+  // ============================================================
+// API FUNCTIONS
+// ============================================================
+var API_BASE = '';
+
+// Get token from session storage
+function getAuthToken() {
+  return sessionStorage.getItem('token');
+}
+
+// Handle unauthorized responses
+function handleUnauthorized(response) {
+  if (response.status === 401 || response.status === 403) {
+    sessionStorage.clear();
+    window.location.href = '/';
+    throw new Error('Session expired. Please login again.');
+  }
+  return response;
+}
+
+async function apiGet(url) { 
+  var token = getAuthToken();
+  var res = await fetch(API_BASE + url, {
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + token
+    }
+  });
+  handleUnauthorized(res);
+  if (!res.ok) throw new Error(await res.text()); 
+  return res.json(); 
+}
+
+async function apiPost(url, data) {
+  var token = getAuthToken();
+  var res = await fetch(API_BASE + url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + token
+    },
+    body: JSON.stringify(data)
+  });
+  handleUnauthorized(res);
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
   
   // ============================================================
   // LOAD VENDORS
@@ -1103,18 +1148,19 @@
       var currentUserData = getCurrentUser();
       if (!currentUserData) { showToast('User not found. Please login again.', 'error'); return; }
       
-      try {
-        var response = await fetch('/api/auth/change-password', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId: currentUserData.id, oldPassword: currentPassword, newPassword: newPassword })
-        });
-        var data = await response.json();
-        if (!response.ok) throw new Error(data.error);
-        showToast('Password changed successfully! Please login again.', 'success');
-        setTimeout(function() { logout(); }, 1500);
-      } catch(err) { showToast('Failed to change password: ' + err.message, 'error'); }
-    });
+   try {
+ await apiPost('/api/auth/change-password',  {
+    userId: currentUserData.id,  // ✅ Use currentUserData (defined above)
+    oldPassword: currentPassword,
+    newPassword: newPassword
+  });
+  
+  showToast('Password changed successfully! Please login again.', '✅');
+  setTimeout(() => { logout(); }, 1500);
+} catch (err) {
+  showToast('Failed to change password: ' + err.message, '❌');
+}
+});
   }
   
   // ============================================================

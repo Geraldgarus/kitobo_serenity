@@ -595,17 +595,37 @@
 </div>
 
 <div class="toast-container" id="toast-container"></div>
-
 <script>
   // ========== API FUNCTIONS ==========
   const API_BASE = '/api';
-  
+
+  // Get token from session storage
+  function getAuthToken() {
+    return sessionStorage.getItem('token');
+  }
+
+  // Handle unauthorized responses
+  function handleUnauthorized(response) {
+    if (response.status === 401 || response.status === 403) {
+      sessionStorage.clear();
+      window.location.href = '/';
+      throw new Error('Session expired. Please login again.');
+    }
+    return response;
+  }
+
   async function apiGet(endpoint) {
     try {
-      const response = await fetch(API_BASE + endpoint);
+      const token = getAuthToken();
+      const response = await fetch(API_BASE + endpoint, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        }
+      });
+      handleUnauthorized(response);
       if (!response.ok) {
         const text = await response.text();
-        console.error('API Error Response:', text);
         throw new Error('Server returned ' + response.status);
       }
       return await response.json();
@@ -614,17 +634,21 @@
       throw err;
     }
   }
-  
+
   async function apiPost(endpoint, data) {
     try {
+      const token = getAuthToken();
       const response = await fetch(API_BASE + endpoint, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        },
         body: JSON.stringify(data)
       });
+      handleUnauthorized(response);
       if (!response.ok) {
         const text = await response.text();
-        console.error('API Error Response:', text);
         throw new Error('Server returned ' + response.status);
       }
       return await response.json();
@@ -633,16 +657,20 @@
       throw err;
     }
   }
-  
+
   async function apiDelete(endpoint) {
     try {
+      const token = getAuthToken();
       const response = await fetch(API_BASE + endpoint, {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' }
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        }
       });
+      handleUnauthorized(response);
       if (!response.ok) {
         const text = await response.text();
-        console.error('API Error Response:', text);
         throw new Error('Server returned ' + response.status);
       }
       return await response.json();
@@ -691,12 +719,12 @@
 
   function logout() {
     sessionStorage.removeItem('pms_user');
-    window.location.href = '/login';
+    window.location.href = '/';
   }
 
   var currentUser = getCurrentUser();
   if (!currentUser) {
-    window.location.href = '/login';
+    window.location.href = '/';
   }
 
   // Display user info
@@ -719,7 +747,7 @@
     });
   }
 
-  // ========== ADD OUTLET MODAL (SLIDE FROM RIGHT) ==========
+  // ========== ADD OUTLET MODAL ==========
   var addOutletOverlay = document.getElementById('addOutletOverlay');
   var addOutletModal = document.getElementById('addOutletModal');
   var closeAddOutletBtn = document.getElementById('closeAddOutletBtn');
@@ -744,7 +772,7 @@
   if (cancelAddOutletBtn) { cancelAddOutletBtn.addEventListener('click', closeAddOutletModal); }
   if (addOutletOverlay) { addOutletOverlay.addEventListener('click', closeAddOutletModal); }
 
-  // ========== CHANGE PASSWORD MODAL (SLIDE FROM RIGHT) ==========
+  // ========== CHANGE PASSWORD MODAL ==========
   var changePwOverlay = document.getElementById('changePwOverlay');
   var changePwModal = document.getElementById('changePwModal');
   var openChangePwBtn = document.getElementById('openChangePwBtn');
@@ -752,65 +780,73 @@
   var cancelChangePwBtn = document.getElementById('cancelChangePwBtn');
   
   function openChangePasswordModal() {
-    changePwOverlay.classList.add('show');
-    changePwModal.classList.add('show');
+    console.log('Opening change password modal');
+    if (changePwOverlay) changePwOverlay.classList.add('show');
+    if (changePwModal) changePwModal.classList.add('show');
     document.body.style.overflow = 'hidden';
     if (dropdownMenu) dropdownMenu.classList.remove('show');
     if (userPill) userPill.classList.remove('active');
   }
   
   function closeChangePasswordModal() {
-    changePwOverlay.classList.remove('show');
-    changePwModal.classList.remove('show');
+    console.log('Closing change password modal');
+    if (changePwOverlay) changePwOverlay.classList.remove('show');
+    if (changePwModal) changePwModal.classList.remove('show');
     document.body.style.overflow = '';
     document.getElementById('change-password-form').reset();
   }
   
-  if (openChangePwBtn) { openChangePwBtn.addEventListener('click', openChangePasswordModal); }
+  if (openChangePwBtn) { 
+    openChangePwBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      openChangePasswordModal();
+    }); 
+  }
   if (closeChangePwBtn) { closeChangePwBtn.addEventListener('click', closeChangePasswordModal); }
   if (cancelChangePwBtn) { cancelChangePwBtn.addEventListener('click', closeChangePasswordModal); }
   if (changePwOverlay) { changePwOverlay.addEventListener('click', closeChangePasswordModal); }
   
-  document.getElementById('change-password-form').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    var currentPassword = document.getElementById('current-password').value;
-    var newPassword = document.getElementById('new-password').value;
-    var confirmPassword = document.getElementById('confirm-password').value;
-    
-    if (newPassword !== confirmPassword) {
-      showToast('New passwords do not match', 'error');
-      return;
-    }
-    if (newPassword.length < 6) {
-      showToast('Password must be at least 6 characters', 'error');
-      return;
-    }
-    
-    var currentUserData = getCurrentUser();
-    if (!currentUserData) {
-      showToast('User not found. Please login again.', 'error');
-      return;
-    }
-    
-    try {
-      var response = await fetch('/api/auth/change-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+  // Change Password Form Submit
+  var changePasswordForm = document.getElementById('change-password-form');
+  if (changePasswordForm) {
+    changePasswordForm.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      console.log('Change password form submitted');
+      
+      var currentPassword = document.getElementById('current-password').value;
+      var newPassword = document.getElementById('new-password').value;
+      var confirmPassword = document.getElementById('confirm-password').value;
+      
+      if (newPassword !== confirmPassword) {
+        showToast('New passwords do not match', 'error');
+        return;
+      }
+      if (newPassword.length < 6) {
+        showToast('Password must be at least 6 characters', 'error');
+        return;
+      }
+      
+      var currentUserData = getCurrentUser();
+      if (!currentUserData) {
+        showToast('User not found. Please login again.', 'error');
+        return;
+      }
+      
+      try {
+        await apiPost('/auth/change-password', {
           userId: currentUserData.id,
           oldPassword: currentPassword,
           newPassword: newPassword
-        })
-      });
-      var data = await response.json();
-      if (!response.ok) throw new Error(data.error);
-      
-      showToast('Password changed successfully! Please login again.', 'success');
-      setTimeout(function() { logout(); }, 1500);
-    } catch (err) {
-      showToast('Failed to change password: ' + err.message, 'error');
-    }
-  });
+        });
+        
+        showToast('Password changed successfully! Please login again.', 'success');
+        setTimeout(function() { logout(); }, 1500);
+      } catch (err) {
+        console.error('Change password error:', err);
+        showToast('Failed to change password: ' + err.message, 'error');
+      }
+    });
+  }
 
   // ========== OUTLET MANAGEMENT ==========
   var outlets = [];
@@ -860,26 +896,30 @@
     }
   }
 
-  document.getElementById('add-outlet-form').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    var name = document.getElementById('outlet-name').value.trim().toLowerCase();
-    if (!name) {
-      showToast('Please enter an outlet name', 'error');
-      return;
-    }
-    if (!/^[a-z][a-z0-9_]*$/.test(name)) {
-      showToast('Name must be lowercase letters, numbers, underscores, starting with a letter', 'error');
-      return;
-    }
-    try {
-      await apiPost('/outlets', { name: name });
-      showToast('Outlet "' + name + '" created successfully!', 'success');
-      closeAddOutletModal();
-      await loadOutlets();
-    } catch (err) { 
-      showToast('Failed to create outlet: ' + err.message, 'error'); 
-    }
-  });
+  // Add Outlet Form Submit
+  var addOutletForm = document.getElementById('add-outlet-form');
+  if (addOutletForm) {
+    addOutletForm.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      var name = document.getElementById('outlet-name').value.trim().toLowerCase();
+      if (!name) {
+        showToast('Please enter an outlet name', 'error');
+        return;
+      }
+      if (!/^[a-z][a-z0-9_]*$/.test(name)) {
+        showToast('Name must be lowercase letters, numbers, underscores, starting with a letter', 'error');
+        return;
+      }
+      try {
+        await apiPost('/outlets', { name: name });
+        showToast('Outlet "' + name + '" created successfully!', 'success');
+        closeAddOutletModal();
+        await loadOutlets();
+      } catch (err) { 
+        showToast('Failed to create outlet: ' + err.message, 'error'); 
+      }
+    });
+  }
 
   // Initialize
   document.addEventListener('DOMContentLoaded', function() {

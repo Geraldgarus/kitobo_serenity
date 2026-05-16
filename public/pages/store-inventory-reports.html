@@ -740,6 +740,28 @@
     toast.innerHTML = '<div style="background:' + bg + ';color:white;padding:12px 20px;border-radius:40px;margin-bottom:8px;">' + msg + '</div>'; 
     setTimeout(function() { toast.innerHTML = ''; }, 3000); 
   }
+
+  async function apiPost(url, data) {
+  var token = sessionStorage.getItem('token');
+  var fullUrl = url.startsWith('/api') ? url : '/api' + url;
+  var res = await fetch(fullUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + token
+    },
+    body: JSON.stringify(data)
+  });
+  
+  if (res.status === 401 || res.status === 403) {
+    sessionStorage.clear();
+    window.location.href = '/';
+    throw new Error('Session expired');
+  }
+  
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
   
   // Sidebar toggle
   var hamburger = document.getElementById('hamburger-btn');
@@ -757,10 +779,10 @@
   
   // Authentication
   function getCurrentUser() { var u = sessionStorage.getItem('pms_user'); return u ? JSON.parse(u) : null; }
-  function logout() { sessionStorage.removeItem('pms_user'); window.location.href = '/login'; }
+  function logout() { sessionStorage.removeItem('pms_user'); window.location.href = '/'; }
   
   var currentUser = getCurrentUser(); 
-  if (!currentUser) { window.location.href = '/login'; }
+  if (!currentUser) { window.location.href = '/'; }
   
   document.getElementById('userName').innerText = currentUser.fullName || currentUser.username;
   document.getElementById('userRole').innerText = currentUser.role || 'User';
@@ -817,17 +839,18 @@
     if (!currentUserData) { showToast('User not found. Please login again.', 'error'); return; }
     
     try {
-      var response = await fetch('/api/auth/change-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: currentUserData.id, oldPassword: currentPassword, newPassword: newPassword })
-      });
-      var data = await response.json();
-      if (!response.ok) throw new Error(data.error);
-      showToast('Password changed successfully! Please login again.', 'success');
-      setTimeout(function() { logout(); }, 1500);
-    } catch(err) { showToast('Failed to change password: ' + err.message, 'error'); }
+  await apiPost('/auth/change-password', {
+    userId: currentUserData.id,  // ✅ Use currentUserData (defined above)
+    oldPassword: currentPassword,
+    newPassword: newPassword
   });
+  
+  showToast('Password changed successfully! Please login again.', '✅');
+  setTimeout(() => { logout(); }, 1500);
+} catch (err) {
+  showToast('Failed to change password: ' + err.message, '❌');
+}
+});
   
   // ============================================================
   // INVENTORY FUNCTIONS
@@ -835,16 +858,29 @@
   var allItems = [];
   
   async function loadReport() {
-    try { 
-      var res = await fetch('/api/store/items'); 
-      var items = await res.json(); 
-      allItems = items; 
-      applyFilters(); 
-    } catch(err) { 
-      document.getElementById('inventory-body').innerHTML = '<tr><td colspan="6" class="empty-state">Error loading data: ' + err.message + '</td</tr>'; 
-      showToast('Failed to load: ' + err.message, 'error'); 
+  try { 
+    var token = sessionStorage.getItem('token');
+    var res = await fetch('/api/store/items', {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token
+      }
+    });
+    
+    if (res.status === 401 || res.status === 403) {
+      sessionStorage.clear();
+      window.location.href = '/';
+      return;
     }
+    
+    var items = await res.json(); 
+    allItems = Array.isArray(items) ? items : []; 
+    applyFilters(); 
+  } catch(err) { 
+    document.getElementById('inventory-body').innerHTML = '<tr><td colspan="6" class="empty-state">Error loading data: ' + err.message + '</td<tr>'; 
+    showToast('Failed to load: ' + err.message, 'error'); 
   }
+}
   
   function applyFilters() {
     var category = document.getElementById('filter-category').value;
