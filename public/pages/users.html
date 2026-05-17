@@ -13,9 +13,13 @@
     .users-table th, .users-table td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--gray-200); }
     .users-table th { background: var(--gray-100); font-weight: 600; color: var(--navy); }
     .users-table tr:hover { background: var(--gray-50); }
-    .btn-sm { padding: 4px 12px; font-size: 12px; margin-right: 6px; }
+    .btn-sm { padding: 4px 12px; font-size: 12px; margin-right: 6px; border-radius: 6px; cursor: pointer; }
     .btn-warning { background: #f59e0b; color: white; border: none; }
     .btn-warning:hover { background: #d97706; }
+    .btn-danger { background: #ef4444; color: white; border: none; }
+    .btn-danger:hover { background: #dc2626; }
+    .btn-success { background: #10b981; color: white; border: none; }
+    .btn-success:hover { background: #059669; }
     .role-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; }
     .role-admin { background: #d1fae5; color: #065f46; }
     .role-manager { background: #dbeafe; color: #1e40af; }
@@ -25,6 +29,35 @@
     .form-group label { display: block; margin-bottom: 0.3rem; font-weight: 500; font-size: 0.85rem; color: #2c3e4e; }
     .form-control { width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 20px; font-size: 0.9rem; }
     .form-control:focus { outline: none; border-color: #c9933a; }
+    
+    /* Status Badges */
+    .status-active {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      background: #d1fae5;
+      color: #065f46;
+    }
+    .status-warning {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      background: #fef3c7;
+      color: #d97706;
+    }
+    .status-locked {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      background: #fee2e2;
+      color: #dc2626;
+    }
     
     /* User Dropdown Styles */
     .user-dropdown { position: relative; cursor: pointer; }
@@ -69,102 +102,104 @@
     .fa-chevron-down { font-size: 12px; color: #aaa; transition: transform 0.2s; }
     .user-pill.active .fa-chevron-down { transform: rotate(180deg); }
 
+    /* Filter buttons */
+    .filter-bar {
+      display: flex;
+      gap: 10px;
+      padding: 0 0 20px 0;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .filter-btn {
+      padding: 6px 18px;
+      border-radius: 40px;
+      border: 1px solid #e2e8f0;
+      background: white;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .filter-btn.active {
+      background: #c9933a;
+      color: white;
+      border-color: #c9933a;
+    }
+    .filter-btn:hover:not(.active) {
+      background: #f8fafc;
+      border-color: #cbd5e1;
+    }
 
-    /* ============================================================
-   MOBILE RESPONSIVE ADDITIONS FOR USER MANAGEMENT PAGE
-   ============================================================ */
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+      .card-body {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        padding: 0 16px 16px 16px !important;
+      }
+      .users-table {
+        min-width: 700px !important;
+        width: 100% !important;
+      }
+      .users-table th, .users-table td {
+        white-space: nowrap !important;
+        padding: 10px 12px !important;
+        font-size: 12px !important;
+      }
+      .card-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 12px !important;
+        padding: 16px !important;
+      }
+      .btn-sm {
+        padding: 4px 8px !important;
+        font-size: 10px !important;
+        margin-right: 4px !important;
+      }
+      .btn-gold {
+        width: 100% !important;
+        text-align: center !important;
+      }
+      .main-content {
+        padding: 12px !important;
+      }
+      .filter-bar {
+        justify-content: center;
+      }
+    }
 
-/* Make table horizontally scrollable on mobile */
-@media (max-width: 768px) {
-  /* Table container - ensure horizontal scroll */
-  .card-body {
-    overflow-x: auto !important;
-    -webkit-overflow-scrolling: touch !important;
-    padding: 0 16px 16px 16px !important;
-  }
-  
-  /* Table minimum width to force scroll */
-  .users-table {
-    min-width: 700px !important;
-    width: 100% !important;
-  }
-  
-  /* Prevent text wrapping in table cells */
-  .users-table th,
-  .users-table td {
-    white-space: nowrap !important;
-    padding: 10px 12px !important;
-    font-size: 12px !important;
-  }
-  
-  /* Card header - stack vertically */
-  .card-header {
-    flex-direction: column !important;
-    align-items: flex-start !important;
-    gap: 12px !important;
-    padding: 16px !important;
-  }
-  
-  /* Action buttons in table - smaller on mobile */
-  .btn-sm {
-    padding: 4px 8px !important;
-    font-size: 10px !important;
-    margin-right: 4px !important;
-  }
-  
-  /* Role badges - smaller on mobile */
-  .role-badge {
-    padding: 2px 8px !important;
-    font-size: 9px !important;
-  }
-  
-  /* Add New User button - full width on mobile */
-  .btn-gold {
-    width: 100% !important;
-    text-align: center !important;
-  }
-  
-  /* Fix main content spacing */
-  .main-content {
-    padding: 12px !important;
-  }
+    @media (max-width: 480px) {
+      .users-table th, .users-table td {
+        padding: 6px 8px !important;
+        font-size: 10px !important;
+      }
+      .btn-sm {
+        padding: 3px 6px !important;
+        font-size: 9px !important;
+      }
+    }
+
+    /* Make Unlock button smaller and inline */
+.btn-sm.btn-success {
+  padding: 4px 8px;
+  font-size: 11px;
+  white-space: nowrap;
+  display: inline-block;
+  width: auto;
+  min-width: 70px;
 }
 
-/* For very small phones (max-width: 480px) */
-@media (max-width: 480px) {
-  .users-table th,
-  .users-table td {
-    padding: 6px 8px !important;
-    font-size: 10px !important;
-  }
-  
-  .btn-sm {
-    padding: 3px 6px !important;
-    font-size: 9px !important;
-  }
-  
-  .card-header .card-title {
-    font-size: 16px !important;
-  }
-  
-  .empty-state {
-    padding: 20px !important;
-    font-size: 12px !important;
-  }
+/* Ensure all action buttons stay in one row */
+.users-table td:last-child {
+  white-space: nowrap;
+  min-width: 120px;
 }
 
-/* Touch-friendly button sizes for mobile */
-@media (hover: none) and (pointer: coarse) {
-  .btn-sm,
-  .btn-gold,
-  .btn-outline,
-  button {
-    min-height: 36px !important;
-  }
-  
-  button:active {
-    transform: scale(0.97);
-  }
+.btn-sm {
+  display: inline-block;
+  margin-right: 4px;
+  vertical-align: middle;
 }
   </style>
 </head>
@@ -172,7 +207,6 @@
 
 <div class="overlay" id="overlay-main"></div>
 
-<!-- Sidebar -->
 <!-- Sidebar -->
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-top">
@@ -187,43 +221,35 @@
   </div>
   
   <nav class="sidebar-nav">
-    
-    <!-- CORE OPERATIONS -->
     <div class="nav-section-label">Core Operations</div>
-    <a href="/dashboard" class="nav-item ">📊 Stay View</a>
+    <a href="/dashboard" class="nav-item">📊 Stay View</a>
     <a href="/reservations" class="nav-item">📅 Reservations</a>
     <a href="/housekeeping" class="nav-item">🧹 Housekeeping</a>
     
-    <!-- PROPERTY -->
     <div class="nav-section-label">Property</div>
     <a href="/apartments" class="nav-item">🏠 Apartments View</a>
     <a href="/apartments-list" class="nav-item">📋 Apartments List</a>
     
-    <!-- STORE & PROCUREMENT (COMBINED) -->
     <div class="nav-section-label">Store & Procurement</div>
     <a href="/store-main" class="nav-item">🏬 Main Store</a>
     <a href="/store-outlets" class="nav-item">🏪 Outlets Store</a>
     <a href="/purchase-orders" class="nav-item">📦 Purchase Orders</a>
     <a href="/goods-receipt" class="nav-item">✅ Goods Receipt</a>
     
-    <!-- REPORTS (KEPT SEPARATE) -->
     <div class="nav-section-label">Reports</div>
     <a href="/reports" class="nav-item">📊 Reservations Report</a>
     <a href="/purchase-orders-reports" class="nav-item">📄 Purchase Orders Report</a>
     <a href="/goods-receipt-reports" class="nav-item">📋 Goods Receipt Report</a>
     <a href="/store-inventory-reports" class="nav-item">📦 Store Inventory Report</a>
     
-    <!-- ADMIN -->
     <div class="nav-section-label">Administration</div>
     <a href="/users" class="nav-item active">👥 User Management</a>
-    
   </nav>
   
   <div class="sidebar-footer">
     <small>Steps PMS v1.0 · Dar es Salaam</small>
   </div>
 </aside>
-
 
 <!-- Navbar -->
 <nav class="navbar">
@@ -248,7 +274,6 @@
       </div>
       <div class="dropdown-menu" id="dropdownMenu">
         <button onclick="openChangePasswordModal()"><i class="fas fa-key"></i> Change Password</button>
-
         <hr>
         <button onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
       </div>
@@ -262,6 +287,15 @@
       <span class="card-title">User Management</span>
       <button class="btn btn-gold" onclick="openAddUserModal()">＋ Add New User</button>
     </div>
+    
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+      <button class="filter-btn active" data-filter="all">All Users</button>
+      <button class="filter-btn" data-filter="locked">🔒 Locked Users</button>
+      <button class="filter-btn" data-filter="active">✅ Active</button>
+      <button class="filter-btn" data-filter="warning">⚠️ Has Failed Attempts</button>
+    </div>
+    
     <div style="overflow-x: auto;">
       <table class="users-table" id="users-table">
         <thead>
@@ -272,6 +306,7 @@
             <th>Email</th>
             <th>Role</th>
             <th>Created At</th>
+            <th>Status</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -356,10 +391,6 @@
     window.location.href = '/';
   }
   
-  function switchToBack() {
-    alert('Back office feature coming soon');
-  }
-  
   const currentUser = getCurrentUser();
   if (!currentUser) {
     window.location.href = '/';
@@ -422,58 +453,120 @@
       return;
     }
     
-     try {
-  await apiPost('/auth/change-password', {
-    userId: currentUser.id,
-    oldPassword: currentPassword,
-    newPassword: newPassword
+    try {
+      await apiPost('/auth/change-password', {
+        userId: currentUser.id,
+        oldPassword: currentPassword,
+        newPassword: newPassword
+      });
+      showToast('Password changed successfully! Please login again.', '✅');
+      setTimeout(() => { logout(); }, 1500);
+    } catch (err) {
+      showToast('Failed to change password: ' + err.message, '❌');
+    }
   });
-  
-  showToast('Password changed successfully! Please login again.', '✅');
-  setTimeout(() => { logout(); }, 1500);
-} catch (err) {
-  showToast('Failed to change password: ' + err.message, '❌');
-}
-});
   
   // ========== USER CRUD ==========
   let users = [];
+  let currentFilter = 'all';
   
   async function loadUsers() {
     try {
       const data = await apiGet('/users');
       users = data;
-      renderUsers();
+      applyFilter();
     } catch (err) {
       showToast('Failed to load users: ' + err.message, '❌');
     }
   }
   
-  function renderUsers() {
+  function applyFilter() {
+    let filteredUsers = [...users];
+    
+    switch(currentFilter) {
+      case 'locked':
+        filteredUsers = users.filter(u => u.locked_until && new Date(u.locked_until) > new Date());
+        break;
+      case 'active':
+        filteredUsers = users.filter(u => !u.locked_until && (!u.failed_attempts || u.failed_attempts === 0));
+        break;
+      case 'warning':
+        filteredUsers = users.filter(u => u.failed_attempts > 0 && u.failed_attempts < 5 && (!u.locked_until || new Date(u.locked_until) <= new Date()));
+        break;
+      default:
+        filteredUsers = users;
+    }
+    
+    renderUsers(filteredUsers);
+  }
+  
+  function renderUsers(filteredUsers) {
     const tbody = document.getElementById('users-tbody');
     if (!tbody) return;
-    if (users.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="7" class="empty-state">👥 No users found. Click "Add New User" to create one. </div> </td></td>';
+    if (filteredUsers.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" class="empty-state">👥 No users found.</td></tr>';
       return;
     }
-    tbody.innerHTML = users.map(user => {
+    
+    tbody.innerHTML = filteredUsers.map(user => {
       let roleClass = 'role-manager';
       if (user.role === 'admin') roleClass = 'role-admin';
       if (user.role === 'housekeeping') roleClass = 'role-housekeeping';
+      
+      // Check lock status
+      const isLocked = user.locked_until && new Date(user.locked_until) > new Date();
+      const minutesLeft = isLocked ? Math.ceil((new Date(user.locked_until) - new Date()) / 60000) : 0;
+      
+      let statusHtml = '';
+      if (isLocked) {
+        statusHtml = `<span class="status-locked">🔒 Locked (${minutesLeft} min left)</span>`;
+      } else if (user.failed_attempts > 0) {
+        statusHtml = `<span class="status-warning">⚠️ ${user.failed_attempts}/5 attempts</span>`;
+      } else {
+        statusHtml = `<span class="status-active">✅ Active</span>`;
+      }
+      
       return `
-      <tr>
-        <td>${user.id}</td>
-        <td><strong>${escapeHtml(user.username)}</strong></td>
-        <td>${escapeHtml(user.full_name || '—')}</td>
-        <td>${escapeHtml(user.email)}</span></td>
-        <td><span class="role-badge ${roleClass}">${user.role}</span></td>
-        <td>${new Date(user.created_at).toLocaleDateString()}</td>
-        <td>
-          <button class="btn btn-warning btn-sm" onclick="openEditUserModal(${user.id})">✏️ Edit</button>
-          <button class="btn btn-danger btn-sm" onclick="deleteUser(${user.id}, '${escapeHtml(user.username)}')">🗑 Delete</button>
-        </td>
-      </tr>
-    `}).join('');
+        <tr>
+          <td>${user.id}</td>
+          <td><strong>${escapeHtml(user.username)}</strong></td>
+          <td>${escapeHtml(user.full_name || '—')}</td>
+          <td>${escapeHtml(user.email)}</td>
+          <td><span class="role-badge ${roleClass}">${user.role}</span></td>
+          <td>${user.created_at ? new Date(user.created_at).toLocaleDateString() : '—'}</td>
+          <td>${statusHtml}</td>
+          <td>
+            ${isLocked ? `<button class="btn-sm btn-success" onclick="unlockUser(${user.id}, '${escapeHtml(user.username)}')">🔓 Unlock</button>` : ''}
+            <button class="btn-sm btn-warning" onclick="openEditUserModal(${user.id})">✏️ Edit</button>
+            <button class="btn-sm btn-danger" onclick="deleteUser(${user.id}, '${escapeHtml(user.username)}')">🗑 Delete</button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+  
+  async function unlockUser(id, username) {
+    if (!confirm(`Unlock user "${username}"? They will be able to login again.`)) return;
+    try {
+      const token = sessionStorage.getItem('token');
+      const response = await fetch(`/api/users/unlock/${id}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Unlock failed');
+      }
+      
+      showToast(`User "${username}" unlocked successfully!`, 'success');
+      await loadUsers(); // Refresh the list
+    } catch (err) {
+      showToast('Failed to unlock user: ' + err.message, 'error');
+    }
   }
   
   async function deleteUser(id, username) {
@@ -487,7 +580,17 @@
     }
   }
   
-  // Add/Edit Modal
+  // Filter buttons
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentFilter = btn.getAttribute('data-filter');
+      applyFilter();
+    });
+  });
+  
+  // Add/Edit Modal functions
   function openAddUserModal() {
     document.getElementById('user-modal-title').innerText = '➕ Add New User';
     document.getElementById('user-id').value = '';
@@ -584,6 +687,13 @@
     return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m]));
   }
   
+  function showToast(msg, type) {
+    const toast = document.getElementById('toast-container');
+    const bgColor = type === 'error' ? '#ef4444' : '#10b981';
+    toast.innerHTML = `<div style="background:${bgColor};color:white;padding:12px 20px;border-radius:40px;margin-bottom:8px;">${msg}</div>`;
+    setTimeout(() => toast.innerHTML = '', 3000);
+  }
+  
   // Sidebar toggle
   const hamburgerBtn = document.getElementById('hamburger-btn');
   const sidebar = document.getElementById('sidebar');
@@ -601,14 +711,15 @@
     loadUsers();
   });
   
+  // Make functions global
   window.openAddUserModal = openAddUserModal;
   window.openEditUserModal = openEditUserModal;
   window.closeUserModal = closeUserModal;
   window.deleteUser = deleteUser;
+  window.unlockUser = unlockUser;
   window.openChangePasswordModal = openChangePasswordModal;
   window.closeChangePasswordModal = closeChangePasswordModal;
   window.logout = logout;
-  window.switchToBack = switchToBack;
 </script>
 </body>
 </html>

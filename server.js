@@ -116,7 +116,7 @@ const pages = [
   'store-housekeeping', 'store-kitchen', 'store-public', 'users', 'users1', 'login',
   'activity-logs', 'register', 'back-office', 'index2', 'purchase-orders', 'goods-receipt',
   'purchase-orders-reports', 'goods-receipt-reports', 'store-inventory-reports', 
-  'point-of-sale', 'sales-report', 'add-reservation'
+  'point-of-sale', 'sales-report', 'add-reservation','guest-database'
 ];
 
 // Create routes for each page without .html extension
@@ -981,22 +981,36 @@ app.post('/api/auth/register', async (req, res) => {
   }
 });
 
+
+
+
+
 // POST /api/auth/login – email and password only
 // POST /api/auth/login – email and password only (RETURNS TOKEN)
 // ============================================================
 // ACCOUNT LOCKOUT - Brute Force Protection
 // ============================================================
-// Store failed attempts in memory
-const failedAttempts = new Map();
+
 
 // Lockout settings
+// ============================================================
+// ACCOUNT LOCKOUT - Database Version (Persists after restart)
+// ============================================================
+// ============================================================
+// ACCOUNT LOCKOUT - Memory Version (WORKING)
+// ============================================================
+// ============================================================
+// ACCOUNT LOCKOUT - Combined Version (WORKS 100%)
+// ============================================================
+const failedAttempts = new Map();
 const MAX_ATTEMPTS = 5;
 const LOCKOUT_MINUTES = 15;
 
+// Check if account is locked (from memory)
 async function checkAccountLockout(email) {
   const record = failedAttempts.get(email);
   
-  if (!record) return; // No failed attempts
+  if (!record) return;
   
   if (record.count >= MAX_ATTEMPTS) {
     const timeElapsed = Date.now() - record.lockUntil;
@@ -1006,25 +1020,57 @@ async function checkAccountLockout(email) {
       const minutesLeft = Math.ceil((lockoutMs - timeElapsed) / 60000);
       throw new Error(`Account locked. Try again in ${minutesLeft} minutes.`);
     } else {
-      // Lockout expired, reset attempts
       failedAttempts.delete(email);
     }
   }
 }
 
-function recordFailedAttempt(email) {
+// Record failed attempt (memory + database)
+async function recordFailedAttempt(email) {
+  // Update memory (for lockout)
   const record = failedAttempts.get(email) || { count: 0, lockUntil: null };
   record.count++;
   record.lockUntil = Date.now();
   failedAttempts.set(email, record);
-  console.log(`⚠️ Failed login attempt for ${email} (${record.count}/${MAX_ATTEMPTS})`);
+  
+  // Update database (for User Management page)
+  try {
+    await pool.query(
+      `UPDATE users SET failed_attempts = $1 WHERE email = $2`,
+      [record.count, email]
+    );
+    
+    if (record.count >= MAX_ATTEMPTS) {
+      const lockUntil = new Date(Date.now() + LOCKOUT_MINUTES * 60 * 1000);
+      await pool.query(
+        `UPDATE users SET locked_until = $1 WHERE email = $2`,
+        [lockUntil, email]
+      );
+      console.log(`🔒 Account ${email} LOCKED`);
+    }
+  } catch (err) {
+    console.log('Database update failed:', err.message);
+  }
+  
+  console.log(`⚠️ Failed login for ${email} (${record.count}/${MAX_ATTEMPTS})`);
 }
 
-function resetFailedAttempts(email) {
-  if (failedAttempts.has(email)) {
-    failedAttempts.delete(email);
-    console.log(`✅ Lockout reset for ${email}`);
+// Reset failed attempts (memory + database)
+async function resetFailedAttempts(email) {
+  // Clear memory
+  failedAttempts.delete(email);
+  
+  // Clear database
+  try {
+    await pool.query(
+      `UPDATE users SET failed_attempts = 0, locked_until = NULL WHERE email = $1`,
+      [email]
+    );
+  } catch (err) {
+    console.log('Database reset failed:', err.message);
   }
+  
+  console.log(`✅ Lockout reset for ${email}`);
 }
 
 // POST /api/auth/login – email and password only (RETURNS TOKEN) WITH ACCOUNT LOCKOUT
@@ -1044,8 +1090,7 @@ app.post('/api/auth/login', async (req, res) => {
     );
     
     if (rows.length === 0) {
-      // Record failed attempt (email doesn't exist - prevents email enumeration)
-      recordFailedAttempt(email);
+      await recordFailedAttempt(email);
       return res.status(401).json({ error: 'Invalid email or password' });
     }
     
@@ -1053,13 +1098,12 @@ app.post('/api/auth/login', async (req, res) => {
     const match = await bcrypt.compare(password, user.password_hash);
     
     if (!match) {
-      // Record failed attempt
-      recordFailedAttempt(email);
+      await recordFailedAttempt(email);
       return res.status(401).json({ error: 'Invalid email or password' });
     }
     
     // ========== LOGIN SUCCESSFUL - RESET LOCKOUT ==========
-    resetFailedAttempts(email);
+    await resetFailedAttempts(email);
     
     // ========== GENERATE JWT TOKEN ==========
     const token = jwt.sign(
@@ -1116,6 +1160,22 @@ app.post('/api/auth/change-password', async (req, res) => {
 // ============================================================
 // USER MANAGEMENT API (admin only)
 // ============================================================
+
+
+
+// GET all users (with lock status)
+app.get('/api/users', async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      'SELECT id, username, email, role, full_name, created_at, updated_at, failed_attempts, locked_until FROM users ORDER BY id'
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error('GET /api/users error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 // GET all users
 app.get('/api/users', async (req, res) => {
@@ -1262,6 +1322,39 @@ app.delete('/api/users/:id', async (req, res) => {
   }
 });
 
+
+
+// GET all users (with lock status)
+app.get('/api/users', async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      'SELECT id, username, email, role, full_name, created_at, updated_at, failed_attempts, locked_until FROM users ORDER BY id'
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error('GET /api/users error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+// Add this to your server.js if not already there
+app.post('/api/users/unlock/:id', protectAPI, async (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Admin access required' });
+  }
+  
+  const { id } = req.params;
+  try {
+    await pool.query(
+      'UPDATE users SET failed_attempts = 0, locked_until = NULL WHERE id = $1',
+      [id]
+    );
+    res.json({ message: 'User unlocked successfully' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 // ============================================================
 // HOUSEKEEPING STATUS API
 // ============================================================

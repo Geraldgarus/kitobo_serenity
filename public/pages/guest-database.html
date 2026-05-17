@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Guest Database - Steps PMS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <style>
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+    
+    .data-table th,
+    .data-table td {
+      padding: 12px 8px;
+      text-align: left;
+      border-bottom: 1px solid #e2e8f0;
+      vertical-align: middle;
+    }
+    
+    .data-table th {
+      background: #f8fafc;
+      font-weight: 600;
+      color: #1e2a3e;
+    }
+    
+    /* Guest cell with stacked content */
+    .guest-cell {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    
+    .guest-name {
+      font-weight: 600;
+    }
+    
+    .guest-email {
+      font-size: 11px;
+      color: #64748b;
+      word-break: break-all;
+    }
+    
+    .data-table td:nth-child(4),
+    .data-table td:nth-child(5),
+    .data-table td:nth-child(6) {
+      white-space: nowrap;
+    }
+    
+    .stats-summary {
+      display: flex;
+      gap: 20px;
+      padding: 0 0 20px 0;
+      flex-wrap: wrap;
+    }
+    
+    .stat-card {
+      background: white;
+      border-radius: 20px;
+      padding: 16px 24px;
+      flex: 1;
+      min-width: 140px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      text-align: center;
+    }
+    
+    .stat-card .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: #1e293b;
+    }
+    
+    .stat-card .stat-label {
+      font-size: 12px;
+      color: #64748b;
+      text-transform: uppercase;
+    }
+    
+    .search-box {
+      margin-bottom: 20px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    
+    .search-box input {
+      flex: 1;
+      max-width: 300px;
+      padding: 10px 16px;
+      border: 1px solid #e2e8f0;
+      border-radius: 40px;
+      font-size: 14px;
+    }
+    
+    .btn-outline {
+      background: transparent;
+      border: 1px solid #e2e8f0;
+      padding: 8px 20px;
+      border-radius: 40px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .btn-outline:hover {
+      background: #f8fafc;
+    }
+    
+    @media (max-width: 768px) {
+      .stats-summary {
+        flex-direction: column;
+        gap: 12px;
+      }
+      .data-table {
+        min-width: 700px;
+      }
+      .search-box input {
+        max-width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="overlay" id="overlay-main"></div>
+
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-top">
+    <a class="sidebar-logo" href="/">
+      <div class="logo-icon">🏨</div>
+      <div class="logo-text">
+        <span>Steps</span>
+        <span>Premium Suite</span>
+      </div>
+    </a>
+    <button class="sidebar-close-btn" id="sidebar-close-btn">✕</button>
+  </div>
+  
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Core Operations</div>
+    <a href="/dashboard" class="nav-item">📊 Stay View</a>
+    <a href="/reservations" class="nav-item">📅 Reservations</a>
+    <a href="/housekeeping" class="nav-item">🧹 Housekeeping</a>
+    
+    <div class="nav-section-label">Property</div>
+    <a href="/apartments" class="nav-item">🏠 Apartments View</a>
+    <a href="/apartments-list" class="nav-item">📋 Apartments List</a>
+    
+    <div class="nav-section-label">Store & Procurement</div>
+    <a href="/store-main" class="nav-item">🏬 Main Store</a>
+    <a href="/store-outlets" class="nav-item">🏪 Outlets Store</a>
+    <a href="/purchase-orders" class="nav-item">📦 Purchase Orders</a>
+    <a href="/goods-receipt" class="nav-item">✅ Goods Receipt</a>
+    
+    <div class="nav-section-label">Reports</div>
+    <a href="/reports" class="nav-item">📊 Reservations Report</a>
+    <a href="/purchase-orders-reports" class="nav-item">📄 Purchase Orders Report</a>
+    <a href="/goods-receipt-reports" class="nav-item">📋 Goods Receipt Report</a>
+    <a href="/store-inventory-reports" class="nav-item">📦 Store Inventory Report</a>
+    
+    <div class="nav-section-label">Guest Management</div>
+    <a href="/guest-database" class="nav-item active">👥 Guest Database</a>
+    
+    <div class="nav-section-label">Administration</div>
+    <a href="/users" class="nav-item">👥 User Management</a>
+  </nav>
+  
+  <div class="sidebar-footer">
+    <small>Steps PMS v1.0 · Dar es Salaam</small>
+  </div>
+</aside>
+
+<!-- Navbar -->
+<nav class="navbar">
+  <div class="navbar-left">
+    <button class="hamburger" id="hamburger-btn" aria-label="Toggle menu">
+      <span class="hb-bar"></span><span class="hb-bar"></span><span class="hb-bar"></span>
+    </button>
+    <div>
+      <div class="page-title">Guest Database</div>
+      <div class="page-subtitle">All Guest Information</div>
+    </div>
+  </div>
+  <div class="navbar-right">
+    <button class="notif-btn">🔔<span class="badge">3</span></button>
+    
+    <div class="user-dropdown" id="userDropdown">
+      <div class="user-pill" id="userPill">
+        <div class="user-avatar" id="userAvatar">U</div>
+        <div class="user-info">
+          <span id="userName">Loading...</span>
+          <span id="userRole">Loading...</span>
+        </div>
+        <i class="fas fa-chevron-down"></i>
+      </div>
+      <div class="dropdown-menu" id="dropdownMenu">
+        <button onclick="openChangePasswordModal()"><i class="fas fa-key"></i> Change Password</button>
+        <a href="/users" class="dropdown-item"><i class="fas fa-users"></i> User Management</a>
+        <hr>
+        <button onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<main class="main-content">
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Guest Database</span>
+      <button class="btn btn-gold" onclick="exportToCSV()">📎 Export to CSV</button>
+    </div>
+    
+    <!-- Stats Summary -->
+    <div class="stats-summary">
+      <div class="stat-card">
+        <div class="stat-value" id="total-guests">—</div>
+        <div class="stat-label">Total Guests</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="unique-guests">—</div>
+        <div class="stat-label">Unique Guests</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="total-stays">—</div>
+        <div class="stat-label">Total Stays</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="total-spent">—</div>
+        <div class="stat-label">Total Spent</div>
+      </div>
+    </div>
+    
+    <!-- Search Box -->
+    <div class="search-box">
+      <input type="text" id="search-input" placeholder="🔍 Search by guest name, email, or mobile..." oninput="filterGuests()">
+      <button class="btn-outline" onclick="clearSearch()">Clear</button>
+    </div>
+    
+    <div style="overflow-x: auto;">
+      <table class="data-table" id="guests-table">
+        <thead>
+          <tr>
+            <th>Guest Name</th>
+            <th>Email</th>
+            <th>Mobile</th>
+            <th>Country</th>
+            <th>City</th>
+            <th>Total Stays</th>
+            <th>Total Spent (TSH)</th>
+            <th>Last Stay</th>
+          </tr>
+        </thead>
+        <tbody id="guests-tbody">
+          <tr><td colspan="8" class="empty-state">Loading guests...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<!-- Change Password Modal -->
+<div class="reservation-modal-overlay" id="change-password-modal-overlay" onclick="closeChangePasswordModal()"></div>
+<div class="reservation-modal" id="change-password-modal">
+  <div class="reservation-modal-header">
+    <h3>🔐 Change Password</h3>
+    <button class="reservation-modal-close" onclick="closeChangePasswordModal()">✕</button>
+  </div>
+  <div class="reservation-modal-body">
+    <form id="change-password-form">
+      <div class="form-group"><label>Current Password</label><input type="password" id="current-password" class="form-control" required></div>
+      <div class="form-group"><label>New Password (min 6)</label><input type="password" id="new-password" class="form-control" required></div>
+      <div class="form-group"><label>Confirm Password</label><input type="password" id="confirm-password" class="form-control" required></div>
+      <hr class="divider" />
+      <button type="submit" class="btn btn-success">✅ Update Password</button>
+      <button type="button" class="btn btn-outline" style="margin-top:10px; width:100%;" onclick="closeChangePasswordModal()">Cancel</button>
+    </form>
+  </div>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+
+<script src="../js/api.js"></script>
+<script src="../js/utils.js"></script>
+<script>
+  // ============================================================
+  // SIDEBAR TOGGLE
+  // ============================================================
+  const hamburgerBtn = document.getElementById('hamburger-btn');
+  const sidebar = document.getElementById('sidebar');
+  const overlayMain = document.getElementById('overlay-main');
+  const sidebarClose = document.getElementById('sidebar-close-btn');
+  
+  function openSidebar() { sidebar.classList.add('open'); overlayMain.classList.add('open'); hamburgerBtn.classList.add('active'); }
+  function closeSidebar() { sidebar.classList.remove('open'); overlayMain.classList.remove('open'); hamburgerBtn.classList.remove('active'); }
+  
+  hamburgerBtn?.addEventListener('click', () => sidebar.classList.contains('open') ? closeSidebar() : openSidebar());
+  sidebarClose?.addEventListener('click', closeSidebar);
+  overlayMain?.addEventListener('click', closeSidebar);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSidebar(); });
+  
+  // ============================================================
+  // USER AUTHENTICATION
+  // ============================================================
+  function getCurrentUser() {
+    const userStr = sessionStorage.getItem('pms_user');
+    return userStr ? JSON.parse(userStr) : null;
+  }
+  
+  function logout() {
+    sessionStorage.removeItem('pms_user');
+    sessionStorage.removeItem('token');
+    window.location.href = '/';
+  }
+  
+  const currentUser = getCurrentUser();
+  if (!currentUser) {
+    window.location.href = '/';
+  }
+  
+  document.getElementById('userName').innerText = currentUser.fullName || currentUser.username;
+  document.getElementById('userRole').innerText = currentUser.role || 'User';
+  document.getElementById('userAvatar').innerText = (currentUser.fullName || currentUser.username || 'U')[0];
+  
+  // Dropdown toggle
+  const userPill = document.getElementById('userPill');
+  const dropdownMenu = document.getElementById('dropdownMenu');
+  if (userPill) {
+    userPill.addEventListener('click', (e) => {
+      e.stopPropagation();
+      dropdownMenu.classList.toggle('show');
+      userPill.classList.toggle('active');
+    });
+    document.addEventListener('click', () => {
+      dropdownMenu.classList.remove('show');
+      userPill.classList.remove('active');
+    });
+  }
+  
+  // ============================================================
+  // CHANGE PASSWORD MODAL
+  // ============================================================
+  function openChangePasswordModal() {
+    if (!document.getElementById('change-password-modal')) {
+      const modalHTML = `
+        <div class="reservation-modal-overlay" id="change-password-modal-overlay" onclick="closeChangePasswordModal()"></div>
+        <div class="reservation-modal" id="change-password-modal">
+          <div class="reservation-modal-header">
+            <h3>🔐 Change Password</h3>
+            <button class="reservation-modal-close" onclick="closeChangePasswordModal()">✕</button>
+          </div>
+          <div class="reservation-modal-body">
+            <form id="change-password-form">
+              <div class="form-group"><label>Current Password</label><input type="password" id="current-password" class="form-control" required></div>
+              <div class="form-group"><label>New Password (min 6)</label><input type="password" id="new-password" class="form-control" required></div>
+              <div class="form-group"><label>Confirm Password</label><input type="password" id="confirm-password" class="form-control" required></div>
+              <hr class="divider" />
+              <button type="submit" class="btn btn-success">✅ Update Password</button>
+              <button type="button" class="btn btn-outline" style="margin-top:10px; width:100%;" onclick="closeChangePasswordModal()">Cancel</button>
+            </form>
+          </div>
+        </div>
+      `;
+      document.body.insertAdjacentHTML('beforeend', modalHTML);
+      
+      document.getElementById('change-password-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const currentPassword = document.getElementById('current-password').value;
+        const newPassword = document.getElementById('new-password').value;
+        const confirmPassword = document.getElementById('confirm-password').value;
+        
+        if (newPassword !== confirmPassword) {
+          showToast('New passwords do not match', 'error');
+          return;
+        }
+        if (newPassword.length < 6) {
+          showToast('Password must be at least 6 characters', 'error');
+          return;
+        }
+        
+        try {
+          await apiPost('/auth/change-password', {
+            userId: currentUser.id,
+            oldPassword: currentPassword,
+            newPassword: newPassword
+          });
+          showToast('Password changed successfully! Please login again.', 'success');
+          setTimeout(() => { logout(); }, 1500);
+        } catch (err) {
+          showToast('Failed to change password: ' + err.message, 'error');
+        }
+      });
+    }
+    
+    document.getElementById('change-password-modal').classList.add('open');
+    document.getElementById('change-password-modal-overlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    dropdownMenu.classList.remove('show');
+    userPill.classList.remove('active');
+  }
+  
+  function closeChangePasswordModal() {
+    const modal = document.getElementById('change-password-modal');
+    const overlay = document.getElementById('change-password-modal-overlay');
+    if (modal) modal.classList.remove('open');
+    if (overlay) overlay.classList.remove('open');
+    document.body.style.overflow = '';
+    const form = document.getElementById('change-password-form');
+    if (form) form.reset();
+  }
+  
+  // ============================================================
+  // GUEST DATABASE FUNCTIONS
+  // ============================================================
+  let allGuests = [];
+  let guestsData = [];
+  
+  async function loadGuests() {
+    try {
+      const reservations = await apiGet('/reservations');
+      
+      // Group by email to get unique guests
+      const guestMap = new Map();
+      
+      reservations.forEach(res => {
+        const email = res.email;
+        if (!guestMap.has(email)) {
+          guestMap.set(email, {
+            guest: res.guest,
+            email: res.email,
+            mobile: res.mobile || '—',
+            country: res.country || '—',
+            city: res.city || '—',
+            stays: 1,
+            totalSpent: res.total || 0,
+            lastStay: res.checkout || res.checkin,
+            allReservations: [res]
+          });
+        } else {
+          const existing = guestMap.get(email);
+          existing.stays++;
+          existing.totalSpent += (res.total || 0);
+          if (res.checkout > existing.lastStay) {
+            existing.lastStay = res.checkout;
+          }
+          existing.allReservations.push(res);
+        }
+      });
+      
+      guestsData = Array.from(guestMap.values());
+      allGuests = [...guestsData];
+      updateStats();
+      renderGuests();
+    } catch (err) {
+      console.error('Error loading guests:', err);
+      document.getElementById('guests-tbody').innerHTML = `<tr><td colspan="8" class="empty-state">Error loading guests: ${err.message}</td></tr>`;
+      showToast('Failed to load guests: ' + err.message, 'error');
+    }
+  }
+  
+  function updateStats() {
+    const totalGuests = guestsData.reduce((sum, g) => sum + g.stays, 0);
+    const uniqueGuests = guestsData.length;
+    const totalSpent = guestsData.reduce((sum, g) => sum + g.totalSpent, 0);
+    
+    document.getElementById('total-guests').innerText = totalGuests;
+    document.getElementById('unique-guests').innerText = uniqueGuests;
+    document.getElementById('total-stays').innerText = uniqueGuests;
+    document.getElementById('total-spent').innerHTML = fmtTSH(totalSpent);
+  }
+  
+  function renderGuests() {
+    const tbody = document.getElementById('guests-tbody');
+    if (!tbody) return;
+    
+    if (guestsData.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="8" class="empty-state">👥 No guests found.</td></tr>`;
+      return;
+    }
+    
+    tbody.innerHTML = guestsData.map(guest => `
+      <tr>
+        <td>
+          <div class="guest-cell">
+            <span class="guest-name">${escapeHtml(guest.guest)}</span>
+          </div>
+         </td
+        <td>${escapeHtml(guest.email)}</td
+        <td>${escapeHtml(guest.mobile)}</td
+        <td>${escapeHtml(guest.country)}</td
+        <td>${escapeHtml(guest.city)}</td
+        <td>${guest.stays}</td
+        <td>${fmtTSH(guest.totalSpent)}</td
+        <td>${guest.lastStay ? fmtDate(guest.lastStay) : '—'}</td
+      </tr>
+    `).join('');
+  }
+  
+  function filterGuests() {
+    const searchTerm = document.getElementById('search-input').value.toLowerCase().trim();
+    
+    if (!searchTerm) {
+      guestsData = [...allGuests];
+    } else {
+      guestsData = allGuests.filter(guest => 
+        guest.guest.toLowerCase().includes(searchTerm) ||
+        guest.email.toLowerCase().includes(searchTerm) ||
+        (guest.mobile && guest.mobile.toLowerCase().includes(searchTerm))
+      );
+    }
+    
+    renderGuests();
+    updateStats();
+  }
+  
+  function clearSearch() {
+    document.getElementById('search-input').value = '';
+    guestsData = [...allGuests];
+    renderGuests();
+    updateStats();
+  }
+  
+  function exportToCSV() {
+    let csv = 'Guest Name,Email,Mobile,Country,City,Total Stays,Total Spent (TSH),Last Stay\n';
+    
+    guestsData.forEach(guest => {
+      csv += `"${guest.guest}","${guest.email}","${guest.mobile}","${guest.country}","${guest.city}",${guest.stays},"${fmtTSH(guest.totalSpent)}","${guest.lastStay || ''}"\n`;
+    });
+    
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `guest_database_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    showToast('Exported successfully!', 'success');
+  }
+  
+  function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m]));
+  }
+  
+  function fmtTSH(amount) {
+    return 'TSh ' + (amount || 0).toLocaleString();
+  }
+  
+  function fmtDate(dateStr) {
+    if (!dateStr) return '—';
+    return new Date(dateStr).toLocaleDateString();
+  }
+  
+  function showToast(msg, type) {
+    const toast = document.getElementById('toast-container');
+    const bgColor = type === 'error' ? '#ef4444' : '#10b981';
+    toast.innerHTML = `<div style="background:${bgColor};color:white;padding:12px 20px;border-radius:40px;margin-bottom:8px;">${msg}</div>`;
+    setTimeout(() => toast.innerHTML = '', 3000);
+  }
+  
+  // ============================================================
+  // INITIALIZE
+  // ============================================================
+  document.addEventListener('DOMContentLoaded', () => {
+    loadGuests();
+  });
+  
+  // Make functions global
+  window.filterGuests = filterGuests;
+  window.clearSearch = clearSearch;
+  window.exportToCSV = exportToCSV;
+  window.openChangePasswordModal = openChangePasswordModal;
+  window.closeChangePasswordModal = closeChangePasswordModal;
+  window.logout = logout;
+</script>
+</body>
+</html>
