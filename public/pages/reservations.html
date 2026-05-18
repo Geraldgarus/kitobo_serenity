@@ -4,6 +4,15 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <title>Reservations - Steps PMS</title>
+  <style>
+  body { opacity: 0; transition: opacity 0.2s; }
+  body.loaded { opacity: 1; }
+</style>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    document.body.classList.add('loaded');
+  });
+</script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/style.css?v=20260518" />
@@ -1215,20 +1224,47 @@ function modalStepperChange(id, delta) {
 }
 
 function modalUpdateRate() {
+  console.log('🔄 Updating rate...');
+  
   const aptId = parseInt(document.getElementById('modal-f-apt')?.value);
   const rateType = document.getElementById('modal-f-ratetype')?.value;
   const checkin = document.getElementById('modal-f-checkin')?.value;
   const checkout = document.getElementById('modal-f-checkout')?.value;
+  
   if (!aptId || !checkin || !checkout) { 
-    document.getElementById('modal-f-total').textContent = '—'; 
+    document.getElementById('modal-f-total').innerHTML = '—';
+    document.getElementById('modal-f-total-hidden').value = 0;
+    console.log('Missing fields');
     return; 
   }
+  
   const apt = modalAPARTMENTS.find(a => a.id === aptId);
-  const nights = Math.max(0, daysBetween(checkin, checkout));
-  const total = apt ? Math.round(apt.ratePerNight * nights * (rateType === 'Partial' ? 0.6 : 1)) : 0;
+  if (!apt) {
+    console.log('Apartment not found');
+    return;
+  }
+  
+  const nights = daysBetween(checkin, checkout);
+  const multiplier = rateType === 'Partial' ? 0.6 : 1;
+  const total = Math.round(apt.ratePerNight * nights * multiplier);
+  
   document.getElementById('modal-f-total').innerHTML = total > 0 ? fmtTSH(total) : '—';
   document.getElementById('modal-f-total-hidden').value = total;
+  
+  console.log(`✅ ${nights} nights × ${apt.ratePerNight} × ${multiplier} = ${total}`);
 }
+// Force recalculation when dates lose focus
+function forceRateUpdate() {
+  setTimeout(() => {
+    modalUpdateRate();
+  }, 100);
+}
+
+// Add these event listeners after initModalForm
+document.getElementById('modal-f-checkin')?.addEventListener('blur', forceRateUpdate);
+document.getElementById('modal-f-checkout')?.addEventListener('blur', forceRateUpdate);
+document.getElementById('modal-f-apt')?.addEventListener('change', forceRateUpdate);
+document.getElementById('modal-f-ratetype')?.addEventListener('change', forceRateUpdate);
 
 function openReservationModal() {
   document.getElementById('reservation-modal').classList.add('open');

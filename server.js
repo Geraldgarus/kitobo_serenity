@@ -2464,3 +2464,14 @@ app.post('/api/countries', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+
+
+
+
+
+// optimize speed
+// optimize speed
+// optimize speed
+const compression = require('compression');
+app.use(compression());
