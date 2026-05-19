@@ -379,6 +379,138 @@
     font-size: 14px;
   }
 }
+/* Editable Total Rate - Custom CSS */
+.custom-rate-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.custom-rate-edit {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  width: 100%;
+}
+
+.custom-rate-edit input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #c9933a;
+  border-radius: 20px;
+  font-size: 14px;
+}
+
+.btn-custom-apply {
+  background: #c9933a;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 40px;
+  cursor: pointer;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.btn-custom-apply:hover {
+  background: #a87a2c;
+}
+
+.btn-custom-cancel {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 40px;
+  cursor: pointer;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.btn-custom-cancel:hover {
+  background: #dc2626;
+}
+
+.custom-total-badge {
+  font-size: 10px;
+  color: #c9933a;
+  margin-left: 8px;
+  font-style: italic;
+}
+
+.custom-rate-edit-icon {
+  cursor: pointer;
+  margin-left: 8px;
+  font-size: 12px;
+  color: #94a3b8;
+  transition: color 0.2s;
+}
+
+.custom-rate-edit-icon:hover {
+  color: #c9933a;
+}
+
+/* Increase Reservation Modal Width */
+@media (min-width: 768px) {
+  .reservation-modal {
+    width: 650px !important;
+    max-width: 90% !important;
+  }
+}
+
+@media (min-width: 1200px) {
+  .reservation-modal {
+    width: 750px !important;
+    max-width: 85% !important;
+  }
+}
+
+/* Ensure custom rate edit section fits properly */
+.custom-rate-edit {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: nowrap;
+  width: 100%;
+}
+
+.custom-rate-edit input {
+  flex: 2;
+  min-width: 0;
+  padding: 8px 12px;
+  border: 1px solid #c9933a;
+  border-radius: 20px;
+  font-size: 13px;
+}
+
+.btn-custom-apply, .btn-custom-cancel {
+  padding: 8px 16px;
+  white-space: nowrap;
+  font-size: 12px;
+}
+
+/* Ensure form groups don't overflow */
+.form-group-row {
+  flex-wrap: wrap;
+}
+
+/* For mobile devices */
+@media (max-width: 768px) {
+  .custom-rate-edit {
+    flex-wrap: wrap;
+  }
+  
+  .custom-rate-edit input {
+    width: 100%;
+    flex: auto;
+  }
+  
+  .btn-custom-apply, .btn-custom-cancel {
+    flex: 1;
+    text-align: center;
+  }
+}
 </style>
 </head>
 <body>
@@ -596,10 +728,17 @@
           </div>
         </div>
         <div class="form-group">
-          <label>💰 Total Rate</label>
-          <div class="rate-display" id="modal-f-total">—</div>
-          <input type="hidden" id="modal-f-total-hidden" value="0" />
-        </div>
+  <label>💰 Total Rate</label>
+  <div id="modal-total-container">
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <div class="rate-display" id="modal-f-total" style="flex: 1;">—</div>
+      <i class="fas fa-pencil-alt custom-rate-edit-icon" onclick="enableCustomTotal('modal')" title="Set custom total"></i>
+    </div>
+    <div id="modal-custom-area" style="display: none; margin-top: 8px;"></div>
+  </div>
+  <input type="hidden" id="modal-f-total-hidden" value="0">
+  <input type="hidden" id="modal-use-custom-total" value="0">
+</div>
       </div>
       
       <hr class="divider" />
@@ -708,10 +847,17 @@
           </div>
         </div>
         <div class="form-group">
-          <label>💰 Total Rate</label>
-          <div class="rate-display" id="edit-f-total">—</div>
-          <input type="hidden" id="edit-f-total-hidden" value="0" />
-        </div>
+  <label>💰 Total Rate</label>
+  <div id="edit-total-container">
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <div class="rate-display" id="edit-f-total" style="flex: 1;">—</div>
+      <i class="fas fa-pencil-alt custom-rate-edit-icon" onclick="enableCustomTotal('edit')" title="Set custom total"></i>
+    </div>
+    <div id="edit-custom-area" style="display: none; margin-top: 8px;"></div>
+  </div>
+  <input type="hidden" id="edit-f-total-hidden" value="0">
+  <input type="hidden" id="edit-use-custom-total" value="0">
+</div>
       </div>
       
       <hr class="divider" />
@@ -785,6 +931,137 @@
 <script src="../js/reservations.js"></script>
 
 <script>
+// ============================================================
+// CUSTOM TOTAL RATE FUNCTIONALITY
+// ============================================================
+
+function enableCustomTotal(type) {
+  const customArea = document.getElementById(`${type}-custom-area`);
+  const currentTotal = parseFloat(document.getElementById(`${type}-f-total-hidden`).value) || 0;
+  
+  customArea.style.display = 'block';
+  customArea.innerHTML = `
+    <div class="custom-rate-edit">
+      <input type="number" id="${type}-custom-input" value="${currentTotal}" step="1000" min="0" placeholder="Enter total amount in TSH">
+      <button class="btn-custom-apply" onclick="applyCustomTotal('${type}')">Apply</button>
+      <button class="btn-custom-cancel" onclick="cancelCustomTotal('${type}')">Cancel</button>
+    </div>
+  `;
+  
+  // Focus the input
+  setTimeout(() => {
+    const input = document.getElementById(`${type}-custom-input`);
+    if (input) input.focus();
+  }, 100);
+}
+
+function cancelCustomTotal(type) {
+  const customArea = document.getElementById(`${type}-custom-area`);
+  customArea.style.display = 'none';
+  customArea.innerHTML = '';
+}
+
+function applyCustomTotal(type) {
+  const customInput = document.getElementById(`${type}-custom-input`);
+  const customTotal = parseFloat(customInput.value);
+  
+  if (isNaN(customTotal) || customTotal <= 0) {
+    showToast('Please enter a valid total amount (greater than 0)', 'error');
+    return;
+  }
+  
+  // Get check-in and check-out dates
+  const checkin = document.getElementById(`${type}-f-checkin`).value;
+  const checkout = document.getElementById(`${type}-f-checkout`).value;
+  
+  if (!checkin || !checkout) {
+    showToast('Please select check-in and check-out dates first', 'error');
+    return;
+  }
+  
+  // Calculate nights
+  const nights = daysBetween(checkin, checkout);
+  
+  if (nights <= 0) {
+    showToast('Invalid date range. Check-out must be after check-in.', 'error');
+    return;
+  }
+  
+  // Calculate nightly rate based on custom total
+  const nightlyRate = Math.round(customTotal / nights);
+  
+  // Store the custom total
+  document.getElementById(`${type}-f-total-hidden`).value = customTotal;
+  document.getElementById(`${type}-f-total`).innerHTML = fmtTSH(customTotal);
+  document.getElementById(`${type}-use-custom-total`).value = '1';
+  
+  // Hide the custom area
+  const customArea = document.getElementById(`${type}-custom-area`);
+  customArea.style.display = 'none';
+  customArea.innerHTML = '';
+  
+  showToast(`✅ Custom total applied! Nightly rate: ${fmtTSH(nightlyRate)}`, 'success');
+  console.log(`Custom Total: ${fmtTSH(customTotal)} | Nights: ${nights} | Nightly Rate: ${fmtTSH(nightlyRate)}`);
+}
+
+// OVERRIDE modalUpdateRate to respect custom total
+const originalModalUpdate = modalUpdateRate;
+modalUpdateRate = function() {
+  const useCustom = document.getElementById('modal-use-custom-total')?.value;
+  if (useCustom === '1') {
+    console.log('Custom total active, keeping existing total');
+    return;
+  }
+  originalModalUpdate();
+};
+
+// OVERRIDE editUpdateRate to respect custom total
+const originalEditUpdate = editUpdateRate;
+editUpdateRate = function() {
+  const useCustom = document.getElementById('edit-use-custom-total')?.value;
+  if (useCustom === '1') {
+    console.log('Custom total active, keeping existing total');
+    return;
+  }
+  originalEditUpdate();
+};
+
+// Reset custom total when dates or apartment change
+function resetCustomTotal(type) {
+  const useCustom = document.getElementById(`${type}-use-custom-total`);
+  if (useCustom && useCustom.value === '1') {
+    useCustom.value = '0';
+    console.log(`Custom total reset for ${type}, auto-calculation resumed`);
+  }
+}
+
+// Add reset listeners
+function addResetListeners(type) {
+  const elements = [`${type}-f-checkin`, `${type}-f-checkout`, `${type}-f-apt`, `${type}-f-ratetype`];
+  elements.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener('change', () => resetCustomTotal(type));
+    }
+  });
+}
+
+// Call after initModalForm and initEditForm
+setTimeout(() => {
+  addResetListeners('modal');
+  addResetListeners('edit');
+}, 1000);
+
+function daysBetween(date1, date2) {
+  const d1 = new Date(date1);
+  const d2 = new Date(date2);
+  const diffTime = Math.abs(d2 - d1);
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  return diffDays;
+}
+
+
+
 
   // ============================================================
 // NOTIFICATION SYSTEM
@@ -1016,13 +1293,36 @@ async function loadModalCountries() {
     console.log('🌍 Loading countries for add modal...');
     const countries = await apiGet('/countries');
     modalCountriesList = countries;
+    console.log(`✅ Loaded ${countries.length} countries`);
+    
+    // Pre-render the options so they're ready when dropdown opens
     renderModalCountryOptions('');
+    return true;
   } catch (err) {
     console.error('Error loading countries:', err);
     const optionsContainer = document.getElementById('modal-country-options');
     if (optionsContainer) {
-      optionsContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: #ef4444;">Failed to load countries</div>';
+      optionsContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: #ef4444;">Failed to load countries. Please refresh.</div>';
     }
+    return false;
+  }
+}
+
+function checkCountryDropdown() {
+  const wrapper = document.getElementById('modal-country-wrapper');
+  const selectBtn = document.getElementById('modal-country-select-btn');
+  const dropdown = document.getElementById('modal-country-dropdown');
+  const countriesCount = modalCountriesList.length;
+  
+  console.log('Country Dropdown Debug:');
+  console.log('- Wrapper exists:', !!wrapper);
+  console.log('- Select button exists:', !!selectBtn);
+  console.log('- Dropdown exists:', !!dropdown);
+  console.log('- Countries loaded:', countriesCount);
+  
+  if (countriesCount === 0) {
+    console.log('⚠️ No countries loaded! Refreshing...');
+    loadModalCountries();
   }
 }
 
@@ -1066,26 +1366,71 @@ function initModalCountryDropdown() {
   const dropdown = document.getElementById('modal-country-dropdown');
   const searchInput = document.getElementById('modal-country-search');
   
-  if (!wrapper || !selectBtn || !dropdown) return;
+  if (!wrapper || !selectBtn || !dropdown) {
+    console.log('Country dropdown elements not found');
+    return;
+  }
   
-  selectBtn.addEventListener('click', (e) => {
+  // Remove any existing listeners to prevent duplicates
+  const newSelectBtn = selectBtn.cloneNode(true);
+  selectBtn.parentNode.replaceChild(newSelectBtn, selectBtn);
+  
+  // Re-get the elements after replacement
+  const finalSelectBtn = document.getElementById('modal-country-select-btn');
+  const finalDropdown = document.getElementById('modal-country-dropdown');
+  const finalSearchInput = document.getElementById('modal-country-search');
+  
+  // Close dropdown when clicking outside
+  function closeDropdownOnOutsideClick(e) {
+    const wrapper = document.getElementById('modal-country-wrapper');
+    if (wrapper && !wrapper.contains(e.target)) {
+      if (finalDropdown) finalDropdown.classList.remove('show');
+      document.removeEventListener('click', closeDropdownOnOutsideClick);
+    }
+  }
+  
+  // Open/Close dropdown
+  finalSelectBtn.addEventListener('click', (e) => {
     e.stopPropagation();
-    dropdown.classList.toggle('show');
-    if (dropdown.classList.contains('show')) {
-      searchInput.value = '';
-      searchInput.focus();
-      renderModalCountryOptions('');
+    e.preventDefault();
+    
+    // Close any other open dropdowns first
+    document.querySelectorAll('.select-dropdown.show').forEach(d => {
+      if (d !== finalDropdown) d.classList.remove('show');
+    });
+    
+    finalDropdown.classList.toggle('show');
+    
+    if (finalDropdown.classList.contains('show')) {
+      if (finalSearchInput) {
+        finalSearchInput.value = '';
+        finalSearchInput.focus();
+        renderModalCountryOptions('');
+      }
+      // Add outside click listener
+      setTimeout(() => {
+        document.addEventListener('click', closeDropdownOnOutsideClick);
+      }, 100);
+    } else {
+      document.removeEventListener('click', closeDropdownOnOutsideClick);
     }
   });
   
-  searchInput.addEventListener('input', (e) => {
-    renderModalCountryOptions(e.target.value);
-  });
+  // Search functionality
+  if (finalSearchInput) {
+    finalSearchInput.addEventListener('input', (e) => {
+      e.stopPropagation();
+      renderModalCountryOptions(e.target.value);
+    });
+    
+    finalSearchInput.addEventListener('click', (e) => {
+      e.stopPropagation();
+    });
+  }
   
-  document.addEventListener('click', (e) => {
-    if (!wrapper.contains(e.target)) {
-      dropdown.classList.remove('show');
-    }
+  // Prevent dropdown click from closing
+  finalDropdown.addEventListener('click', (e) => {
+    e.stopPropagation();
   });
 }
 
@@ -1149,29 +1494,67 @@ function initEditCountryDropdown() {
   const dropdown = document.getElementById('edit-country-dropdown');
   const searchInput = document.getElementById('edit-country-search');
   
-  if (!wrapper || !selectBtn || !dropdown) return;
+  if (!wrapper || !selectBtn || !dropdown) {
+    console.log('Edit country dropdown elements not found');
+    return;
+  }
   
-  selectBtn.addEventListener('click', (e) => {
+  // Remove any existing listeners to prevent duplicates
+  const newSelectBtn = selectBtn.cloneNode(true);
+  selectBtn.parentNode.replaceChild(newSelectBtn, selectBtn);
+  
+  // Re-get the elements after replacement
+  const finalSelectBtn = document.getElementById('edit-country-select-btn');
+  const finalDropdown = document.getElementById('edit-country-dropdown');
+  const finalSearchInput = document.getElementById('edit-country-search');
+  
+  function closeDropdownOnOutsideClick(e) {
+    const wrapper = document.getElementById('edit-country-wrapper');
+    if (wrapper && !wrapper.contains(e.target)) {
+      if (finalDropdown) finalDropdown.classList.remove('show');
+      document.removeEventListener('click', closeDropdownOnOutsideClick);
+    }
+  }
+  
+  finalSelectBtn.addEventListener('click', (e) => {
     e.stopPropagation();
-    dropdown.classList.toggle('show');
-    if (dropdown.classList.contains('show')) {
-      searchInput.value = '';
-      searchInput.focus();
-      renderEditCountryOptions('');
+    e.preventDefault();
+    
+    document.querySelectorAll('.select-dropdown.show').forEach(d => {
+      if (d !== finalDropdown) d.classList.remove('show');
+    });
+    
+    finalDropdown.classList.toggle('show');
+    
+    if (finalDropdown.classList.contains('show')) {
+      if (finalSearchInput) {
+        finalSearchInput.value = '';
+        finalSearchInput.focus();
+        renderEditCountryOptions('');
+      }
+      setTimeout(() => {
+        document.addEventListener('click', closeDropdownOnOutsideClick);
+      }, 100);
+    } else {
+      document.removeEventListener('click', closeDropdownOnOutsideClick);
     }
   });
   
-  searchInput.addEventListener('input', (e) => {
-    renderEditCountryOptions(e.target.value);
-  });
+  if (finalSearchInput) {
+    finalSearchInput.addEventListener('input', (e) => {
+      e.stopPropagation();
+      renderEditCountryOptions(e.target.value);
+    });
+    
+    finalSearchInput.addEventListener('click', (e) => {
+      e.stopPropagation();
+    });
+  }
   
-  document.addEventListener('click', (e) => {
-    if (!wrapper.contains(e.target)) {
-      dropdown.classList.remove('show');
-    }
+  finalDropdown.addEventListener('click', (e) => {
+    e.stopPropagation();
   });
 }
-
 
 
 
@@ -1271,6 +1654,7 @@ function openReservationModal() {
   document.getElementById('reservation-modal-overlay').classList.add('open');
   document.body.style.overflow = 'hidden';
   initModalForm();
+  setTimeout(() => checkCountryDropdown(), 500);
 }
 
 function closeReservationModal() {

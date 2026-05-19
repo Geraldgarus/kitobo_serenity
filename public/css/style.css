@@ -592,7 +592,7 @@ h1, h2, h3, .logo-text, .card-title {
 /* For large desktops (screen width > 1400px) - 5 cards per row */
 @media (min-width: 1400px) {
   .rooms-grid {
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(4, 1fr);
   }
 }
 
