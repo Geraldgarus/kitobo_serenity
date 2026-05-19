@@ -601,9 +601,29 @@ Here is an HTML document that adds a search placeholder to the Main Store page, 
   <div class="reservation-modal-body">
     <form id="add-item-form">
       <div class="form-group"><label>Item Name *</label><input type="text" id="item-name" class="form-control" required></div>
-      <div class="form-group"><label>Category *</label><select id="item-category" class="form-control" required><option value="">Select category</option><option value="food">Food</option><option value="housekeeping">Housekeeping</option><option value="POS">POS</option><option value="other">Other</option></select></div>
+      <div class="form-group"><label>Category *</label><select id="item-category" class="form-control" required><option value="">Select category</option>
+<option value="food">Food</option>
+<option value="housekeeping">Housekeeping</option>
+<option value="kitchen equipment">Kitchen Equipment</option>
+<option value="maintenance">Maintenance</option>
+<option value="furniture">Furniture</option>
+<option value="guest amenities">Guest Amenities</option>
+<option value="other">Other</option></select></div>
       <div class="form-group"><label>Unit Price (TSH per unit) *</label><input type="number" id="item-unit-price" class="form-control" placeholder="Price per kg/litre/unit" required></div>
-      <div class="form-group"><label>Unit of Measurement</label><select id="item-unit" class="form-control" required><option value="kg">kg</option><option value="litres">litres</option><option value="units">units</option><option value="pc">pc</option></select></div>
+      <div class="form-group"><label>Unit of Measurement</label><select id="item-unit" class="form-control" required><option value="kg">kg</option>
+<option value="g">g</option>
+<option value="litres">litres</option>
+<option value="ml">ml</option>
+<option value="units">units</option>
+<option value="box">box</option>
+<option value="pack">pack</option>
+<option value="bottle">bottle</option>
+<option value="dozen">dozen</option>
+<option value="pair">pair</option>
+<option value="set">set</option>
+<option value="roll">roll</option>
+<option value="meter">meter</option>
+<option value="bag">bag</option></select></div>
       <hr class="divider" />
       <button type="submit" class="btn btn-success">✅ Create Item</button>
       <button type="button" class="btn btn-outline" style="margin-top:10px; width:100%;" onclick="closeAddItemModal()">Cancel</button>
@@ -634,9 +654,28 @@ Here is an HTML document that adds a search placeholder to the Main Store page, 
     <form id="edit-item-form">
       <input type="hidden" id="edit-item-id">
       <div class="form-group"><label>Item Name</label><input type="text" id="edit-item-name" class="form-control" required></div>
-      <div class="form-group"><label>Category</label><select id="edit-item-category" class="form-control" required><option value="food">Food</option><option value="housekeeping">Housekeeping</option><option value="other">Other</option></select></div>
+      <div class="form-group"><label>Category</label><select id="edit-item-category" class="form-control" required> <option value="food">Food</option>
+  <option value="housekeeping">Housekeeping</option>
+  <option value="kitchen equipment">Kitchen Equipment</option>
+  <option value="maintenance">Maintenance</option>
+  <option value="furniture">Furniture</option>
+  <option value="guest amenities">Guest Amenities</option>
+  <option value="other">Other</option></select></div>
       <div class="form-group"><label>Unit Price (TSH per unit)</label><input type="number" id="edit-item-unit-price" class="form-control" required></div>
-      <div class="form-group"><label>Unit of Measurement</label><select id="edit-item-unit" class="form-control" required><option value="kg">kg</option><option value="litres">litres</option><option value="units">units</option><option value="pc">pc</option></select></div>
+      <div class="form-group"><label>Unit of Measurement</label><select id="edit-item-unit" class="form-control" required><option value="kg">kg</option>
+<option value="g">g</option>
+<option value="litres">litres</option>
+<option value="ml">ml</option>
+<option value="units">units</option>
+<option value="box">box</option>
+<option value="pack">pack</option>
+<option value="bottle">bottle</option>
+<option value="dozen">dozen</option>
+<option value="pair">pair</option>
+<option value="set">set</option>
+<option value="roll">roll</option>
+<option value="meter">meter</option>
+<option value="bag">bag</option></select></div>
       <hr class="divider" />
       <button type="submit" class="btn btn-gold">💾 Update Item</button>
       <button type="button" class="btn btn-outline" style="margin-top:10px; width:100%;" onclick="closeEditItemModal()">Cancel</button>

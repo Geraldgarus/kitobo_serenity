@@ -56,77 +56,191 @@
     .fa-chevron-down { transition: transform 0.2s; }
     .user-pill.active .fa-chevron-down { transform: rotate(180deg); }
     
-    .po-modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 2000; }
-    .po-modal.show { display: flex; }
-    .po-modal-content { background: white; border-radius: 24px; width: 85%; max-width: 900px; max-height: 85%; overflow: auto; }
-    .po-modal-header { padding: 20px 24px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #1e2a3e; color: white; border-radius: 24px 24px 0 0; }
-    .po-modal-header h3 { margin: 0; }
-    .po-modal-header button { background: none; border: none; color: white; font-size: 24px; cursor: pointer; }
-    .po-modal-body { padding: 24px; }
-    .po-info-section { background: #f8fafc; padding: 16px; border-radius: 16px; margin-bottom: 24px; }
-    .po-info-section p { margin: 8px 0; }
-    .items-table { width: 100%; border-collapse: collapse; }
-    .items-table th, .items-table td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
-    .items-table th { background: #f1f5f9; font-weight: 600; }
-    .total-row { background: #f1f5f9; font-weight: bold; }
-    
+   /* PO Details Modal - Slide from Right */
+.po-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 2000;
+  visibility: hidden;
+}
+
+.po-modal.show {
+  visibility: visible;
+}
+
+.po-modal-content {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 500px;
+  max-width: 90%;
+  height: 100vh;
+  background: white;
+  z-index: 2001;
+  transform: translateX(100%);
+  transition: transform 0.3s ease-in-out;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -2px 0 20px rgba(0, 0, 0, 0.15);
+}
+
+.po-modal.show .po-modal-content {
+  transform: translateX(0);
+}
+
+.po-modal-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(135deg, #1e2a3e 0%, #2a3a5c 100%);
+  color: white;
+  flex-shrink: 0;
+}
+
+.po-modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-family: 'Playfair Display', serif;
+}
+
+.po-modal-header button {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+
+.po-modal-header button:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.po-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .po-modal-content {
+    width: 100%;
+  }
+  
+  .po-modal-body {
+    padding: 16px;
+  }
+  
+  .po-modal-header {
+    padding: 16px 20px;
+  }
+}
     /* ============================================================
        CHANGE PASSWORD MODAL - FIXED (CENTERED ON ALL SCREENS)
     ============================================================ */
-    .change-pw-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.7);
-      z-index: 10000;
-      display: none;
-    }
-    .change-pw-overlay.open { display: block; }
-    
-    .change-pw-modal {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: white;
-      border-radius: 32px;
-      width: 90%;
-      max-width: 500px;
-      z-index: 10001;
-      display: none;
-      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
-      max-height: 90vh;
-      overflow-y: auto;
-    }
-    .change-pw-modal.open { display: block; }
-    
-    .change-pw-modal-header {
-      padding: 20px 28px;
-      border-bottom: 1px solid #eef2f6;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: #1e2a3e;
-      color: white;
-      border-radius: 32px 32px 0 0;
-    }
-    .change-pw-modal-header h3 {
-      margin: 0;
-      font-size: 18px;
-      font-family: 'Playfair Display', serif;
-    }
-    .change-pw-modal-close {
-      background: none;
-      border: none;
-      color: white;
-      font-size: 24px;
-      cursor: pointer;
-    }
-    .change-pw-modal-body {
-      padding: 28px;
-    }
+ /* ============================================================
+   CHANGE PASSWORD MODAL - SLIDE FROM RIGHT (like reservations page)
+   ============================================================ */
+.change-pw-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 10000;
+  visibility: hidden;
+}
+.change-pw-overlay.open { visibility: visible; }
+
+.change-pw-modal {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 500px;
+  max-width: 90%;
+  height: 100vh;
+  background: white;
+  z-index: 10001;
+  transform: translateX(100%);
+  transition: transform 0.3s ease-in-out;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -2px 0 20px rgba(0, 0, 0, 0.15);
+  visibility: hidden;
+}
+.change-pw-modal.open {
+  visibility: visible;
+  transform: translateX(0);
+}
+
+.change-pw-modal-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(135deg, #1e2a3e 0%, #2a3a5c 100%);
+  color: white;
+  flex-shrink: 0;
+}
+
+.change-pw-modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-family: 'Playfair Display', serif;
+}
+
+.change-pw-modal-close {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+
+.change-pw-modal-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.change-pw-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .change-pw-modal {
+    width: 100%;
+  }
+  .change-pw-modal-body {
+    padding: 16px;
+  }
+  .change-pw-modal-header {
+    padding: 16px 20px;
+  }
+}
     
     /* Form styles */
     .form-group { margin-bottom: 18px; }
@@ -325,6 +439,18 @@
     top: 55px;
   }
 }
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.po-modal.show .po-modal-content {
+  animation: slideInRight 0.3s ease-out;
+}
   </style>
 </head>
 <body>
@@ -434,14 +560,21 @@
 </main>
 
 <!-- PO Details Modal -->
+<!-- PO Details Modal - Slide from Right -->
 <div id="poModal" class="po-modal">
   <div class="po-modal-content">
-    <div class="po-modal-header"><h3 id="modalTitle">Purchase Order Details</h3><button onclick="closeModal()">✕</button></div>
-    <div class="po-modal-body" id="modalBody">Loading...</div>
+    <div class="po-modal-header">
+      <h3 id="modalTitle">📄 Purchase Order Details</h3>
+      <button onclick="closeModal()">✕</button>
+    </div>
+    <div class="po-modal-body" id="modalBody">
+      <div style="text-align:center;padding:40px;">Loading...</div>
+    </div>
   </div>
 </div>
 
 <!-- Change Password Modal - FIXED (Centered on all screens) -->
+<!-- Change Password Modal - Slide from Right -->
 <div class="change-pw-overlay" id="change-password-modal-overlay"></div>
 <div class="change-pw-modal" id="change-password-modal">
   <div class="change-pw-modal-header">
@@ -909,7 +1042,9 @@ if (changePasswordForm) {
     }
   }
   
-  function closeModal() { document.getElementById('poModal').classList.remove('show'); }
+  function closeModal() { 
+  document.getElementById('poModal').classList.remove('show'); 
+}
   
   // Update Statistics
   function updateStats(orders) { 

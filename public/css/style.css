@@ -585,8 +585,29 @@ h1, h2, h3, .logo-text, .card-title {
 /* Rooms Grid */
 .rooms-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 16px;
+  gap: 20px;
+  grid-template-columns: repeat(3, 1fr);
+}
+
+/* For large desktops (screen width > 1400px) - 5 cards per row */
+@media (min-width: 1400px) {
+  .rooms-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+/* For tablets - 2 cards per row */
+@media (max-width: 992px) {
+  .rooms-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* For mobile - 1 card per row */
+@media (max-width: 768px) {
+  .rooms-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .room-card {
@@ -820,6 +841,17 @@ h1, h2, h3, .logo-text, .card-title {
   background: var(--green);
   color: white;
   width: 100%;
+  padding: 14px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 40px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-success:hover {
+  background: #059669;
+  transform: translateY(-1px);
 }
 
 /* Forms */
