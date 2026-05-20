@@ -851,7 +851,7 @@
       </div>
       <div class="form-group-row" style="grid-template-columns:1fr 1fr 1.2fr">
         <div class="form-group"><label>👤 Adults</label><div class="stepper"><button type="button" onclick="editStepperChange('edit-f-adults', -1)">−</button><input type="number" id="edit-f-adults" value="1" min="1" max="6" /><button type="button" onclick="editStepperChange('edit-f-adults', 1)">+</button></div></div>
-        <div class="form-group"><label>🧒 Children</label><div class="stepper"><button type="button" onclick="editStepperChange('edit-f-children', -1)">−</button><input type="number" id="edit-f-children" value="0" min="0" max="6" /><button type="button" onclick="editStepperChange('edit-f-children', 1)">+</button></div></div>
+        <div class="form-group"><label>👤Children</label><div class="stepper"><button type="button" onclick="editStepperChange('edit-f-children', -1)">−</button><input type="number" id="edit-f-children" value="0" min="0" max="6" /><button type="button" onclick="editStepperChange('edit-f-children', 1)">+</button></div></div>
         <div <div class="form-group">
   <label>💰 Total Rate</label>
   <div id="edit-total-container">
@@ -1119,6 +1119,8 @@ async function loadNotifications() {
     // Get today's date
     const today = new Date();
     const todayStr = today.toISOString().split('T')[0];
+    const todayDate = new Date();
+    todayDate.setHours(0, 0, 0, 0);
     
     // Get reservations
     const reservations = await apiGet('/reservations');
@@ -1126,41 +1128,61 @@ async function loadNotifications() {
     // Clear existing notifications
     notifications = [];
     
-    // Check for checkouts today
+    // 1. Check for checkouts today
     const checkoutsToday = reservations.filter(r => r.checkout === todayStr);
     checkoutsToday.forEach(r => {
       notifications.push({
         id: `checkout_${r.id}`,
         type: 'checkout',
-        message: `${r.guest} checks out today at 11:00 AM`,
+        message: `🚪 ${r.guest} checks out TODAY at 11:00 AM`,
         time: new Date().toLocaleTimeString(),
         read: false,
         reservationId: r.id,
-        icon: '🚪'
+        icon: '🚪',
+        checkinDate: r.checkin,
+        checkoutDate: r.checkout
       });
     });
     
-    // Check for upcoming check-ins (next 7 days)
-    const nextWeek = new Date();
-    nextWeek.setDate(today.getDate() + 7);
+    // 2. Check for ALL upcoming check-ins (any future date)
     const upcomingCheckins = reservations.filter(r => {
       const checkin = new Date(r.checkin);
-      return checkin > today && checkin <= nextWeek;
+      return checkin > todayDate;
     });
+    
+    // Sort by check-in date (closest first)
+    upcomingCheckins.sort((a, b) => new Date(a.checkin) - new Date(b.checkin));
+    
     upcomingCheckins.forEach(r => {
-      const checkinDate = new Date(r.checkin).toLocaleDateString();
+      const checkinDate = new Date(r.checkin);
+      const formattedDate = checkinDate.toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric' 
+      });
+      
+      // Calculate days until check-in
+      const daysUntil = Math.ceil((checkinDate - todayDate) / (1000 * 60 * 60 * 24));
+      
+      let daysText = '';
+      if (daysUntil === 0) daysText = 'TODAY';
+      else if (daysUntil === 1) daysText = 'tomorrow';
+      else daysText = `in ${daysUntil} days`;
+      
       notifications.push({
         id: `checkin_${r.id}`,
         type: 'upcoming',
-        message: `${r.guest} arrives on ${checkinDate}`,
+        message: `📅 ${r.guest} arrives ${daysText} (${formattedDate})`,
         time: new Date().toLocaleTimeString(),
         read: false,
         reservationId: r.id,
-        icon: '📅'
+        icon: '📅',
+        checkinDate: r.checkin,
+        daysUntil: daysUntil
       });
     });
     
-    // Check for low stock items (if on store page)
+    // 3. Check for low stock items (if on store page)
     try {
       const storeItems = await apiGet('/store/items');
       const lowStock = storeItems.filter(i => parseFloat(i.quantity) < 5);
@@ -1168,7 +1190,7 @@ async function loadNotifications() {
         notifications.push({
           id: `stock_${item.id}`,
           type: 'stock',
-          message: `${item.name} is low in stock (${item.quantity} left)`,
+          message: `⚠️ ${item.name} is low in stock (${item.quantity} left)`,
           time: new Date().toLocaleTimeString(),
           read: false,
           icon: '⚠️'
@@ -1176,19 +1198,22 @@ async function loadNotifications() {
       });
     } catch(e) {
       // Store API might not be accessible, ignore
+      console.log('Store items not available');
     }
     
-    // Sort by time (newest first) and limit to 20
+    // Sort by time (newest first) and limit to 30
     notifications.sort((a, b) => new Date(b.time) - new Date(a.time));
-    notifications = notifications.slice(0, 20);
+    notifications = notifications.slice(0, 30);
     
     // Update UI
     renderNotifications();
     updateNotificationBadge();
     
-    console.log(`📢 Loaded ${notifications.length} notifications`);
+    console.log(`📢 Loaded ${notifications.length} notifications (${upcomingCheckins.length} upcoming, ${checkoutsToday.length} checkouts today)`);
   } catch (err) {
     console.error('Failed to load notifications:', err);
+    renderNotifications();
+    updateNotificationBadge();
   }
 }
 
@@ -1203,17 +1228,68 @@ function renderNotifications() {
     return;
   }
   
-  container.innerHTML = notifications.map(notif => `
-    <div class="notification-item ${notif.read ? 'read' : 'unread'}" data-id="${notif.id}" data-type="${notif.type}" data-reservation-id="${notif.reservationId || ''}">
-      <div class="notification-message">
-        <span class="notification-icon">${notif.icon}</span>
-        ${escapeHtml(notif.message)}
-      </div>
-      <div class="notification-time">
-        <span>🕐 ${notif.time}</span>
-      </div>
-    </div>
-  `).join('');
+  // Group notifications by type for better display
+  const checkoutNotifs = notifications.filter(n => n.type === 'checkout');
+  const upcomingNotifs = notifications.filter(n => n.type === 'upcoming');
+  const stockNotifs = notifications.filter(n => n.type === 'stock');
+  
+  let html = '';
+  
+  // Checkouts section
+  if (checkoutNotifs.length > 0) {
+    html += `<div style="padding: 8px 16px; background: #fef3c7; font-size: 11px; font-weight: 600; color: #92400e;">🚪 CHECKOUTS TODAY</div>`;
+    checkoutNotifs.forEach(notif => {
+      html += `
+        <div class="notification-item ${notif.read ? 'read' : 'unread'}" data-id="${notif.id}" data-type="${notif.type}" data-reservation-id="${notif.reservationId || ''}">
+          <div class="notification-message">
+            <span class="notification-icon">${notif.icon}</span>
+            ${escapeHtml(notif.message)}
+          </div>
+          <div class="notification-time">
+            <span>🕐 ${notif.time}</span>
+          </div>
+        </div>
+      `;
+    });
+  }
+  
+  // Upcoming section
+  if (upcomingNotifs.length > 0) {
+    html += `<div style="padding: 8px 16px; background: #dbeafe; font-size: 11px; font-weight: 600; color: #1e40af; margin-top: 4px;">📅 UPCOMING ARRIVALS</div>`;
+    upcomingNotifs.forEach(notif => {
+      html += `
+        <div class="notification-item ${notif.read ? 'read' : 'unread'}" data-id="${notif.id}" data-type="${notif.type}" data-reservation-id="${notif.reservationId || ''}">
+          <div class="notification-message">
+            <span class="notification-icon">${notif.icon}</span>
+            ${escapeHtml(notif.message)}
+          </div>
+          <div class="notification-time">
+            <span>🕐 ${notif.time}</span>
+          </div>
+        </div>
+      `;
+    });
+  }
+  
+  // Stock alerts section
+  if (stockNotifs.length > 0) {
+    html += `<div style="padding: 8px 16px; background: #fee2e2; font-size: 11px; font-weight: 600; color: #991b1b; margin-top: 4px;">⚠️ STOCK ALERTS</div>`;
+    stockNotifs.forEach(notif => {
+      html += `
+        <div class="notification-item ${notif.read ? 'read' : 'unread'}" data-id="${notif.id}" data-type="${notif.type}">
+          <div class="notification-message">
+            <span class="notification-icon">${notif.icon}</span>
+            ${escapeHtml(notif.message)}
+          </div>
+          <div class="notification-time">
+            <span>🕐 ${notif.time}</span>
+          </div>
+        </div>
+      `;
+    });
+  }
+  
+  container.innerHTML = html;
   
   // Add click handlers to notification items
   document.querySelectorAll('.notification-item').forEach(item => {
@@ -1226,9 +1302,7 @@ function renderNotifications() {
         updateNotificationBadge();
         
         // Handle click action based on type
-        if (notif.type === 'checkout' && notif.reservationId) {
-          openDetail(notif.reservationId);
-        } else if (notif.type === 'upcoming' && notif.reservationId) {
+        if ((notif.type === 'checkout' || notif.type === 'upcoming') && notif.reservationId) {
           openDetail(notif.reservationId);
         } else if (notif.type === 'stock') {
           window.location.href = '/store-main';
