@@ -111,6 +111,7 @@ function updateReservationStats() {
 
 async function openDetail(resId) {
   try {
+   
     const res = await apiGet(`/reservations/${resId}`);
     selectedReservation = res;
     const apt = getApt(res.aptId) || { name: res.aptName || '—' };
@@ -125,9 +126,6 @@ async function openDetail(resId) {
       { icon: '👤', label: 'Guest Name', value: escapeHtml(res.guest) },
       { icon: '📧', label: 'Email', value: escapeHtml(res.email) },
       { icon: '📱', label: 'Mobile', value: escapeHtml(res.mobile || '—') },
-      // ✅ ADD THESE TWO LINES FOR ID FIELDS
-      { icon: '🪪', label: 'ID Type', value: escapeHtml(res.idType || '—') },
-      { icon: '📋', label: 'ID Number', value: escapeHtml(res.identification || '—') },
       { icon: '🌍', label: 'Country', value: escapeHtml(res.country || '—') },
       { icon: '🏙️', label: 'City', value: escapeHtml(res.city || '—') },
       { icon: '🏠', label: 'Apartment', value: escapeHtml(apt.name) },

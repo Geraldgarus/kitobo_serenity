@@ -741,8 +741,6 @@
   </div>
   <input type="hidden" id="modal-f-total-hidden" value="0">
   <input type="hidden" id="modal-use-custom-total" value="0">
-  <input type="hidden" id="modal-f-identification-hidden" value="">
-  <input type="hidden" id="modal-f-id-type-hidden" value="">
 </div>
       </div>
       
@@ -762,23 +760,7 @@
           <input type="tel" id="modal-f-mobile" class="form-control" placeholder="+255 XXX XXX" required />
         </div>
       </div>
-      <!-- NEW ROW: National ID / ID Type -->
-<div class="form-group-row cols-2">
-  <div class="form-group">
-    <label>🪪 NIDA / Passport Number</label>
-    <input type="text" id="modal-f-identification" class="form-control" placeholder="NIDA Number or Passport ID" />
-  </div>
-  <div class="form-group">
-    <label>📋 ID Type</label>
-    <select id="modal-f-id-type" class="form-control">
-      <option value="NIDA">NIDA (National ID)</option>
-      <option value="Passport">Passport</option>
-      <option value="Driving License">Driving License</option>
-      <option value="Voter ID">Voter ID</option>
-      <option value="Other">Other</option>
-    </select>
-  </div>
-</div>
+      
       <div class="form-group-row cols-2">
   <div class="form-group">
     <label>🌍 Country</label>
@@ -897,23 +879,7 @@
           <input type="tel" id="edit-f-mobile" class="form-control" placeholder="+255 XXX XXX" required />
         </div>
       </div>
-      <!-- NEW ROW: National ID / ID Type -->
-<div class="form-group-row cols-2">
-  <div class="form-group">
-    <label>🪪 NIDA / Passport Number</label>
-    <input type="text" id="edit-f-identification" class="form-control" placeholder="NIDA Number or Passport ID" />
-  </div>
-  <div class="form-group">
-    <label>📋 ID Type</label>
-    <select id="edit-f-id-type" class="form-control">
-      <option value="NIDA">NIDA (National ID)</option>
-      <option value="Passport">Passport</option>
-      <option value="Driving License">Driving License</option>
-      <option value="Voter ID">Voter ID</option>
-      <option value="Other">Other</option>
-    </select>
-  </div>
-</div>
+      
       <div class="form-group-row cols-2">
   <div class="form-group">
     <label>🌍 Country</label>
@@ -1288,50 +1254,41 @@ function printReservation() {
             </div>
           </div>
           
-        <div class="guest-details">
-  <div class="guest-item">
-    <div class="guest-icon">👤</div>
-    <div>
-      <div class="guest-label">Full Name</div>
-      <div class="guest-value">${safeEscape(res.guest)}</div>
-    </div>
-  </div>
-  <div class="guest-item">
-    <div class="guest-icon">📧</div>
-    <div>
-      <div class="guest-label">Email</div>
-      <div class="guest-value">${safeEscape(res.email)}</div>
-    </div>
-  </div>
-  <div class="guest-item">
-    <div class="guest-icon">📱</div>
-    <div>
-      <div class="guest-label">Mobile</div>
-      <div class="guest-value">${safeEscape(res.mobile || '—')}</div>
-    </div>
-  </div>
-  <div class="guest-item">
-    <div class="guest-icon">🪪</div>
-    <div>
-      <div class="guest-label">ID Type</div>
-      <div class="guest-value">${safeEscape(res.idType || '—')}</div>
-    </div>
-  </div>
-  <div class="guest-item">
-    <div class="guest-icon">📋</div>
-    <div>
-      <div class="guest-label">ID Number</div>
-      <div class="guest-value">${safeEscape(res.identification || '—')}</div>
-    </div>
-  </div>
-  <div class="guest-item">
-    <div class="guest-icon">🌍</div>
-    <div>
-      <div class="guest-label">Country / City</div>
-      <div class="guest-value">${safeEscape(res.country || '—')} / ${safeEscape(res.city || '—')}</div>
-    </div>
-  </div>
-</div>
+          <div class="guest-section">
+            <div class="section-header">
+              <div class="section-title">👤 Guest Information</div>
+            </div>
+            <div class="guest-details">
+              <div class="guest-item">
+                <div class="guest-icon">👤</div>
+                <div>
+                  <div class="guest-label">Full Name</div>
+                  <div class="guest-value">${safeEscape(res.guest)}</div>
+                </div>
+              </div>
+              <div class="guest-item">
+                <div class="guest-icon">📧</div>
+                <div>
+                  <div class="guest-label">Email</div>
+                  <div class="guest-value">${safeEscape(res.email)}</div>
+                </div>
+              </div>
+              <div class="guest-item">
+                <div class="guest-icon">📱</div>
+                <div>
+                  <div class="guest-label">Mobile</div>
+                  <div class="guest-value">${safeEscape(res.mobile || '—')}</div>
+                </div>
+              </div>
+              <div class="guest-item">
+                <div class="guest-icon">🌍</div>
+                <div>
+                  <div class="guest-label">Country / City</div>
+                  <div class="guest-value">${safeEscape(res.country || '—')} / ${safeEscape(res.city || '—')}</div>
+                </div>
+              </div>
+            </div>
+          </div>
           
           <div class="stay-section">
             <div class="section-header">
@@ -2030,9 +1987,6 @@ async function initModalForm() {
       return;
     }
   }
-  // Reset identification fields
-document.getElementById('modal-f-identification').value = '';
-document.getElementById('modal-f-id-type').value = 'NIDA';
   const sel = document.getElementById('modal-f-apt');
   sel.innerHTML = '<option value="">Select Apartment</option>';
   modalAPARTMENTS.forEach(apt => {
@@ -2161,10 +2115,6 @@ async function initEditForm(reservationId) {
     document.getElementById('edit-f-guest').value = reservation.guest;
     document.getElementById('edit-f-email').value = reservation.email;
     document.getElementById('edit-f-mobile').value = reservation.mobile || '';
-    
-    // ✅ SET ID FIELDS HERE - ONCE, AFTER OTHER FIELDS
-    document.getElementById('edit-f-identification').value = reservation.identification || '';
-    document.getElementById('edit-f-id-type').value = reservation.idType || 'NIDA';
     
     // Set country value for custom dropdown
     const countryValue = reservation.country || '';
@@ -2352,20 +2302,6 @@ document.getElementById('reservation-form-modal')?.addEventListener('submit', as
     showToast('Check-out must be after check-in', '⚠️'); 
     return; 
   }
-  
-  // ✅ ADD ID VALIDATION HERE
-  const idType = document.getElementById('modal-f-id-type').value;
-  const idNumber = document.getElementById('modal-f-identification').value;
-  
-  // Only validate if ID number is provided
-  if (idNumber && idNumber.trim() !== '') {
-    const validation = validateIdentification(idType, idNumber);
-    if (!validation.valid) {
-      showToast(validation.message, 'error');
-      return;
-    }
-  }
-
 
   // Get the final total (either custom or auto-calculated)
   let finalTotal = forcedTotal;
@@ -2387,7 +2323,6 @@ document.getElementById('reservation-form-modal')?.addEventListener('submit', as
     guest: document.getElementById('modal-f-guest').value,
     email: document.getElementById('modal-f-email').value,
     mobile: document.getElementById('modal-f-mobile').value,
-   
     country: document.getElementById('modal-f-country').value,
     city: document.getElementById('modal-f-city').value,
     checkin, checkout,
@@ -2395,9 +2330,6 @@ document.getElementById('reservation-form-modal')?.addEventListener('submit', as
     children: parseInt(document.getElementById('modal-f-children').value),
     rateType: document.getElementById('modal-f-ratetype').value,
     total: finalTotal,
-     // ✅ ADD THESE TWO LINES
-  identification: document.getElementById('modal-f-identification').value,
-  idType: document.getElementById('modal-f-id-type').value
   };
 
   try {
@@ -2416,8 +2348,8 @@ document.getElementById('reservation-form-modal')?.addEventListener('submit', as
     document.getElementById('modal-f-total-hidden').value = 0;
     
     setTimeout(() => {
-  loadAndRenderReservations();  // ← Changed from loadAndRenderDashboard
-}, 100);
+      loadAndRenderDashboard();
+    }, 100);
     
     submitBtn.textContent = originalText;
     submitBtn.disabled = false;
@@ -2474,17 +2406,6 @@ document.getElementById('edit-form-modal')?.addEventListener('submit', async fun
     showToast('Check-out must be after check-in', '⚠️'); 
     return; 
   }
-    // ✅ ADD ID VALIDATION HERE
-  const idType = document.getElementById('edit-f-id-type').value;
-  const idNumber = document.getElementById('edit-f-identification').value;
-  
-  if (idNumber && idNumber.trim() !== '') {
-    const validation = validateIdentification(idType, idNumber);
-    if (!validation.valid) {
-      showToast(validation.message, 'error');
-      return;
-    }
-  }
   
   let finalTotal = forcedTotal;
   const useCustomTotal = document.getElementById('edit-use-custom-total')?.value;
@@ -2510,10 +2431,7 @@ document.getElementById('edit-form-modal')?.addEventListener('submit', async fun
     rateType: document.getElementById('edit-f-ratetype').value,
     total: finalTotal,
     userId: currentUser.id,
-    username: currentUser.fullName || currentUser.username,
-    // ✅ ADD THESE TWO LINES
-  identification: document.getElementById('edit-f-identification').value,
-  idType: document.getElementById('edit-f-id-type').value
+    username: currentUser.fullName || currentUser.username
   };
 
   try {
@@ -2526,9 +2444,9 @@ document.getElementById('edit-form-modal')?.addEventListener('submit', async fun
     showToast('✅ Reservation updated successfully!', '📝');
     closeEditModal();
     
-   setTimeout(() => {
-  loadAndRenderReservations();  // ← Changed from loadAndRenderDashboard
-}, 100);
+    setTimeout(() => {
+      loadAndRenderDashboard();
+    }, 100);
     
     submitBtn.textContent = originalText;
     submitBtn.disabled = false;
@@ -2537,80 +2455,6 @@ document.getElementById('edit-form-modal')?.addEventListener('submit', async fun
   }
 });
 
-
-// ============================================================
-// ID VALIDATION FUNCTIONS
-// ============================================================
-
-function validateNIDA(number) {
-  // NIDA format: 20 digits (Tanzania National ID)
-  // Format: YYYYMMDD followed by numbers (total 20 digits)
-  // Example: 19810101700000120001
-  const nidaRegex = /^\d{20}$/;
-  
-  if (!nidaRegex.test(number)) {
-    return { valid: false, message: 'NIDA number must be exactly 20 digits (e.g., 19810101700000120001)' };
-  }
-  return { valid: true, message: '' };
-}
-
-function validatePassport(number) {
-  // Passport format: 1-2 letters followed by 6-9 digits
-  // Examples: A1234567, AB1234567, TZ123456789
-  const passportRegex = /^[A-Z]{1,2}\d{6,9}$/;
-  
-  if (!passportRegex.test(number.toUpperCase())) {
-    return { valid: false, message: 'Passport number must start with 1-2 letters followed by 6-9 digits (e.g., A1234567 or AB1234567)' };
-  }
-  return { valid: true, message: '' };
-}
-
-function validateDrivingLicense(number) {
-  // Driving license: 1-2 letters + 5-8 digits
-  const licenseRegex = /^[A-Z]{1,2}\d{5,8}$/i;
-  
-  if (!licenseRegex.test(number)) {
-    return { valid: false, message: 'Driving license format: 1-2 letters followed by 5-8 digits (e.g., D12345 or DL1234567)' };
-  }
-  return { valid: true, message: '' };
-}
-
-function validateVoterID(number) {
-  // Voter ID: 8-12 digits
-  const voterRegex = /^\d{8,12}$/;
-  
-  if (!voterRegex.test(number)) {
-    return { valid: false, message: 'Voter ID must be 8-12 digits (e.g., 12345678)' };
-  }
-  return { valid: true, message: '' };
-}
-
-function validateIdentification(type, number) {
-  if (!number || number.trim() === '') {
-    return { valid: true, message: '' }; // Optional field
-  }
-  
-  const trimmedNumber = number.trim();
-  
-  switch(type) {
-    case 'NIDA':
-      return validateNIDA(trimmedNumber);
-    case 'Passport':
-      return validatePassport(trimmedNumber);
-    case 'Driving License':
-      return validateDrivingLicense(trimmedNumber);
-    case 'Voter ID':
-      return validateVoterID(trimmedNumber);
-    case 'Other':
-      // For "Other" type, just check if not empty
-      if (trimmedNumber.length < 3) {
-        return { valid: false, message: 'Please enter a valid identification number (min 3 characters)' };
-      }
-      return { valid: true, message: '' };
-    default:
-      return { valid: true, message: '' };
-  }
-}
 // ========== SIDEBAR TOGGLE ==========
 const hamburgerBtn = document.getElementById('hamburger-btn');
 const sidebar = document.getElementById('sidebar');
