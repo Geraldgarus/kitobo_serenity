@@ -523,3 +523,124 @@ BEGIN
         RAISE NOTICE '✅ identification_number column added successfully';
     END IF;
 END $$;
+
+
+-- ============================================================
+-- MAINTENANCE TASKS TABLE
+-- ============================================================
+
+-- Create maintenance_tasks table if not exists
+CREATE TABLE IF NOT EXISTS maintenance_tasks (
+  id                SERIAL PRIMARY KEY,
+  task_number       VARCHAR(50) NOT NULL UNIQUE,
+  technician_name   VARCHAR(100) NOT NULL,
+  item_type         VARCHAR(50) NOT NULL,
+  description       TEXT NOT NULL,
+  labour_cost       INT DEFAULT 0,
+  tools             JSONB DEFAULT '[]'::jsonb,
+  total_tools_cost  INT DEFAULT 0,
+  total_cost        INT DEFAULT 0,
+  task_date         DATE NOT NULL,
+  remarks           TEXT,
+  status            VARCHAR(20) DEFAULT 'pending',
+  created_by        VARCHAR(100),
+  created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create indexes for faster queries
+CREATE INDEX IF NOT EXISTS idx_maintenance_tasks_date ON maintenance_tasks(task_date);
+CREATE INDEX IF NOT EXISTS idx_maintenance_tasks_status ON maintenance_tasks(status);
+CREATE INDEX IF NOT EXISTS idx_maintenance_tasks_item_type ON maintenance_tasks(item_type);
+CREATE INDEX IF NOT EXISTS idx_maintenance_tasks_technician ON maintenance_tasks(technician_name);
+
+-- Create trigger to auto-update updated_at
+CREATE OR REPLACE FUNCTION update_maintenance_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = CURRENT_TIMESTAMP;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trigger_maintenance_updated_at ON maintenance_tasks;
+CREATE TRIGGER trigger_maintenance_updated_at
+  BEFORE UPDATE ON maintenance_tasks
+  FOR EACH ROW
+  EXECUTE FUNCTION update_maintenance_updated_at();
+
+-- Verification
+DO $$
+BEGIN
+    RAISE NOTICE '✅ Maintenance tasks table migration completed!';
+    
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'maintenance_tasks') THEN
+        RAISE NOTICE '✅ maintenance_tasks table: CREATED';
+    ELSE
+        RAISE NOTICE '❌ maintenance_tasks table: MISSING';
+    END IF;
+END $$;
+
+
+-- ============================================================
+-- DAILY ACTIVITIES TABLE
+-- ============================================================
+
+-- Create daily_activities table if not exists
+CREATE TABLE IF NOT EXISTS daily_activities (
+  id SERIAL PRIMARY KEY,
+  activity_date DATE NOT NULL,
+  description TEXT NOT NULL,
+  prepared_by VARCHAR(100) NOT NULL,
+  remarks TEXT,
+  created_by VARCHAR(100),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create indexes for faster queries
+CREATE INDEX IF NOT EXISTS idx_daily_activities_date ON daily_activities(activity_date);
+CREATE INDEX IF NOT EXISTS idx_daily_activities_prepared_by ON daily_activities(prepared_by);
+
+-- Create trigger to auto-update updated_at
+CREATE OR REPLACE FUNCTION update_daily_activities_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = CURRENT_TIMESTAMP;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trigger_daily_activities_updated_at ON daily_activities;
+CREATE TRIGGER trigger_daily_activities_updated_at
+  BEFORE UPDATE ON daily_activities
+  FOR EACH ROW
+  EXECUTE FUNCTION update_daily_activities_updated_at();
+
+-- Verification
+DO $$
+BEGIN
+    RAISE NOTICE '✅ Daily activities table migration completed!';
+    
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'daily_activities') THEN
+        RAISE NOTICE '✅ daily_activities table: CREATED';
+    ELSE
+        RAISE NOTICE '❌ daily_activities table: MISSING';
+    END IF;
+END $$;
+
+
+
+
+
+-- ============================================================
+-- ADD TASKS COLUMNS TO DAILY ACTIVITIES
+-- ============================================================
+
+ALTER TABLE daily_activities ADD COLUMN IF NOT EXISTS tasks JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE daily_activities ADD COLUMN IF NOT EXISTS tasks_description TEXT;
+
+DO $$
+BEGIN
+    RAISE NOTICE '✅ Tasks columns added to daily_activities table';
+END $$;

@@ -1,1106 +1,120 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Activity Logs - Steps PMS | Track User Actions</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <title>Login Activity Logs</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background: #f1f5f9;
-            color: #0f172a;
-            overflow-x: hidden;
-        }
-
-        /* Sidebar Styles */
-        .sidebar {
-            position: fixed;
-            left: 0;
-            top: 0;
-            bottom: 0;
-            width: 280px;
-            background: #ffffff;
-            border-right: 1px solid #e2e8f0;
-            transform: translateX(0);
-            transition: transform 0.3s ease;
-            z-index: 1000;
-            overflow-y: auto;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.02);
-        }
-
-        .sidebar.open {
-            transform: translateX(0);
-        }
-
-        .overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 999;
-            display: none;
-            backdrop-filter: blur(3px);
-        }
-
-        .overlay.open {
-            display: block;
-        }
-
-        .sidebar-top {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 24px 20px;
-            border-bottom: 1px solid #f1f5f9;
-        }
-
-        .sidebar-logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            text-decoration: none;
-        }
-
-        .logo-icon {
-            font-size: 32px;
-        }
-
-        .logo-text {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .logo-text span:first-child {
-            font-weight: 800;
-            color: #0f172a;
-            font-size: 18px;
-        }
-
-        .logo-text span:last-child {
-            font-size: 10px;
-            color: #c9933a;
-            letter-spacing: 0.5px;
-        }
-
-        .sidebar-close-btn {
-            background: none;
-            border: none;
-            font-size: 22px;
-            cursor: pointer;
-            color: #94a3b8;
-        }
-
-        .sidebar-nav {
-            padding: 20px 12px;
-        }
-
-        .nav-section-label {
-            padding: 12px 16px 6px;
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-            color: #94a3b8;
-            letter-spacing: 0.8px;
-        }
-
-        .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 10px 16px;
-            margin: 4px 0;
-            border-radius: 12px;
-            color: #475569;
-            text-decoration: none;
-            font-size: 14px;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-
-        .nav-item:hover {
-            background: #f8fafc;
-            color: #c9933a;
-        }
-
-        .nav-item.active {
-            background: #fef7e8;
-            color: #c9933a;
-            font-weight: 600;
-        }
-
-        .sidebar-footer {
-            padding: 20px;
-            border-top: 1px solid #f1f5f9;
-            font-size: 11px;
-            color: #94a3b8;
-            text-align: center;
-            margin-top: 20px;
-        }
-
-        /* Navbar */
-        .navbar {
-            background: white;
-            padding: 12px 32px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #e2e8f0;
-            position: sticky;
-            top: 0;
-            z-index: 99;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-        }
-
-        .navbar-left {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .hamburger {
-            display: none;
-            background: none;
-            border: none;
-            font-size: 24px;
-            cursor: pointer;
-            color: #475569;
-        }
-
-        .page-title {
-            font-size: 1.6rem;
-            font-weight: 700;
-            color: #0f172a;
-        }
-
-        .page-subtitle {
-            font-size: 12px;
-            color: #64748b;
-            margin-top: 4px;
-        }
-
-        .navbar-right {
-            display: flex;
-            gap: 20px;
-            align-items: center;
-        }
-
-        .btn-add-reservation {
-            background: #c9933a;
-            color: white;
-            border: none;
-            padding: 8px 22px;
-            border-radius: 40px;
-            font-weight: 600;
-            font-size: 13px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .btn-add-reservation:hover {
-            background: #b07e2c;
-            transform: translateY(-1px);
-        }
-
-        .notif-btn {
-            background: none;
-            border: none;
-            font-size: 20px;
-            position: relative;
-            cursor: pointer;
-        }
-
-        .badge {
-            position: absolute;
-            top: -8px;
-            right: -10px;
-            background: #ef4444;
-            color: white;
-            border-radius: 30px;
-            padding: 2px 6px;
-            font-size: 10px;
-            font-weight: bold;
-        }
-
-        /* User Dropdown */
-        .user-dropdown {
-            position: relative;
-        }
-
-        .user-pill {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 6px 14px;
-            background: #f8fafc;
-            border-radius: 40px;
-            cursor: pointer;
-            transition: all 0.2s;
-            border: 1px solid #e2e8f0;
-        }
-
-        .user-pill:hover {
-            background: #f1f5f9;
-        }
-
-        .user-avatar {
-            width: 36px;
-            height: 36px;
-            background: #c9933a;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 700;
-            font-size: 14px;
-        }
-
-        .user-info {
-            line-height: 1.3;
-        }
-
-        .user-info span:first-child {
-            font-size: 13px;
-            font-weight: 700;
-            color: #0f172a;
-        }
-
-        .user-info span:last-child {
-            font-size: 10px;
-            color: #64748b;
-        }
-
-        .dropdown-menu {
-            position: absolute;
-            top: 55px;
-            right: 0;
-            background: white;
-            min-width: 240px;
-            border-radius: 16px;
-            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
-            padding: 8px 0;
-            z-index: 100;
-            display: none;
-        }
-
-        .dropdown-menu.show {
-            display: block;
-        }
-
-        .dropdown-menu button,
-        .dropdown-menu a {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 10px 20px;
-            text-decoration: none;
-            color: #1e293b;
-            font-size: 13px;
-            background: none;
-            border: none;
-            width: 100%;
-            text-align: left;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .dropdown-menu button:hover,
-        .dropdown-menu a:hover {
-            background: #fef7e8;
-            color: #c9933a;
-        }
-
-        .dropdown-menu hr {
-            margin: 8px 0;
-            border-color: #eef2f6;
-        }
-
-        /* Main Content */
-        .main-content {
-            margin-left: 280px;
-            padding: 28px 36px;
-            transition: margin 0.3s;
-        }
-
-        /* Filter Bar */
-        .filter-bar {
-            background: white;
-            border-radius: 24px;
-            padding: 20px 28px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 16px;
-            align-items: flex-end;
-            margin-bottom: 28px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-        }
-
-        .filter-group {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .filter-group label {
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-            color: #64748b;
-            letter-spacing: 0.5px;
-        }
-
-        .filter-group input,
-        .filter-group select {
-            padding: 10px 14px;
-            border: 1px solid #e2e8f0;
-            border-radius: 24px;
-            font-size: 13px;
-            min-width: 150px;
-            background: white;
-            transition: all 0.2s;
-        }
-
-        .filter-group input:focus,
-        .filter-group select:focus {
-            outline: none;
-            border-color: #c9933a;
-            box-shadow: 0 0 0 3px rgba(201, 147, 58, 0.1);
-        }
-
-        .btn-gold {
-            background: #c9933a;
-            color: white;
-            border: none;
-            padding: 10px 24px;
-            border-radius: 40px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 13px;
-            transition: all 0.2s;
-        }
-
-        .btn-gold:hover {
-            background: #b07e2c;
-            transform: translateY(-1px);
-        }
-
-        .btn-outline {
-            background: transparent;
-            border: 1px solid #e2e8f0;
-            padding: 10px 24px;
-            border-radius: 40px;
-            cursor: pointer;
-            font-weight: 500;
-            font-size: 13px;
-            transition: all 0.2s;
-        }
-
-        .btn-outline:hover {
-            background: #f8fafc;
-            border-color: #cbd5e1;
-        }
-
-        /* Card & Table */
-        .card {
-            background: white;
-            border-radius: 24px;
-            margin-bottom: 24px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-            overflow: hidden;
-        }
-
-        .card-header {
-            padding: 20px 28px;
-            border-bottom: 1px solid #eef2f6;
-            font-weight: 700;
-            font-size: 18px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #ffffff;
-        }
-
-        .card-body {
-            padding: 0;
-            overflow-x: auto;
-        }
-
-        .data-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .data-table th {
-            padding: 16px 20px;
-            text-align: left;
-            background: #fafcff;
-            font-weight: 700;
-            font-size: 12px;
-            color: #334155;
-            border-bottom: 1px solid #eef2f6;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .data-table td {
-            padding: 14px 20px;
-            border-bottom: 1px solid #f1f5f9;
-            font-size: 13px;
-            vertical-align: middle;
-        }
-
-        .badge-action {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 30px;
-            font-size: 11px;
-            font-weight: 700;
-            text-align: center;
-        }
-
-        .badge-create {
-            background: #d1fae5;
-            color: #065f46;
-        }
-
-        .badge-update {
-            background: #dbeafe;
-            color: #1e40af;
-        }
-
-        .badge-delete {
-            background: #fee2e2;
-            color: #991b1b;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: #94a3b8;
-            font-size: 14px;
-        }
-
-        .user-doer {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .user-doer-icon {
-            width: 28px;
-            height: 28px;
-            background: #c9933a20;
-            border-radius: 50%;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-        }
-
-        /* Toast */
-        .toast-container {
-            position: fixed;
-            bottom: 28px;
-            right: 28px;
-            z-index: 1100;
-        }
-
-        /* Modal */
-        .reservation-modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.6);
-            z-index: 10000;
-            display: none;
-        }
-
-        .reservation-modal-overlay.open {
-            display: block;
-        }
-
-        .reservation-modal {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            border-radius: 32px;
-            width: 90%;
-            max-width: 550px;
-            z-index: 10001;
-            display: none;
-            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
-        }
-
-        .reservation-modal.open {
-            display: block;
-        }
-
-        .reservation-modal-header {
-            padding: 20px 28px;
-            border-bottom: 1px solid #eef2f6;
-            display: flex;
-            justify-content: space-between;
-            background: #0f172a;
-            color: white;
-            border-radius: 32px 32px 0 0;
-        }
-
-        .reservation-modal-header h3 {
-            margin: 0;
-            font-size: 18px;
-        }
-
-        .reservation-modal-close {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 26px;
-            cursor: pointer;
-        }
-
-        .reservation-modal-body {
-            padding: 28px;
-        }
-
-        .form-group {
-            margin-bottom: 18px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 6px;
-            font-weight: 600;
-            font-size: 13px;
-            color: #334155;
-        }
-
-        .form-control {
-            width: 100%;
-            padding: 12px 16px;
-            border: 1px solid #e2e8f0;
-            border-radius: 28px;
-            font-size: 14px;
-        }
-
-        .btn-success {
-            background: #10b981;
-            color: white;
-            border: none;
-            padding: 12px;
-            border-radius: 40px;
-            width: 100%;
-            cursor: pointer;
-            font-weight: 700;
-            margin-top: 8px;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        @media (max-width: 992px) {
-            .sidebar {
-                transform: translateX(-100%);
-            }
-            .sidebar.open {
-                transform: translateX(0);
-            }
-            .hamburger {
-                display: block;
-            }
-            .main-content {
-                margin-left: 0;
-                padding: 20px;
-            }
-            .filter-bar {
-                padding: 16px;
-            }
-        }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #4CAF50; color: white; }
+        tr:nth-child(even) { background-color: #f2f2f2; }
+        .error { color: red; padding: 20px; text-align: center; }
+        .login-prompt { text-align: center; padding: 50px; }
+        button { padding: 10px 20px; background: #4CAF50; color: white; border: none; cursor: pointer; }
     </style>
 </head>
 <body>
+    <h2>User Login Activity Logs</h2>
+    <div id="content"></div>
 
-<div class="overlay" id="overlay-main"></div>
-
-<aside class="sidebar" id="sidebar">
-    <div class="sidebar-top">
-        <a class="sidebar-logo" href="/">
-            <div class="logo-icon">🏨</div>
-            <div class="logo-text">
-                <span>Steps</span>
-                <span>Premium Suite</span>
-            </div>
-        </a>
-        <button class="sidebar-close-btn" id="sidebar-close-btn">✕</button>
-    </div>
-    <nav class="sidebar-nav">
-        <div class="nav-section-label">Core Operations</div>
-        <a href="/dashboard" class="nav-item">📊 Stay View</a>
-        <a href="/reservations" class="nav-item">📅 Reservations</a>
-        <a href="/housekeeping" class="nav-item">🧹 Housekeeping</a>
-        <div class="nav-section-label">Property</div>
-        <a href="/apartments" class="nav-item">🏠 Apartments View</a>
-        <a href="/apartments-list" class="nav-item">📋 Apartments List</a>
-        <div class="nav-section-label">Store & Procurement</div>
-        <a href="/store-main" class="nav-item">🏬 Main Store</a>
-        <a href="/store-outlets" class="nav-item">🏪 Outlets Store</a>
-        <a href="/purchase-orders" class="nav-item">📦 Purchase Orders</a>
-        <a href="/goods-receipt" class="nav-item">✅ Goods Receipt</a>
-        <div class="nav-section-label">Reports</div>
-        <a href="/reports" class="nav-item">📊 Reservations Report</a>
-        <a href="/purchase-orders-reports" class="nav-item">📄 Purchase Orders Report</a>
-        <a href="/goods-receipt-reports" class="nav-item">📋 Goods Receipt Report</a>
-        <a href="/store-inventory-reports" class="nav-item">📦 Store Inventory Report</a>
-        <div class="nav-section-label">Audit</div>
-        <a href="/activity-logs" class="nav-item active">📋 Activity Logs</a>
-        <div class="nav-section-label">Administration</div>
-        <a href="/users" class="nav-item">👥 User Management</a>
-    </nav>
-    <div class="sidebar-footer"><small>Steps PMS v1.0 · Dar es Salaam</small></div>
-</aside>
-
-<nav class="navbar">
-    <div class="navbar-left">
-        <button class="hamburger" id="hamburger-btn">☰</button>
-        <div>
-            <div class="page-title">Activity Logs</div>
-            <div class="page-subtitle">Complete audit trail of all user actions</div>
-        </div>
-    </div>
-    <div class="navbar-right">
-        <button class="btn-add-reservation" id="addReservationBtn">＋ Add Reservation</button>
-        <button class="notif-btn">🔔<span class="badge">3</span></button>
-        <div class="user-dropdown">
-            <div class="user-pill" id="userPill">
-                <div class="user-avatar" id="userAvatar">U</div>
-                <div class="user-info">
-                    <span id="userName">Loading...</span>
-                    <span id="userRole">Loading...</span>
-                </div>
-                <i class="fas fa-chevron-down"></i>
-            </div>
-            <div class="dropdown-menu" id="dropdownMenu">
-                <button id="changePwdBtn"><i class="fas fa-key"></i> Change Password</button>
-                <a href="/users"><i class="fas fa-users"></i> User Management</a>
-                <hr>
-                <button id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</button>
-            </div>
-        </div>
-    </div>
-</nav>
-
-<main class="main-content">
-    <div class="filter-bar">
-        <div class="filter-group">
-            <label>📅 From Date</label>
-            <input type="date" id="filter-from">
-        </div>
-        <div class="filter-group">
-            <label>📅 To Date</label>
-            <input type="date" id="filter-to">
-        </div>
-        <div class="filter-group">
-            <label>⚡ Action</label>
-            <select id="filter-action">
-                <option value="">All Actions</option>
-                <option value="CREATE">➕ Create</option>
-                <option value="UPDATE">✏️ Update</option>
-                <option value="DELETE">🗑️ Delete</option>
-            </select>
-        </div>
-        <div class="filter-group">
-            <label>📦 Entity</label>
-            <select id="filter-entity">
-                <option value="">All Entities</option>
-                <option value="reservation">📅 Reservation</option>
-                <option value="apartment">🏠 Apartment</option>
-                <option value="user">👤 User</option>
-                <option value="store_item">📦 Store Item</option>
-                <option value="purchase_order">📄 Purchase Order</option>
-            </select>
-        </div>
-        <button class="btn-gold" id="applyFilterBtn">🔍 Apply Filters</button>
-        <button class="btn-outline" id="clearFilterBtn">🗑️ Clear</button>
-        <button class="btn-outline" id="exportCsvBtn">📎 Export CSV</button>
-    </div>
-
-    <div class="card">
-        <div class="card-header">
-            <span>📋 Activity Log</span>
-            <span id="result-count" style="font-size: 13px; font-weight: normal; color: #64748b;"></span>
-        </div>
-        <div class="card-body">
-            <table class="data-table" id="logs-table">
-                <thead>
-                    <tr>
-                        <th>🕐 Time</th>
-                        <th>👤 User (Doer)</th>
-                        <th>⚡ Action</th>
-                        <th>📦 Entity</th>
-                        <th>🔢 Entity ID</th>
-                        <th>📝 Details</th>
-                        <th>🌐 IP Address</th>
-                    </tr>
-                </thead>
-                <tbody id="logs-body">
-                    <tr><td colspan="7" class="empty-state">Loading activity logs...</td></tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-</main>
-
-<div class="toast-container" id="toast-container"></div>
-
-<script>
-    // ============================================================
-    // GLOBAL VARIABLES - Get Current Logged-in User
-    // ============================================================
-    let currentUser = null;
-    
-    function getCurrentUser() {
-        const stored = sessionStorage.getItem('pms_user');
-        if (stored) {
-            return JSON.parse(stored);
-        }
-        return null;
-    }
-    
-    function initUserSession() {
-        currentUser = getCurrentUser();
-        if (!currentUser) {
-            // Redirect to login if no user found
-            window.location.href = '/';
-            return;
-        }
-        document.getElementById('userName').innerText = currentUser.fullName || currentUser.username;
-        document.getElementById('userRole').innerText = currentUser.role || 'Staff';
-        const avatarLetter = (currentUser.fullName?.[0] || currentUser.username?.[0] || 'U').toUpperCase();
-        document.getElementById('userAvatar').innerText = avatarLetter;
-        console.log('✅ Logged in as:', currentUser.fullName || currentUser.username, '(Role:', currentUser.role, ')');
-    }
-    
-    function logout() {
-        sessionStorage.removeItem('pms_user');
-        window.location.href = '/';
-    }
-    
-    // ============================================================
-    // UTILITY FUNCTIONS
-    // ============================================================
-    function showToast(message, type = 'info') {
-        const container = document.getElementById('toast-container');
-        const bgColor = type === 'error' ? '#dc2626' : (type === 'success' ? '#10b981' : '#c9933a');
-        const icon = type === 'error' ? '❌' : (type === 'success' ? '✅' : 'ℹ️');
-        container.innerHTML = `<div style="background:${bgColor};color:white;padding:14px 28px;border-radius:40px;font-size:13px;font-weight:500;box-shadow:0 8px 20px rgba(0,0,0,0.15);display:flex;align-items:center;gap:10px;">${icon} ${message}</div>`;
-        setTimeout(() => container.innerHTML = '', 3500);
-    }
-    
-    function escapeHtml(str) {
-        if (!str) return '';
-        return String(str).replace(/[&<>]/g, function(m) {
-            if (m === '&') return '&amp;';
-            if (m === '<') return '&lt;';
-            if (m === '>') return '&gt;';
-            return m;
-        });
-    }
-    
-    // ============================================================
-    // LOAD ACTIVITY LOGS FROM API
-    // ============================================================
-    async function loadActivityLogs() {
-        const tbody = document.getElementById('logs-body');
-        const resultSpan = document.getElementById('result-count');
-        tbody.innerHTML = '<tr><td colspan="7" class="empty-state"><span style="display:inline-block;width:16px;height:16px;border:2px solid #cbd5e1;border-top-color:#c9933a;border-radius:50%;animation:spin 0.6s linear infinite;margin-right:8px;"></span> Fetching logs...</td></tr>';
-        
-        const fromDate = document.getElementById('filter-from').value;
-        const toDate = document.getElementById('filter-to').value;
-        const actionFilter = document.getElementById('filter-action').value;
-        const entityFilter = document.getElementById('filter-entity').value;
-        
-        let url = '/api/activity-logs?';
-        const params = [];
-        if (fromDate) params.push(`from=${fromDate}`);
-        if (toDate) params.push(`to=${toDate}`);
-        if (actionFilter) params.push(`action=${actionFilter}`);
-        if (entityFilter) params.push(`entityType=${entityFilter}`);
-        if (params.length) url += params.join('&');
-        
-        try {
-            const response = await fetch(url);
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            const logs = await response.json();
+    <script>
+        async function loadLogs() {
+            const content = document.getElementById('content');
             
-            console.log('📋 Activity logs received:', logs.length);
-            if (logs.length > 0) {
-                console.log('Sample log:', { 
-                    username: logs[0].username, 
-                    action: logs[0].action,
-                    entity_type: logs[0].entity_type,
-                    created_at: logs[0].created_at 
-                });
-            }
+            // Check if user is logged in
+            const token = localStorage.getItem('token');
             
-            if (!logs || logs.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="empty-state">📭 No activity logs found. Create, update, or delete something to see logs here.</td></tr>';
-                resultSpan.innerText = '0 records';
+            if (!token) {
+                content.innerHTML = `
+                    <div class="login-prompt">
+                        <p>Please login to view activity logs</p>
+                        <button onclick="window.location.href='/'">Go to Login</button>
+                    </div>
+                `;
                 return;
             }
             
-            let html = '';
-            logs.forEach(log => {
-                const actionClass = log.action === 'CREATE' ? 'badge-create' : (log.action === 'UPDATE' ? 'badge-update' : 'badge-delete');
-                const actionIcon = log.action === 'CREATE' ? '➕' : (log.action === 'UPDATE' ? '✏️' : '🗑️');
-                const timeStr = new Date(log.created_at).toLocaleString();
+            try {
+                const response = await fetch('/api/activity-logs', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
                 
-                // IMPORTANT: Display the DOER (username from log)
-                // This username comes from the logged-in user who performed the action
-                const doerName = log.username && log.username !== 'system' ? log.username : (log.username || 'Unknown');
-                const isSystem = log.username === 'system';
-                
-                let details = '';
-                if (log.action === 'CREATE') {
-                    details = `Created new ${log.entity_type}`;
-                } else if (log.action === 'UPDATE') {
-                    details = `Updated ${log.entity_type}`;
-                } else if (log.action === 'DELETE') {
-                    details = `Deleted ${log.entity_type}`;
-                } else {
-                    details = log.details || `${log.action} ${log.entity_type}`;
+                if (response.status === 401) {
+                    content.innerHTML = `
+                        <div class="login-prompt">
+                            <p>Session expired. Please login again.</p>
+                            <button onclick="logout()">Login Again</button>
+                        </div>
+                    `;
+                    return;
                 }
                 
-                html += `
-                    <tr>
-                        <td style="white-space:nowrap;">${escapeHtml(timeStr)}</td>
-                        <td>
-                            <div class="user-doer">
-                                <div class="user-doer-icon">${isSystem ? '🤖' : '👤'}</div>
-                                <strong style="color:${isSystem ? '#94a3b8' : '#0f172a'}">${escapeHtml(doerName)}</strong>
-                                ${isSystem ? '<span style="font-size:10px;color:#94a3b8;"> (System)</span>' : ''}
-                            </div>
-                        </td>
-                        <td><span class="badge-action ${actionClass}">${actionIcon} ${log.action}</span></td>
-                        <td>${escapeHtml(log.entity_type)}</td>
-                        <td>${log.entity_id || '-'}</td>
-                        <td>${escapeHtml(details)}</td>
-                        <td><code style="font-size:11px;">${escapeHtml(log.ip_address || '-')}</code></td>
-                    </tr>
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                const logs = await response.json();
+                
+                // Ensure logs is an array
+                if (!Array.isArray(logs)) {
+                    console.error('Logs is not an array:', logs);
+                    content.innerHTML = '<div class="error">Invalid data format received</div>';
+                    return;
+                }
+                
+                if (logs.length === 0) {
+                    content.innerHTML = '<div class="error">No login activity found</div>';
+                    return;
+                }
+                
+                // Create table
+                let html = `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Username</th>
+                                <th>Action</th>
+                                <th>Time</th>
+                                <th>IP Address</th>
+                                <th>Device/Browser</th>
+                            </tr>
+                        </thead>
+                        <tbody>
                 `;
-            });
-            
-            tbody.innerHTML = html;
-            resultSpan.innerText = `Showing ${logs.length} records`;
-            
-        } catch (err) {
-            console.error('Error loading activity logs:', err);
-            tbody.innerHTML = `<tr><td colspan="7" class="empty-state">❌ Error loading logs: ${err.message}</td></tr>`;
-            showToast('Failed to load activity logs', 'error');
-        }
-    }
-    
-    function clearFilters() {
-        document.getElementById('filter-from').value = '';
-        document.getElementById('filter-to').value = '';
-        document.getElementById('filter-action').value = '';
-        document.getElementById('filter-entity').value = '';
-        loadActivityLogs();
-        showToast('Filters cleared', 'success');
-    }
-    
-    function exportToCSV() {
-        const rows = document.querySelectorAll('#logs-body tr');
-        if (!rows.length || rows[0].innerText.includes('No activity logs') || rows[0].innerText.includes('Fetching')) {
-            showToast('No data to export', 'error');
-            return;
-        }
-        
-        let csvContent = "Time,User (Doer),Action,Entity,Entity ID,Details,IP Address\n";
-        rows.forEach(row => {
-            const cells = row.querySelectorAll('td');
-            if (cells.length && cells[0] && !cells[0].innerText.includes('No activity')) {
-                const rowData = Array.from(cells).map(cell => `"${cell.innerText.replace(/"/g, '""')}"`);
-                csvContent += rowData.join(',') + '\n';
-            }
-        });
-        
-        const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        const url = URL.createObjectURL(blob);
-        link.href = url;
-        link.setAttribute('download', `activity_logs_${new Date().toISOString().slice(0,19)}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-        showToast('CSV exported successfully', 'success');
-    }
-    
-    // ============================================================
-    // CHANGE PASSWORD MODAL
-    // ============================================================
-    function openChangePasswordModal() {
-        let modalOverlay = document.getElementById('change-password-modal-overlay');
-        let modal = document.getElementById('change-password-modal');
-        if (!modal) {
-            const modalHTML = `
-                <div class="reservation-modal-overlay" id="change-password-modal-overlay"></div>
-                <div class="reservation-modal" id="change-password-modal">
-                    <div class="reservation-modal-header">
-                        <h3>🔐 Change Password</h3>
-                        <button class="reservation-modal-close" id="modalCloseBtn">✕</button>
-                    </div>
-                    <div class="reservation-modal-body">
-                        <form id="changePwdForm">
-                            <div class="form-group">
-                                <label>Current Password</label>
-                                <input type="password" id="currentPass" class="form-control" required>
-                            </div>
-                            <div class="form-group">
-                                <label>New Password (min 6 characters)</label>
-                                <input type="password" id="newPass" class="form-control" required>
-                            </div>
-                            <div class="form-group">
-                                <label>Confirm Password</label>
-                                <input type="password" id="confirmPass" class="form-control" required>
-                            </div>
-                            <button type="submit" class="btn-success">Update Password</button>
-                            <button type="button" id="cancelPwdBtn" style="margin-top:12px; background:#f1f5f9; border:1px solid #e2e8f0; border-radius:40px; padding:10px; width:100%; cursor:pointer;">Cancel</button>
-                        </form>
-                    </div>
-                </div>
-            `;
-            document.body.insertAdjacentHTML('beforeend', modalHTML);
-            modalOverlay = document.getElementById('change-password-modal-overlay');
-            modal = document.getElementById('change-password-modal');
-            
-            document.getElementById('changePwdForm').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const newPassword = document.getElementById('newPass').value;
-                const confirm = document.getElementById('confirmPass').value;
-                if (newPassword !== confirm) {
-                    showToast('Passwords do not match', 'error');
-                    return;
-                }
-                if (newPassword.length < 6) {
-                    showToast('Password must be at least 6 characters', 'error');
-                    return;
-                }
                 
-                 try {
-  await apiPost('/auth/change-password', {
-    userId: currentUser.id,
-    oldPassword: currentPassword,
-    newPassword: newPassword
-  });
-  
-  showToast('Password changed successfully! Please login again.', '✅');
-  setTimeout(() => { logout(); }, 1500);
-} catch (err) {
-  showToast('Failed to change password: ' + err.message, '❌');
-}
-});
-            
-            document.getElementById('modalCloseBtn').onclick = closeChangePasswordModal;
-            document.getElementById('cancelPwdBtn').onclick = closeChangePasswordModal;
-            modalOverlay.onclick = closeChangePasswordModal;
-        }
-        modal.classList.add('open');
-        modalOverlay.classList.add('open');
-        document.body.style.overflow = 'hidden';
-    }
-    
-    function closeChangePasswordModal() {
-        const overlay = document.getElementById('change-password-modal-overlay');
-        const modal = document.getElementById('change-password-modal');
-        if (modal) modal.classList.remove('open');
-        if (overlay) overlay.classList.remove('open');
-        document.body.style.overflow = '';
-    }
-    
-    // ============================================================
-    // SIDEBAR & UI TOGGLES
-    // ============================================================
-    function initSidebar() {
-        const hamburger = document.getElementById('hamburger-btn');
-        const sidebar = document.getElementById('sidebar');
-        const overlayMain = document.getElementById('overlay-main');
-        const closeBtn = document.getElementById('sidebar-close-btn');
-        
-        function openSidebar() { 
-            sidebar.classList.add('open'); 
-            overlayMain.classList.add('open'); 
-        }
-        function closeSidebar() { 
-            sidebar.classList.remove('open'); 
-            overlayMain.classList.remove('open'); 
+                logs.forEach(log => {
+                    html += `
+                        <tr>
+                            <td>${log.username || 'N/A'}</td>
+                            <td>${log.action || 'N/A'}</td>
+                            <td>${log.time ? new Date(log.time).toLocaleString() : 'N/A'}</td>
+                            <td>${log.ip_address || 'N/A'}</td>
+                            <td>${log.user_agent ? log.user_agent.substring(0, 50) + '...' : 'N/A'}</td>
+                        </tr>
+                    `;
+                });
+                
+                html += `</tbody></table>`;
+                content.innerHTML = html;
+                
+            } catch (err) {
+                console.error('Failed to load logs:', err);
+                content.innerHTML = `<div class="error">Error loading logs: ${err.message}</div>`;
+            }
         }
         
-        hamburger?.addEventListener('click', openSidebar);
-        closeBtn?.addEventListener('click', closeSidebar);
-        overlayMain?.addEventListener('click', closeSidebar);
-    }
-    
-    function initDropdown() {
-        const userPill = document.getElementById('userPill');
-        const dropdown = document.getElementById('dropdownMenu');
+        function logout() {
+            localStorage.removeItem('token');
+            window.location.href = '/';
+        }
         
-        userPill?.addEventListener('click', (e) => {
-            e.stopPropagation();
-            dropdown.classList.toggle('show');
-            userPill.classList.toggle('active');
-        });
+        // Load logs on page load
+        loadLogs();
         
-        document.addEventListener('click', () => {
-            dropdown.classList.remove('show');
-            userPill?.classList.remove('active');
-        });
-        
-        document.getElementById('changePwdBtn')?.addEventListener('click', openChangePasswordModal);
-        document.getElementById('logoutBtn')?.addEventListener('click', logout);
-    }
-    
-    // ============================================================
-    // INITIALIZATION
-    // ============================================================
-    document.addEventListener('DOMContentLoaded', () => {
-        initUserSession();
-        initSidebar();
-        initDropdown();
-        loadActivityLogs();
-        
-        document.getElementById('applyFilterBtn').addEventListener('click', loadActivityLogs);
-        document.getElementById('clearFilterBtn').addEventListener('click', clearFilters);
-        document.getElementById('exportCsvBtn').addEventListener('click', exportToCSV);
-        document.getElementById('addReservationBtn').addEventListener('click', () => {
-            window.location.href = '/reservations';
-        });
-    });
-    
-    // Add spin animation
-    const styleSheet = document.createElement("style");
-    styleSheet.textContent = `@keyframes spin { to { transform: rotate(360deg); } }`;
-    document.head.appendChild(styleSheet);
-    
-    // Expose globals
-    window.loadActivityLogs = loadActivityLogs;
-    window.clearFilters = clearFilters;
-    window.exportToCSV = exportToCSV;
-    window.logout = logout;
-    window.openChangePasswordModal = openChangePasswordModal;
-    window.closeChangePasswordModal = closeChangePasswordModal;
-</script>
+        // Refresh every 30 seconds
+        setInterval(loadLogs, 30000);
+    </script>
 </body>
 </html>

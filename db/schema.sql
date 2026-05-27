@@ -418,3 +418,99 @@ ALTER TABLE reservations ADD COLUMN IF NOT EXISTS identification_type VARCHAR(50
 ALTER TABLE reservations ADD COLUMN IF NOT EXISTS identification_number VARCHAR(100);
 ALTER TABLE reservations ADD COLUMN IF NOT EXISTS identification VARCHAR(200);
 ALTER TABLE reservations ADD COLUMN IF NOT EXISTS id_type VARCHAR(50);
+
+
+-- ============================================================
+-- MAINTENANCE TASKS TABLE
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS maintenance_tasks (
+  id                SERIAL PRIMARY KEY,
+  task_number       VARCHAR(50) NOT NULL UNIQUE,
+  technician_name   VARCHAR(100) NOT NULL,
+  item_type         VARCHAR(50) NOT NULL,
+  description       TEXT NOT NULL,
+  labour_cost       INT DEFAULT 0,
+  tools             JSONB DEFAULT '[]'::jsonb,
+  total_tools_cost  INT DEFAULT 0,
+  total_cost        INT DEFAULT 0,
+  task_date         DATE NOT NULL,
+  remarks           TEXT,
+  status            VARCHAR(20) DEFAULT 'pending',
+  created_by        VARCHAR(100),
+  created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create indexes for faster queries
+CREATE INDEX IF NOT EXISTS idx_maintenance_tasks_date ON maintenance_tasks(task_date);
+CREATE INDEX IF NOT EXISTS idx_maintenance_tasks_status ON maintenance_tasks(status);
+CREATE INDEX IF NOT EXISTS idx_maintenance_tasks_item_type ON maintenance_tasks(item_type);
+CREATE INDEX IF NOT EXISTS idx_maintenance_tasks_technician ON maintenance_tasks(technician_name);
+
+-- Create trigger to auto-update updated_at
+CREATE OR REPLACE FUNCTION update_maintenance_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = CURRENT_TIMESTAMP;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trigger_maintenance_updated_at ON maintenance_tasks;
+CREATE TRIGGER trigger_maintenance_updated_at
+  BEFORE UPDATE ON maintenance_tasks
+  FOR EACH ROW
+  EXECUTE FUNCTION update_maintenance_updated_at();
+
+-- Add comment to table
+COMMENT ON TABLE maintenance_tasks IS 'Stores all maintenance and repair tasks';
+
+
+-- ============================================================
+-- DAILY ACTIVITIES TABLE
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS daily_activities (
+  id SERIAL PRIMARY KEY,
+  activity_date DATE NOT NULL,
+  description TEXT NOT NULL,
+  prepared_by VARCHAR(100) NOT NULL,
+  remarks TEXT,
+  created_by VARCHAR(100),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_daily_activities_date ON daily_activities(activity_date);
+CREATE INDEX IF NOT EXISTS idx_daily_activities_prepared_by ON daily_activities(prepared_by);
+
+
+
+-- ============================================================
+-- EXPENDITURES TABLE
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS expenditures (
+  id SERIAL PRIMARY KEY,
+  expenditure_number VARCHAR(50) NOT NULL UNIQUE,
+  category VARCHAR(50) NOT NULL,
+  description TEXT NOT NULL,
+  amount INT NOT NULL,
+  expenditure_date DATE NOT NULL,
+  paid_to VARCHAR(100),
+  payment_method VARCHAR(50) DEFAULT 'cash',
+  receipt_number VARCHAR(100),
+  remarks TEXT,
+  created_by VARCHAR(100),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_expenditures_date ON expenditures(expenditure_date);
+CREATE INDEX IF NOT EXISTS idx_expenditures_category ON expenditures(category);
+
+
+-- Add tasks columns to daily_activities if not exists
+ALTER TABLE daily_activities ADD COLUMN IF NOT EXISTS tasks JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE daily_activities ADD COLUMN IF NOT EXISTS tasks_description TEXT;

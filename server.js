@@ -116,7 +116,8 @@ const pages = [
   'store-housekeeping', 'store-kitchen', 'store-public', 'users', 'users1', 'login',
   'activity-logs', 'register', 'back-office', 'index2', 'purchase-orders', 'goods-receipt',
   'purchase-orders-reports', 'goods-receipt-reports', 'store-inventory-reports', 
-  'point-of-sale', 'sales-report', 'add-reservation','guest-database'
+  'point-of-sale', 'sales-report', 'add-reservation','guest-database','maintenance','daily-activities', 'expenditures',  'daily-activities-report','financial-report',  'maintenance-report'
+
 ];
 
 // Create routes for each page without .html extension
@@ -1124,6 +1125,15 @@ app.post('/api/auth/login', async (req, res) => {
     // ========== LOGIN SUCCESSFUL - RESET LOCKOUT ==========
     await resetFailedAttempts(email);
     
+    // ========== LOG THE LOGIN ACTIVITY ==========
+    const ipAddress = req.ip || req.connection.remoteAddress || null;
+    const userAgent = req.headers['user-agent'] || null;
+    
+    await pool.query(`
+      INSERT INTO activity_logs (user_id, username, action, entity_type, entity_id, ip_address, user_agent, new_data)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    `, [user.id, user.username, 'LOGIN', 'user', user.id, ipAddress, userAgent, JSON.stringify({ loginTime: new Date().toISOString() })]);
+    
     // ========== GENERATE JWT TOKEN ==========
     const token = jwt.sign(
       { 
@@ -1151,6 +1161,71 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
+
+app.post('/api/auth/logout', async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (token) {
+      // Decode token to get user info
+      const decoded = jwt.verify(token, JWT_SECRET);
+      const ipAddress = req.ip || req.connection.remoteAddress || null;
+      const userAgent = req.headers['user-agent'] || null;
+      
+      await pool.query(`
+        INSERT INTO activity_logs (user_id, username, action, entity_type, entity_id, ip_address, user_agent)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `, [decoded.id, decoded.email, 'LOGOUT', 'user', decoded.id, ipAddress, userAgent]);
+    }
+    res.json({ message: 'Logged out successfully' });
+  } catch (err) {
+    console.error(err);
+    res.json({ message: 'Logged out' });
+  }
+});
+
+
+
+// Function to log user activities
+async function logActivity(userId, username, action, entityType, entityId = null, oldData = null, newData = null, req = null) {
+  try {
+    const ipAddress = req ? req.ip || req.connection.remoteAddress || null : null;
+    const userAgent = req ? req.headers['user-agent'] || null : null;
+    
+    await db.query(`
+      INSERT INTO activity_logs (user_id, username, action, entity_type, entity_id, old_data, new_data, ip_address, user_agent)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    `, [userId, username, action, entityType, entityId, oldData, newData, ipAddress, userAgent]);
+  } catch (err) {
+    console.error('Failed to log activity:', err.message);
+  }
+}
+
+
+// Get login history
+app.get('/api/activity-logs', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        id,
+        username,
+        action,
+        entity_type,
+        created_at as time,
+        ip_address,
+        user_agent
+      FROM activity_logs 
+      WHERE action IN ('LOGIN', 'LOGOUT')
+      ORDER BY created_at DESC
+      LIMIT 100
+    `);
+    
+    // Always return an array
+    res.json(result.rows || []);
+  } catch (err) {
+    console.error('Activity logs error:', err);
+    res.status(500).json({ error: err.message, logs: [] });
+  }
+});
 // POST /api/auth/change-password
 app.post('/api/auth/change-password', async (req, res) => {
   const { userId, oldPassword, newPassword } = req.body;
@@ -2541,3 +2616,454 @@ app.post('/api/countries', async (req, res) => {
 // optimize speed
 const compression = require('compression');
 app.use(compression());
+
+
+
+// ============================================================
+// MAINTENANCE MANAGEMENT API
+// ============================================================
+
+// Create maintenance table
+async function createMaintenanceTable() {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS maintenance_tasks (
+        id SERIAL PRIMARY KEY,
+        task_number VARCHAR(50) NOT NULL UNIQUE,
+        technician_name VARCHAR(100) NOT NULL,
+        item_type VARCHAR(50) NOT NULL,
+        description TEXT NOT NULL,
+        labour_cost INT DEFAULT 0,
+        tools JSONB DEFAULT '[]',
+        total_tools_cost INT DEFAULT 0,
+        total_cost INT DEFAULT 0,
+        task_date DATE NOT NULL,
+        remarks TEXT,
+        status VARCHAR(20) DEFAULT 'pending',
+        created_by VARCHAR(100),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    console.log('✅ Maintenance table ready');
+  } catch (err) {
+    console.log('Maintenance table note:', err.message);
+  }
+}
+
+// Call this after database connection
+createMaintenanceTable();
+
+// GET all maintenance tasks (with filters)
+app.get('/api/maintenance', async (req, res) => {
+  const { from, to, itemType, status } = req.query;
+  let query = 'SELECT * FROM maintenance_tasks WHERE 1=1';
+  const params = [];
+  let paramCount = 1;
+  
+  if (from) {
+    query += ` AND task_date >= $${paramCount++}`;
+    params.push(from);
+  }
+  if (to) {
+    query += ` AND task_date <= $${paramCount++}`;
+    params.push(to);
+  }
+  if (itemType) {
+    query += ` AND item_type = $${paramCount++}`;
+    params.push(itemType);
+  }
+  if (status) {
+    query += ` AND status = $${paramCount++}`;
+    params.push(status);
+  }
+  
+  query += ' ORDER BY task_date DESC, id DESC';
+  
+  try {
+    const { rows } = await pool.query(query, params);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET single maintenance task
+app.get('/api/maintenance/:id', async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM maintenance_tasks WHERE id = $1', [req.params.id]);
+    if (rows.length === 0) return res.status(404).json({ error: 'Task not found' });
+    res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST create maintenance task
+app.post('/api/maintenance', async (req, res) => {
+  const { taskNumber, technicianName, itemType, description, labourCost, tools, totalToolsCost, date, remarks, status } = req.body;
+  
+  if (!technicianName || !itemType || !description) {
+    return res.status(400).json({ error: 'Technician name, item type, and description are required' });
+  }
+  
+  const totalCost = (labourCost || 0) + (totalToolsCost || 0);
+  const taskNum = taskNumber || `MT-${Date.now()}`;
+  
+  try {
+    const { rows } = await pool.query(`
+      INSERT INTO maintenance_tasks (task_number, technician_name, item_type, description, labour_cost, tools, total_tools_cost, total_cost, task_date, remarks, status, created_by)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+      RETURNING *
+    `, [taskNum, technicianName, itemType, description, labourCost || 0, JSON.stringify(tools || []), totalToolsCost || 0, totalCost, date, remarks || null, status || 'pending', req.body.created_by || 'system']);
+    
+    res.status(201).json(rows[0]);
+  } catch (err) {
+    console.error('Create task error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT update maintenance task
+app.put('/api/maintenance/:id', async (req, res) => {
+  const { id } = req.params;
+  const { technicianName, itemType, description, labourCost, tools, totalToolsCost, date, remarks, status } = req.body;
+  
+  const totalCost = (labourCost || 0) + (totalToolsCost || 0);
+  
+  try {
+    const { rows } = await pool.query(`
+      UPDATE maintenance_tasks SET
+        technician_name = COALESCE($1, technician_name),
+        item_type = COALESCE($2, item_type),
+        description = COALESCE($3, description),
+        labour_cost = COALESCE($4, labour_cost),
+        tools = COALESCE($5, tools),
+        total_tools_cost = COALESCE($6, total_tools_cost),
+        total_cost = COALESCE($7, total_cost),
+        task_date = COALESCE($8, task_date),
+        remarks = COALESCE($9, remarks),
+        status = COALESCE($10, status),
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = $11
+      RETURNING *
+    `, [technicianName, itemType, description, labourCost, JSON.stringify(tools || []), totalToolsCost, totalCost, date, remarks, status, id]);
+    
+    if (rows.length === 0) return res.status(404).json({ error: 'Task not found' });
+    res.json(rows[0]);
+  } catch (err) {
+    console.error('Update task error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT update task status only
+app.put('/api/maintenance/:id/status', async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+  
+  try {
+    const { rows } = await pool.query(`
+      UPDATE maintenance_tasks SET status = $1, updated_at = CURRENT_TIMESTAMP
+      WHERE id = $2 RETURNING *
+    `, [status, id]);
+    
+    if (rows.length === 0) return res.status(404).json({ error: 'Task not found' });
+    res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE maintenance task
+app.delete('/api/maintenance/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const { rowCount } = await pool.query('DELETE FROM maintenance_tasks WHERE id = $1', [id]);
+    if (rowCount === 0) return res.status(404).json({ error: 'Task not found' });
+    res.json({ message: 'Task deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+
+
+// ============================================================
+// DAILY ACTIVITIES API
+// ============================================================
+
+// Create daily_activities table
+async function createDailyActivitiesTable() {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS daily_activities (
+        id SERIAL PRIMARY KEY,
+        activity_date DATE NOT NULL,
+        description TEXT NOT NULL,
+        prepared_by VARCHAR(100) NOT NULL,
+        remarks TEXT,
+        created_by VARCHAR(100),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    console.log('✅ Daily activities table ready');
+  } catch (err) {
+    console.log('Daily activities table note:', err.message);
+  }
+}
+
+createDailyActivitiesTable();
+
+// GET all daily activities (with filters)
+app.get('/api/daily-activities', async (req, res) => {
+  const { from, to, preparedBy } = req.query;
+  let query = 'SELECT * FROM daily_activities WHERE 1=1';
+  const params = [];
+  let paramCount = 1;
+  
+  if (from) {
+    query += ` AND activity_date >= $${paramCount++}::date`;
+    params.push(from);
+  }
+  if (to) {
+    query += ` AND activity_date <= $${paramCount++}::date`;
+    params.push(to);
+  }
+  if (preparedBy) {
+    query += ` AND prepared_by ILIKE $${paramCount++}`;
+    params.push(`%${preparedBy}%`);
+  }
+  
+  query += ' ORDER BY activity_date DESC, id DESC';
+  
+  try {
+    const { rows } = await pool.query(query, params);
+    res.json(rows);
+  } catch (err) {
+    console.error('GET /api/daily-activities error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET single daily activity
+app.get('/api/daily-activities/:id', async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM daily_activities WHERE id = $1', [req.params.id]);
+    if (rows.length === 0) return res.status(404).json({ error: 'Activity not found' });
+    res.json(rows[0]);
+  } catch (err) {
+    console.error('GET /api/daily-activities/:id error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST create daily activity
+// POST create daily activity with tasks
+app.post('/api/daily-activities', async (req, res) => {
+  const { date, tasks, tasksDescription, preparedBy, remarks } = req.body;
+  
+  if (!date || !preparedBy) {
+    return res.status(400).json({ error: 'Date and prepared by are required' });
+  }
+  
+  const tasksJson = JSON.stringify(tasks || []);
+  const finalDescription = tasksDescription || (tasks ? tasks.map(t => `${t.completed ? '✅' : '⏳'} ${t.description}`).join('\n') : '');
+  
+  try {
+    const { rows } = await pool.query(`
+      INSERT INTO daily_activities (activity_date, tasks, tasks_description, prepared_by, remarks, created_by)
+      VALUES ($1, $2, $3, $4, $5, $6)
+      RETURNING *
+    `, [date, tasksJson, finalDescription, preparedBy, remarks || null, req.body.created_by || 'system']);
+    
+    res.status(201).json(rows[0]);
+  } catch (err) {
+    console.error('POST error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT update daily activity with tasks
+app.put('/api/daily-activities/:id', async (req, res) => {
+  const { id } = req.params;
+  const { date, tasks, tasksDescription, preparedBy, remarks } = req.body;
+  
+  const tasksJson = JSON.stringify(tasks || []);
+  const finalDescription = tasksDescription || (tasks ? tasks.map(t => `${t.completed ? '✅' : '⏳'} ${t.description}`).join('\n') : '');
+  
+  try {
+    const { rows } = await pool.query(`
+      UPDATE daily_activities SET
+        activity_date = COALESCE($1, activity_date),
+        tasks = COALESCE($2, tasks),
+        tasks_description = COALESCE($3, tasks_description),
+        prepared_by = COALESCE($4, prepared_by),
+        remarks = COALESCE($5, remarks),
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = $6
+      RETURNING *
+    `, [date, tasksJson, finalDescription, preparedBy, remarks, id]);
+    
+    if (rows.length === 0) return res.status(404).json({ error: 'Activity not found' });
+    res.json(rows[0]);
+  } catch (err) {
+    console.error('PUT error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE daily activity
+app.delete('/api/daily-activities/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const { rowCount } = await pool.query('DELETE FROM daily_activities WHERE id = $1', [id]);
+    if (rowCount === 0) return res.status(404).json({ error: 'Activity not found' });
+    res.json({ message: 'Activity deleted successfully' });
+  } catch (err) {
+    console.error('DELETE /api/daily-activities/:id error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+
+
+// ============================================================
+// EXPENDITURES API
+// ============================================================
+
+// Create expenditures table
+async function createExpendituresTable() {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS expenditures (
+        id SERIAL PRIMARY KEY,
+        expenditure_number VARCHAR(50) NOT NULL UNIQUE,
+        category VARCHAR(50) NOT NULL,
+        description TEXT NOT NULL,
+        amount INT NOT NULL,
+        expenditure_date DATE NOT NULL,
+        paid_to VARCHAR(100),
+        payment_method VARCHAR(50) DEFAULT 'cash',
+        receipt_number VARCHAR(100),
+        remarks TEXT,
+        created_by VARCHAR(100),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    console.log('✅ Expenditures table ready');
+  } catch (err) {
+    console.log('Expenditures table note:', err.message);
+  }
+}
+
+createExpendituresTable();
+
+// GET all expenditures
+app.get('/api/expenditures', async (req, res) => {
+  const { from, to, category } = req.query;
+  let query = 'SELECT * FROM expenditures WHERE 1=1';
+  const params = [];
+  let paramCount = 1;
+  
+  if (from) {
+    query += ` AND expenditure_date >= $${paramCount++}::date`;
+    params.push(from);
+  }
+  if (to) {
+    query += ` AND expenditure_date <= $${paramCount++}::date`;
+    params.push(to);
+  }
+  if (category && category !== '') {
+    query += ` AND category = $${paramCount++}`;
+    params.push(category);
+  }
+  
+  query += ' ORDER BY expenditure_date DESC, id DESC';
+  
+  try {
+    const { rows } = await pool.query(query, params);
+    res.json(rows);
+  } catch (err) {
+    console.error('GET /api/expenditures error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET single expenditure
+app.get('/api/expenditures/:id', async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM expenditures WHERE id = $1', [req.params.id]);
+    if (rows.length === 0) return res.status(404).json({ error: 'Expenditure not found' });
+    res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST create expenditure
+app.post('/api/expenditures', async (req, res) => {
+  const { date, expenditureNumber, category, description, amount, paidTo, paymentMethod, receiptNumber, remarks } = req.body;
+  
+  if (!date || !category || !description || !amount) {
+    return res.status(400).json({ error: 'Date, category, description, and amount are required' });
+  }
+  
+  try {
+    const { rows } = await pool.query(`
+      INSERT INTO expenditures (expenditure_number, category, description, amount, expenditure_date, paid_to, payment_method, receipt_number, remarks, created_by)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      RETURNING *
+    `, [expenditureNumber, category, description, amount, date, paidTo || null, paymentMethod || 'cash', receiptNumber || null, remarks || null, req.body.created_by || 'system']);
+    
+    res.status(201).json(rows[0]);
+  } catch (err) {
+    console.error('POST /api/expenditures error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT update expenditure
+app.put('/api/expenditures/:id', async (req, res) => {
+  const { id } = req.params;
+  const { date, category, description, amount, paidTo, paymentMethod, receiptNumber, remarks } = req.body;
+  
+  try {
+    const { rows } = await pool.query(`
+      UPDATE expenditures SET
+        category = COALESCE($1, category),
+        description = COALESCE($2, description),
+        amount = COALESCE($3, amount),
+        expenditure_date = COALESCE($4, expenditure_date),
+        paid_to = COALESCE($5, paid_to),
+        payment_method = COALESCE($6, payment_method),
+        receipt_number = COALESCE($7, receipt_number),
+        remarks = COALESCE($8, remarks),
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = $9
+      RETURNING *
+    `, [category, description, amount, date, paidTo, paymentMethod, receiptNumber, remarks, id]);
+    
+    if (rows.length === 0) return res.status(404).json({ error: 'Expenditure not found' });
+    res.json(rows[0]);
+  } catch (err) {
+    console.error('PUT /api/expenditures/:id error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE expenditure
+app.delete('/api/expenditures/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const { rowCount } = await pool.query('DELETE FROM expenditures WHERE id = $1', [id]);
+    if (rowCount === 0) return res.status(404).json({ error: 'Expenditure not found' });
+    res.json({ message: 'Expenditure deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});

@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Maintenance - Steps PMS</title>
+  <style>
+  body { opacity: 0; transition: opacity 0.2s; }
+  body.loaded { opacity: 1; }
+</style>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    document.body.classList.add('loaded');
+  });
+</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css?v=20260518" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    .maintenance-container { display: flex; gap: 24px; min-height: calc(100vh - 150px); flex-wrap: wrap; }
+    .maintenance-left { width: 380px; background: white; border-radius: 16px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .maintenance-right { flex: 1; background: white; border-radius: 16px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .filter-section { background: #f5f5f5; border-radius: 12px; padding: 15px; margin-bottom: 20px; }
+    .filter-section h4 { margin-bottom: 12px; font-size: 14px; color: #1e2a3e; }
+    .filter-row { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+    .filter-row input, .filter-row select { flex: 1; padding: 8px 12px; border: 1px solid #e5e5e5; border-radius: 8px; font-size: 13px; }
+    .filter-actions { display: flex; gap: 8px; margin-top: 10px; }
+    .filter-actions button { flex: 1; padding: 8px; font-size: 12px; }
+    .tasks-list { max-height: calc(100vh - 350px); overflow-y: auto; }
+    .task-item { padding: 12px; border-bottom: 1px solid #e5e5e5; cursor: pointer; transition: background 0.2s; border-radius: 8px; margin-bottom: 8px; }
+    .task-item:hover { background: #f5f5f5; }
+    .task-item.completed { border-left: 3px solid #10b981; background: #f0fdf4; }
+    .task-item.pending { border-left: 3px solid #f59e0b; }
+    .task-number { font-weight: 700; font-size: 13px; color: #c9933a; margin-bottom: 4px; }
+    .task-type { display: inline-block; background: #e2e8f0; padding: 2px 8px; border-radius: 20px; font-size: 10px; margin-bottom: 6px; }
+    .task-status-badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 10px; margin-left: 8px; }
+    .status-pending { background: #fef3c7; color: #d97706; }
+    .status-completed { background: #d1fae5; color: #065f46; }
+    .task-date { font-size: 10px; color: #94a3b8; margin-top: 4px; }
+    .form-section { display: none; }
+    .form-section.active { display: block; }
+    .form-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #e2e8f0; }
+    .form-header h3 { margin: 0; font-size: 18px; }
+    .form-group-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 20px; }
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { display: block; margin-bottom: 0.3rem; font-weight: 500; font-size: 0.85rem; color: #2c3e4e; }
+    .form-control { width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 20px; font-size: 0.9rem; }
+    textarea.form-control { border-radius: 12px; resize: vertical; }
+    .divider { margin: 1rem 0; border: none; border-top: 1px solid #e2e8f0; }
+    .tools-section { background: #f8fafc; border-radius: 12px; padding: 15px; margin: 15px 0; }
+    .tools-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .tools-list { margin-top: 10px; }
+    .tool-item { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; }
+    .tool-item input { flex: 1; padding: 8px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13px; }
+    .tool-item .tool-cost { width: 120px; }
+    .tool-item button { background: #ef4444; color: white; border: none; border-radius: 6px; padding: 6px 10px; cursor: pointer; font-size: 12px; }
+    .btn-add-tool { background: #c9933a; color: white; border: none; border-radius: 20px; padding: 6px 12px; font-size: 12px; cursor: pointer; }
+    .btn-add-tool:hover { background: #a87a2c; }
+    .btn-success { background: #10b981; color: white; border: none; cursor: pointer; padding: 10px 20px; border-radius: 40px; }
+    .btn-gold { background: #c9933a; color: white; border: none; cursor: pointer; padding: 10px 20px; border-radius: 40px; }
+    .btn-outline { background: transparent; border: 1px solid #e2e8f0; cursor: pointer; padding: 10px 20px; border-radius: 40px; }
+    .btn-danger { background: #ef4444; color: white; border: none; cursor: pointer; padding: 10px 20px; border-radius: 40px; }
+    .btn-sm { padding: 4px 10px; font-size: 12px; }
+    .total-cost-box { background: #fef3c7; padding: 12px; border-radius: 12px; margin-top: 15px; display: flex; justify-content: space-between; font-weight: 600; }
+    .grand-total-box { background: #c9933a; color: white; padding: 12px; border-radius: 12px; margin-top: 15px; display: flex; justify-content: space-between; font-weight: 700; font-size: 16px; }
+    .notif-btn { position: relative; background: #f1f5f9; border: none; border-radius: 40px; padding: 8px 12px; cursor: pointer; font-size: 18px; }
+    .notif-btn:hover { background: #e2e8f0; }
+    .notif-btn .badge { position: absolute; top: -5px; right: -5px; background: #ef4444; color: white; border-radius: 50%; font-size: 10px; padding: 2px 6px; min-width: 18px; text-align: center; display: none; }
+    .notification-panel { position: absolute; top: 60px; right: 20px; width: 350px; background: white; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); z-index: 1000; display: none; }
+    .notification-panel.show { display: block; }
+    .notification-header { padding: 14px 16px; border-bottom: 1px solid #e2e8f0; font-weight: 700; display: flex; justify-content: space-between; background: #f8fafc; }
+    .notification-list { max-height: 400px; overflow-y: auto; }
+    .notification-item { padding: 14px 16px; border-bottom: 1px solid #eef2f6; cursor: pointer; }
+    .empty-notifications { padding: 40px 20px; text-align: center; color: #94a3b8; }
+    #changePwOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10000; display: none; }
+    #changePwOverlay.show { display: block; }
+    #changePwModal { position: fixed; top: 0; right: 0; width: 100%; max-width: 450px; height: 100vh; background: white; z-index: 10001; display: none; overflow-y: auto; transform: translateX(100%); transition: transform 0.3s; }
+    #changePwModal.show { display: block; transform: translateX(0); }
+    .change-pw-header { padding: 20px 28px; background: #1e2a3e; color: white; display: flex; justify-content: space-between; align-items: center; }
+    .change-pw-header button { background: none; border: none; color: white; font-size: 24px; cursor: pointer; }
+    .change-pw-body { padding: 28px; }
+    .btn-pw-success { background: #10b981; color: white; border: none; padding: 12px; border-radius: 40px; width: 100%; cursor: pointer; font-weight: 700; }
+    @media (max-width: 768px) { .maintenance-container { flex-direction: column; } .maintenance-left { width: 100%; order: 2; } .maintenance-right { width: 100%; order: 1; } .form-group-row { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+
+<div class="overlay" id="overlay-main"></div>
+
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-top">
+    <a class="sidebar-logo" href="/">
+      <div class="logo-icon">🏨</div>
+      <div class="logo-text"><span>Steps</span><span>Premium Suite</span></div>
+    </a>
+    <button class="sidebar-close-btn" id="sidebar-close-btn">✕</button>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Core Operations</div>
+    <a href="/dashboard" class="nav-item">📊 Stay View</a>
+    <a href="/reservations" class="nav-item">📅 Reservations</a>
+    <a href="/housekeeping" class="nav-item">🧹 Housekeeping</a>
+    <div class="nav-section-label">Property</div>
+    <a href="/apartments" class="nav-item">🏠 Apartments View</a>
+    <a href="/apartments-list" class="nav-item">📋 Apartments List</a>
+    <div class="nav-section-label">Store & Procurement</div>
+    <a href="/store-main" class="nav-item">🏬 Main Store</a>
+    <a href="/store-outlets" class="nav-item">🏪 Outlets Store</a>
+    <a href="/purchase-orders" class="nav-item">📦 Purchase Orders</a>
+    <a href="/goods-receipt" class="nav-item">✅ Goods Receipt</a>
+    <div class="nav-section-label">Maintenance</div>
+    <a href="/maintenance" class="nav-item active">🔧 Maintenance</a>
+    <div class="nav-section-label">Reports</div>
+    <a href="/reports" class="nav-item">📊 Reservations Report</a>
+    <a href="/purchase-orders-reports" class="nav-item">📄 Purchase Orders Report</a>
+    <a href="/goods-receipt-reports" class="nav-item">📋 Goods Receipt Report</a>
+    <a href="/store-inventory-reports" class="nav-item">📦 Store Inventory Report</a>
+    <div class="nav-section-label">Guest Management</div>
+    <a href="/guest-database" class="nav-item">👥 Guest Database</a>
+    <div class="nav-section-label">Administration</div>
+    <a href="/users" class="nav-item">👥 User Management</a>
+  </nav>
+  <div class="sidebar-footer"><small>Steps PMS v1.0 · Dar es Salaam</small></div>
+</aside>
+
+<nav class="navbar">
+  <div class="navbar-left">
+    <button class="hamburger" id="hamburger-btn"><span class="hb-bar"></span><span class="hb-bar"></span><span class="hb-bar"></span></button>
+    <div><div class="page-title">Maintenance Management</div><div class="page-subtitle">Track repairs and maintenance tasks</div></div>
+  </div>
+  <div class="navbar-right">
+    <button class="notif-btn" id="notif-btn">🔔<span class="badge" id="notif-badge">0</span></button>
+    <div class="user-dropdown">
+      <div class="user-pill" id="userPill">
+        <div class="user-avatar" id="userAvatar">U</div>
+        <div class="user-info"><span id="userName">Loading...</span><span id="userRole">Loading...</span></div>
+        <i class="fas fa-chevron-down"></i>
+      </div>
+      <div class="dropdown-menu" id="dropdownMenu">
+        <button id="openChangePwBtn"><i class="fas fa-key"></i> Change Password</button>
+        <a href="/users" class="dropdown-item"><i class="fas fa-users"></i> User Management</a>
+        <hr><button onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<main class="main-content">
+  <div class="maintenance-container">
+    <div class="maintenance-left">
+      <div class="filter-section">
+        <h4>🔍 Filter Tasks</h4>
+        <div class="filter-row">
+          <input type="date" id="filter-from">
+          <input type="date" id="filter-to">
+        </div>
+        <div class="filter-row">
+          <select id="filter-item-type"><option value="">All Item Types</option><option value="Electrical">⚡ Electrical</option><option value="Plumbing">🚰 Plumbing</option><option value="HVAC">❄️ HVAC</option><option value="Furniture">🪑 Furniture</option><option value="Appliance">📺 Appliance</option><option value="Building">🏗️ Building</option><option value="Other">🔧 Other</option></select>
+          <select id="filter-status"><option value="">All Status</option><option value="pending">⏳ Pending</option><option value="completed">✅ Completed</option></select>
+        </div>
+        <div class="filter-actions"><button class="btn btn-outline btn-sm" onclick="applyFilters()">Apply Filters</button><button class="btn btn-outline btn-sm" onclick="resetFilters()">Reset</button></div>
+      </div>
+      <div style="margin-bottom: 15px; display: flex; justify-content: space-between;"><strong>Maintenance Tasks</strong><button class="btn btn-outline btn-sm" onclick="loadTasks()">🔄 Refresh</button></div>
+      <div id="tasks-list" class="tasks-list"><div style="text-align: center; padding: 20px;">Loading tasks...</div></div>
+    </div>
+
+    <div class="maintenance-right">
+      <div id="form-section" class="form-section">
+        <div class="form-header"><h3>➕ New Maintenance Task</h3><button class="btn btn-outline btn-sm" onclick="cancelForm()">Cancel</button></div>
+        <form id="maintenance-form">
+          <div class="form-group-row">
+            <div class="form-group"><label>🔢 Task Number</label><input type="text" id="task-number" class="form-control" readonly></div>
+            <div class="form-group"><label>👨‍🔧 Technician Name</label><input type="text" id="technician-name" class="form-control" required></div>
+          </div>
+          <div class="form-group-row">
+            <div class="form-group"><label>🔧 Item Type</label><select id="item-type" class="form-control" required><option value="">Select Item Type</option><option value="Electrical">⚡ Electrical</option><option value="Plumbing">🚰 Plumbing</option><option value="HVAC">❄️ HVAC</option><option value="Furniture">🪑 Furniture</option><option value="Appliance">📺 Appliance</option><option value="Building">🏗️ Building</option><option value="Other">🔧 Other</option></select></div>
+            <div class="form-group"><label>📅 Date</label><input type="date" id="task-date" class="form-control" required></div>
+          </div>
+          <div class="form-group"><label>📝 Description of Repair</label><textarea id="description" class="form-control" rows="2" required></textarea></div>
+          <div class="form-group"><label>💰 Labour Cost (TSh)</label><input type="number" id="labour-cost" class="form-control" value="0" min="0" step="1000" oninput="updateGrandTotal()"></div>
+          <div class="tools-section">
+            <div class="tools-header"><strong>🔧 Additional Tools & Parts</strong><button type="button" class="btn-add-tool" onclick="addToolField()">+ Add Tool</button></div>
+            <div id="tools-list"></div>
+            <div class="total-cost-box"><span>💰 Total Tools Cost:</span><span id="total-tools-cost">TSh 0</span></div>
+          </div>
+          <div class="grand-total-box"><span>💵 GRAND TOTAL (Labour + Tools):</span><span id="grand-total">TSh 0</span></div>
+          <div class="form-group"><label>📝 Remarks / Notes</label><textarea id="remarks" class="form-control" rows="2"></textarea></div>
+          <hr class="divider">
+          <div style="display: flex; gap: 10px;"><button type="submit" class="btn btn-success" style="flex:1">💾 Save Task</button><button type="button" class="btn btn-outline" onclick="cancelForm()" style="flex:1">Cancel</button></div>
+        </form>
+      </div>
+      
+      <div id="empty-state"><div style="text-align: center; padding: 60px 20px;"><div style="font-size: 64px;">🔧</div><h3>No Task Selected</h3><p>Click "New Maintenance Task" to create a task</p><button class="btn btn-gold" onclick="showForm()">➕ New Maintenance Task</button></div></div>
+      
+      <div id="task-details-view" style="display: none;"><div id="task-details-content"></div></div>
+    </div>
+  </div>
+  
+  <div class="notification-panel" id="notification-panel">
+    <div class="notification-header"><span>📢 Notifications</span><div><button id="mark-all-read-btn">Mark all read</button><button id="close-notif-panel">✕</button></div></div>
+    <div class="notification-list" id="notification-list"><div class="empty-notifications">📭 No new notifications</div></div>
+  </div>
+</main>
+
+<div class="toast-container" id="toast-container"></div>
+<div id="changePwOverlay"></div>
+<div id="changePwModal">
+  <div class="change-pw-header"><h3>🔐 Change Password</h3><button id="closeChangePwBtn">✕</button></div>
+  <div class="change-pw-body">
+    <form id="change-password-form">
+      <div class="form-group"><label>Current Password</label><input type="password" id="current-password" class="form-control" required></div>
+      <div class="form-group"><label>New Password (min 6 characters)</label><input type="password" id="new-password" class="form-control" required></div>
+      <div class="form-group"><label>Confirm New Password</label><input type="password" id="confirm-password" class="form-control" required></div>
+      <hr class="divider"><button type="submit" class="btn-pw-success">✅ Update Password</button>
+      <button type="button" id="cancelChangePwBtn" style="background:transparent;border:1px solid #e2e8f0;padding:12px;border-radius:40px;width:100%;margin-top:10px;">Cancel</button>
+    </form>
+  </div>
+</div>
+
+<script src="../js/api.js"></script>
+<script src="../js/utils.js"></script>
+<script>
+let tasks = [], toolsList = [], currentEditId = null, currentViewTask = null, notifications = [];
+
+function addToolField() {
+  toolsList.push({ id: Date.now(), name: '', cost: 0 });
+  renderToolsList();
+}
+function removeTool(toolId) { toolsList = toolsList.filter(t => t.id !== toolId); renderToolsList(); updateGrandTotal(); }
+function updateToolName(toolId, name) { let tool = toolsList.find(t => t.id === toolId); if (tool) tool.name = name; }
+function updateToolCost(toolId, cost) { let tool = toolsList.find(t => t.id === toolId); if (tool) { tool.cost = parseInt(cost) || 0; renderToolsList(); updateGrandTotal(); } }
+function updateTotalToolsCost() { let total = toolsList.reduce((s, t) => s + (t.cost || 0), 0); document.getElementById('total-tools-cost').innerHTML = 'TSh ' + total.toLocaleString(); return total; }
+function updateGrandTotal() { let labour = parseInt(document.getElementById('labour-cost')?.value) || 0; let toolsTotal = toolsList.reduce((s, t) => s + (t.cost || 0), 0); let grand = labour + toolsTotal; document.getElementById('grand-total').innerHTML = 'TSh ' + grand.toLocaleString(); return grand; }
+function renderToolsList() {
+  let container = document.getElementById('tools-list');
+  if (!container) return;
+  if (toolsList.length === 0) { container.innerHTML = '<div style="text-align:center;padding:10px;color:#94a3b8;">No additional tools added.</div>'; updateTotalToolsCost(); return; }
+  container.innerHTML = toolsList.map(tool => `<div class="tool-item"><input type="text" placeholder="Tool/Part name" value="${escapeHtml(tool.name)}" onchange="updateToolName(${tool.id}, this.value)" style="flex:2"><input type="number" placeholder="Cost" value="${tool.cost}" onchange="updateToolCost(${tool.id}, this.value)" class="tool-cost"><button onclick="removeTool(${tool.id})">🗑</button></div>`).join('');
+  updateTotalToolsCost();
+}
+
+function showForm() {
+  document.getElementById('form-section').classList.add('active');
+  document.getElementById('empty-state').style.display = 'none';
+  document.getElementById('task-details-view').style.display = 'none';
+  currentEditId = null;
+  toolsList = [];
+  renderToolsList();
+  document.getElementById('task-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('task-number').value = 'MT-' + Date.now();
+  document.getElementById('technician-name').value = '';
+  document.getElementById('item-type').value = '';
+  document.getElementById('description').value = '';
+  document.getElementById('labour-cost').value = '0';
+  document.getElementById('remarks').value = '';
+  updateGrandTotal();
+  document.querySelector('#form-section .form-header h3').textContent = '➕ New Maintenance Task';
+}
+function cancelForm() {
+  document.getElementById('form-section').classList.remove('active');
+  document.getElementById('empty-state').style.display = 'block';
+  document.getElementById('task-details-view').style.display = 'none';
+  toolsList = []; currentEditId = null;
+}
+
+document.getElementById('maintenance-form')?.addEventListener('submit', async function(e) {
+  e.preventDefault();
+  let toolsTotal = toolsList.reduce((s, t) => s + (t.cost || 0), 0);
+  let labourCost = parseInt(document.getElementById('labour-cost').value) || 0;
+  let totalCost = labourCost + toolsTotal;
+  let taskData = {
+    taskNumber: document.getElementById('task-number').value,
+    technicianName: document.getElementById('technician-name').value,
+    itemType: document.getElementById('item-type').value,
+    description: document.getElementById('description').value,
+    labourCost: labourCost,
+    tools: toolsList,
+    totalToolsCost: toolsTotal,
+    totalCost: totalCost,
+    date: document.getElementById('task-date').value,
+    remarks: document.getElementById('remarks').value,
+    status: 'pending'
+  };
+  if (!taskData.technicianName || !taskData.itemType || !taskData.description) { showToast('Please fill all required fields', 'error'); return; }
+  try {
+    if (currentEditId) { await apiPut(`/maintenance/${currentEditId}`, taskData); showToast('Task updated!', 'success'); }
+    else { await apiPost('/maintenance', taskData); showToast('Task saved!', 'success'); }
+    cancelForm(); loadTasks();
+  } catch(err) { showToast('Failed to save: ' + err.message, 'error'); }
+});
+
+async function loadTasks() {
+  try {
+    let url = '/maintenance';
+    let from = document.getElementById('filter-from')?.value, to = document.getElementById('filter-to')?.value, type = document.getElementById('filter-item-type')?.value, status = document.getElementById('filter-status')?.value;
+    let params = new URLSearchParams();
+    if (from) params.append('from', from); if (to) params.append('to', to); if (type) params.append('itemType', type); if (status) params.append('status', status);
+    if (params.toString()) url += '?' + params.toString();
+    tasks = await apiGet(url);
+    renderTasksList();
+  } catch(err) { document.getElementById('tasks-list').innerHTML = '<div style="text-align:center;padding:20px;color:#ef4444;">Error loading tasks</div>'; }
+}
+function applyFilters() { loadTasks(); }
+function resetFilters() { document.getElementById('filter-from').value = ''; document.getElementById('filter-to').value = ''; document.getElementById('filter-item-type').value = ''; document.getElementById('filter-status').value = ''; loadTasks(); }
+function renderTasksList() {
+  let container = document.getElementById('tasks-list');
+  if (!container) return;
+  if (tasks.length === 0) { container.innerHTML = '<div style="text-align:center;padding:20px;">📭 No maintenance tasks found</div>'; return; }
+  let html = '';
+  for (let task of tasks) {
+    let statusClass = task.status === 'completed' ? 'completed' : 'pending';
+    let statusText = task.status === 'completed' ? 'Completed' : 'Pending';
+    let statusColor = task.status === 'completed' ? 'status-completed' : 'status-pending';
+    let dateStr = task.task_date ? new Date(task.task_date).toLocaleDateString() : 'No date';
+    let itemType = task.item_type || task.itemType || 'Other';
+    let taskNumber = task.task_number || task.taskNumber || 'MT-' + task.id;
+    html += `<div class="task-item ${statusClass}" onclick="viewTaskDetails(${task.id})"><div class="task-number">#${escapeHtml(taskNumber)}</div><div class="task-type">🔧 ${escapeHtml(itemType)}</div><div class="task-status-badge ${statusColor}">${statusText}</div><div class="task-date">📅 ${dateStr}</div></div>`;
+  }
+  container.innerHTML = html;
+}
+
+async function viewTaskDetails(id) {
+  try {
+    let task = await apiGet(`/maintenance/${id}`);
+    currentViewTask = task;
+    let labour = task.labour_cost || 0;
+    let toolsTotal = task.total_tools_cost || 0;
+    let grand = task.total_cost || (labour + toolsTotal);
+    let toolsHtml = '<div class="tools-section">No additional tools recorded</div>';
+    if (task.tools && task.tools.length > 0) {
+      toolsHtml = `<div class="tools-section"><strong>🔧 Tools & Parts Used:</strong><ul>${task.tools.map(t => `<li>${escapeHtml(t.name)} - ${fmtTSH(t.cost || 0)}</li>`).join('')}</ul><div class="total-cost-box"><span>Tools Total:</span><span>${fmtTSH(toolsTotal)}</span></div></div>`;
+    }
+    document.getElementById('task-details-content').innerHTML = `
+      <div class="form-header"><h3>🔧 Task Details</h3><button class="btn btn-outline btn-sm" onclick="closeTaskDetails()">✕ Close</button></div>
+      <div style="background:#f5f5f5;padding:15px;border-radius:12px;">
+        <p><strong>Task Number:</strong> #${escapeHtml(task.task_number || task.taskNumber)}</p>
+        <p><strong>Status:</strong> <select id="task-status-select" style="padding:5px 10px;border-radius:20px;border:1px solid #e2e8f0;" onchange="updateTaskStatus(${task.id}, this.value)"><option value="pending" ${task.status==='pending'?'selected':''}>⏳ Pending</option><option value="completed" ${task.status==='completed'?'selected':''}>✅ Completed</option></select></p>
+        <p><strong>Technician:</strong> ${escapeHtml(task.technician_name || task.technicianName)}</p>
+        <p><strong>Item Type:</strong> ${escapeHtml(task.item_type || task.itemType)}</p>
+        <p><strong>Date:</strong> ${task.task_date ? new Date(task.task_date).toLocaleDateString() : 'N/A'}</p>
+        <p><strong>Description:</strong><br>${escapeHtml(task.description)}</p>
+        <p><strong>Labour Cost:</strong> ${fmtTSH(labour)}</p>
+        ${toolsHtml}
+        <p><strong>Remarks:</strong> ${escapeHtml(task.remarks) || 'No remarks'}</p>
+        <div class="grand-total-box"><span><strong>GRAND TOTAL:</strong></span><span><strong>${fmtTSH(grand)}</strong></span></div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:20px;"><button class="btn btn-gold" onclick="openEditTask(${task.id})" style="flex:1">✏️ Edit</button><button class="btn btn-danger" onclick="deleteTask(${task.id})" style="flex:1">🗑 Delete</button><button class="btn btn-outline" onclick="closeTaskDetails()" style="flex:1">Close</button></div>
+    `;
+    document.getElementById('form-section').classList.remove('active');
+    document.getElementById('empty-state').style.display = 'none';
+    document.getElementById('task-details-view').style.display = 'block';
+  } catch(err) { showToast('Failed to load details', 'error'); }
+}
+function closeTaskDetails() { document.getElementById('task-details-view').style.display = 'none'; document.getElementById('empty-state').style.display = 'block'; currentViewTask = null; }
+async function openEditTask(id) {
+  try {
+    let task = await apiGet(`/maintenance/${id}`);
+    currentEditId = id;
+    document.getElementById('task-number').value = task.task_number || task.taskNumber || '';
+    document.getElementById('technician-name').value = task.technician_name || task.technicianName || '';
+    document.getElementById('item-type').value = task.item_type || task.itemType || '';
+    document.getElementById('description').value = task.description || '';
+    document.getElementById('labour-cost').value = task.labour_cost || 0;
+    document.getElementById('task-date').value = task.task_date || new Date().toISOString().split('T')[0];
+    document.getElementById('remarks').value = task.remarks || '';
+    toolsList = (task.tools && Array.isArray(task.tools)) ? task.tools : [];
+    renderToolsList();
+    updateGrandTotal();
+    closeTaskDetails();
+    document.getElementById('form-section').classList.add('active');
+    document.getElementById('empty-state').style.display = 'none';
+    document.getElementById('task-details-view').style.display = 'none';
+    document.querySelector('#form-section .form-header h3').textContent = '✏️ Edit Maintenance Task';
+  } catch(err) { showToast('Failed to load for edit', 'error'); }
+}
+async function updateTaskStatus(id, status) { try { await apiPut(`/maintenance/${id}/status`, { status: status }); showToast(`Task marked as ${status}`, 'success'); loadTasks(); if (currentViewTask && currentViewTask.id === id) viewTaskDetails(id); } catch(err) { showToast('Failed to update status', 'error'); } }
+async function deleteTask(id) { if (!confirm('Delete this task?')) return; try { await apiDelete(`/maintenance/${id}`); showToast('Task deleted', 'success'); loadTasks(); if (currentViewTask && currentViewTask.id === id) closeTaskDetails(); } catch(err) { showToast('Failed to delete', 'error'); } }
+
+function getCurrentUser() { let str = sessionStorage.getItem('pms_user'); if (!str) return null; try { return JSON.parse(str); } catch(e) { return null; } }
+function logout() { sessionStorage.removeItem('pms_user'); window.location.href = '/'; }
+function openChangePasswordModal() { document.getElementById('changePwOverlay').classList.add('show'); document.getElementById('changePwModal').classList.add('show'); document.body.style.overflow = 'hidden'; if (dropdownMenu) dropdownMenu.classList.remove('show'); if (userPill) userPill.classList.remove('active'); }
+function closeChangePasswordModal() { document.getElementById('changePwOverlay').classList.remove('show'); document.getElementById('changePwModal').classList.remove('show'); document.body.style.overflow = ''; document.getElementById('change-password-form').reset(); }
+
+document.addEventListener('DOMContentLoaded', function() {
+  let user = getCurrentUser();
+  if (!user) { window.location.href = '/'; return; }
+  document.getElementById('userName').innerText = user.fullName || user.username;
+  document.getElementById('userRole').innerText = user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'User';
+  document.getElementById('userAvatar').innerText = (user.fullName || user.username || 'U').charAt(0).toUpperCase();
+  loadTasks();
+  setInterval(() => loadTasks(), 60000);
+  document.getElementById('openChangePwBtn')?.addEventListener('click', openChangePasswordModal);
+  document.getElementById('closeChangePwBtn')?.addEventListener('click', closeChangePasswordModal);
+  document.getElementById('cancelChangePwBtn')?.addEventListener('click', closeChangePasswordModal);
+  document.getElementById('changePwOverlay')?.addEventListener('click', closeChangePasswordModal);
+  document.getElementById('change-password-form')?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    let current = document.getElementById('current-password').value;
+    let newPw = document.getElementById('new-password').value;
+    let confirm = document.getElementById('confirm-password').value;
+    if (newPw !== confirm) { showToast('New passwords do not match', 'error'); return; }
+    if (newPw.length < 6) { showToast('Password must be at least 6 characters', 'error'); return; }
+    try {
+      await apiPost('/auth/change-password', { userId: user.id, oldPassword: current, newPassword: newPw });
+      showToast('Password changed! Please login again.', 'success');
+      setTimeout(() => logout(), 1500);
+    } catch(err) { showToast('Failed to change password', 'error'); }
+  });
+});
+
+let hamburgerBtn = document.getElementById('hamburger-btn'), sidebar = document.getElementById('sidebar'), overlayMain = document.getElementById('overlay-main'), sidebarClose = document.getElementById('sidebar-close-btn'), userPill = document.getElementById('userPill'), dropdownMenu = document.getElementById('dropdownMenu');
+function openSidebar() { sidebar.classList.add('open'); overlayMain.classList.add('open'); if (hamburgerBtn) hamburgerBtn.classList.add('active'); }
+function closeSidebar() { sidebar.classList.remove('open'); overlayMain.classList.remove('open'); if (hamburgerBtn) hamburgerBtn.classList.remove('active'); }
+if (hamburgerBtn) hamburgerBtn.addEventListener('click', () => sidebar.classList.contains('open') ? closeSidebar() : openSidebar());
+if (sidebarClose) sidebarClose.addEventListener('click', closeSidebar);
+if (overlayMain) overlayMain.addEventListener('click', closeSidebar);
+if (userPill) { userPill.addEventListener('click', (e) => { e.stopPropagation(); dropdownMenu.classList.toggle('show'); userPill.classList.toggle('active'); }); document.addEventListener('click', () => { dropdownMenu.classList.remove('show'); if (userPill) userPill.classList.remove('active'); }); }
+
+function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, function(m) { if (m === '&') return '&amp;'; if (m === '<') return '&lt;'; if (m === '>') return '&gt;'; return m; }); }
+function fmtTSH(v) { return 'TSh ' + (v || 0).toLocaleString(); }
+function showToast(msg, type) { let toast = document.getElementById('toast-container'); let bg = type === 'error' ? '#ef4444' : '#10b981'; toast.innerHTML = '<div style="background:' + bg + ';color:white;padding:12px 20px;border-radius:40px;">' + msg + '</div>'; setTimeout(() => toast.innerHTML = '', 3000); }
+
+window.showForm = showForm; window.cancelForm = cancelForm; window.loadTasks = loadTasks; window.applyFilters = applyFilters; window.resetFilters = resetFilters;
+window.viewTaskDetails = viewTaskDetails; window.closeTaskDetails = closeTaskDetails; window.openEditTask = openEditTask;
+window.updateTaskStatus = updateTaskStatus; window.deleteTask = deleteTask; window.addToolField = addToolField;
+window.removeTool = removeTool; window.updateToolName = updateToolName; window.updateToolCost = updateToolCost;
+window.logout = logout; window.openChangePasswordModal = openChangePasswordModal; window.closeChangePasswordModal = closeChangePasswordModal;
+</script>
+</body>
+</html>
