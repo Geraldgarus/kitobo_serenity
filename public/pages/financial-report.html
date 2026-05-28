@@ -188,7 +188,6 @@
       margin-top: 24px;
     }
     
-    /* Change Password Modal - Slide from Right */
     #changePwOverlay {
       position: fixed;
       top: 0;
@@ -199,9 +198,7 @@
       z-index: 10000;
       display: none;
     }
-    #changePwOverlay.show {
-      display: block;
-    }
+    #changePwOverlay.show { display: block; }
     #changePwModal {
       position: fixed;
       top: 0;
@@ -212,15 +209,12 @@
       background: white;
       z-index: 10001;
       display: none;
-      box-shadow: -5px 0 30px rgba(0, 0, 0, 0.2);
+      box-shadow: -5px 0 30px rgba(0,0,0,0.2);
       overflow-y: auto;
       transform: translateX(100%);
       transition: transform 0.3s ease-in-out;
     }
-    #changePwModal.show {
-      display: block;
-      transform: translateX(0);
-    }
+    #changePwModal.show { display: block; transform: translateX(0); }
     .change-pw-header {
       padding: 20px 28px;
       background: #1e2a3e;
@@ -231,10 +225,6 @@
       position: sticky;
       top: 0;
     }
-    .change-pw-header h3 {
-      margin: 0;
-      font-size: 18px;
-    }
     .change-pw-header button {
       background: none;
       border: none;
@@ -242,9 +232,7 @@
       font-size: 24px;
       cursor: pointer;
     }
-    .change-pw-body {
-      padding: 28px;
-    }
+    .change-pw-body { padding: 28px; }
     .btn-pw-success {
       background: #10b981;
       color: white;
@@ -256,7 +244,6 @@
       font-weight: 700;
     }
     
-    /* Notification Styles */
     .notif-btn {
       position: relative;
       background: #f1f5f9;
@@ -265,12 +252,8 @@
       padding: 8px 12px;
       cursor: pointer;
       font-size: 18px;
-      transition: all 0.2s;
     }
-    .notif-btn:hover {
-      background: #e2e8f0;
-      transform: scale(1.05);
-    }
+    .notif-btn:hover { background: #e2e8f0; }
     .notif-btn .badge {
       position: absolute;
       top: -5px;
@@ -279,188 +262,54 @@
       color: white;
       border-radius: 50%;
       font-size: 10px;
-      font-weight: 600;
       padding: 2px 6px;
       min-width: 18px;
       text-align: center;
       display: none;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
     }
     .notification-panel {
       position: absolute;
       top: 60px;
       right: 20px;
       width: 350px;
-      max-width: calc(100vw - 40px);
       background: white;
       border-radius: 16px;
       box-shadow: 0 10px 40px rgba(0,0,0,0.15);
       z-index: 1000;
       display: none;
-      overflow: hidden;
-      border: 1px solid #e2e8f0;
     }
-    .notification-panel.show {
-      display: block;
-      animation: slideDown 0.2s ease;
-    }
-    @keyframes slideDown {
-      from { opacity: 0; transform: translateY(-10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
+    .notification-panel.show { display: block; }
     .notification-header {
       padding: 14px 16px;
       border-bottom: 1px solid #e2e8f0;
       font-weight: 700;
-      font-size: 14px;
-      color: #1e293b;
       display: flex;
       justify-content: space-between;
-      align-items: center;
       background: #f8fafc;
     }
-    .notification-header button {
-      background: none;
-      border: none;
-      font-size: 16px;
-      cursor: pointer;
-      color: #64748b;
-      padding: 4px;
-    }
-    .notification-list {
-      max-height: 400px;
-      overflow-y: auto;
-    }
-    .notification-item {
-      padding: 14px 16px;
-      border-bottom: 1px solid #eef2f6;
-      transition: background 0.2s;
-      cursor: pointer;
-    }
-    .notification-item:hover {
-      background: #f8fafc;
-    }
-    .notification-item.unread {
-      background: #fef3c7;
-      border-left: 3px solid #f59e0b;
-    }
-    .notification-message {
-      font-size: 13px;
-      color: #1e293b;
-      margin-bottom: 4px;
-      line-height: 1.4;
-    }
-    .notification-time {
-      font-size: 10px;
-      color: #94a3b8;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .empty-notifications {
-      padding: 40px 20px;
-      text-align: center;
-      color: #94a3b8;
-    }
-    .mark-all-read {
-      background: none;
-      border: none;
-      color: #c9933a;
-      font-size: 12px;
-      cursor: pointer;
-      font-weight: 500;
-    }
-    
-    @media (max-width: 992px) {
-      .main-content {
-        margin-left: 0;
-        padding: 16px;
-      }
-    }
+    .notification-list { max-height: 400px; overflow-y: auto; }
+    .notification-item { padding: 14px 16px; border-bottom: 1px solid #eef2f6; cursor: pointer; }
+    .notification-item.unread { background: #fef3c7; border-left: 3px solid #f59e0b; }
+    .empty-notifications { padding: 40px 20px; text-align: center; color: #94a3b8; }
     
     @media (max-width: 768px) {
-      .summary-cards {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 12px;
-      }
-      .report-tables {
-        grid-template-columns: 1fr;
-      }
-      .filter-bar {
-        flex-direction: column;
-      }
-      .filter-group {
-        width: 100%;
-      }
-      .summary-card .amount {
-        font-size: 18px;
-      }
-      .summary-card h4 {
-        font-size: 10px;
-      }
-      .summary-card {
-        padding: 12px;
-      }
-      .report-table {
-        overflow-x: auto;
-      }
-      table {
-        min-width: 500px;
-      }
-      .action-buttons {
-        flex-direction: column;
-      }
-      .action-buttons button {
-        width: 100%;
-      }
-      .notification-panel {
-        width: calc(100vw - 30px);
-        right: 15px;
-        top: 55px;
-      }
-      #changePwModal {
-        max-width: 100%;
-        width: 100%;
-      }
-    }
-    
-    @media (max-width: 480px) {
-      .report-container {
-        padding: 16px;
-      }
-      .filter-bar {
-        padding: 15px;
-      }
-      .btn-gold, .btn-outline, .btn-print {
-        padding: 8px 16px;
-        font-size: 13px;
-      }
-      .change-pw-body {
-        padding: 20px;
-      }
-      .change-pw-header {
-        padding: 16px 20px;
-      }
+      .summary-cards { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+      .report-tables { grid-template-columns: 1fr; }
+      .filter-bar { flex-direction: column; }
+      .filter-group { width: 100%; }
+      .report-table { overflow-x: auto; }
+      table { min-width: 500px; }
+      .action-buttons { flex-direction: column; }
+      .notification-panel { width: calc(100vw - 30px); right: 15px; top: 55px; }
+      #changePwModal { max-width: 100%; width: 100%; }
     }
     
     @media print {
       .sidebar, .navbar, .filter-bar, .action-buttons, .notif-btn, .user-dropdown, .notification-panel {
         display: none !important;
       }
-      .main-content {
-        margin: 0 !important;
-        padding: 0 !important;
-      }
-      .report-container {
-        box-shadow: none;
-        padding: 0;
-      }
-      .summary-card {
-        break-inside: avoid;
-      }
-      .report-tables {
-        break-inside: avoid;
-      }
+      .main-content { margin: 0 !important; padding: 0 !important; }
+      .report-container { box-shadow: none; padding: 0; }
     }
   </style>
 </head>
@@ -472,41 +321,85 @@
   <div class="sidebar-top">
     <a class="sidebar-logo" href="/">
       <div class="logo-icon">🏨</div>
-      <div class="logo-text"><span>Steps</span><span>Premium Suite</span></div>
+      <div class="logo-text">
+        <span>Steps</span>
+        <span>Premier Suites</span>
+      </div>
     </a>
     <button class="sidebar-close-btn" id="sidebar-close-btn">✕</button>
   </div>
+  
   <nav class="sidebar-nav">
+    <!-- ============================================================ -->
+    <!-- CORE OPERATIONS -->
+    <!-- ============================================================ -->
     <div class="nav-section-label">Core Operations</div>
     <a href="/dashboard" class="nav-item">📊 Stay View</a>
     <a href="/reservations" class="nav-item">📅 Reservations</a>
     <a href="/housekeeping" class="nav-item">🧹 Housekeeping</a>
+    
+    <!-- ============================================================ -->
+    <!-- PROPERTY -->
+    <!-- ============================================================ -->
     <div class="nav-section-label">Property</div>
     <a href="/apartments" class="nav-item">🏠 Apartments View</a>
     <a href="/apartments-list" class="nav-item">📋 Apartments List</a>
+    
+    <!-- ============================================================ -->
+    <!-- STORE & PROCUREMENT -->
+    <!-- ============================================================ -->
     <div class="nav-section-label">Store & Procurement</div>
     <a href="/store-main" class="nav-item">🏬 Main Store</a>
     <a href="/store-outlets" class="nav-item">🏪 Outlets Store</a>
     <a href="/purchase-orders" class="nav-item">📦 Purchase Orders</a>
     <a href="/goods-receipt" class="nav-item">✅ Goods Receipt</a>
+    
+    <!-- ============================================================ -->
+    <!-- MAINTENANCE -->
+    <!-- ============================================================ -->
     <div class="nav-section-label">Maintenance</div>
     <a href="/maintenance" class="nav-item">🔧 Maintenance</a>
-    <div class="nav-section-label">Daily Activities</div>
-    <a href="/daily-activities" class="nav-item">📋 Daily Activities</a>
-    <div class="nav-section-label">Financial</div>
-    <a href="/expenditures" class="nav-item">💰 Expenditures</a>
-    <a href="/financial-report" class="nav-item active">📊 Financial Report</a>
+    
+    <!-- ============================================================ -->
+    <!-- STAFF ACTIVITIES -->
+    <!-- ============================================================ -->
+    <div class="nav-section-label">Staff Activities</div>
+    <a href="/staff-activities" class="nav-item">📋 Staff Activities</a>
+    
+    <!-- ============================================================ -->
+    <!-- REPORTS (ALL REPORTS GROUPED TOGETHER) -->
+    <!-- ============================================================ -->
     <div class="nav-section-label">Reports</div>
     <a href="/reports" class="nav-item">📊 Reservations Report</a>
+    <a href="/maintenance-report" class="nav-item">🔧 Maintenance Report</a>
+    <a href="/staff-activities-report" class="nav-item">📋 Staff Activity Report</a>
     <a href="/purchase-orders-reports" class="nav-item">📄 Purchase Orders Report</a>
     <a href="/goods-receipt-reports" class="nav-item">📋 Goods Receipt Report</a>
     <a href="/store-inventory-reports" class="nav-item">📦 Store Inventory Report</a>
+    <a href="/financial-report" class="nav-item active">💰 Financial Report</a>
+    
+    <!-- ============================================================ -->
+    <!-- FINANCIAL -->
+    <!-- ============================================================ -->
+    <div class="nav-section-label">Financial</div>
+    <a href="/expenditures" class="nav-item">💸 Expenditures</a>
+    
+    <!-- ============================================================ -->
+    <!-- GUEST MANAGEMENT -->
+    <!-- ============================================================ -->
     <div class="nav-section-label">Guest Management</div>
     <a href="/guest-database" class="nav-item">👥 Guest Database</a>
+    
+    <!-- ============================================================ -->
+    <!-- ADMINISTRATION -->
+    <!-- ============================================================ -->
     <div class="nav-section-label">Administration</div>
     <a href="/users" class="nav-item">👥 User Management</a>
   </nav>
-  <div class="sidebar-footer"><small>Steps PMS v1.0 · Dar es Salaam</small></div>
+  
+  <div class="sidebar-footer">
+    <small>Steps PMS v1.0 · Dar es Salaam</small>
+  </div>
 </aside>
 
 <nav class="navbar">
@@ -533,7 +426,6 @@
 
 <main class="main-content">
   <div class="report-container">
-    <!-- Filter Bar -->
     <div class="filter-bar">
       <div class="filter-group">
         <label>📅 From Date</label>
@@ -557,8 +449,7 @@
       </div>
     </div>
 
-    <!-- Summary Cards -->
-    <div class="summary-cards" id="summary-cards">
+    <div class="summary-cards">
       <div class="summary-card revenue">
         <h4>💰 TOTAL REVENUE</h4>
         <div class="amount" id="total-revenue">TSh 0</div>
@@ -577,7 +468,6 @@
       </div>
     </div>
 
-    <!-- Report Tables -->
     <div class="report-tables">
       <div class="report-table">
         <h3><i class="fas fa-arrow-down" style="color: #10b981;"></i> INCOME (Revenue)</h3>
@@ -600,7 +490,6 @@
       </div>
     </div>
 
-    <!-- Profit & Loss Summary -->
     <div style="margin-top: 24px;">
       <div class="report-table">
         <h3><i class="fas fa-chart-line"></i> PROFIT & LOSS SUMMARY</h3>
@@ -620,7 +509,6 @@
     </div>
   </div>
   
-  <!-- Notification Panel -->
   <div class="notification-panel" id="notification-panel">
     <div class="notification-header">
       <span>📢 Notifications</span>
@@ -637,7 +525,6 @@
 
 <div class="toast-container" id="toast-container"></div>
 
-<!-- Change Password Modal -->
 <div id="changePwOverlay"></div>
 <div id="changePwModal">
   <div class="change-pw-header">
@@ -660,7 +547,7 @@
       </div>
       <hr class="divider" />
       <button type="submit" class="btn-pw-success">✅ Update Password</button>
-      <button type="button" id="cancelChangePwBtn" style="background:transparent;border:1px solid #e2e8f0;padding:12px;border-radius:40px;width:100%;cursor:pointer;margin-top:10px;">Cancel</button>
+      <button type="button" id="cancelChangePwBtn" style="background:transparent;border:1px solid #e2e8f0;padding:12px;border-radius:40px;width:100%;margin-top:10px;">Cancel</button>
     </form>
   </div>
 </div>
@@ -671,7 +558,7 @@
 let currentRevenue = 0;
 let currentExpenses = 0;
 let currentProfit = 0;
-let notifications = [];
+let financialNotifications = [];
 
 async function loadReport() {
   try {
@@ -713,6 +600,10 @@ async function loadReport() {
     document.getElementById('summary-revenue').innerHTML = fmtTSH(currentRevenue);
     document.getElementById('summary-expenses').innerHTML = fmtTSH(currentExpenses);
     document.getElementById('summary-profit').innerHTML = fmtTSH(currentProfit);
+    
+    // Load notifications after report
+    loadFinancialNotifications();
+    
   } catch (err) {
     console.error('Failed to load report:', err);
     showToast('Failed to load report: ' + err.message, 'error');
@@ -763,23 +654,54 @@ function resetFilters() {
 // NOTIFICATION SYSTEM
 // ============================================================
 
-async function loadNotifications() {
+async function loadFinancialNotifications() {
   try {
-    notifications = [];
-    const reservations = await apiGet('/reservations');
-    const today = new Date().toISOString().split('T')[0];
-    const checkoutsToday = reservations.filter(r => r.checkout === today);
-    if (checkoutsToday.length > 0) {
-      notifications.push({
-        id: 'checkout_today',
-        message: `${checkoutsToday.length} guest(s) checking out today at 11:00 AM`,
+    financialNotifications = [];
+    
+    if (currentProfit < 0) {
+      financialNotifications.push({
+        id: 'negative_profit',
+        message: `⚠️ WARNING: Negative profit of ${fmtTSH(Math.abs(currentProfit))}! Review expenses.`,
         time: new Date().toLocaleTimeString(),
         read: false,
-        icon: '🚪'
+        icon: '⚠️'
       });
     }
+    
+    if (currentRevenue > 0) {
+      const profitMargin = (currentProfit / currentRevenue) * 100;
+      if (profitMargin < 20 && profitMargin >= 0) {
+        financialNotifications.push({
+          id: 'low_margin',
+          message: `📉 Low profit margin: ${profitMargin.toFixed(1)}%. Target is above 20%.`,
+          time: new Date().toLocaleTimeString(),
+          read: false,
+          icon: '📉'
+        });
+      } else if (profitMargin >= 30) {
+        financialNotifications.push({
+          id: 'good_margin',
+          message: `🎉 Excellent profit margin: ${profitMargin.toFixed(1)}%!`,
+          time: new Date().toLocaleTimeString(),
+          read: false,
+          icon: '🎉'
+        });
+      }
+    }
+    
+    if (currentRevenue > 0 || currentExpenses > 0) {
+      financialNotifications.push({
+        id: 'financial_summary',
+        message: `Revenue: ${fmtTSH(currentRevenue)} | Expenses: ${fmtTSH(currentExpenses)} | Profit: ${fmtTSH(currentProfit)}`,
+        time: new Date().toLocaleTimeString(),
+        read: false,
+        icon: '📊'
+      });
+    }
+    
     renderNotifications();
     updateNotificationBadge();
+    
   } catch (err) {
     console.error('Failed to load notifications:', err);
   }
@@ -788,25 +710,42 @@ async function loadNotifications() {
 function renderNotifications() {
   const container = document.getElementById('notification-list');
   if (!container) return;
-  if (notifications.length === 0) {
+  
+  if (financialNotifications.length === 0) {
     container.innerHTML = '<div class="empty-notifications">📭 No new notifications</div>';
     return;
   }
-  container.innerHTML = notifications.map(notif => `
-    <div class="notification-item ${notif.read ? 'read' : 'unread'}">
-      <div class="notification-message">
-        <span class="notification-icon">${notif.icon}</span>
-        ${escapeHtml(notif.message)}
+  
+  let html = '';
+  for (let notif of financialNotifications) {
+    html += `
+      <div class="notification-item ${notif.read ? 'read' : 'unread'}">
+        <div class="notification-message">
+          <span class="notification-icon">${notif.icon}</span>
+          ${escapeHtml(notif.message)}
+        </div>
+        <div class="notification-time">🕐 ${notif.time}</div>
       </div>
-      <div class="notification-time">🕐 ${notif.time}</div>
-    </div>
-  `).join('');
+    `;
+  }
+  container.innerHTML = html;
+  
+  document.querySelectorAll('.notification-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const notif = financialNotifications.find(n => n.id === item.getAttribute('data-id'));
+      if (notif) {
+        notif.read = true;
+        renderNotifications();
+        updateNotificationBadge();
+      }
+    });
+  });
 }
 
 function updateNotificationBadge() {
   const badge = document.getElementById('notif-badge');
   if (!badge) return;
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const unreadCount = financialNotifications.filter(n => !n.read).length;
   badge.textContent = unreadCount;
   badge.style.display = unreadCount > 0 ? 'inline-block' : 'none';
 }
@@ -822,9 +761,10 @@ function closeNotificationPanel() {
 }
 
 function markAllNotificationsRead() {
-  notifications.forEach(n => n.read = true);
+  financialNotifications.forEach(n => n.read = true);
   renderNotifications();
   updateNotificationBadge();
+  showToast('All notifications marked as read', 'success');
 }
 
 // ============================================================
@@ -853,14 +793,28 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('filter-to').value = isoDate(today);
   
   loadReport();
-  loadNotifications();
-  setInterval(() => { loadReport(); loadNotifications(); }, 60000);
+  
+  const notifBtn = document.getElementById('notif-btn');
+  if (notifBtn) notifBtn.addEventListener('click', toggleNotificationPanel);
+  
+  const markAllBtn = document.getElementById('mark-all-read-btn');
+  if (markAllBtn) markAllBtn.addEventListener('click', markAllNotificationsRead);
+  
+  const closeNotifBtn = document.getElementById('close-notif-panel');
+  if (closeNotifBtn) closeNotifBtn.addEventListener('click', closeNotificationPanel);
+  
+  document.addEventListener('click', function(e) {
+    const panel = document.getElementById('notification-panel');
+    const btn = document.getElementById('notif-btn');
+    if (panel && btn && !btn.contains(e.target) && !panel.contains(e.target)) {
+      panel.classList.remove('show');
+    }
+  });
   
   document.getElementById('openChangePwBtn')?.addEventListener('click', openChangePasswordModal);
   document.getElementById('closeChangePwBtn')?.addEventListener('click', closeChangePasswordModal);
   document.getElementById('cancelChangePwBtn')?.addEventListener('click', closeChangePasswordModal);
   document.getElementById('changePwOverlay')?.addEventListener('click', closeChangePasswordModal);
-  
   document.getElementById('change-password-form')?.addEventListener('submit', async function(e) {
     e.preventDefault();
     let current = document.getElementById('current-password').value;
@@ -875,14 +829,7 @@ document.addEventListener('DOMContentLoaded', function() {
     } catch(err) { showToast('Failed to change password', 'error'); }
   });
   
-  const notifBtn = document.getElementById('notif-btn');
-  if (notifBtn) notifBtn.addEventListener('click', toggleNotificationPanel);
-  
-  const markAllBtn = document.getElementById('mark-all-read-btn');
-  if (markAllBtn) markAllBtn.addEventListener('click', markAllNotificationsRead);
-  
-  const closeNotifBtn = document.getElementById('close-notif-panel');
-  if (closeNotifBtn) closeNotifBtn.addEventListener('click', closeNotificationPanel);
+  setInterval(() => { loadReport(); }, 60000);
 });
 
 // Sidebar toggle

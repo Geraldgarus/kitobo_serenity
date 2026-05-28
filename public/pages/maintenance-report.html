@@ -327,41 +327,85 @@
   <div class="sidebar-top">
     <a class="sidebar-logo" href="/">
       <div class="logo-icon">🏨</div>
-      <div class="logo-text"><span>Steps</span><span>Premium Suite</span></div>
+      <div class="logo-text">
+        <span>Steps</span>
+        <span>Premier Suites</span>
+      </div>
     </a>
     <button class="sidebar-close-btn" id="sidebar-close-btn">✕</button>
   </div>
+  
   <nav class="sidebar-nav">
+    <!-- ============================================================ -->
+    <!-- CORE OPERATIONS -->
+    <!-- ============================================================ -->
     <div class="nav-section-label">Core Operations</div>
     <a href="/dashboard" class="nav-item">📊 Stay View</a>
     <a href="/reservations" class="nav-item">📅 Reservations</a>
     <a href="/housekeeping" class="nav-item">🧹 Housekeeping</a>
+    
+    <!-- ============================================================ -->
+    <!-- PROPERTY -->
+    <!-- ============================================================ -->
     <div class="nav-section-label">Property</div>
     <a href="/apartments" class="nav-item">🏠 Apartments View</a>
     <a href="/apartments-list" class="nav-item">📋 Apartments List</a>
+    
+    <!-- ============================================================ -->
+    <!-- STORE & PROCUREMENT -->
+    <!-- ============================================================ -->
     <div class="nav-section-label">Store & Procurement</div>
     <a href="/store-main" class="nav-item">🏬 Main Store</a>
     <a href="/store-outlets" class="nav-item">🏪 Outlets Store</a>
     <a href="/purchase-orders" class="nav-item">📦 Purchase Orders</a>
     <a href="/goods-receipt" class="nav-item">✅ Goods Receipt</a>
+    
+    <!-- ============================================================ -->
+    <!-- MAINTENANCE -->
+    <!-- ============================================================ -->
     <div class="nav-section-label">Maintenance</div>
     <a href="/maintenance" class="nav-item">🔧 Maintenance</a>
-    <div class="nav-section-label">Maintenance Reports</div>
-    <a href="/maintenance-report" class="nav-item active">📊 Maintenance Report</a>
-    <div class="nav-section-label">Financial</div>
-    <a href="/expenditures" class="nav-item">💰 Expenditures</a>
-    <a href="/financial-report" class="nav-item">📊 Financial Report</a>
+    
+    <!-- ============================================================ -->
+    <!-- STAFF ACTIVITIES -->
+    <!-- ============================================================ -->
+    <div class="nav-section-label">Staff Activities</div>
+    <a href="/staff-activities" class="nav-item">📋 Staff Activities</a>
+    
+    <!-- ============================================================ -->
+    <!-- REPORTS (ALL REPORTS GROUPED TOGETHER) -->
+    <!-- ============================================================ -->
     <div class="nav-section-label">Reports</div>
     <a href="/reports" class="nav-item">📊 Reservations Report</a>
+    <a href="/maintenance-report" class="nav-item active">🔧 Maintenance Report</a>
+    <a href="/staff-activities-report" class="nav-item">📋 Staff Activity Report</a>
     <a href="/purchase-orders-reports" class="nav-item">📄 Purchase Orders Report</a>
     <a href="/goods-receipt-reports" class="nav-item">📋 Goods Receipt Report</a>
     <a href="/store-inventory-reports" class="nav-item">📦 Store Inventory Report</a>
+    <a href="/financial-report" class="nav-item">💰 Financial Report</a>
+    
+    <!-- ============================================================ -->
+    <!-- FINANCIAL -->
+    <!-- ============================================================ -->
+    <div class="nav-section-label">Financial</div>
+    <a href="/expenditures" class="nav-item">💸 Expenditures</a>
+    
+    <!-- ============================================================ -->
+    <!-- GUEST MANAGEMENT -->
+    <!-- ============================================================ -->
     <div class="nav-section-label">Guest Management</div>
     <a href="/guest-database" class="nav-item">👥 Guest Database</a>
+    
+    <!-- ============================================================ -->
+    <!-- ADMINISTRATION -->
+    <!-- ============================================================ -->
     <div class="nav-section-label">Administration</div>
     <a href="/users" class="nav-item">👥 User Management</a>
   </nav>
-  <div class="sidebar-footer"><small>Steps PMS v1.0 · Dar es Salaam</small></div>
+  
+  <div class="sidebar-footer">
+    <small>Steps PMS v1.0 · Dar es Salaam</small>
+  </div>
 </aside>
 
 <nav class="navbar">
@@ -561,6 +605,7 @@ async function loadReport() {
     tasks = await apiGet(url);
     renderReport();
     updateSummaryCards();
+    loadNotifications();
   } catch(err) {
     console.error('Failed to load report:', err);
     document.getElementById('tasks-body').innerHTML = '<tr><td colspan="9" style="text-align: center; color: #ef4444;">Error loading tasks</td></tr>';
@@ -632,6 +677,9 @@ function updateSummaryCards() {
   document.getElementById('total-cost').innerHTML = fmtTSH(totalCost);
   document.getElementById('total-tasks').innerHTML = tasks.length;
 }
+function applyFilters() { 
+  loadReport(); 
+}
 
 function resetFilters() {
   document.getElementById('filter-from').value = '';
@@ -640,6 +688,24 @@ function resetFilters() {
   document.getElementById('filter-status').value = '';
   loadReport();
 }
+
+
+// Make sure filter buttons trigger the report
+document.getElementById('filter-from')?.addEventListener('change', function() {
+  loadReport();
+});
+
+document.getElementById('filter-to')?.addEventListener('change', function() {
+  loadReport();
+});
+
+document.getElementById('filter-item-type')?.addEventListener('change', function() {
+  loadReport();
+});
+
+document.getElementById('filter-status')?.addEventListener('change', function() {
+  loadReport();
+});
 
 // ============================================================
 // NOTIFICATION SYSTEM
@@ -779,6 +845,22 @@ window.resetFilters = resetFilters;
 window.logout = logout;
 window.openChangePasswordModal = openChangePasswordModal;
 window.closeChangePasswordModal = closeChangePasswordModal;
+
+// Ensure filters trigger report
+(function() {
+  const fromDate = document.getElementById('filter-from');
+  const toDate = document.getElementById('filter-to');
+  const itemType = document.getElementById('filter-item-type');
+  const status = document.getElementById('filter-status');
+  
+  if (fromDate) fromDate.addEventListener('change', () => loadReport());
+  if (toDate) toDate.addEventListener('change', () => loadReport());
+  if (itemType) itemType.addEventListener('change', () => loadReport());
+  if (status) status.addEventListener('change', () => loadReport());
+  
+  // Initial load
+  loadReport();
+})();
 </script>
 </body>
 </html>

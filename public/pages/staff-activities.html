@@ -142,6 +142,46 @@
       .task-item-row input[type="text"] { width: 100%; }
       .tasks-summary { flex-direction: column; align-items: flex-start; }
     }
+
+    .notification-icon {
+  font-size: 14px;
+  margin-right: 8px;
+}
+
+.notification-item {
+  padding: 14px 16px;
+  border-bottom: 1px solid #eef2f6;
+  transition: background 0.2s;
+  cursor: pointer;
+}
+
+.notification-item:hover {
+  background: #f8fafc;
+}
+
+.notification-item.unread {
+  background: #fef3c7;
+  border-left: 3px solid #f59e0b;
+}
+
+.notification-item.read {
+  opacity: 0.7;
+}
+
+.notification-message {
+  font-size: 13px;
+  color: #1e293b;
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+
+.notification-time {
+  font-size: 10px;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
   </style>
 </head>
 <body>
@@ -152,38 +192,85 @@
   <div class="sidebar-top">
     <a class="sidebar-logo" href="/">
       <div class="logo-icon">🏨</div>
-      <div class="logo-text"><span>Steps</span><span>Premium Suite</span></div>
+      <div class="logo-text">
+        <span>Steps</span>
+        <span>Premier Suites</span>
+      </div>
     </a>
     <button class="sidebar-close-btn" id="sidebar-close-btn">✕</button>
   </div>
+  
   <nav class="sidebar-nav">
+    <!-- ============================================================ -->
+    <!-- CORE OPERATIONS -->
+    <!-- ============================================================ -->
     <div class="nav-section-label">Core Operations</div>
     <a href="/dashboard" class="nav-item">📊 Stay View</a>
     <a href="/reservations" class="nav-item">📅 Reservations</a>
     <a href="/housekeeping" class="nav-item">🧹 Housekeeping</a>
+    
+    <!-- ============================================================ -->
+    <!-- PROPERTY -->
+    <!-- ============================================================ -->
     <div class="nav-section-label">Property</div>
     <a href="/apartments" class="nav-item">🏠 Apartments View</a>
     <a href="/apartments-list" class="nav-item">📋 Apartments List</a>
+    
+    <!-- ============================================================ -->
+    <!-- STORE & PROCUREMENT -->
+    <!-- ============================================================ -->
     <div class="nav-section-label">Store & Procurement</div>
     <a href="/store-main" class="nav-item">🏬 Main Store</a>
     <a href="/store-outlets" class="nav-item">🏪 Outlets Store</a>
     <a href="/purchase-orders" class="nav-item">📦 Purchase Orders</a>
     <a href="/goods-receipt" class="nav-item">✅ Goods Receipt</a>
+    
+    <!-- ============================================================ -->
+    <!-- MAINTENANCE -->
+    <!-- ============================================================ -->
     <div class="nav-section-label">Maintenance</div>
     <a href="/maintenance" class="nav-item">🔧 Maintenance</a>
+    
+    <!-- ============================================================ -->
+    <!-- STAFF ACTIVITIES -->
+    <!-- ============================================================ -->
     <div class="nav-section-label">Staff Activities</div>
     <a href="/staff-activities" class="nav-item active">📋 Staff Activities</a>
+    
+    <!-- ============================================================ -->
+    <!-- REPORTS (ALL REPORTS GROUPED TOGETHER) -->
+    <!-- ============================================================ -->
     <div class="nav-section-label">Reports</div>
     <a href="/reports" class="nav-item">📊 Reservations Report</a>
+    <a href="/maintenance-report" class="nav-item">🔧 Maintenance Report</a>
+    <a href="/staff-activities-report" class="nav-item">📋 Activity Report</a>
     <a href="/purchase-orders-reports" class="nav-item">📄 Purchase Orders Report</a>
     <a href="/goods-receipt-reports" class="nav-item">📋 Goods Receipt Report</a>
     <a href="/store-inventory-reports" class="nav-item">📦 Store Inventory Report</a>
+    <a href="/financial-report" class="nav-item">💰 Financial Report</a>
+    
+    <!-- ============================================================ -->
+    <!-- FINANCIAL -->
+    <!-- ============================================================ -->
+    <div class="nav-section-label">Financial</div>
+    <a href="/expenditures" class="nav-item">💸 Expenditures</a>
+    
+    <!-- ============================================================ -->
+    <!-- GUEST MANAGEMENT -->
+    <!-- ============================================================ -->
     <div class="nav-section-label">Guest Management</div>
     <a href="/guest-database" class="nav-item">👥 Guest Database</a>
+    
+    <!-- ============================================================ -->
+    <!-- ADMINISTRATION -->
+    <!-- ============================================================ -->
     <div class="nav-section-label">Administration</div>
     <a href="/users" class="nav-item">👥 User Management</a>
   </nav>
-  <div class="sidebar-footer"><small>Steps PMS v1.0 · Dar es Salaam</small></div>
+  
+  <div class="sidebar-footer">
+    <small>Steps PMS v1.0 · Dar es Salaam</small>
+  </div>
 </aside>
 
 <nav class="navbar">
@@ -657,6 +744,193 @@ window.viewActivityDetails = viewActivityDetails; window.closeActivityDetails = 
 window.deleteActivity = deleteActivity; window.addTaskField = addTaskField; window.removeTask = removeTask;
 window.updateTaskDescription = updateTaskDescription; window.toggleTaskCompleted = toggleTaskCompleted;
 window.logout = logout; window.openChangePasswordModal = openChangePasswordModal; window.closeChangePasswordModal = closeChangePasswordModal;
+
+
+
+// ============================================================
+// NOTIFICATION SYSTEM FOR STAFF ACTIVITIES
+// ============================================================
+
+let staffNotifications = [];
+let staffNotifInterval = null;
+
+async function loadStaffNotifications() {
+  try {
+    staffNotifications = [];
+    
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+    
+    // Get today's activities
+    const todayActivities = activities.filter(a => a.activity_date === todayStr);
+    if (todayActivities.length > 0) {
+      staffNotifications.push({
+        id: 'today_activities',
+        type: 'today',
+        message: `${todayActivities.length} activity(s) recorded today`,
+        time: new Date().toLocaleTimeString(),
+        read: false,
+        icon: '📋'
+      });
+    }
+    
+    // Count pending tasks
+    let pendingTasksCount = 0;
+    for (let activity of activities) {
+      if (activity.tasks && Array.isArray(activity.tasks)) {
+        const pending = activity.tasks.filter(t => !t.completed).length;
+        pendingTasksCount += pending;
+      }
+    }
+    if (pendingTasksCount > 0) {
+      staffNotifications.push({
+        id: 'pending_tasks',
+        type: 'pending',
+        message: `${pendingTasksCount} task(s) pending completion`,
+        time: new Date().toLocaleTimeString(),
+        read: false,
+        icon: '⏳'
+      });
+    }
+    
+    // Summary notification
+    if (activities.length > 0) {
+      let totalTasks = 0;
+      for (let activity of activities) {
+        if (activity.tasks && Array.isArray(activity.tasks)) {
+          totalTasks += activity.tasks.length;
+        } else if (activity.tasks_description) {
+          totalTasks += 1;
+        }
+      }
+      staffNotifications.push({
+        id: 'summary',
+        type: 'summary',
+        message: `Total: ${activities.length} activities, ${totalTasks} tasks`,
+        time: new Date().toLocaleTimeString(),
+        read: false,
+        icon: '📊'
+      });
+    }
+    
+    renderStaffNotifications();
+    updateStaffNotificationBadge();
+    
+  } catch (err) {
+    console.error('Failed to load notifications:', err);
+  }
+}
+
+function renderStaffNotifications() {
+  const container = document.getElementById('notification-list');
+  if (!container) return;
+  
+  if (staffNotifications.length === 0) {
+    container.innerHTML = '<div class="empty-notifications">📭 No new notifications</div>';
+    return;
+  }
+  
+  let html = '';
+  for (let notif of staffNotifications) {
+    html += `
+      <div class="notification-item ${notif.read ? 'read' : 'unread'}" data-id="${notif.id}">
+        <div class="notification-message">
+          <span class="notification-icon">${notif.icon}</span>
+          ${escapeHtml(notif.message)}
+        </div>
+        <div class="notification-time">🕐 ${notif.time}</div>
+      </div>
+    `;
+  }
+  container.innerHTML = html;
+  
+  // Add click handlers
+  document.querySelectorAll('.notification-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const notifId = item.getAttribute('data-id');
+      const notif = staffNotifications.find(n => n.id === notifId);
+      if (notif) {
+        notif.read = true;
+        renderStaffNotifications();
+        updateStaffNotificationBadge();
+      }
+      closeStaffNotificationPanel();
+    });
+  });
+}
+
+function updateStaffNotificationBadge() {
+  const badge = document.getElementById('notif-badge');
+  if (!badge) return;
+  
+  const unreadCount = staffNotifications.filter(n => !n.read).length;
+  badge.textContent = unreadCount;
+  badge.style.display = unreadCount > 0 ? 'inline-block' : 'none';
+}
+
+function toggleStaffNotificationPanel() {
+  const panel = document.getElementById('notification-panel');
+  if (panel) {
+    panel.classList.toggle('show');
+  }
+}
+
+function closeStaffNotificationPanel() {
+  const panel = document.getElementById('notification-panel');
+  if (panel) {
+    panel.classList.remove('show');
+  }
+}
+
+function markAllStaffNotificationsRead() {
+  staffNotifications.forEach(n => n.read = true);
+  renderStaffNotifications();
+  updateStaffNotificationBadge();
+  showToast('All notifications marked as read', 'success');
+}
+
+// Override loadActivities to refresh notifications
+const originalStaffLoadActivities = loadActivities;
+loadActivities = async function() {
+  await originalStaffLoadActivities();
+  setTimeout(() => loadStaffNotifications(), 500);
+};
+
+// Initialize notification button
+const staffNotifBtn = document.getElementById('notif-btn');
+if (staffNotifBtn) {
+  staffNotifBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleStaffNotificationPanel();
+  });
+}
+
+// Close panel when clicking outside
+document.addEventListener('click', function(e) {
+  const panel = document.getElementById('notification-panel');
+  const btn = document.getElementById('notif-btn');
+  if (panel && btn && !btn.contains(e.target) && !panel.contains(e.target)) {
+    panel.classList.remove('show');
+  }
+});
+
+// Mark all read button
+const staffMarkAllBtn = document.getElementById('mark-all-read-btn');
+if (staffMarkAllBtn) {
+  staffMarkAllBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    markAllStaffNotificationsRead();
+  });
+}
+
+// Close button
+const staffCloseNotifBtn = document.getElementById('close-notif-panel');
+if (staffCloseNotifBtn) {
+  staffCloseNotifBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    closeStaffNotificationPanel();
+  });
+}
 </script>
 </body>
 </html>

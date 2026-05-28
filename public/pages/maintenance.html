@@ -93,36 +93,85 @@
   <div class="sidebar-top">
     <a class="sidebar-logo" href="/">
       <div class="logo-icon">🏨</div>
-      <div class="logo-text"><span>Steps</span><span>Premium Suite</span></div>
+      <div class="logo-text">
+        <span>Steps</span>
+        <span>Premier Suites</span>
+      </div>
     </a>
     <button class="sidebar-close-btn" id="sidebar-close-btn">✕</button>
   </div>
+  
   <nav class="sidebar-nav">
+    <!-- ============================================================ -->
+    <!-- CORE OPERATIONS -->
+    <!-- ============================================================ -->
     <div class="nav-section-label">Core Operations</div>
     <a href="/dashboard" class="nav-item">📊 Stay View</a>
     <a href="/reservations" class="nav-item">📅 Reservations</a>
     <a href="/housekeeping" class="nav-item">🧹 Housekeeping</a>
+    
+    <!-- ============================================================ -->
+    <!-- PROPERTY -->
+    <!-- ============================================================ -->
     <div class="nav-section-label">Property</div>
     <a href="/apartments" class="nav-item">🏠 Apartments View</a>
     <a href="/apartments-list" class="nav-item">📋 Apartments List</a>
+    
+    <!-- ============================================================ -->
+    <!-- STORE & PROCUREMENT -->
+    <!-- ============================================================ -->
     <div class="nav-section-label">Store & Procurement</div>
     <a href="/store-main" class="nav-item">🏬 Main Store</a>
     <a href="/store-outlets" class="nav-item">🏪 Outlets Store</a>
     <a href="/purchase-orders" class="nav-item">📦 Purchase Orders</a>
     <a href="/goods-receipt" class="nav-item">✅ Goods Receipt</a>
+    
+    <!-- ============================================================ -->
+    <!-- MAINTENANCE -->
+    <!-- ============================================================ -->
     <div class="nav-section-label">Maintenance</div>
     <a href="/maintenance" class="nav-item active">🔧 Maintenance</a>
+    
+    <!-- ============================================================ -->
+    <!-- STAFF ACTIVITIES -->
+    <!-- ============================================================ -->
+    <div class="nav-section-label">Staff Activities</div>
+    <a href="/staff-activities" class="nav-item">📋 Staff Activities</a>
+    
+    <!-- ============================================================ -->
+    <!-- REPORTS (ALL REPORTS GROUPED TOGETHER) -->
+    <!-- ============================================================ -->
     <div class="nav-section-label">Reports</div>
     <a href="/reports" class="nav-item">📊 Reservations Report</a>
+    <a href="/maintenance-report" class="nav-item">🔧 Maintenance Report</a>
+    <a href="/staff-activities-report" class="nav-item">📋 Staff Activity Report</a>
     <a href="/purchase-orders-reports" class="nav-item">📄 Purchase Orders Report</a>
     <a href="/goods-receipt-reports" class="nav-item">📋 Goods Receipt Report</a>
     <a href="/store-inventory-reports" class="nav-item">📦 Store Inventory Report</a>
+    <a href="/financial-report" class="nav-item">💰 Financial Report</a>
+    
+    <!-- ============================================================ -->
+    <!-- FINANCIAL -->
+    <!-- ============================================================ -->
+    <div class="nav-section-label">Financial</div>
+    <a href="/expenditures" class="nav-item">💸 Expenditures</a>
+    
+    <!-- ============================================================ -->
+    <!-- GUEST MANAGEMENT -->
+    <!-- ============================================================ -->
     <div class="nav-section-label">Guest Management</div>
     <a href="/guest-database" class="nav-item">👥 Guest Database</a>
+    
+    <!-- ============================================================ -->
+    <!-- ADMINISTRATION -->
+    <!-- ============================================================ -->
     <div class="nav-section-label">Administration</div>
     <a href="/users" class="nav-item">👥 User Management</a>
   </nav>
-  <div class="sidebar-footer"><small>Steps PMS v1.0 · Dar es Salaam</small></div>
+  
+  <div class="sidebar-footer">
+    <small>Steps PMS v1.0 · Dar es Salaam</small>
+  </div>
 </aside>
 
 <nav class="navbar">
@@ -302,6 +351,183 @@ async function loadTasks() {
     renderTasksList();
   } catch(err) { document.getElementById('tasks-list').innerHTML = '<div style="text-align:center;padding:20px;color:#ef4444;">Error loading tasks</div>'; }
 }
+
+// ============================================================
+// NOTIFICATION SYSTEM FOR MAINTENANCE PAGE
+// ============================================================
+
+let maintenanceNotifications = [];
+let maintenanceNotifInterval = null;
+
+async function loadMaintenanceNotifications() {
+  try {
+    maintenanceNotifications = [];
+    
+    // Count pending tasks
+    const pendingTasks = tasks.filter(t => t.status === 'pending');
+    if (pendingTasks.length > 0) {
+      maintenanceNotifications.push({
+        id: 'pending_tasks',
+        type: 'pending',
+        message: `${pendingTasks.length} maintenance task(s) pending completion`,
+        time: new Date().toLocaleTimeString(),
+        read: false,
+        icon: '🔧'
+      });
+    }
+    
+    // Count completed tasks
+    const completedTasks = tasks.filter(t => t.status === 'completed');
+    if (completedTasks.length > 0) {
+      maintenanceNotifications.push({
+        id: 'completed_tasks',
+        type: 'completed',
+        message: `${completedTasks.length} maintenance task(s) completed`,
+        time: new Date().toLocaleTimeString(),
+        read: false,
+        icon: '✅'
+      });
+    }
+    
+    // Summary notification
+    if (tasks.length > 0) {
+      const totalCost = tasks.reduce((sum, t) => sum + (t.total_cost || 0), 0);
+      maintenanceNotifications.push({
+        id: 'summary',
+        type: 'summary',
+        message: `Total: ${tasks.length} tasks, Total Cost: ${fmtTSH(totalCost)}`,
+        time: new Date().toLocaleTimeString(),
+        read: false,
+        icon: '📊'
+      });
+    }
+    
+    renderMaintenanceNotifications();
+    updateMaintenanceNotificationBadge();
+    
+  } catch (err) {
+    console.error('Failed to load notifications:', err);
+  }
+}
+
+function renderMaintenanceNotifications() {
+  const container = document.getElementById('notification-list');
+  if (!container) return;
+  
+  if (maintenanceNotifications.length === 0) {
+    container.innerHTML = '<div class="empty-notifications">📭 No new notifications</div>';
+    return;
+  }
+  
+  let html = '';
+  for (let notif of maintenanceNotifications) {
+    html += `
+      <div class="notification-item ${notif.read ? 'read' : 'unread'}" data-id="${notif.id}">
+        <div class="notification-message">
+          <span class="notification-icon">${notif.icon}</span>
+          ${escapeHtml(notif.message)}
+        </div>
+        <div class="notification-time">🕐 ${notif.time}</div>
+      </div>
+    `;
+  }
+  container.innerHTML = html;
+  
+  // Add click handlers
+  document.querySelectorAll('.notification-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const notifId = item.getAttribute('data-id');
+      const notif = maintenanceNotifications.find(n => n.id === notifId);
+      if (notif) {
+        notif.read = true;
+        renderMaintenanceNotifications();
+        updateMaintenanceNotificationBadge();
+        
+        if (notif.type === 'pending') {
+          // Refresh the tasks list
+          loadTasks();
+        }
+      }
+      closeMaintenanceNotificationPanel();
+    });
+  });
+}
+
+function updateMaintenanceNotificationBadge() {
+  const badge = document.getElementById('notif-badge');
+  if (!badge) return;
+  
+  const unreadCount = maintenanceNotifications.filter(n => !n.read).length;
+  badge.textContent = unreadCount;
+  badge.style.display = unreadCount > 0 ? 'inline-block' : 'none';
+}
+
+function toggleMaintenanceNotificationPanel() {
+  const panel = document.getElementById('notification-panel');
+  if (panel) {
+    panel.classList.toggle('show');
+  }
+}
+
+function closeMaintenanceNotificationPanel() {
+  const panel = document.getElementById('notification-panel');
+  if (panel) {
+    panel.classList.remove('show');
+  }
+}
+
+function markAllMaintenanceNotificationsRead() {
+  maintenanceNotifications.forEach(n => n.read = true);
+  renderMaintenanceNotifications();
+  updateMaintenanceNotificationBadge();
+  showToast('All notifications marked as read', 'success');
+}
+
+// Override loadTasks to refresh notifications
+const originalLoadTasks = loadTasks;
+loadTasks = async function() {
+  await originalLoadTasks();
+  setTimeout(() => loadMaintenanceNotifications(), 500);
+};
+
+// Initialize notification button
+const maintenanceNotifBtn = document.getElementById('notif-btn');
+if (maintenanceNotifBtn) {
+  maintenanceNotifBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleMaintenanceNotificationPanel();
+  });
+}
+
+// Close panel when clicking outside
+document.addEventListener('click', function(e) {
+  const panel = document.getElementById('notification-panel');
+  const btn = document.getElementById('notif-btn');
+  if (panel && btn && !btn.contains(e.target) && !panel.contains(e.target)) {
+    panel.classList.remove('show');
+  }
+});
+
+// Mark all read button
+const maintenanceMarkAllBtn = document.getElementById('mark-all-read-btn');
+if (maintenanceMarkAllBtn) {
+  maintenanceMarkAllBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    markAllMaintenanceNotificationsRead();
+  });
+}
+
+// Close button
+const maintenanceCloseNotifBtn = document.getElementById('close-notif-panel');
+if (maintenanceCloseNotifBtn) {
+  maintenanceCloseNotifBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    closeMaintenanceNotificationPanel();
+  });
+}
+
+
+
 function applyFilters() { loadTasks(); }
 function resetFilters() { document.getElementById('filter-from').value = ''; document.getElementById('filter-to').value = ''; document.getElementById('filter-item-type').value = ''; document.getElementById('filter-status').value = ''; loadTasks(); }
 function renderTasksList() {
@@ -390,7 +616,11 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('userRole').innerText = user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'User';
   document.getElementById('userAvatar').innerText = (user.fullName || user.username || 'U').charAt(0).toUpperCase();
   loadTasks();
-  setInterval(() => loadTasks(), 60000);
+  loadMaintenanceNotifications();  // ← ADD THIS LINE
+  setInterval(() => { 
+    loadTasks(); 
+    loadMaintenanceNotifications();  // ← ADD THIS LINE
+  }, 60000);
   document.getElementById('openChangePwBtn')?.addEventListener('click', openChangePasswordModal);
   document.getElementById('closeChangePwBtn')?.addEventListener('click', closeChangePasswordModal);
   document.getElementById('cancelChangePwBtn')?.addEventListener('click', closeChangePasswordModal);
