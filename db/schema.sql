@@ -514,3 +514,10 @@ CREATE INDEX IF NOT EXISTS idx_expenditures_category ON expenditures(category);
 -- Add tasks columns to daily_activities if not exists
 ALTER TABLE daily_activities ADD COLUMN IF NOT EXISTS tasks JSONB DEFAULT '[]'::jsonb;
 ALTER TABLE daily_activities ADD COLUMN IF NOT EXISTS tasks_description TEXT;
+
+
+-- Add missing columns to daily_activities table
+ALTER TABLE daily_activities ADD COLUMN IF NOT EXISTS tasks JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE daily_activities ADD COLUMN IF NOT EXISTS tasks_description TEXT;
+ALTER TABLE daily_activities ADD COLUMN IF NOT EXISTS prepared_by VARCHAR(100);
+ALTER TABLE daily_activities ADD COLUMN IF NOT EXISTS remarks TEXT;

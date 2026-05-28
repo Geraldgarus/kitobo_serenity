@@ -688,3 +688,11 @@ DO $$
 BEGIN
     RAISE NOTICE '✅ Expenditures table created successfully!';
 END $$;
+
+
+
+-- Add missing columns to daily_activities table (safe - no data loss)
+ALTER TABLE daily_activities ADD COLUMN IF NOT EXISTS tasks JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE daily_activities ADD COLUMN IF NOT EXISTS tasks_description TEXT;
+ALTER TABLE daily_activities ADD COLUMN IF NOT EXISTS prepared_by VARCHAR(100);
+ALTER TABLE daily_activities ADD COLUMN IF NOT EXISTS remarks TEXT;
