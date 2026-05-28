@@ -613,14 +613,21 @@ async function loadReport() {
 function renderIncomeTable(reservations) {
   const tbody = document.getElementById('income-body');
   if (!reservations.length) {
-    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">No income records found</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">No income records found</td><td></td><td></td><td></td></tr>';
     return;
   }
   let html = '';
   let subtotal = 0;
   for (let r of reservations) {
     const dateStr = r.checkout ? new Date(r.checkout).toLocaleDateString() : (r.created_at ? new Date(r.created_at).toLocaleDateString() : 'N/A');
-    html += `<tr><td>${dateStr}</td><td>${escapeHtml(r.guest)}</td><td>${escapeHtml(r.apt_name || 'Apt ' + r.apt_id)}</td><td style="color: #10b981; font-weight: 600;">${fmtTSH(r.total)}</td></tr>`;
+    // Use aptName (camelCase from API)
+    const apartmentName = r.aptName || `Apartment ${r.apt_id || '?'}`;
+    html += `<tr>
+      <td>${dateStr}</td>
+      <td>${escapeHtml(r.guest)}</td>
+      <td>${escapeHtml(apartmentName)}</td>
+      <td style="color: #10b981; font-weight: 600;">${fmtTSH(r.total)}</td>
+    </td>`;
     subtotal += r.total || 0;
   }
   html += `<tr class="total-row"><td colspan="3"><strong>Total Income</strong></td><td><strong>${fmtTSH(subtotal)}</strong></td></tr>`;
