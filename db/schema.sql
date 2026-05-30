@@ -587,6 +587,12 @@ CREATE INDEX IF NOT EXISTS idx_maintenance_tasks_item_name ON maintenance_tasks(
 
 
 
--- Add contact_number to maintenance_tasks
+-- ============================================================
+-- ADD CONTACT NUMBER TO MAINTENANCE TASKS (for Coolify deployment)
+-- ============================================================
+
+-- Add contact_number column
 ALTER TABLE maintenance_tasks ADD COLUMN IF NOT EXISTS contact_number VARCHAR(50);
+
+-- Create index for faster searches
 CREATE INDEX IF NOT EXISTS idx_maintenance_tasks_contact_number ON maintenance_tasks(contact_number);

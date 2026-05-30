@@ -829,6 +829,30 @@ END $$;
 
 
 
--- Add contact_number to maintenance_tasks
-ALTER TABLE maintenance_tasks ADD COLUMN IF NOT EXISTS contact_number VARCHAR(50);
+-- ============================================================
+-- SAFE MIGRATION: ADD CONTACT NUMBER TO MAINTENANCE TASKS
+-- ============================================================
+
+-- Add contact_number column if it doesn't exist
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name='maintenance_tasks' AND column_name='contact_number') THEN
+        ALTER TABLE maintenance_tasks ADD COLUMN contact_number VARCHAR(50);
+        RAISE NOTICE '✅ contact_number column added to maintenance_tasks';
+    ELSE
+        RAISE NOTICE 'ℹ️ contact_number column already exists';
+    END IF;
+END $$;
+
+-- Create index for contact_number
 CREATE INDEX IF NOT EXISTS idx_maintenance_tasks_contact_number ON maintenance_tasks(contact_number);
+
+-- Verification
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.columns 
+               WHERE table_name='maintenance_tasks' AND column_name='contact_number') THEN
+        RAISE NOTICE '✅ contact_number column is ready for use';
+    END IF;
+END $$;
