@@ -9,8 +9,27 @@ const { Pool } = require('pg');
 const bcrypt  = require('bcrypt');
 
 const pool    = require('./db/pool');
+
+// Add this function AFTER the pool is created
+async function ensurePaymentColumns() {
+  try {
+    console.log('🔧 Checking payment columns...');
+    await pool.query(`
+      ALTER TABLE reservations ADD COLUMN IF NOT EXISTS payment_status VARCHAR(20) DEFAULT 'unpaid';
+      ALTER TABLE reservations ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50);
+      ALTER TABLE reservations ADD COLUMN IF NOT EXISTS payment_date TIMESTAMP;
+      ALTER TABLE reservations ADD COLUMN IF NOT EXISTS amount_paid INT DEFAULT 0;
+      ALTER TABLE reservations ADD COLUMN IF NOT EXISTS balance INT DEFAULT 0;
+    `);
+    console.log('✅ Payment columns verified');
+  } catch (err) {
+    console.log('⚠️ Payment columns check:', err.message);
+  }
+}
+
 const app     = express();
 const PORT    = process.env.PORT || 3000;
+
 
 // ============================================================
 // AUTO DATABASE SETUP - Runs on startup
@@ -2611,14 +2630,18 @@ app.get('/api/activity-logs', async (req, res) => {
 
 
 // Run database setup, then start server
-setupDatabase().then(() => {
+// Run database setup, then ensure payment columns, then start server
+setupDatabase().then(async () => {
+  await ensurePaymentColumns();
   app.listen(PORT, () => {
     console.log(`✅ Steps PMS API running on http://localhost:${PORT}`);
     console.log(`📄 Clean URLs enabled - access pages without .html`);
     console.log(`   Example: http://localhost:${PORT}/dashboard`);
   });
+}).catch(err => {
+  console.error('Failed to setup database:', err);
+  process.exit(1);
 });
-
 
 // ============================================================
 // COUNTRIES API
