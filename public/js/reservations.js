@@ -70,7 +70,7 @@ function renderReservationsTable() {
       </td>
       <td>${escapeHtml(aptName)}</td>
       <td>${fmtDate(res.checkin)}</td>
-      <td>${fmtDate(res.checkout)} at 11:00 AM</td>
+      <td>${fmtDate(res.checkout)}</td>
       <td>${nights}n</td>
       <td>${res.adults}A ${res.children}C</td>
       <td class="total-cell">${fmtTSH(res.total)}</td>
