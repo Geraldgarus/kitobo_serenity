@@ -1,4 +1,4 @@
-// server.js – Steps Premium Suite API
+﻿// server.js – Steps Premium Suite API
 require('dotenv').config();
 const express = require('express');
 const cors    = require('cors');
@@ -135,7 +135,7 @@ const pages = [
   'store-housekeeping', 'store-kitchen', 'store-public', 'users', 'users1', 'login',
   'activity-logs', 'register', 'back-office', 'index2', 'purchase-orders', 'goods-receipt',
   'purchase-orders-reports', 'goods-receipt-reports', 'store-inventory-reports', 
-  'point-of-sale', 'sales-report',  'staff-activities', 'staff-activities-report','add-reservation','guest-database','maintenance','daily-activities', 'expenditures',  'daily-activities-report','financial-report',  'maintenance-report'
+  'point-of-sale', 'bar', 'restaurant', 'sales-report',  'staff-activities', 'staff-activities-report','add-reservation','guest-database','maintenance','daily-activities', 'expenditures',  'daily-activities-report','financial-report',  'maintenance-report', 'housekeeping-report'
 
 ];
 
@@ -223,16 +223,16 @@ app.put('/api/apartments/:id', async (req, res) => {
 
 // POST /api/apartments – create new apartment
 app.post('/api/apartments', async (req, res) => {
-  const { name, type, maxAdults, emoji, color, ratePerNight } = req.body;
-  if (!name || !type || !maxAdults || !ratePerNight) {
-    return res.status(400).json({ error: 'Name, type, maxAdults, ratePerNight are required' });
+  const { name, type, maxAdults, emoji, color } = req.body;
+  if (!name || !type || !maxAdults) {
+    return res.status(400).json({ error: 'Name, type, and maxAdults are required' });
   }
   try {
     const { rows } = await pool.query(
       `INSERT INTO apartments (name, type, max_adults, emoji, color, rate_per_night)
-       VALUES ($1, $2, $3, $4, $5, $6)
+       VALUES ($1, $2, $3, $4, $5, 0)
        RETURNING *`,
-      [name, type, maxAdults, emoji || '', color || '#2d9c6e', ratePerNight]
+      [name, type, maxAdults, emoji || '', color || '#2d9c6e']
     );
     res.status(201).json(camelApt(rows[0]));
   } catch (err) {
@@ -252,6 +252,34 @@ app.delete('/api/apartments/:id', async (req, res) => {
     const { rowCount } = await pool.query('DELETE FROM apartments WHERE id = $1', [id]);
     if (rowCount === 0) return res.status(404).json({ error: 'Apartment not found' });
     res.json({ message: 'Apartment deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/apartments/maintenance – list rooms currently under maintenance
+app.get('/api/apartments/maintenance', async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT * FROM apartments WHERE under_maintenance = TRUE ORDER BY name`
+    );
+    res.json(rows.map(camelApt));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT /api/apartments/:id/maintenance – set or clear maintenance flag
+app.put('/api/apartments/:id/maintenance', async (req, res) => {
+  const { id } = req.params;
+  const { under_maintenance } = req.body;
+  try {
+    const { rows } = await pool.query(
+      `UPDATE apartments SET under_maintenance = $1 WHERE id = $2 RETURNING *`,
+      [under_maintenance === true || under_maintenance === 'true', id]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Apartment not found' });
+    res.json(camelApt(rows[0]));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -612,14 +640,15 @@ app.get('/api/reports/summary', async (req, res) => {
 
 function camelApt(r) {
   return {
-    id:           r.id,
-    name:         r.name,
-    type:         r.type,
-    maxAdults:    r.max_adults,
-    emoji:        r.emoji,
-    color:        r.color,
-    ratePerNight: r.rate_per_night,
-    occupied:     r.occupied ?? undefined,
+    id:               r.id,
+    name:             r.name,
+    type:             r.type,
+    maxAdults:        r.max_adults,
+    emoji:            r.emoji,
+    color:            r.color,
+    ratePerNight:     r.rate_per_night,
+    occupied:         r.occupied ?? undefined,
+    underMaintenance: r.under_maintenance ?? false,
   };
 }
 
@@ -671,7 +700,7 @@ app.get('/api/store/items', async (req, res) => {
 
 // POST add item to main store
 app.post('/api/store/items', async (req, res) => {
-  const { name, category, cost, quantity } = req.body;
+  const { name, category, cost, quantity, pos } = req.body;
   if (!name || !category || !cost || !quantity) {
     return res.status(400).json({ error: 'All fields required' });
   }
@@ -680,9 +709,9 @@ app.post('/api/store/items', async (req, res) => {
   const unit = parts[1] || 'units';
   try {
     const { rows } = await pool.query(
-      `INSERT INTO store_items (name, category, cost, quantity, stock_value, unit)
-       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-      [name, category, cost, quantity, stock_value, unit]
+      `INSERT INTO store_items (name, category, cost, quantity, stock_value, unit, pos)
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+      [name, category, cost, quantity, stock_value, unit, pos || null]
     );
     res.status(201).json(rows[0]);
   } catch (err) {
@@ -692,16 +721,16 @@ app.post('/api/store/items', async (req, res) => {
 
 // PUT update main store item
 app.put('/api/store/items/:id', async (req, res) => {
-  const { name, category, cost, quantity } = req.body;
+  const { name, category, cost, quantity, pos } = req.body;
   const id = req.params.id;
   const parts = quantity.trim().split(' ');
   const stock_value = parseFloat(parts[0]);
   const unit = parts[1] || 'units';
   try {
     const { rows } = await pool.query(
-      `UPDATE store_items SET name=$1, category=$2, cost=$3, quantity=$4, stock_value=$5, unit=$6
-       WHERE id=$7 RETURNING *`,
-      [name, category, cost, quantity, stock_value, unit, id]
+      `UPDATE store_items SET name=$1, category=$2, cost=$3, quantity=$4, stock_value=$5, unit=$6, pos=$7
+       WHERE id=$8 RETURNING *`,
+      [name, category, cost, quantity, stock_value, unit, pos || null, id]
     );
     if (rows.length === 0) return res.status(404).json({ error: 'Item not found' });
     res.json(rows[0]);
@@ -1548,6 +1577,7 @@ app.get('/api/housekeeping/status', async (req, res) => {
         a.emoji,
         a.color,
         a.max_adults,
+        COALESCE(a.under_maintenance, FALSE) as under_maintenance,
         COALESCE(hs.status, 'clean') as status,
         hs.last_updated,
         hs.updated_by,
@@ -1593,6 +1623,7 @@ app.get('/api/housekeeping/status', async (req, res) => {
         emoji: row.emoji,
         color: row.color,
         max_adults: row.max_adults,
+        under_maintenance: row.under_maintenance,
         status: row.status,
         last_updated: row.last_updated,
         updated_by: row.updated_by,
@@ -2299,21 +2330,21 @@ app.get('/api/purchase-orders/:id/items', async (req, res) => {
 
 // POST /api/sales - Save a completed sale
 app.post('/api/sales', async (req, res) => {
-  const { items, total_amount, cashier_id, cashier_name } = req.body;
-  
+  const { items, total_amount, cashier_id, cashier_name, pos_type } = req.body;
+
   if (!items || items.length === 0) {
     return res.status(400).json({ error: 'No items in sale' });
   }
-  
+
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-    
+
     const orderResult = await client.query(`
-      INSERT INTO sales_orders (cashier_id, cashier_name, total_amount, status, order_date)
-      VALUES ($1, $2, $3, 'completed', CURRENT_TIMESTAMP)
+      INSERT INTO sales_orders (cashier_id, cashier_name, total_amount, status, order_date, pos_type)
+      VALUES ($1, $2, $3, 'completed', CURRENT_TIMESTAMP, $4)
       RETURNING id, order_number
-    `, [cashier_id || null, cashier_name, total_amount]);
+    `, [cashier_id || null, cashier_name, total_amount, pos_type || null]);
     
     const saleId = orderResult.rows[0].id;
     const orderNumber = orderResult.rows[0].order_number;
@@ -2343,11 +2374,11 @@ app.post('/api/sales', async (req, res) => {
 
 // GET /api/sales - Get sales with date filter (FIXED - includes full end date)
 app.get('/api/sales', async (req, res) => {
-  const { from, to } = req.query;
+  const { from, to, pos_type } = req.query;
   let query = `
-    SELECT 
-      so.id, so.order_number, so.cashier_name, so.total_amount, 
-      so.order_date, so.status,
+    SELECT
+      so.id, so.order_number, so.cashier_name, so.total_amount,
+      so.order_date, so.status, so.pos_type,
       COALESCE((
         SELECT SUM(si.quantity)::INTEGER
         FROM sales_items si
@@ -2358,17 +2389,20 @@ app.get('/api/sales', async (req, res) => {
   `;
   const params = [];
   let paramCount = 1;
-  
+
   if (from) {
     query += ` AND so.order_date >= $${paramCount++}::date`;
     params.push(from);
   }
   if (to) {
-    // FIX: Add 1 day to include the entire end date
     query += ` AND so.order_date < ($${paramCount++}::date + INTERVAL '1 day')`;
     params.push(to);
   }
-  
+  if (pos_type) {
+    query += ` AND so.pos_type = $${paramCount++}`;
+    params.push(pos_type);
+  }
+
   query += ` ORDER BY so.order_date DESC`;
   
   try {
@@ -2466,6 +2500,69 @@ app.get('/api/sales/top-products', async (req, res) => {
 });
 
 
+
+// ============================================================
+// LAUNDRY SERVICES API
+// ============================================================
+
+// GET /api/laundry - list with optional date/status filters
+app.get('/api/laundry', async (req, res) => {
+  const { from, to, payment_status } = req.query;
+  let query = `SELECT * FROM laundry_services WHERE 1=1`;
+  const params = [];
+  let p = 1;
+  if (from)            { query += ` AND service_date >= $${p++}::date`; params.push(from); }
+  if (to)              { query += ` AND service_date < ($${p++}::date + INTERVAL '1 day')`; params.push(to); }
+  if (payment_status)  { query += ` AND payment_status = $${p++}`; params.push(payment_status); }
+  query += ` ORDER BY service_date DESC, created_at DESC`;
+  try {
+    const { rows } = await pool.query(query, params);
+    res.json(rows);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// POST /api/laundry - create new record
+app.post('/api/laundry', async (req, res) => {
+  const { room_number, clothes_type, services, service_date, housekeeper_name, price, payment_method, payment_status, amount_paid, notes } = req.body;
+  if (!room_number || !housekeeper_name) return res.status(400).json({ error: 'room_number and housekeeper_name are required' });
+  try {
+    const { rows } = await pool.query(
+      `INSERT INTO laundry_services (room_number, clothes_type, services, service_date, housekeeper_name, price, payment_method, payment_status, amount_paid, notes)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`,
+      [room_number, clothes_type || null, services || null, service_date || new Date().toISOString().split('T')[0],
+       housekeeper_name, parseFloat(price) || 0, payment_method || null, payment_status || 'pending',
+       parseFloat(amount_paid) || 0, notes || null]
+    );
+    res.status(201).json(rows[0]);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// PUT /api/laundry/:id - update record
+app.put('/api/laundry/:id', async (req, res) => {
+  const { id } = req.params;
+  const { room_number, clothes_type, services, service_date, housekeeper_name, price, payment_method, payment_status, amount_paid, notes } = req.body;
+  try {
+    const { rows } = await pool.query(
+      `UPDATE laundry_services SET room_number=$1, clothes_type=$2, services=$3, service_date=$4,
+       housekeeper_name=$5, price=$6, payment_method=$7, payment_status=$8, amount_paid=$9, notes=$10, updated_at=NOW()
+       WHERE id=$11 RETURNING *`,
+      [room_number, clothes_type || null, services || null, service_date,
+       housekeeper_name, parseFloat(price) || 0, payment_method || null, payment_status || 'pending',
+       parseFloat(amount_paid) || 0, notes || null, id]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Record not found' });
+    res.json(rows[0]);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// DELETE /api/laundry/:id
+app.delete('/api/laundry/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    await pool.query(`DELETE FROM laundry_services WHERE id=$1`, [id]);
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
 
 // ============================================================
 // CATEGORIES API
@@ -2634,7 +2731,7 @@ app.get('/api/activity-logs', async (req, res) => {
 setupDatabase().then(async () => {
   await ensurePaymentColumns();
   app.listen(PORT, () => {
-    console.log(`✅ Steps PMS API running on http://localhost:${PORT}`);
+    console.log(`✅ Kitobo Serenity Resort API running on http://localhost:${PORT}`);
     console.log(`📄 Clean URLs enabled - access pages without .html`);
     console.log(`   Example: http://localhost:${PORT}/dashboard`);
   });

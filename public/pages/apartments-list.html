@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>Apartments - Steps PMS</title>
+  <title>Rooms - Kitobo Serenity Resort</title>
   <style>
   body { opacity: 0; transition: opacity 0.2s; }
   body.loaded { opacity: 1; }
@@ -478,10 +478,7 @@
   <div class="sidebar-top">
     <a class="sidebar-logo" href="/">
       <div class="logo-icon"><i class="fas fa-building"></i></div>
-      <div class="logo-text">
-        <span>Steps</span>
-        <span>Premier Suites</span>
-      </div>
+      <div class="logo-text"><span>Kitobo</span><span>Serenity Resort</span></div>
     </a>
     <button class="sidebar-close-btn" id="sidebar-close-btn"><i class="fas fa-times"></i></button>
   </div>
@@ -500,13 +497,16 @@
     <a href="/reservations" class="nav-item"><i class="fas fa-calendar-alt"></i> Reservations</a>
     <a href="/housekeeping" class="nav-item"><i class="fas fa-soap"></i> Housekeeping</a>
     <a href="/maintenance" class="nav-item"><i class="fas fa-toolbox"></i> Maintenance</a>
+    <div class="nav-section-label">POS</div>
+    <a href="/bar" class="nav-item"><i class="fas fa-wine-glass-alt"></i> Bar</a>
+    <a href="/restaurant" class="nav-item"><i class="fas fa-utensils"></i> Restaurant</a>
     
     <!-- ============================================================ -->
     <!-- PROPERTY -->
     <!-- ============================================================ -->
     <div class="nav-section-label">Property</div>
-    <a href="/apartments" class="nav-item"><i class="fas fa-building"></i> Apartments View</a>
-    <a href="/apartments-list" class="nav-item active"><i class="fas fa-list-ul"></i> Apartments List</a>
+    <a href="/apartments" class="nav-item"><i class="fas fa-building"></i> Rooms View</a>
+    <a href="/apartments-list" class="nav-item active"><i class="fas fa-list-ul"></i> Rooms List</a>
     
     <!-- ============================================================ -->
     <!-- INVENTORY -->
@@ -533,6 +533,8 @@
     <a href="/purchase-orders-reports" class="nav-item"><i class="fas fa-file-alt"></i> Purchase Orders Report</a>
     <a href="/goods-receipt-reports" class="nav-item"><i class="fas fa-stamp"></i> Goods Receipt Report</a>
     <a href="/store-inventory-reports" class="nav-item"><i class="fas fa-boxes"></i> Store Inventory Report</a>
+    <a href="/sales-report" class="nav-item"><i class="fas fa-receipt"></i> Sales Report</a>
+    <a href="/housekeeping-report" class="nav-item"><i class="fas fa-soap"></i> Housekeeping Report</a>
     <a href="/financial-report" class="nav-item"><i class="fas fa-chart-line"></i> Financial Report</a>
     
     <!-- ============================================================ -->
@@ -555,7 +557,7 @@
   </nav>
   
   <div class="sidebar-footer">
-    <small>Steps PMS v1.0 · Dar es Salaam</small>
+    <small>Kitobo Serenity Resort</small>
   </div>
 </aside>
 
@@ -566,8 +568,8 @@
       <span class="hb-bar"></span><span class="hb-bar"></span><span class="hb-bar"></span>
     </button>
     <div>
-      <div class="page-title">Apartment List</div>
-      <div class="page-subtitle">Manage Apartments</div>
+      <div class="page-title">Room List</div>
+      <div class="page-subtitle">Manage Rooms</div>
     </div>
   </div>
   <div class="navbar-right">
@@ -579,6 +581,7 @@
       <i class="fas fa-chart-line"></i>
     </a>
     <button class="" onclick="openReservationModal()"></button>
+        <button class="pos-navbar-btn" onclick="openPOSChooser()" title="Point of Sale"><i class="fas fa-cash-register"></i> POS</button>
     <button class="notif-btn" id="notif-btn">
   <i class="fas fa-bell"></i><span class="badge" id="notif-badge">0</span>
 </button>
@@ -605,15 +608,15 @@
 <main class="main-content">
   <div class="card">
     <div class="card-header">
-      <span class="card-title">All Apartments</span>
-      <button class="btn btn-gold" onclick="openAddApartmentModal()">＋ Add Apartment</button>
+      <span class="card-title">All Rooms</span>
+      <button class="btn btn-gold" onclick="openAddApartmentModal()">＋ Add Room</button>
     </div>
     <!-- Mobile-friendly scrollable table wrapper -->
     <div class="table-wrapper" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
       <table class="apt-table" id="apartments-table">
         <thead>
           <tr>
-            <th>Emoji</th><th>Name</th><th>Type</th><th>Max Adults</th><th>Rate/Night</th><th>Color</th><th>Actions</th>
+            <th>Icon</th><th>Name</th><th>Type</th><th>Max Adults</th><th>Color</th><th>Actions</th>
           </tr>
         </thead>
         <tbody id="apartments-tbody"></tbody>
@@ -639,16 +642,15 @@
 <div class="reservation-modal-overlay" id="apt-modal-overlay" onclick="closeApartmentModal()"></div>
 <div class="reservation-modal" id="apt-modal">
   <div class="reservation-modal-header">
-    <h3 id="apt-modal-title"><i class="fas fa-plus"></i> Add Apartment</h3>
+    <h3 id="apt-modal-title"><i class="fas fa-plus"></i> Add Room</h3>
     <button class="reservation-modal-close" onclick="closeApartmentModal()"><i class="fas fa-times"></i></button>
   </div>
   <div class="reservation-modal-body">
     <form id="apt-form">
       <input type="hidden" id="apt-id">
-      <div class="form-group"><label>Apartment Name</label><input type="text" id="apt-name" class="form-control" required></div>
+      <div class="form-group"><label>Room Name</label><input type="text" id="apt-name" class="form-control" required></div>
       <div class="form-group"><label>Type</label><input type="text" id="apt-type" class="form-control" required></div>
       <div class="form-group"><label>Max Adults</label><input type="number" id="apt-max-adults" class="form-control" required min="1" value="2"></div>
-      <div class="form-group"><label>Rate per Night (TSH)</label><input type="number" id="apt-rate" class="form-control" required min="0" value="90000"></div>
       <div class="form-group">
         <label><i class="fas fa-icons"></i> Icon</label>
         <input type="hidden" id="apt-emoji" value="fa-home">
@@ -663,7 +665,7 @@
       </div>
       <div class="form-group"><label>Color (hex)</label><input type="color" id="apt-color" class="form-control" value="#2d9c6e"></div>
       <hr class="divider" />
-      <button type="submit" class="btn btn-success" id="apt-submit-btn"><i class="fas fa-check-circle"></i> Save Apartment</button>
+      <button type="submit" class="btn btn-success" id="apt-submit-btn"><i class="fas fa-check-circle"></i> Save Room</button>
       <button type="button" class="btn btn-outline" style="margin-top:10px; width:100%;" onclick="closeApartmentModal()">Cancel</button>
     </form>
   </div>
@@ -970,7 +972,7 @@ async function loadApartments() {
     const tbody = document.getElementById('apartments-tbody');
     if (!tbody) return;
     if (apartments.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="7" class="empty-state"><i class="fas fa-building"></i> No apartments found. Click "Add Apartment" to create one.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><i class="fas fa-building"></i> No rooms found. Click "Add Room" to create one.</td></tr>';
       return;
     }
     tbody.innerHTML = apartments.map(apt => `
@@ -979,7 +981,6 @@ async function loadApartments() {
         <td><strong>${escapeHtml(apt.name)}</strong></td>
         <td>${escapeHtml(apt.type)}</td>
         <td>${apt.maxAdults}</td>
-        <td>${fmtTSH(apt.ratePerNight)}</td>
         <td><div class="color-preview" style="background:${apt.color || '#2d9c6e'}"></div></td>
         <td>
           <button class="btn-sm btn-warning" onclick="openEditApartmentModal(${apt.id})"><i class="fas fa-edit"></i> Edit</button>
@@ -1047,7 +1048,7 @@ async function apiPut(endpoint, data) {
     if (!confirm(`Delete apartment "${apt.name}"? This will also delete all its reservations.`)) return;
     try {
       await apiDelete(`/apartments/${id}`);
-      showToast('Apartment deleted', 'success');
+      showToast('Room deleted', 'success');
       await loadApartments();
     } catch (err) {
       showToast('Delete failed: ' + err.message, 'error');
@@ -1058,12 +1059,11 @@ async function apiPut(endpoint, data) {
   // ADD/EDIT MODAL FUNCTIONS
   // ============================================================
   function openAddApartmentModal() {
-    document.getElementById('apt-modal-title').innerText = '<i class="fas fa-plus"></i> Add Apartment';
+    document.getElementById('apt-modal-title').innerText = '<i class="fas fa-plus"></i> Add Room';
     document.getElementById('apt-id').value = '';
     document.getElementById('apt-name').value = '';
     document.getElementById('apt-type').value = '';
     document.getElementById('apt-max-adults').value = '2';
-    document.getElementById('apt-rate').value = '90000';
     document.getElementById('apt-emoji').value = 'fa-home';
     setAptIconPicker('fa-home');
     document.getElementById('apt-color').value = '#2d9c6e';
@@ -1075,12 +1075,11 @@ async function apiPut(endpoint, data) {
   function openEditApartmentModal(id) {
     const apt = apartments.find(a => a.id === id);
     if (!apt) return;
-    document.getElementById('apt-modal-title').innerText = '<i class="fas fa-edit"></i> Edit Apartment';
+    document.getElementById('apt-modal-title').innerText = '<i class="fas fa-edit"></i> Edit Room';
     document.getElementById('apt-id').value = apt.id;
     document.getElementById('apt-name').value = apt.name;
     document.getElementById('apt-type').value = apt.type;
     document.getElementById('apt-max-adults').value = apt.maxAdults;
-    document.getElementById('apt-rate').value = apt.ratePerNight;
     const iconVal = apt.emoji || 'fa-home';
     document.getElementById('apt-emoji').value = iconVal;
     setAptIconPicker(iconVal);
@@ -1106,29 +1105,28 @@ async function apiPut(endpoint, data) {
     const name = document.getElementById('apt-name').value.trim();
     const type = document.getElementById('apt-type').value.trim();
     const maxAdults = parseInt(document.getElementById('apt-max-adults').value);
-    const ratePerNight = parseInt(document.getElementById('apt-rate').value);
     const emoji = document.getElementById('apt-emoji').value.trim();
     const color = document.getElementById('apt-color').value;
 
-    if (!name || !type || !maxAdults || !ratePerNight) {
+    if (!name || !type || !maxAdults) {
       showToast('Please fill all required fields', 'error');
       return;
     }
 
-    const payload = { name, type, maxAdults, ratePerNight, emoji, color };
+    const payload = { name, type, maxAdults, emoji, color };
 
     try {
       if (id) {
         await apiPut(`/apartments/${id}`, payload);
-        showToast('Apartment updated successfully!', 'success');
+        showToast('Room updated successfully!', 'success');
       } else {
         await apiPost('/apartments', payload);
-        showToast('Apartment added successfully!', 'success');
+        showToast('Room added successfully!', 'success');
       }
       closeApartmentModal();
       await loadApartments();
     } catch (err) {
-      showToast('Failed to save apartment: ' + err.message, 'error');
+      showToast('Failed to save room: ' + err.message, 'error');
     }
   });
 
@@ -1384,6 +1382,30 @@ if (changePasswordForm) {
 
   window.toggleAptIconPicker = toggleAptIconPicker;
   window.setAptIconPicker = setAptIconPicker;
+</script>
+
+<!-- POS Chooser Modal -->
+<div id="pos-chooser-overlay" onclick="if(event.target===this)closePOSChooser()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:18px;padding:40px 36px;max-width:460px;width:92%;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,0.28);position:relative;">
+    <div style="font-size:22px;font-weight:700;color:#1e293b;margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:10px;"><i class="fas fa-cash-register" style="color:#2d9c6e;"></i> Point of Sale</div>
+    <p style="color:#64748b;margin:0 0 28px;font-size:14px;">Select the POS system to open</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px;">
+      <a href="/bar" onclick="closePOSChooser()" style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:26px 16px;background:linear-gradient(135deg,#1e3a5f,#2563eb);border-radius:14px;color:#fff;text-decoration:none;font-weight:700;font-size:15px;transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 10px 28px rgba(37,99,235,0.4)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='none'">
+        <i class="fas fa-wine-glass-alt" style="font-size:34px;opacity:0.95;"></i>
+        Bar
+      </a>
+      <a href="/restaurant" onclick="closePOSChooser()" style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:26px 16px;background:linear-gradient(135deg,#7c2d12,#ea580c);border-radius:14px;color:#fff;text-decoration:none;font-weight:700;font-size:15px;transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 10px 28px rgba(234,88,12,0.4)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='none'">
+        <i class="fas fa-utensils" style="font-size:34px;opacity:0.95;"></i>
+        Restaurant
+      </a>
+    </div>
+    <button onclick="closePOSChooser()" style="padding:9px 28px;border:1.5px solid #e2e8f0;border-radius:8px;background:#f8fafc;cursor:pointer;color:#64748b;font-size:13px;font-weight:500;">Cancel</button>
+  </div>
+</div>
+<script>
+function openPOSChooser(){var o=document.getElementById('pos-chooser-overlay');if(o){o.style.display='flex';}}
+function closePOSChooser(){var o=document.getElementById('pos-chooser-overlay');if(o){o.style.display='none';}}
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closePOSChooser();});
 </script>
 </body>
 </html>

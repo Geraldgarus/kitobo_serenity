@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>Purchase Orders - Steps PMS</title>
+  <title>Purchase Orders - Kitobo Serenity Resort</title>
   <style>
   body { opacity: 0; transition: opacity 0.2s; }
   body.loaded { opacity: 1; }
@@ -676,10 +676,7 @@
   <div class="sidebar-top">
     <a class="sidebar-logo" href="/">
       <div class="logo-icon"><i class="fas fa-building"></i></div>
-      <div class="logo-text">
-        <span>Steps</span>
-        <span>Premier Suites</span>
-      </div>
+      <div class="logo-text"><span>Kitobo</span><span>Serenity Resort</span></div>
     </a>
     <button class="sidebar-close-btn" id="sidebar-close-btn"><i class="fas fa-times"></i></button>
   </div>
@@ -698,13 +695,16 @@
     <a href="/reservations" class="nav-item"><i class="fas fa-calendar-alt"></i> Reservations</a>
     <a href="/housekeeping" class="nav-item"><i class="fas fa-soap"></i> Housekeeping</a>
     <a href="/maintenance" class="nav-item"><i class="fas fa-toolbox"></i> Maintenance</a>
+    <div class="nav-section-label">POS</div>
+    <a href="/bar" class="nav-item"><i class="fas fa-wine-glass-alt"></i> Bar</a>
+    <a href="/restaurant" class="nav-item"><i class="fas fa-utensils"></i> Restaurant</a>
     
     <!-- ============================================================ -->
     <!-- PROPERTY -->
     <!-- ============================================================ -->
     <div class="nav-section-label">Property</div>
-    <a href="/apartments" class="nav-item"><i class="fas fa-building"></i> Apartments View</a>
-    <a href="/apartments-list" class="nav-item "><i class="fas fa-list-ul"></i> Apartments List</a>
+    <a href="/apartments" class="nav-item"><i class="fas fa-building"></i> Rooms View</a>
+    <a href="/apartments-list" class="nav-item "><i class="fas fa-list-ul"></i> Rooms List</a>
     
     <!-- ============================================================ -->
     <!-- INVENTORY -->
@@ -731,6 +731,8 @@
     <a href="/purchase-orders-reports" class="nav-item"><i class="fas fa-file-alt"></i> Purchase Orders Report</a>
     <a href="/goods-receipt-reports" class="nav-item"><i class="fas fa-stamp"></i> Goods Receipt Report</a>
     <a href="/store-inventory-reports" class="nav-item"><i class="fas fa-boxes"></i> Store Inventory Report</a>
+    <a href="/sales-report" class="nav-item"><i class="fas fa-receipt"></i> Sales Report</a>
+    <a href="/housekeeping-report" class="nav-item"><i class="fas fa-soap"></i> Housekeeping Report</a>
     <a href="/financial-report" class="nav-item"><i class="fas fa-chart-line"></i> Financial Report</a>
     
     <!-- ============================================================ -->
@@ -753,7 +755,7 @@
   </nav>
   
   <div class="sidebar-footer">
-    <small>Steps PMS v1.0 · Dar es Salaam</small>
+    <small>Kitobo Serenity Resort</small>
   </div>
 </aside>
 
@@ -765,6 +767,7 @@
     <div><div class="page-title">Purchase Orders</div><div class="page-subtitle">Manage procurement</div></div>
   </div>
   <div class="navbar-right">
+        <button class="pos-navbar-btn" onclick="openPOSChooser()" title="Point of Sale"><i class="fas fa-cash-register"></i> POS</button>
     <button class="notif-btn" id="notif-btn">
   <i class="fas fa-bell"></i><span class="badge" id="notif-badge">0</span>
 </button>
@@ -1630,7 +1633,7 @@ function escapeHtml(str) {
       printWindow.document.write('<html><head><title>Purchase Order #' + data.po_number + '</title>');
       printWindow.document.write('<style>body{font-family:Arial,sans-serif;padding:20px;} table{width:100%;border-collapse:collapse;} th,td{border:1px solid #ddd;padding:8px;text-align:left;} .header{text-align:center;margin-bottom:30px;}</style>');
       printWindow.document.write('</head><body>');
-      printWindow.document.write('<div class="header"><h1>Steps Premium Suite</h1><h2>Purchase Order</h2></div>');
+      printWindow.document.write('<div class="header"><h1>Kitobo Serenity Resort</h1><h2>Purchase Order</h2></div>');
       printWindow.document.write('<p><strong>PO Number:</strong> ' + data.po_number + '</p>');
       printWindow.document.write('<p><strong>Date:</strong> ' + data.order_date + '</p>');
       printWindow.document.write('<p><strong>Vendor:</strong> ' + escapeHtml(data.vendor_name) + '</p>');
@@ -1651,320 +1654,29 @@ function escapeHtml(str) {
       showToast('Failed to print: ' + err.message, 'error');
     }
   }
-  
-  function openItemSelector() {
-    document.getElementById('item-selector-modal').classList.add('show');
-    renderItemList();
-  }
-  
-  function closeItemSelector() {
-    document.getElementById('item-selector-modal').classList.remove('show');
-    document.getElementById('item-search-input').value = '';
-  }
-  
-  function renderItemList() {
-    var container = document.getElementById('item-list-container');
-    var searchTerm = document.getElementById('item-search-input').value.toLowerCase();
-    var filtered = storeItems.filter(function(item) {
-      return item.name.toLowerCase().includes(searchTerm) || item.category.toLowerCase().includes(searchTerm);
-    });
-    if (filtered.length === 0) {
-      container.innerHTML = '<div style="text-align: center; padding: 20px;">No items found</div>';
-      return;
-    }
-    var html = '';
-    for (var i = 0; i < filtered.length; i++) {
-      var item = filtered[i];
-      html += '<div class="item-list-item" onclick="addItemToOrder(' + i + ')">';
-      html += '<strong>' + escapeHtml(item.name) + '</strong><br>';
-      html += '<small>Category: ' + escapeHtml(item.category) + ' | Unit: ' + escapeHtml(item.unit || 'units') + ' | Price: ' + fmtTSH(item.cost) + '/unit</small>';
-      html += '</div>';
-    }
-    container.innerHTML = html;
-    window.currentFilteredItems = filtered;
-  }
-  
-  function filterItemList() {
-    renderItemList();
-  }
-  
-  function addItemToOrder(index) {
-    var item = window.currentFilteredItems[index];
-    if (!item) return;
-    
-    var existing = selectedItems.find(function(i) { return i.item_name === item.name; });
-    if (existing) {
-      showToast('Item already added. You can edit quantity below.', 'error');
-      closeItemSelector();
-      return;
-    }
-    
-    selectedItems.push({
-      item_name: item.name,
-      category: item.category,
-      unit: item.unit || 'units',
-      unit_price: item.cost,
-      quantity: 1,
-      total_price: item.cost
-    });
-    renderSelectedItems();
-    closeItemSelector();
-    updateOrderTotal();
-  }
-  
-  function renderSelectedItems() {
-    var container = document.getElementById('selected-items-list');
-    if (selectedItems.length === 0) {
-      container.innerHTML = '<div style="text-align: center; padding: 20px; color: #737373;">No items added. Click "Add Item" to start.</div>';
-      return;
-    }
-    var html = '<div style="overflow-x: auto;"><table class="items-table"><thead><tr><th>Item</th><th>Unit</th><th>Unit Price</th><th>Quantity</th><th>Total</th><th></th></tr></thead><tbody>';
-    for (var i = 0; i < selectedItems.length; i++) {
-      var item = selectedItems[i];
-      html += '<tr>';
-      html += '<td><strong>' + escapeHtml(item.item_name) + '</strong><br><small>' + escapeHtml(item.category) + '</small></td>';
-      html += '<td>' + escapeHtml(item.unit) + '</td>';
-      html += '<td><input type="number" value="' + item.unit_price + '" onchange="updateItemPrice(' + i + ', this.value)" style="width: 100px; padding: 4px;" class="form-control"></td>';
-      html += '<td><input type="number" value="' + item.quantity + '" onchange="updateItemQuantity(' + i + ', this.value)" style="width: 80px; padding: 4px;" class="form-control" step="0.01"></td>';
-      html += '<td>' + fmtTSH(item.unit_price * item.quantity) + '</td>';
-      html += '<td><button class="btn btn-danger btn-sm" onclick="removeSelectedItem(' + i + ')"><i class="fas fa-trash-alt"></i></button></td>';
-      html += '</tr>';
-    }
-    html += '</tbody></table></div>';
-    container.innerHTML = html;
-  }
-  
-  function updateItemPrice(index, price) {
-    selectedItems[index].unit_price = parseFloat(price);
-    selectedItems[index].total_price = selectedItems[index].unit_price * selectedItems[index].quantity;
-    renderSelectedItems();
-    updateOrderTotal();
-  }
-  
-  function updateItemQuantity(index, quantity) {
-    selectedItems[index].quantity = parseFloat(quantity);
-    selectedItems[index].total_price = selectedItems[index].unit_price * selectedItems[index].quantity;
-    renderSelectedItems();
-    updateOrderTotal();
-  }
-  
-  function removeSelectedItem(index) {
-    selectedItems.splice(index, 1);
-    renderSelectedItems();
-    updateOrderTotal();
-  }
-  
-  function updateOrderTotal() {
-    var total = 0;
-    for (var i = 0; i < selectedItems.length; i++) {
-      total += selectedItems[i].unit_price * selectedItems[i].quantity;
-    }
-    document.getElementById('order-total').innerHTML = fmtTSH(total);
-    window.currentOrderTotal = total;
-  }
-  
-  async function savePurchaseOrder() {
-    var vendorId = document.getElementById('po-vendor').value;
-    var orderDate = document.getElementById('po-date').value;
-    var notes = document.getElementById('po-notes').value;
-    
-    if (!vendorId) {
-      showToast('Please select a vendor', 'error');
-      return;
-    }
-    if (selectedItems.length === 0) {
-      showToast('Please add at least one item', 'error');
-      return;
-    }
-    
-    var items = selectedItems.map(function(item) {
-      return {
-        item_name: item.item_name,
-        category: item.category,
-        unit: item.unit,
-        unit_price: item.unit_price,
-        quantity: item.quantity
-      };
-    });
-    
-    try {
-      var result = await apiPost('/purchase-orders', {
-        vendor_id: parseInt(vendorId),
-        order_date: orderDate,
-        notes: notes,
-        items: items,
-        created_by: currentUser.username || 'admin'
-      });
-      showToast('Purchase order saved successfully! PO #' + result.po_number, 'success');
-      selectedItems = [];
-      renderSelectedItems();
-      document.getElementById('po-notes').value = '';
-      document.getElementById('po-vendor').value = '';
-      updateOrderTotal();
-      document.getElementById('po-form').classList.remove('active');
-      loadPurchaseOrders();
-    } catch(err) {
-      showToast('Failed to save: ' + err.message, 'error');
-    }
-  }
-  
-  async function saveAndPrintPurchaseOrder() {
-    var vendorId = document.getElementById('po-vendor').value;
-    var orderDate = document.getElementById('po-date').value;
-    var notes = document.getElementById('po-notes').value;
-    
-    if (!vendorId) {
-      showToast('Please select a vendor', 'error');
-      return;
-    }
-    if (selectedItems.length === 0) {
-      showToast('Please add at least one item', 'error');
-      return;
-    }
-    
-    var items = selectedItems.map(function(item) {
-      return {
-        item_name: item.item_name,
-        category: item.category,
-        unit: item.unit,
-        unit_price: item.unit_price,
-        quantity: item.quantity
-      };
-    });
-    
-    try {
-      var result = await apiPost('/purchase-orders', {
-        vendor_id: parseInt(vendorId),
-        order_date: orderDate,
-        notes: notes,
-        items: items,
-        created_by: currentUser.username || 'admin'
-      });
-      showToast('Purchase order saved! Preparing print...', 'success');
-      
-      var vendor = vendors.find(function(v) { return v.id === parseInt(vendorId); });
-      var vendorName = vendor ? vendor.name : 'Unknown';
-      
-      var printWindow = window.open('', '_blank');
-      printWindow.document.write('<html><head><title>Purchase Order #' + result.po_number + '</title>');
-      printWindow.document.write('<style>body{font-family:Arial,sans-serif;padding:20px;} table{width:100%;border-collapse:collapse;} th,td{border:1px solid #ddd;padding:8px;text-align:left;} .header{text-align:center;margin-bottom:30px;}</style>');
-      printWindow.document.write('</head><body>');
-      printWindow.document.write('<div class="header"><h1>Steps Premium Suite</h1><h2>Purchase Order</h2></div>');
-      printWindow.document.write('<p><strong>PO Number:</strong> ' + result.po_number + '</p>');
-      printWindow.document.write('<p><strong>Date:</strong> ' + orderDate + '</p>');
-      printWindow.document.write('<p><strong>Vendor:</strong> ' + vendorName + '</p>');
-      printWindow.document.write('<p><strong>Notes:</strong> ' + (notes || 'N/A') + '</p>');
-      printWindow.document.write('<h3>Items</h3>');
-      printWindow.document.write('<table><thead><tr><th>Item</th><th>Unit</th><th>Unit Price</th><th>Quantity</th><th>Total</th></tr></thead><tbody>');
-      for (var i = 0; i < selectedItems.length; i++) {
-        var item = selectedItems[i];
-        printWindow.document.write('<tr><td>' + item.item_name + '<br><small>' + item.category + '</small></td>>' + item.unit + '</td<td>' + fmtTSH(item.unit_price) + '</td<td>' + item.quantity + '</td<td>' + fmtTSH(item.unit_price * item.quantity) + '</td</tr>');
-      }
-      printWindow.document.write('<tr style="font-weight:bold;"><td colspan="4">Total</td<td>' + fmtTSH(window.currentOrderTotal) + '</td</tr>');
-      printWindow.document.write('</tbody></table>');
-      printWindow.document.write('<p style="margin-top:30px;text-align:center;">Thank you for your business!</p>');
-      printWindow.document.write('</body></html>');
-      printWindow.document.close();
-      printWindow.print();
-      
-      selectedItems = [];
-      renderSelectedItems();
-      document.getElementById('po-notes').value = '';
-      document.getElementById('po-vendor').value = '';
-      updateOrderTotal();
-      document.getElementById('po-form').classList.remove('active');
-      loadPurchaseOrders();
-    } catch(err) {
-      showToast('Failed to save: ' + err.message, 'error');
-    }
-  }
-  
-  async function receiveGoods(poId) {
-    if (!confirm('Confirm receipt of all items in this purchase order?\n\nThis will:\n1. Create a Goods Receipt Note (GRN)\n2. Add quantities to Main Store inventory\n3. Update purchase order status to "received"\n\nContinue?')) return;
-    
-    try {
-      var result = await apiPost('/grn/receive/' + poId, {
-        notes: 'Received via purchase order',
-        created_by: currentUser.username || 'admin'
-      });
-      showToast(result.message, 'success');
-      await loadPurchaseOrders();
-      viewPurchaseOrderDetails(poId);
-    } catch(err) {
-      showToast('Failed to receive goods: ' + err.message, 'error');
-    }
-  }
-  
-  document.getElementById('filter-date').addEventListener('change', function() {
-    loadPurchaseOrders();
-  });
-  
-  document.getElementById('createNewPOBtn').addEventListener('click', function() {
-    selectedItems = [];
-    renderSelectedItems();
-    document.getElementById('po-notes').value = '';
-    document.getElementById('po-vendor').value = '';
-    document.getElementById('po-date').value = new Date().toISOString().split('T')[0];
-    updateOrderTotal();
-    showCreateForm();
-  });
-  
-  function escapeHtml(str) { 
-    if (!str) return ''; 
-    return str.replace(/[&<>]/g, function(m) {
-      if (m === '&') return '&amp;';
-      if (m === '<') return '&lt;';
-      if (m === '>') return '&gt;';
-      return m;
-    }); 
-  }
-  
-  function fmtTSH(value) { 
-    return 'TSh ' + (value || 0).toLocaleString(); 
-  }
-  
-  function showToast(msg, type) {
-    var toast = document.getElementById('toast-container');
-    var bg = type === 'error' ? '#ef4444' : '#10b981';
-    toast.innerHTML = '<div style="background:' + bg + ';color:white;padding:12px 20px;border-radius:40px;">' + msg + '</div>';
-    setTimeout(function() { toast.innerHTML = ''; }, 3000);
-  }
-  
-  document.addEventListener('DOMContentLoaded', function() {
-    loadVendors();
-    loadStoreItems();
-    loadPurchaseOrders();
-  });
-
-
-
-  // Add this with your other API functions (around line where apiGet, apiPost are defined)
-
-  
-  window.openItemSelector = openItemSelector;
-  window.closeItemSelector = closeItemSelector;
-  window.filterItemList = filterItemList;
-  window.addItemToOrder = addItemToOrder;
-  window.updateItemPrice = updateItemPrice;
-  window.updateItemQuantity = updateItemQuantity;
-  window.removeSelectedItem = removeSelectedItem;
-  window.savePurchaseOrder = savePurchaseOrder;
-  window.saveAndPrintPurchaseOrder = saveAndPrintPurchaseOrder;
-  window.viewPurchaseOrderDetails = viewPurchaseOrderDetails;
-  window.closeDetailsView = closeDetailsView;
-  window.updateItemInPO = updateItemInPO;
-  window.removeItemFromPO = removeItemFromPO;
-  window.addItemToExistingPO = addItemToExistingPO;
-  window.addItemToExistingPOFromList = addItemToExistingPOFromList;
-  window.savePOChanges = savePOChanges;
-  window.printPurchaseOrder = printPurchaseOrder;
-  window.deletePurchaseOrder = deletePurchaseOrder;
-  window.loadPurchaseOrders = loadPurchaseOrders;
-  window.receiveGoods = receiveGoods;
-  window.cancelCreatePO = cancelCreatePO;
-  window.openChangePasswordModal = openChangePasswordModal;
-  window.closeChangePasswordModal = closeChangePasswordModal;
-  window.logout = logout;
+</script>
+<!-- POS Chooser Modal -->
+<div id="pos-chooser-overlay" onclick="if(event.target===this)closePOSChooser()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:18px;padding:40px 36px;max-width:460px;width:92%;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,0.28);position:relative;">
+    <div style="font-size:22px;font-weight:700;color:#1e293b;margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:10px;"><i class="fas fa-cash-register" style="color:#2d9c6e;"></i> Point of Sale</div>
+    <p style="color:#64748b;margin:0 0 28px;font-size:14px;">Select the POS system to open</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px;">
+      <a href="/bar" onclick="closePOSChooser()" style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:26px 16px;background:linear-gradient(135deg,#1e3a5f,#2563eb);border-radius:14px;color:#fff;text-decoration:none;font-weight:700;font-size:15px;transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 10px 28px rgba(37,99,235,0.4)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='none'">
+        <i class="fas fa-wine-glass-alt" style="font-size:34px;opacity:0.95;"></i>
+        Bar
+      </a>
+      <a href="/restaurant" onclick="closePOSChooser()" style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:26px 16px;background:linear-gradient(135deg,#7c2d12,#ea580c);border-radius:14px;color:#fff;text-decoration:none;font-weight:700;font-size:15px;transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 10px 28px rgba(234,88,12,0.4)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='none'">
+        <i class="fas fa-utensils" style="font-size:34px;opacity:0.95;"></i>
+        Restaurant
+      </a>
+    </div>
+    <button onclick="closePOSChooser()" style="padding:9px 28px;border:1.5px solid #e2e8f0;border-radius:8px;background:#f8fafc;cursor:pointer;color:#64748b;font-size:13px;font-weight:500;">Cancel</button>
+  </div>
+</div>
+<script>
+function openPOSChooser(){var o=document.getElementById('pos-chooser-overlay');if(o){o.style.display='flex';}}
+function closePOSChooser(){var o=document.getElementById('pos-chooser-overlay');if(o){o.style.display='none';}}
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closePOSChooser();});
 </script>
 </body>
 </html>

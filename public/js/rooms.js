@@ -2,7 +2,7 @@
 async function loadAndRenderRooms() {
   const grid = document.getElementById('rooms-grid');
   if (grid) {
-    grid.innerHTML = '<div style="text-align:center;padding:60px;color:var(--gray-300);grid-column:1/-1"><i class="fas fa-spinner fa-spin"></i> Loading apartments…</div>';
+    grid.innerHTML = '<div style="text-align:center;padding:60px;color:var(--gray-300);grid-column:1/-1"><i class="fas fa-spinner fa-spin"></i> Loading rooms…</div>';
   }
 
   try {
@@ -12,9 +12,9 @@ async function loadAndRenderRooms() {
     ]);
     renderRooms();
   } catch (err) {
-    showToast('Failed to load apartments: ' + err.message, '<i class="fas fa-times-circle"></i>');
+    showToast('Failed to load rooms: ' + err.message, '<i class="fas fa-times-circle"></i>');
     if (grid) {
-      grid.innerHTML = `<div style="text-align:center;padding:60px;color:var(--gray-300);grid-column:1/-1"><i class="fas fa-times-circle"></i> Could not load apartments.<br><small>${err.message}</small></div>`;
+      grid.innerHTML = `<div style="text-align:center;padding:60px;color:var(--gray-300);grid-column:1/-1"><i class="fas fa-times-circle"></i> Could not load rooms.<br><small>${err.message}</small></div>`;
     }
   }
 }
@@ -25,7 +25,7 @@ function renderRooms() {
   if (!grid) return;
 
   if (!APARTMENTS.length) {
-    grid.innerHTML = '<div style="text-align:center;padding:60px;color:var(--gray-300);grid-column:1/-1">No apartments found.</div>';
+    grid.innerHTML = '<div style="text-align:center;padding:60px;color:var(--gray-300);grid-column:1/-1">No rooms found.</div>';
     return;
   }
 
@@ -92,7 +92,7 @@ function renderRooms() {
     return `
       <div class="room-card" data-apt-id="${apt.id}">
         <div class="room-card-img" style="background:linear-gradient(135deg,${apt.color}22,${apt.color}55)">
-          <span style="font-size:48px">${apt.emoji || '<i class="fas fa-home"></i>'}</span>
+          <span style="font-size:48px">${apt.emoji && apt.emoji.startsWith('fa-') ? '<i class="fas ' + apt.emoji + '"></i>' : (apt.emoji || '<i class="fas fa-home"></i>')}</span>
           <div class="room-card-badge ${isOccupied ? 'chip-red' : 'chip-green'}">
             ${isOccupied ? '<i class="fas fa-circle" style="color:#ef4444"></i> Occupied' : '<i class="fas fa-circle" style="color:#22c55e"></i> Available'}
           </div>
@@ -217,7 +217,7 @@ async function openDetail(resId) {
         <div class="detail-row">
           <div class="detail-icon"><i class="fas fa-home"></i></div>
           <div>
-            <div class="detail-label">Apartment</div>
+            <div class="detail-label">Room</div>
             <div class="detail-value">${escapeHtml(apt.name)}</div>
           </div>
         </div>

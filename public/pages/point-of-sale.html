@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>Point of Sale - Steps PMS</title>
+  <title>Point of Sale - Kitobo Serenity Resort</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/style.css" />
@@ -38,8 +38,8 @@
     .sidebar-top { padding: 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
     .sidebar-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
     .logo-icon { font-size: 28px; }
-    .logo-text span:first-child { font-weight: 700; font-size: 18px; color: #1e2a3e; font-family: 'Playfair Display', serif; }
-    .logo-text span:last-child { font-size: 10px; color: #c9933a; display: block; }
+    .logo-text span:first-child { font-size: 22px; font-weight: 800; color: #c9933a; letter-spacing: 1.5px; }
+    .logo-text span:last-child { font-size: 13px; font-weight: 500; opacity: 0.85; letter-spacing: 0.5px; display: block; }
     .sidebar-close-btn { background: none; border: none; font-size: 20px; cursor: pointer; color: #64748b; }
     .sidebar-nav { padding: 20px; }
     .nav-section-label { font-size: 11px; text-transform: uppercase; color: #94a3b8; margin: 15px 0 8px 0; }
@@ -323,14 +323,14 @@
 
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-top">
-    <a class="sidebar-logo" href="/"><div class="logo-icon"><i class="fas fa-hotel"></i></div><div class="logo-text"><span>Steps</span><span>Premium Suite</span></div></a>
+    <a class="sidebar-logo" href="/"><div class="logo-icon"><i class="fas fa-hotel"></i></div><div class="logo-text"><span>Kitobo</span><span>Serenity Resort</span></div></a>
     <button class="sidebar-close-btn" id="sidebar-close-btn"><i class="fas fa-times"></i></button>
   </div>
   <nav class="sidebar-nav">
     <div class="nav-section-label">Main</div>
     <a href="/dashboard" class="nav-item"><i class="fas fa-chart-bar"></i> Stay View</a>
-    <a href="/apartments" class="nav-item"><i class="fas fa-home"></i> Apartments View</a>
-    <a href="/apartments-list" class="nav-item"><i class="fas fa-home"></i> Apartments List</a>
+    <a href="/apartments" class="nav-item"><i class="fas fa-home"></i> Rooms View</a>
+    <a href="/apartments-list" class="nav-item"><i class="fas fa-home"></i> Rooms List</a>
     <a href="/reservations" class="nav-item"><i class="fas fa-clipboard-list"></i> Reservations</a>
     <a href="/users" class="nav-item"><i class="fas fa-users"></i> User Management</a>
     <div class="nav-section-label">Operations</div>
@@ -340,14 +340,15 @@
     <a href="/store-outlets" class="nav-item"><i class="fas fa-store-alt"></i> Outlets</a>
     <a href="/purchase-orders" class="nav-item"><i class="fas fa-box"></i> Purchase Orders</a>
     <a href="/goods-receipt" class="nav-item"><i class="fas fa-clipboard-list"></i> Goods Receipt</a>
-    <div class="nav-section-label">Sales</div>
-    <a href="/point-of-sale" class="nav-item active"><i class="fas fa-shopping-cart"></i> Point of Sale</a>
+    <div class="nav-section-label">POS</div>
+    <a href="/bar" class="nav-item"><i class="fas fa-wine-glass-alt"></i> Bar</a>
+    <a href="/restaurant" class="nav-item"><i class="fas fa-utensils"></i> Restaurant</a>
     <div class="nav-section-label">Reports</div>
     <a href="/purchase-orders-reports" class="nav-item"><i class="fas fa-chart-bar"></i> PO Report</a>
     <a href="/goods-receipt-reports" class="nav-item"><i class="fas fa-chart-bar"></i> GRN Report</a>
     <a href="/store-inventory-reports" class="nav-item"><i class="fas fa-chart-bar"></i> Store Report</a>
   </nav>
-  <div class="sidebar-footer"><small>Steps PMS v1.0 · Dar es Salaam</small></div>
+  <div class="sidebar-footer"><small>Kitobo Serenity Resort</small></div>
 </aside>
 
 <nav class="navbar">
@@ -357,6 +358,7 @@
   </div>
   <div class="navbar-right">
     <button class="btn-add-reservation" onclick="alert('Add reservation')">＋ Add Reservation</button>
+        <button class="pos-navbar-btn" onclick="openPOSChooser()" title="Point of Sale"><i class="fas fa-cash-register"></i> POS</button>
     <button class="notif-btn"><i class="fas fa-bell"></i><span class="badge">3</span></button>
     <div class="user-dropdown">
       <div class="user-pill" id="userPill"><div class="user-avatar" id="userAvatar">U</div><div class="user-info"><span id="userName">Loading...</span><span id="userRole">Loading...</span></div><i class="fas fa-chevron-down"></i></div>
@@ -455,8 +457,12 @@
   }
 
   const API_BASE = '';
-  async function apiGet(url) { const res = await fetch(API_BASE + url); if (!res.ok) throw new Error(await res.text()); return res.json(); }
-  async function apiPut(url, body) { const res = await fetch(API_BASE + url, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); if (!res.ok) throw new Error(await res.text()); return res.json(); }
+  function _getToken() { return sessionStorage.getItem('token'); }
+  function _authHeaders(extra) { const t = _getToken(); return { 'Content-Type': 'application/json', ...(t && { 'Authorization': 'Bearer ' + t }), ...extra }; }
+  function _checkAuth(res) { if (res.status === 401 || res.status === 403) { sessionStorage.clear(); window.location.href = '/login'; throw new Error('Session expired'); } return res; }
+  async function apiGet(url) { const res = _checkAuth(await fetch(API_BASE + url, { headers: _authHeaders() })); if (!res.ok) throw new Error(await res.text()); return res.json(); }
+  async function apiPut(url, body) { const res = _checkAuth(await fetch(API_BASE + url, { method: 'PUT', headers: _authHeaders(), body: JSON.stringify(body) })); if (!res.ok) throw new Error(await res.text()); return res.json(); }
+  async function apiPost(url, body) { const res = _checkAuth(await fetch(API_BASE + url, { method: 'POST', headers: _authHeaders(), body: JSON.stringify(body) })); if (!res.ok) throw new Error(await res.text()); return res.json(); }
 
   async function loadItems() {
     try {
@@ -741,14 +747,7 @@ async function saveCurrentOrder() {
       cashier_name: currentUser.fullName || currentUser.username
     };
     
-    const response = await fetch(`${API_BASE}/api/sales`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(saleData)
-    });
-    
-    if (!response.ok) throw new Error(await response.text());
-    const result = await response.json();
+    const result = await apiPost(`/api/sales`, saleData);
     
     // Also save to localStorage for receipt printing (backup)
     const receiptData = {
@@ -813,7 +812,7 @@ async function saveCurrentOrder() {
       </head>
       <body>
         <div class="header">
-          <h2>Steps Premium Suite</h2>
+          <h2>Kitobo Serenity Resort</h2>
           <p>POS Receipt</p>
           <p>Order #${data.orderNumber}</p>
           <p>${data.date}</p>
@@ -832,19 +831,30 @@ async function saveCurrentOrder() {
     printWindow.document.close();
   }
 
-  // Initialize
-  loadItems();
-  createNewOrder();
+</script>
 
-  window.addToCurrentOrder = addToCurrentOrder;
-  window.updateCartItemQuantity = updateCartItemQuantity;
-  window.removeCartItem = removeCartItem;
-  window.saveCurrentOrder = saveCurrentOrder;
-  window.clearCurrentOrder = clearCurrentOrder;
-  window.printCurrentOrder = printCurrentOrder;
-  window.createNewOrder = createNewOrder;
-  window.switchToOrder = switchToOrder;
-  window.deleteOrder = deleteOrder;
+<!-- POS Chooser Modal -->
+<div id="pos-chooser-overlay" onclick="if(event.target===this)closePOSChooser()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:18px;padding:40px 36px;max-width:460px;width:92%;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,0.28);position:relative;">
+    <div style="font-size:22px;font-weight:700;color:#1e293b;margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:10px;"><i class="fas fa-cash-register" style="color:#2d9c6e;"></i> Point of Sale</div>
+    <p style="color:#64748b;margin:0 0 28px;font-size:14px;">Select the POS system to open</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px;">
+      <a href="/bar" onclick="closePOSChooser()" style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:26px 16px;background:linear-gradient(135deg,#1e3a5f,#2563eb);border-radius:14px;color:#fff;text-decoration:none;font-weight:700;font-size:15px;transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 10px 28px rgba(37,99,235,0.4)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='none'">
+        <i class="fas fa-wine-glass-alt" style="font-size:34px;opacity:0.95;"></i>
+        Bar
+      </a>
+      <a href="/restaurant" onclick="closePOSChooser()" style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:26px 16px;background:linear-gradient(135deg,#7c2d12,#ea580c);border-radius:14px;color:#fff;text-decoration:none;font-weight:700;font-size:15px;transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 10px 28px rgba(234,88,12,0.4)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='none'">
+        <i class="fas fa-utensils" style="font-size:34px;opacity:0.95;"></i>
+        Restaurant
+      </a>
+    </div>
+    <button onclick="closePOSChooser()" style="padding:9px 28px;border:1.5px solid #e2e8f0;border-radius:8px;background:#f8fafc;cursor:pointer;color:#64748b;font-size:13px;font-weight:500;">Cancel</button>
+  </div>
+</div>
+<script>
+function openPOSChooser(){var o=document.getElementById('pos-chooser-overlay');if(o){o.style.display='flex';}}
+function closePOSChooser(){var o=document.getElementById('pos-chooser-overlay');if(o){o.style.display='none';}}
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closePOSChooser();});
 </script>
 </body>
 </html>

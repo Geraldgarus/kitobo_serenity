@@ -1,4 +1,10 @@
-// Dashboard specific functions
+﻿// Dashboard specific functions
+function renderRoomIcon(emoji) {
+  if (!emoji) return '<i class="fas fa-home"></i>';
+  if (emoji.startsWith('fa-')) return `<i class="fas ${emoji}"></i>`;
+  return emoji;
+}
+
 async function loadAndRenderDashboard() {
   try {
     [APARTMENTS, reservations] = await Promise.all([
@@ -72,7 +78,7 @@ function renderGantt() {
   }
 
   let html = `<div class="gantt-scroll-wrap"><table class="gantt-table"><thead>`;
-  html += `<tr><th style="min-width:100px;">Apartment</th>`;
+  html += `<tr><th style="min-width:100px;">Room</th>`;
   
   // Header row with dates
   days.forEach(d => {
@@ -88,6 +94,32 @@ function renderGantt() {
   html += '</td></thead><tbody>';
 
   apts.forEach(apt => {
+    // ── MAINTENANCE ROW ──────────────────────────────────────────
+    if (apt.underMaintenance) {
+      html += `<tr>
+        <td style="padding:0 12px; min-width:100px; border-right:2px solid #dc2626; background:#fff5f5;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:18px;">${renderRoomIcon(apt.emoji)}</span>
+            <span style="font-weight:600; color:#dc2626;">${escapeHtml(apt.name)}</span>
+          </div>
+        </td>
+        <td colspan="${days.length}" style="padding:4px; background:#fff5f5;">
+          <div style="background:#fee2e2; border:1px solid #fca5a5; border-left:4px solid #dc2626;
+                      border-radius:6px; padding:6px 14px; display:flex; align-items:center; gap:10px;
+                      cursor:default; height:36px; box-sizing:border-box;">
+            <i class="fas fa-tools" style="color:#dc2626; font-size:14px; flex-shrink:0;"></i>
+            <span style="font-weight:700; color:#dc2626; font-size:13px;">Under Maintenance</span>
+            <span style="color:#b91c1c; font-size:11px; margin-left:4px;">— Room blocked, not available for reservations</span>
+            <a href="/housekeeping" style="margin-left:auto; font-size:11px; color:#dc2626; font-weight:600; text-decoration:none; white-space:nowrap;">
+              <i class="fas fa-external-link-alt"></i> Manage
+            </a>
+          </div>
+        </td>
+      </tr>`;
+      return;
+    }
+
+    // ── NORMAL RESERVATION ROW ───────────────────────────────────
     const aptReservations = reservations.filter(r => {
       if (r.aptId !== apt.id) return false;
       const rCheckout = new Date(r.checkout);
@@ -98,7 +130,7 @@ function renderGantt() {
     html += `<tr>
       <td style="padding:0 12px; min-width:100px; border-right:2px solid ${apt.color}; background:#fafafa;">
         <div style="display:flex; align-items:center; gap:8px;">
-          <i class="fas fa-building" style="font-size:18px;"></i>
+          <span style="font-size:18px;">${renderRoomIcon(apt.emoji)}</span>
           <span style="font-weight:600;">${escapeHtml(apt.name)}</span>
         </div>
       </td>`;
@@ -139,7 +171,7 @@ function renderGantt() {
           else break;
         }
         if (i !== startIndex) {
-          html += `<td colspan="${startIndex - i}" style="background:#fafafa;"> </td>`;
+          html += `<td colspan="${startIndex - i}" style="background:#fafafa;"> </td>`;
           i = startIndex;
         }
         const wkndClass = isWeekend(days[startIndex]) ? 'weekend' : '';
@@ -158,7 +190,7 @@ function renderGantt() {
         i += span;
       } else {
         const wknd = isWeekend(currentDate);
-        html += `<td class="${wknd ? 'weekend' : ''}" style="background:#fafafa;"> </td>`;
+        html += `<td class="${wknd ? 'weekend' : ''}" style="background:#fafafa;"> </td>`;
         i++;
       }
     }
@@ -232,7 +264,7 @@ async function openDetail(resId) {
         <div class="detail-row"><div class="detail-icon"><i class="fas fa-clipboard-list"></i></div><div><div class="detail-label">ID Number</div><div class="detail-value">${escapeHtml(res.identification || '—')}</div></div></div>
         <div class="detail-row"><div class="detail-icon"><i class="fas fa-globe-africa"></i></div><div><div class="detail-label">Country</div><div class="detail-value">${escapeHtml(res.country || '—')}</div></div></div>
         <div class="detail-row"><div class="detail-icon"><i class="fas fa-city"></i></div><div><div class="detail-label">City</div><div class="detail-value">${escapeHtml(res.city || '—')}</div></div></div>
-        <div class="detail-row"><div class="detail-icon"><i class="fas fa-home"></i></div><div><div class="detail-label">Apartment</div><div class="detail-value">${escapeHtml(apt.name)}</div></div></div>
+        <div class="detail-row"><div class="detail-icon"><i class="fas fa-home"></i></div><div><div class="detail-label">Room</div><div class="detail-value">${escapeHtml(apt.name)}</div></div></div>
         <div class="detail-row"><div class="detail-icon"><i class="fas fa-credit-card"></i></div><div><div class="detail-label">Rate Type</div><div class="detail-value">${escapeHtml(res.rateType)}</div></div></div>
         <div class="detail-row"><div class="detail-icon"><i class="fas fa-calendar-alt"></i></div><div><div class="detail-label">Check-in</div><div class="detail-value">${fmtDate(res.checkin)}</div></div></div>
         <div class="detail-row"><div class="detail-icon"><i class="fas fa-calendar-alt"></i></div><div><div class="detail-label">Check-out</div><div class="detail-value">${fmtDate(res.checkout)} at 11:00 AM</div></div></div>

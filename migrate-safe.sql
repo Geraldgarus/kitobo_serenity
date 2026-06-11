@@ -1002,3 +1002,62 @@ UPDATE reservations SET payment_status = 'unpaid' WHERE payment_status IS NULL;
 UPDATE reservations SET amount_paid = 0 WHERE amount_paid IS NULL;
 
 SELECT '✅ Payment columns added to reservations table!' as status;
+
+
+
+-- ============================================================
+-- ADD POS COLUMN TO STORE_ITEMS TABLE
+-- ============================================================
+
+-- Add pos column if it doesn't exist
+ALTER TABLE store_items ADD COLUMN IF NOT EXISTS pos VARCHAR(20) DEFAULT NULL;
+
+-- Create index for faster POS filtering
+CREATE INDEX IF NOT EXISTS idx_store_items_pos ON store_items(pos);
+
+-- Verification
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.columns
+               WHERE table_name='store_items' AND column_name='pos') THEN
+        RAISE NOTICE '✅ pos column added to store_items table';
+    ELSE
+        RAISE NOTICE '❌ pos column MISSING from store_items';
+    END IF;
+END $$;
+
+SELECT '✅ POS column added to store_items table!' as status;
+
+-- ============================================================
+-- POS TYPE COLUMN FOR SALES ORDERS
+-- ============================================================
+ALTER TABLE sales_orders ADD COLUMN IF NOT EXISTS pos_type VARCHAR(20) DEFAULT NULL;
+CREATE INDEX IF NOT EXISTS idx_sales_orders_pos_type ON sales_orders(pos_type);
+SELECT '✅ pos_type column added to sales_orders table!' as status;
+
+-- ============================================================
+-- LAUNDRY SERVICES TABLE
+-- ============================================================
+CREATE TABLE IF NOT EXISTS laundry_services (
+  id SERIAL PRIMARY KEY,
+  room_number VARCHAR(20) NOT NULL,
+  clothes_type VARCHAR(200),
+  services VARCHAR(500),
+  service_date DATE NOT NULL DEFAULT CURRENT_DATE,
+  housekeeper_name VARCHAR(100) NOT NULL,
+  price DECIMAL(10,2) NOT NULL DEFAULT 0,
+  payment_method VARCHAR(50),
+  payment_status VARCHAR(20) DEFAULT 'pending',
+  amount_paid DECIMAL(10,2) DEFAULT 0,
+  notes TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_laundry_service_date ON laundry_services(service_date);
+CREATE INDEX IF NOT EXISTS idx_laundry_payment_status ON laundry_services(payment_status);
+SELECT '✅ laundry_services table created!' as status;
+
+-- ─── Under Maintenance flag on apartments ──────────────────────────────────
+ALTER TABLE apartments ADD COLUMN IF NOT EXISTS under_maintenance BOOLEAN DEFAULT FALSE;
+CREATE INDEX IF NOT EXISTS idx_apartments_maintenance ON apartments(under_maintenance);
+SELECT '✅ apartments.under_maintenance column added!' as status;

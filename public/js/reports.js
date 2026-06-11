@@ -1,4 +1,4 @@
-// Reports specific functions
+﻿// Reports specific functions
 async function loadAndRenderReports() {
   const fromEl = document.getElementById('rpt-from');
   const toEl = document.getElementById('rpt-to');
@@ -109,7 +109,7 @@ async function generatePrintReport() {
     const periodLabel = fromVal && toVal ? `${fmtDate(fromVal)} to ${fmtDate(toVal)}` : 'All Time';
 
     const win = window.open('', '_blank');
-    win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Steps PMS Report – ${periodLabel}</title>
+    win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Kitobo Serenity Resort Report – ${periodLabel}</title>
     <style>
       *{box-sizing:border-box;margin:0;padding:0}
       body{font-family:Georgia,serif;color:#1a2340;background:#fff;padding:40px;font-size:13px}
@@ -131,11 +131,11 @@ async function generatePrintReport() {
       .footer{margin-top:40px;border-top:1px solid #e5e7eb;padding-top:16px;font-size:11px;color:#9ca3af;display:flex;justify-content:space-between}
       @media print{body{padding:20px}}
     </style></head><body>
-    <div class="header"><div class="logo-area"><h1><i class="fas fa-hotel"></i> Steps Premium Suite</h1><p>Property Management System · Dar es Salaam, Tanzania</p></div><div class="report-meta"><div class="period">Period: ${periodLabel}</div><div class="generated">Generated: ${new Date().toLocaleString('en-GB')}</div></div></div>
+    <div class="header"><div class="logo-area"><h1><i class="fas fa-hotel"></i> Kitobo Serenity Resort</h1><p>Property Management System · Dar es Salaam, Tanzania</p></div><div class="report-meta"><div class="period">Period: ${periodLabel}</div><div class="generated">Generated: ${new Date().toLocaleString('en-GB')}</div></div></div>
     <div class="summary-grid"><div class="summary-box"><div class="label">Total Reservations</div><div class="value">${s.totalReservations}</div></div><div class="summary-box"><div class="label">Total Revenue</div><div class="value" style="font-size:15px">${fmtTSH(s.totalRevenue)}</div></div><div class="summary-box"><div class="label">Total Nights Sold</div><div class="value">${s.totalNights}</div></div><div class="summary-box"><div class="label">Avg. Stay</div><div class="value">${s.avgStayNights ? s.avgStayNights.toFixed(1) : '—'} nts</div></div></div>
     <h2>Revenue by Apartment</h2><table><thead><tr><th>Apartment</th><th>Bookings</th><th>Nights</th><th>Revenue</th><th>Rate/Night</th></tr></thead><tbody>${aptRows}</tbody></table>
     <h2>Reservation Detail (${filtered.length} records)</h2><table><thead><tr><th>Guest</th><th>Apartment</th><th>Check-in</th><th>Check-out</th><th>Nights</th><th>Guests</th><th>Rate</th><th>Total</th></tr></thead><tbody>${resRows || '<tr><td colspan="8" style="text-align:center;color:#9ca3af;padding:20px">No reservations in this period</td></tr>'}</tbody></table>
-    <div class="footer"><span>Steps PMS v1.0 · Confidential</span><span>Page 1</span></div>
+    <div class="footer"><span>Kitobo Serenity Resort · Confidential</span><span>Page 1</span></div>
     <script>window.onload=()=>window.print();<\/script>
     </body></html>`);
     win.document.close();

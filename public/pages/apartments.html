@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>Apartments - Steps PMS</title>
+  <title>Rooms - Kitobo Serenity Resort</title>
   <style>
   body { opacity: 0; transition: opacity 0.2s; }
   body.loaded { opacity: 1; }
@@ -495,10 +495,7 @@
   <div class="sidebar-top">
     <a class="sidebar-logo" href="/">
       <div class="logo-icon"><i class="fas fa-building"></i></div>
-      <div class="logo-text">
-        <span>Steps</span>
-        <span>Premier Suites</span>
-      </div>
+      <div class="logo-text"><span>Kitobo</span><span>Serenity Resort</span></div>
     </a>
     <button class="sidebar-close-btn" id="sidebar-close-btn"><i class="fas fa-times"></i></button>
   </div>
@@ -517,13 +514,16 @@
     <a href="/reservations" class="nav-item"><i class="fas fa-calendar-alt"></i> Reservations</a>
     <a href="/housekeeping" class="nav-item"><i class="fas fa-soap"></i> Housekeeping</a>
     <a href="/maintenance" class="nav-item"><i class="fas fa-toolbox"></i> Maintenance</a>
+    <div class="nav-section-label">POS</div>
+    <a href="/bar" class="nav-item"><i class="fas fa-wine-glass-alt"></i> Bar</a>
+    <a href="/restaurant" class="nav-item"><i class="fas fa-utensils"></i> Restaurant</a>
     
     <!-- ============================================================ -->
     <!-- PROPERTY -->
     <!-- ============================================================ -->
     <div class="nav-section-label">Property</div>
-    <a href="/apartments" class="nav-item active"><i class="fas fa-building"></i> Apartments View</a>
-    <a href="/apartments-list" class="nav-item "><i class="fas fa-list-ul"></i> Apartments List</a>
+    <a href="/apartments" class="nav-item active"><i class="fas fa-building"></i> Rooms View</a>
+    <a href="/apartments-list" class="nav-item "><i class="fas fa-list-ul"></i> Rooms List</a>
     
     <!-- ============================================================ -->
     <!-- INVENTORY -->
@@ -550,6 +550,8 @@
     <a href="/purchase-orders-reports" class="nav-item"><i class="fas fa-file-alt"></i> Purchase Orders Report</a>
     <a href="/goods-receipt-reports" class="nav-item"><i class="fas fa-stamp"></i> Goods Receipt Report</a>
     <a href="/store-inventory-reports" class="nav-item"><i class="fas fa-boxes"></i> Store Inventory Report</a>
+    <a href="/sales-report" class="nav-item"><i class="fas fa-receipt"></i> Sales Report</a>
+    <a href="/housekeeping-report" class="nav-item"><i class="fas fa-soap"></i> Housekeeping Report</a>
     <a href="/financial-report" class="nav-item"><i class="fas fa-chart-line"></i> Financial Report</a>
     
     <!-- ============================================================ -->
@@ -572,7 +574,7 @@
   </nav>
   
   <div class="sidebar-footer">
-    <small>Steps PMS v1.0 · Dar es Salaam</small>
+    <small>Kitobo Serenity Resort</small>
   </div>
 </aside>
 
@@ -585,8 +587,8 @@
       <span class="hb-bar"></span><span class="hb-bar"></span><span class="hb-bar"></span>
     </button>
     <div>
-      <div class="page-title">Apartment View</div>
-      <div class="page-subtitle">Apartments Overview</div>
+      <div class="page-title">Room View</div>
+      <div class="page-subtitle">Rooms Overview</div>
     </div>
   </div>
   <div class="navbar-right">
@@ -598,6 +600,7 @@
       <i class="fas fa-chart-line"></i>
     </a>
     <button class="" onclick="openReservationModal()"></button>
+        <button class="pos-navbar-btn" onclick="openPOSChooser()" title="Point of Sale"><i class="fas fa-cash-register"></i> POS</button>
     <button class="notif-btn" id="notif-btn">
   <i class="fas fa-bell"></i><span class="badge" id="notif-badge">0</span>
 </button>
@@ -625,8 +628,8 @@
 <main class="main-content">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
     <div>
-      <h2 style="font-family:'Playfair Display',serif;font-size:22px;color:var(--navy)">Apartments</h2>
-      <p style="color:var(--gray-400);font-size:13px;margin-top:4px">Overview of all 6 apartments and their status</p>
+      <h2 style="font-family:'Playfair Display',serif;font-size:22px;color:var(--navy)">Rooms</h2>
+      <p style="color:var(--gray-400);font-size:13px;margin-top:4px">Overview of all 6 rooms and their status</p>
     </div>
     <button class="" onclick=""></button>
   </div>
@@ -668,20 +671,17 @@
       
       <div class="form-group-row cols-2">
         <div class="form-group">
-          <label><i class="fas fa-home"></i> Apartment</label>
+          <label><i class="fas fa-home"></i> Room</label>
           <select id="modal-f-apt" class="form-control" required>
-            <option value="">Select Apartment</option>
+            <option value="">Select Room</option>
           </select>
         </div>
         <div class="form-group">
-          <label><i class="fas fa-money-bill-wave"></i> Rate Type</label>
-          <select id="modal-f-ratetype" class="form-control">
-            <option value="Full">Full (100%)</option>
-            <option value="Partial">Partial (60%)</option>
-          </select>
+          <label><i class="fas fa-dollar-sign"></i> Price per Night (TSH)</label>
+          <input type="number" id="modal-f-price-per-night" class="form-control" min="0" step="1000" placeholder="Enter price per night" oninput="modalUpdateRate()" />
         </div>
       </div>
-      
+
       <div class="form-group-row" style="grid-template-columns:1fr 1fr 1.2fr">
         <div class="form-group">
           <label><i class="fas fa-user"></i> Adults</label>
@@ -701,15 +701,8 @@
         </div>
         <div class="form-group">
   <label><i class="fas fa-money-bill-wave"></i> Total Rate</label>
-  <div id="modal-total-container">
-    <div style="display: flex; align-items: center; gap: 8px;">
-      <div class="rate-display" id="modal-f-total" style="flex: 1;">—</div>
-      <i class="fas fa-pencil-alt custom-rate-edit-icon" onclick="enableCustomTotal('modal')" title="Set custom total"></i>
-    </div>
-    <div id="modal-custom-area" style="display: none; margin-top: 8px;"></div>
-  </div>
+  <div class="rate-display" id="modal-f-total">—</div>
   <input type="hidden" id="modal-f-total-hidden" value="0">
-  <input type="hidden" id="modal-use-custom-total" value="0">
 </div>
       </div>
       
@@ -802,20 +795,17 @@
       
       <div class="form-group-row cols-2">
         <div class="form-group">
-          <label><i class="fas fa-home"></i> Apartment</label>
+          <label><i class="fas fa-home"></i> Room</label>
           <select id="edit-f-apt" class="form-control" required>
-            <option value="">Select Apartment</option>
+            <option value="">Select Room</option>
           </select>
         </div>
         <div class="form-group">
-          <label><i class="fas fa-money-bill-wave"></i> Rate Type</label>
-          <select id="edit-f-ratetype" class="form-control">
-            <option value="Full">Full (100%)</option>
-            <option value="Partial">Partial (60%)</option>
-          </select>
+          <label><i class="fas fa-dollar-sign"></i> Price per Night (TSH)</label>
+          <input type="number" id="edit-f-price-per-night" class="form-control" min="0" step="1000" placeholder="Enter price per night" oninput="editUpdateRate()" />
         </div>
       </div>
-      
+
       <div class="form-group-row" style="grid-template-columns:1fr 1fr 1.2fr">
         <div class="form-group">
           <label><i class="fas fa-user"></i> Adults</label>
@@ -835,17 +825,10 @@
         </div>
         <div class="form-group">
   <label><i class="fas fa-money-bill-wave"></i> Total Rate</label>
-  <div id="edit-total-container">
-    <div style="display: flex; align-items: center; gap: 8px;">
-      <div class="rate-display" id="edit-f-total" style="flex: 1;">—</div>
-      <i class="fas fa-pencil-alt custom-rate-edit-icon" onclick="enableCustomTotal('edit')" title="Set custom total"></i>
-    </div>
-    <div id="edit-custom-area" style="display: none; margin-top: 8px;"></div>
-  </div>
+  <div class="rate-display" id="edit-f-total">—</div>
   <input type="hidden" id="edit-f-total-hidden" value="0">
-  <input type="hidden" id="edit-use-custom-total" value="0">
   <input type="hidden" id="modal-f-identification-hidden" value="">
-<input type="hidden" id="modal-f-id-type-hidden" value="">
+  <input type="hidden" id="modal-f-id-type-hidden" value="">
 </div>
       </div>
       
@@ -998,7 +981,8 @@ function applyCustomTotal(type) {
   // Store the custom total
   document.getElementById(`${type}-f-total-hidden`).value = customTotal;
   document.getElementById(`${type}-f-total`).innerHTML = fmtTSH(customTotal);
-  document.getElementById(`${type}-use-custom-total`).value = '1';
+  const useCustomEl = document.getElementById(`${type}-use-custom-total`);
+  if (useCustomEl) useCustomEl.value = '1';
   
   // Hide the custom area
   const customArea = document.getElementById(`${type}-custom-area`);
@@ -1573,7 +1557,7 @@ async function initModalForm() {
     try { 
       modalAPARTMENTS = await apiGet('/apartments'); 
     } catch(err) { 
-      showToast('Failed to load apartments', '<i class="fas fa-times-circle"></i>'); 
+      showToast('Failed to load rooms', '<i class="fas fa-times-circle"></i>'); 
       return;
     }
   }
@@ -1582,14 +1566,14 @@ async function initModalForm() {
   document.getElementById('modal-f-id-type').value = 'NIDA';
 
   const sel = document.getElementById('modal-f-apt');
-  sel.innerHTML = '<option value="">Select Apartment</option>';
+  sel.innerHTML = '<option value="">Select Room</option>';
   modalAPARTMENTS.forEach(apt => {
     const opt = document.createElement('option');
     opt.value = apt.id;
-    opt.textContent = `${apt.emoji} ${apt.name} – Max ${apt.maxAdults} Adults – ${fmtTSH(apt.ratePerNight)}/night`;
+    opt.textContent = `${apt.name} – Max ${apt.maxAdults} Adults – ${fmtTSH(apt.ratePerNight)}/night`;
     sel.appendChild(opt);
   });
-  
+
   // Load countries from database for add modal
   await loadModalCountries();
   initModalCountryDropdown();
@@ -1599,7 +1583,7 @@ async function initModalForm() {
   document.getElementById('modal-f-checkout').value = isoDate(addDays(today, 1));
   modalUpdateRate();
 
-  ['modal-f-checkin', 'modal-f-checkout', 'modal-f-apt', 'modal-f-ratetype', 'modal-f-adults', 'modal-f-children'].forEach(id => {
+  ['modal-f-checkin', 'modal-f-checkout', 'modal-f-apt', 'modal-f-price-per-night', 'modal-f-adults', 'modal-f-children'].forEach(id => {
     const el = document.getElementById(id);
     if (el) {
       el.removeEventListener('change', modalUpdateRate);
@@ -1619,34 +1603,21 @@ function modalStepperChange(id, delta) {
 }
 
 function modalUpdateRate() {
-  console.log('<i class="fas fa-sync-alt"></i> Updating rate...');
-  
-  const aptId = parseInt(document.getElementById('modal-f-apt')?.value);
-  const rateType = document.getElementById('modal-f-ratetype')?.value;
+  const pricePerNight = parseFloat(document.getElementById('modal-f-price-per-night')?.value) || 0;
   const checkin = document.getElementById('modal-f-checkin')?.value;
   const checkout = document.getElementById('modal-f-checkout')?.value;
-  
-  if (!aptId || !checkin || !checkout) { 
+
+  if (!pricePerNight || !checkin || !checkout) {
     document.getElementById('modal-f-total').innerHTML = '—';
     document.getElementById('modal-f-total-hidden').value = 0;
-    console.log('Missing fields');
-    return; 
-  }
-  
-  const apt = modalAPARTMENTS.find(a => a.id === aptId);
-  if (!apt) {
-    console.log('Apartment not found');
     return;
   }
-  
+
   const nights = daysBetween(checkin, checkout);
-  const multiplier = rateType === 'Partial' ? 0.6 : 1;
-  const total = Math.round(apt.ratePerNight * nights * multiplier);
-  
+  const total = Math.round(pricePerNight * nights);
+
   document.getElementById('modal-f-total').innerHTML = total > 0 ? fmtTSH(total) : '—';
   document.getElementById('modal-f-total-hidden').value = total;
-  
-  console.log(`<i class="fas fa-check-circle"></i> ${nights} nights × ${apt.ratePerNight} × ${multiplier} = ${total}`);
 }
 // Force recalculation when dates lose focus
 function forceRateUpdate() {
@@ -1659,7 +1630,7 @@ function forceRateUpdate() {
 document.getElementById('modal-f-checkin')?.addEventListener('blur', forceRateUpdate);
 document.getElementById('modal-f-checkout')?.addEventListener('blur', forceRateUpdate);
 document.getElementById('modal-f-apt')?.addEventListener('change', forceRateUpdate);
-document.getElementById('modal-f-ratetype')?.addEventListener('change', forceRateUpdate);
+document.getElementById('modal-f-price-per-night')?.addEventListener('input', forceRateUpdate);
 
 function openReservationModal() {
   document.getElementById('reservation-modal').classList.add('open');
@@ -1686,7 +1657,7 @@ async function initEditForm(reservationId) {
       try { 
         editAPARTMENTS = await apiGet('/apartments'); 
       } catch(err) { 
-        showToast('Failed to load apartments', '<i class="fas fa-times-circle"></i>'); 
+        showToast('Failed to load rooms', '<i class="fas fa-times-circle"></i>'); 
         return;
       }
     }
@@ -1696,11 +1667,11 @@ async function initEditForm(reservationId) {
     document.getElementById('edit-f-id-type').value = reservation.idType || 'NIDA';
 
     const sel = document.getElementById('edit-f-apt');
-    sel.innerHTML = '<option value="">Select Apartment</option>';
+    sel.innerHTML = '<option value="">Select Room</option>';
     editAPARTMENTS.forEach(apt => {
       const opt = document.createElement('option');
       opt.value = apt.id;
-      opt.textContent = `${apt.emoji} ${apt.name} – Max ${apt.maxAdults} Adults – ${fmtTSH(apt.ratePerNight)}/night`;
+      opt.textContent = `${apt.name} – Max ${apt.maxAdults} Adults – ${fmtTSH(apt.ratePerNight)}/night`;
       if (apt.id === reservation.aptId) opt.selected = true;
       sel.appendChild(opt);
     });
@@ -1729,9 +1700,12 @@ async function initEditForm(reservationId) {
     document.getElementById('edit-f-checkout').value = isoDate(reservation.checkout);
     document.getElementById('edit-f-adults').value = reservation.adults;
     document.getElementById('edit-f-children').value = reservation.children;
-    document.getElementById('edit-f-ratetype').value = reservation.rateType;
-    
-    editUpdateRate();
+
+    const savedTotal = reservation.total || 0;
+    const savedNights = Math.max(1, daysBetween(isoDate(reservation.checkin), isoDate(reservation.checkout)));
+    document.getElementById('edit-f-price-per-night').value = savedNights > 0 ? Math.round(savedTotal / savedNights) : '';
+    document.getElementById('edit-f-total-hidden').value = savedTotal;
+    document.getElementById('edit-f-total').innerHTML = fmtTSH(savedTotal);
     
   } catch (err) {
     showToast('Failed to load reservation data: ' + err.message, '<i class="fas fa-times-circle"></i>');
@@ -1747,17 +1721,16 @@ function editStepperChange(id, delta) {
 }
 
 function editUpdateRate() {
-  const aptId = parseInt(document.getElementById('edit-f-apt')?.value);
-  const rateType = document.getElementById('edit-f-ratetype')?.value;
+  const pricePerNight = parseFloat(document.getElementById('edit-f-price-per-night')?.value) || 0;
   const checkin = document.getElementById('edit-f-checkin')?.value;
   const checkout = document.getElementById('edit-f-checkout')?.value;
-  if (!aptId || !checkin || !checkout) { 
-    document.getElementById('edit-f-total').textContent = '—'; 
-    return; 
+  if (!pricePerNight || !checkin || !checkout) {
+    document.getElementById('edit-f-total').textContent = '—';
+    document.getElementById('edit-f-total-hidden').value = 0;
+    return;
   }
-  const apt = editAPARTMENTS.find(a => a.id === aptId);
   const nights = Math.max(0, daysBetween(checkin, checkout));
-  const total = apt ? Math.round(apt.ratePerNight * nights * (rateType === 'Partial' ? 0.6 : 1)) : 0;
+  const total = Math.round(pricePerNight * nights);
   document.getElementById('edit-f-total').innerHTML = total > 0 ? fmtTSH(total) : '—';
   document.getElementById('edit-f-total-hidden').value = total;
 }
@@ -1789,50 +1762,8 @@ function openEditFromDetail() {
 // New Reservation Form
 // Force manual calculation before saving
 function forceManualCalculation() {
-  console.log('<i class="fas fa-wrench"></i> Forcing manual calculation before save...');
-  
-  // Get current form values
-  const aptId = parseInt(document.getElementById('modal-f-apt')?.value);
-  const rateType = document.getElementById('modal-f-ratetype')?.value;
-  const checkin = document.getElementById('modal-f-checkin')?.value;
-  const checkout = document.getElementById('modal-f-checkout')?.value;
-  
-  // Check if custom total is active
-  const useCustomTotal = document.getElementById('modal-use-custom-total')?.value;
-  
-  if (useCustomTotal === '1') {
-    console.log('Custom total active, keeping custom value');
-    return parseFloat(document.getElementById('modal-f-total-hidden').value) || 0;
-  }
-  
-  // Auto-calculate if all fields are present
-  if (!aptId || !checkin || !checkout) {
-    console.log('Missing fields, cannot calculate');
-    return 0;
-  }
-  
-  const apt = modalAPARTMENTS.find(a => a.id === aptId);
-  if (!apt) {
-    console.log('Apartment not found');
-    return 0;
-  }
-  
-  const nights = daysBetween(checkin, checkout);
-  if (nights <= 0) {
-    console.log('Invalid nights');
-    return 0;
-  }
-  
-  const multiplier = rateType === 'Partial' ? 0.6 : 1;
-  const total = Math.round(apt.ratePerNight * nights * multiplier);
-  
-  // Update the hidden field and display
-  document.getElementById('modal-f-total-hidden').value = total;
-  document.getElementById('modal-f-total').innerHTML = fmtTSH(total);
-  
-  console.log(`<i class="fas fa-check-circle"></i> Manual calculation: ${nights} nights × ${apt.ratePerNight} × ${multiplier} = ${total}`);
-  
-  return total;
+  modalUpdateRate();
+  return parseFloat(document.getElementById('modal-f-total-hidden').value) || 0;
 }
 
 
@@ -1865,18 +1796,10 @@ document.getElementById('reservation-form-modal')?.addEventListener('submit', as
     }
   }
   
-  // Get the final total (either custom or auto-calculated)
-  let finalTotal = forcedTotal;
-  
-  // If custom total is active, use custom total instead
-  const useCustomTotal = document.getElementById('modal-use-custom-total')?.value;
-  if (useCustomTotal === '1') {
-    finalTotal = parseFloat(document.getElementById('modal-f-total-hidden').value) || 0;
-  }
-  
-  // Validate total is not zero
+  const finalTotal = parseFloat(document.getElementById('modal-f-total-hidden').value) || 0;
+
   if (finalTotal <= 0) {
-    showToast('Please ensure total amount is calculated correctly', '<i class="fas fa-exclamation-triangle"></i>');
+    showToast('Please enter price per night and ensure dates are selected', '<i class="fas fa-exclamation-triangle"></i>');
     return;
   }
 
@@ -1890,11 +1813,10 @@ document.getElementById('reservation-form-modal')?.addEventListener('submit', as
     checkin, checkout,
     adults: parseInt(document.getElementById('modal-f-adults').value),
     children: parseInt(document.getElementById('modal-f-children').value),
-    rateType: document.getElementById('modal-f-ratetype').value,
+    pricePerNight: parseFloat(document.getElementById('modal-f-price-per-night').value) || 0,
     total: finalTotal,
-    // <i class="fas fa-check-circle"></i> ADD THESE TWO LINES
-  identification: document.getElementById('modal-f-identification').value,
-  idType: document.getElementById('modal-f-id-type').value
+    identification: document.getElementById('modal-f-identification').value,
+    idType: document.getElementById('modal-f-id-type').value
   };
 
   try {
@@ -1908,13 +1830,8 @@ document.getElementById('reservation-form-modal')?.addEventListener('submit', as
     closeReservationModal();
     document.getElementById('reservation-form-modal').reset();
     
-    // Reset custom total flags
-    document.getElementById('modal-use-custom-total').value = '0';
     document.getElementById('modal-f-total-hidden').value = 0;
-    
-    setTimeout(() => {
-      loadAndRenderDashboard();
-    }, 100);
+    loadAndRenderRooms();
     
     submitBtn.textContent = originalText;
     submitBtn.disabled = false;
@@ -1926,35 +1843,8 @@ document.getElementById('reservation-form-modal')?.addEventListener('submit', as
 
 // Force manual calculation for Edit Modal
 function forceManualCalculationEdit() {
-  console.log('<i class="fas fa-wrench"></i> Forcing manual calculation for edit...');
-  
-  const aptId = parseInt(document.getElementById('edit-f-apt')?.value);
-  const rateType = document.getElementById('edit-f-ratetype')?.value;
-  const checkin = document.getElementById('edit-f-checkin')?.value;
-  const checkout = document.getElementById('edit-f-checkout')?.value;
-  
-  const useCustomTotal = document.getElementById('edit-use-custom-total')?.value;
-  
-  if (useCustomTotal === '1') {
-    console.log('Custom total active, keeping custom value');
-    return parseFloat(document.getElementById('edit-f-total-hidden').value) || 0;
-  }
-  
-  if (!aptId || !checkin || !checkout) return 0;
-  
-  const apt = editAPARTMENTS.find(a => a.id === aptId);
-  if (!apt) return 0;
-  
-  const nights = daysBetween(checkin, checkout);
-  if (nights <= 0) return 0;
-  
-  const multiplier = rateType === 'Partial' ? 0.6 : 1;
-  const total = Math.round(apt.ratePerNight * nights * multiplier);
-  
-  document.getElementById('edit-f-total-hidden').value = total;
-  document.getElementById('edit-f-total').innerHTML = fmtTSH(total);
-  
-  return total;
+  editUpdateRate();
+  return parseFloat(document.getElementById('edit-f-total-hidden').value) || 0;
 }
 
 // Edit Reservation Form
@@ -1983,14 +1873,10 @@ document.getElementById('edit-form-modal')?.addEventListener('submit', async fun
       return;
     }
   }
-  let finalTotal = forcedTotal;
-  const useCustomTotal = document.getElementById('edit-use-custom-total')?.value;
-  if (useCustomTotal === '1') {
-    finalTotal = parseFloat(document.getElementById('edit-f-total-hidden').value) || 0;
-  }
-  
+  const finalTotal = parseFloat(document.getElementById('edit-f-total-hidden').value) || 0;
+
   if (finalTotal <= 0) {
-    showToast('Please ensure total amount is calculated correctly', '<i class="fas fa-exclamation-triangle"></i>');
+    showToast('Please enter price per night and ensure dates are selected', '<i class="fas fa-exclamation-triangle"></i>');
     return;
   }
 
@@ -2004,14 +1890,12 @@ document.getElementById('edit-form-modal')?.addEventListener('submit', async fun
     checkin, checkout,
     adults: parseInt(document.getElementById('edit-f-adults').value),
     children: parseInt(document.getElementById('edit-f-children').value),
-    rateType: document.getElementById('edit-f-ratetype').value,
+    pricePerNight: parseFloat(document.getElementById('edit-f-price-per-night').value) || 0,
     total: finalTotal,
     userId: currentUser.id,
     username: currentUser.fullName || currentUser.username,
-   // <i class="fas fa-check-circle"></i> ADD THESE TWO LINES
-  identification: document.getElementById('edit-f-identification').value,
-  idType: document.getElementById('edit-f-id-type').value
-
+    identification: document.getElementById('edit-f-identification').value,
+    idType: document.getElementById('edit-f-id-type').value
   };
 
   try {
@@ -2023,10 +1907,7 @@ document.getElementById('edit-form-modal')?.addEventListener('submit', async fun
     await apiPut(`/reservations/${reservationId}`, payload);
     showToast('<i class="fas fa-check-circle"></i> Reservation updated successfully!', '<i class="fas fa-pen"></i>');
     closeEditModal();
-    
-    setTimeout(() => {
-      loadAndRenderDashboard();
-    }, 100);
+    loadAndRenderRooms();
     
     submitBtn.textContent = originalText;
     submitBtn.disabled = false;
@@ -2075,7 +1956,7 @@ window.openDetail = async function(resId) {
 </div>
       <div class="detail-row"><div class="detail-icon"><i class="fas fa-globe-africa"></i></div><div><div class="detail-label">Country</div><div class="detail-value">${escapeHtml(res.country || '—')}</div></div></div>
       <div class="detail-row"><div class="detail-icon"><i class="fas fa-city"></i></div><div><div class="detail-label">City</div><div class="detail-value">${escapeHtml(res.city || '—')}</div></div></div>
-      <div class="detail-row"><div class="detail-icon"><i class="fas fa-home"></i></div><div><div class="detail-label">Apartment</div><div class="detail-value">${escapeHtml(apt.name)}</div></div></div>
+      <div class="detail-row"><div class="detail-icon"><i class="fas fa-home"></i></div><div><div class="detail-label">Room</div><div class="detail-value">${escapeHtml(apt.name)}</div></div></div>
       <div class="detail-row"><div class="detail-icon"><i class="fas fa-credit-card"></i></div><div><div class="detail-label">Rate Type</div><div class="detail-value">${escapeHtml(res.rateType)}</div></div></div>
       <div class="detail-row"><div class="detail-icon"><i class="fas fa-calendar-alt"></i></div><div><div class="detail-label">Check-in</div><div class="detail-value">${fmtDate(res.checkin)}</div></div></div>
       <div class="detail-row"><div class="detail-icon"><i class="fas fa-calendar-alt"></i></div><div><div class="detail-label">Check-out</div><div class="detail-value">${fmtDate(res.checkout)}</div></div></div>
@@ -2344,6 +2225,30 @@ window.closeEditModal = closeEditModal;
 window.openEditFromDetail = openEditFromDetail;
 window.editStepperChange = editStepperChange;
 
+</script>
+
+<!-- POS Chooser Modal -->
+<div id="pos-chooser-overlay" onclick="if(event.target===this)closePOSChooser()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:18px;padding:40px 36px;max-width:460px;width:92%;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,0.28);position:relative;">
+    <div style="font-size:22px;font-weight:700;color:#1e293b;margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:10px;"><i class="fas fa-cash-register" style="color:#2d9c6e;"></i> Point of Sale</div>
+    <p style="color:#64748b;margin:0 0 28px;font-size:14px;">Select the POS system to open</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px;">
+      <a href="/bar" onclick="closePOSChooser()" style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:26px 16px;background:linear-gradient(135deg,#1e3a5f,#2563eb);border-radius:14px;color:#fff;text-decoration:none;font-weight:700;font-size:15px;transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 10px 28px rgba(37,99,235,0.4)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='none'">
+        <i class="fas fa-wine-glass-alt" style="font-size:34px;opacity:0.95;"></i>
+        Bar
+      </a>
+      <a href="/restaurant" onclick="closePOSChooser()" style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:26px 16px;background:linear-gradient(135deg,#7c2d12,#ea580c);border-radius:14px;color:#fff;text-decoration:none;font-weight:700;font-size:15px;transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 10px 28px rgba(234,88,12,0.4)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='none'">
+        <i class="fas fa-utensils" style="font-size:34px;opacity:0.95;"></i>
+        Restaurant
+      </a>
+    </div>
+    <button onclick="closePOSChooser()" style="padding:9px 28px;border:1.5px solid #e2e8f0;border-radius:8px;background:#f8fafc;cursor:pointer;color:#64748b;font-size:13px;font-weight:500;">Cancel</button>
+  </div>
+</div>
+<script>
+function openPOSChooser(){var o=document.getElementById('pos-chooser-overlay');if(o){o.style.display='flex';}}
+function closePOSChooser(){var o=document.getElementById('pos-chooser-overlay');if(o){o.style.display='none';}}
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closePOSChooser();});
 </script>
 </body>
 </html>

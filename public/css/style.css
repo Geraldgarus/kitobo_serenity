@@ -78,17 +78,21 @@ h1, h2, h3, .logo-text, .card-title {
 .logo-text {
   display: flex;
   flex-direction: column;
+  line-height: 1.2;
 }
 
 .logo-text span:first-child {
-  font-size: 18px;
-  font-weight: 700;
-  letter-spacing: 1px;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  color: #c9933a;
 }
 
 .logo-text span:last-child {
-  font-size: 11px;
-  opacity: 0.7;
+  font-size: 13px;
+  font-weight: 500;
+  opacity: 0.85;
+  letter-spacing: 0.5px;
 }
 
 .sidebar-close-btn {
@@ -248,6 +252,35 @@ h1, h2, h3, .logo-text, .card-title {
 .btn-add-reservation:hover {
   background: #b87a2e;
   color: white;
+}
+
+.pos-navbar-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #2d9c6e;
+  color: #fff;
+  border: none;
+  border-radius: 20px;
+  padding: 7px 14px 7px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.3px;
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+  white-space: nowrap;
+}
+.pos-navbar-btn:hover {
+  background: #238558;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(45,156,110,0.35);
+}
+.pos-navbar-btn:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+.pos-navbar-btn i {
+  font-size: 14px;
 }
 
 .notif-btn {

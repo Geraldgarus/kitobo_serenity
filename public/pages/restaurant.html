@@ -1,0 +1,592 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Restaurant POS - Kitobo Serenity Resort</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: #f1f5f9; color: #1e293b; }
+
+    .sidebar { position: fixed; top: 0; left: 0; width: 280px; height: 100vh; background: #1a2340; color: white; display: flex; flex-direction: column; z-index: 1000; transition: transform 0.3s ease; transform: translateX(-100%); }
+    .sidebar.open { transform: translateX(0); }
+    .sidebar-top { padding: 24px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; }
+    .sidebar-logo { display: flex; align-items: center; gap: 12px; text-decoration: none; color: white; }
+    .logo-icon { font-size: 32px; }
+    .logo-text span:first-child { font-size: 22px; font-weight: 800; color: #c9933a; letter-spacing: 1.5px; }
+    .logo-text span:last-child { font-size: 13px; font-weight: 500; opacity: 0.85; letter-spacing: 0.5px; display: block; }
+    .sidebar-close-btn { background: none; border: none; font-size: 20px; cursor: pointer; color: white; opacity: 0.7; transition: opacity 0.2s; }
+    .sidebar-close-btn:hover { opacity: 1; }
+    .sidebar-nav { flex: 1; padding: 20px 0; overflow-y: auto; }
+    .nav-section-label { padding: 16px 20px 8px; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,0.5); }
+    .nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 20px; text-decoration: none; color: rgba(255,255,255,0.8); border-radius: 0; transition: 0.2s; font-size: 14px; background: none; border: none; width: 100%; text-align: left; cursor: pointer; }
+    .nav-item:hover { background: rgba(255,255,255,0.1); color: white; }
+    .nav-item.active { background: #c9933a; color: #1a2340; }
+    .sidebar-footer { padding: 20px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 11px; color: rgba(255,255,255,0.5); }
+    .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; display: none; }
+    .overlay.open { display: block; }
+
+    .navbar { background: white; padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+    .navbar-left { display: flex; align-items: center; gap: 16px; }
+    .hamburger { background: none; border: none; cursor: pointer; width: 32px; height: 32px; display: flex; flex-direction: column; justify-content: center; gap: 4px; }
+    .hb-bar { width: 20px; height: 2px; background: #1e2a3e; display: block; }
+    .page-title { font-size: 20px; font-weight: 700; font-family: 'Playfair Display', serif; color: #1e2a3e; }
+    .page-subtitle { font-size: 12px; color: #64748b; }
+    .navbar-right { display: flex; align-items: center; gap: 16px; }
+    .notif-btn { background: none; border: none; font-size: 18px; cursor: pointer; position: relative; }
+    .badge { position: absolute; top: -5px; right: -8px; background: #ef4444; color: white; font-size: 10px; padding: 2px 5px; border-radius: 10px; }
+    .user-dropdown { position: relative; cursor: pointer; }
+    .user-pill { display: flex; align-items: center; gap: 8px; padding: 6px 12px; background: #f8fafc; border-radius: 40px; cursor: pointer; }
+    .dropdown-menu { position: absolute; top: 45px; right: 0; background: white; min-width: 180px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); display: none; z-index: 200; }
+    .dropdown-menu.show { display: block; }
+    .dropdown-menu button { display: block; width: 100%; padding: 10px 16px; text-align: left; background: none; border: none; cursor: pointer; font-size: 13px; }
+    .dropdown-menu button:hover { background: #f8fafc; }
+
+    .main-content { padding: 24px; height: calc(100vh - 60px); }
+    .pos-container { display: flex; gap: 24px; height: 100%; }
+
+    .pos-left { flex: 1.2; background: white; border-radius: 24px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+
+    .search-box { padding: 16px 20px 12px; border-bottom: 1px solid #e2e8f0; flex-shrink: 0; }
+    .search-box input { width: 100%; padding: 10px 16px; border: 1px solid #e2e8f0; border-radius: 40px; font-size: 14px; }
+
+    .category-tabs { padding: 12px 20px; border-bottom: 1px solid #e2e8f0; flex-shrink: 0; display: flex; gap: 8px; overflow-x: auto; }
+    .cat-tab { padding: 6px 16px; border-radius: 40px; font-size: 12px; font-weight: 600; cursor: pointer; border: 1px solid #e2e8f0; background: #f8fafc; color: #64748b; white-space: nowrap; transition: 0.2s; }
+    .cat-tab.active { background: #d97706; color: white; border-color: #d97706; }
+    .cat-tab:hover:not(.active) { background: #fef3c7; border-color: #d97706; color: #d97706; }
+
+    .items-scroll-area { flex: 1; overflow-y: auto; padding: 16px; }
+    .items-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .item-card { background: #fef3c7; border-radius: 12px; padding: 12px; text-align: center; cursor: pointer; transition: all 0.2s; border: 1px solid #fde68a; }
+    .item-card:hover { background: #fde68a; border-color: #c9933a; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(201,147,58,0.25); }
+    .item-card.out-of-stock { opacity: 0.5; cursor: not-allowed; }
+    .item-name { font-weight: 600; font-size: 13px; margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .item-price { font-size: 12px; color: #92400e; font-weight: 600; }
+    .item-stock { font-size: 10px; color: #94a3b8; margin-top: 4px; }
+    .item-category { font-size: 10px; color: #94a3b8; margin-top: 2px; }
+
+    .pos-right { flex: 0.9; background: white; border-radius: 24px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .order-section { padding: 16px 20px; border-bottom: 1px solid #e2e8f0; flex-shrink: 0; }
+    .order-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .order-header span { font-weight: 600; font-size: 11px; color: #64748b; }
+    .order-tabs { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; }
+    .order-tab { display: flex; align-items: center; gap: 8px; padding: 6px 14px; background: #f1f5f9; border-radius: 40px; cursor: pointer; white-space: nowrap; font-size: 12px; }
+    .order-tab.active { background: #d97706; color: white; }
+    .order-tab .delete-order { background: none; border: none; cursor: pointer; color: inherit; margin-left: 6px; }
+    .new-order-btn { padding: 6px 14px; background: #10b981; color: white; border: none; border-radius: 40px; cursor: pointer; font-size: 12px; }
+
+    .cart-header { padding: 16px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; flex-shrink: 0; }
+    .cart-scroll-area { flex: 1; overflow-y: auto; padding: 0 20px; }
+    .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f1f5f9; }
+    .cart-item-name { font-weight: 600; font-size: 13px; }
+    .cart-item-price { font-size: 10px; color: #64748b; }
+    .cart-item-controls { display: flex; align-items: center; gap: 8px; }
+    .qty-btn { width: 26px; height: 26px; background: #f1f5f9; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+    .cart-item-qty { min-width: 30px; text-align: center; }
+    .cart-item-total { min-width: 70px; text-align: right; font-weight: 600; }
+    .remove-item { color: #ef4444; cursor: pointer; margin-left: 8px; }
+    .empty-cart { text-align: center; padding: 40px; color: #94a3b8; }
+
+    .cart-footer { flex-shrink: 0; padding: 16px 20px; border-top: 2px solid #e2e8f0; background: white; }
+    .total-row { display: flex; justify-content: space-between; font-size: 18px; font-weight: 700; margin-bottom: 12px; }
+    .action-buttons { display: flex; gap: 10px; }
+    .action-buttons button { flex: 1; padding: 10px; border-radius: 40px; font-weight: 600; cursor: pointer; border: none; }
+    .btn-save { background: #10b981; color: white; }
+    .btn-print { background: #d97706; color: white; }
+    .btn-cancel { background: #f1f5f9; color: #64748b; }
+
+    .toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 2000; }
+
+    @media (max-width: 1200px) { .items-grid { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 900px) { .items-grid { grid-template-columns: repeat(2, 1fr); } }
+  </style>
+</head>
+<body>
+
+<div class="overlay" id="overlay-main"></div>
+
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-top">
+    <a class="sidebar-logo" href="/"><div class="logo-icon"><i class="fas fa-hotel"></i></div><div class="logo-text"><span>Kitobo</span><span>Serenity Resort</span></div></a>
+    <button class="sidebar-close-btn" id="sidebar-close-btn"><i class="fas fa-times"></i></button>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Dashboard</div>
+    <a href="/dashboard" class="nav-item"><i class="fas fa-tachometer-alt"></i> Overview</a>
+    <div class="nav-section-label">Operations</div>
+    <a href="/reservations" class="nav-item"><i class="fas fa-calendar-alt"></i> Reservations</a>
+    <a href="/housekeeping" class="nav-item"><i class="fas fa-soap"></i> Housekeeping</a>
+    <a href="/maintenance" class="nav-item"><i class="fas fa-toolbox"></i> Maintenance</a>
+    <div class="nav-section-label">POS</div>
+    <a href="/bar" class="nav-item"><i class="fas fa-wine-glass-alt"></i> Bar</a>
+    <a href="/restaurant" class="nav-item active"><i class="fas fa-utensils"></i> Restaurant</a>
+    <div class="nav-section-label">Property</div>
+    <a href="/apartments" class="nav-item"><i class="fas fa-building"></i> Rooms View</a>
+    <a href="/apartments-list" class="nav-item"><i class="fas fa-list-ul"></i> Rooms List</a>
+    <div class="nav-section-label">Inventory</div>
+    <a href="/store-main" class="nav-item"><i class="fas fa-store"></i> Main Store</a>
+    <a href="/store-outlets" class="nav-item"><i class="fas fa-truck"></i> Outlets Store</a>
+    <a href="/purchase-orders" class="nav-item"><i class="fas fa-file-invoice"></i> Purchase Orders</a>
+    <a href="/goods-receipt" class="nav-item"><i class="fas fa-clipboard-list"></i> Goods Receipt</a>
+    <div class="nav-section-label">Staff</div>
+    <a href="/staff-activities" class="nav-item"><i class="fas fa-users"></i> Staff Activities</a>
+    <div class="nav-section-label">Reports</div>
+    <a href="/reports" class="nav-item"><i class="fas fa-chart-bar"></i> Reservations Report</a>
+    <a href="/maintenance-report" class="nav-item"><i class="fas fa-chart-line"></i> Maintenance Report</a>
+    <a href="/staff-activities-report" class="nav-item"><i class="fas fa-chart-pie"></i> Activity Report</a>
+    <a href="/purchase-orders-reports" class="nav-item"><i class="fas fa-file-alt"></i> Purchase Orders Report</a>
+    <a href="/goods-receipt-reports" class="nav-item"><i class="fas fa-stamp"></i> Goods Receipt Report</a>
+    <a href="/store-inventory-reports" class="nav-item"><i class="fas fa-boxes"></i> Store Inventory Report</a>
+    <a href="/sales-report" class="nav-item"><i class="fas fa-receipt"></i> Sales Report</a>
+    <a href="/housekeeping-report" class="nav-item"><i class="fas fa-soap"></i> Housekeeping Report</a>
+    <a href="/financial-report" class="nav-item"><i class="fas fa-chart-line"></i> Financial Report</a>
+    <div class="nav-section-label">Finance</div>
+    <a href="/expenditures" class="nav-item"><i class="fas fa-receipt"></i> Expenditures</a>
+    <div class="nav-section-label">Guests</div>
+    <a href="/guest-database" class="nav-item"><i class="fas fa-id-card"></i> Guest Database</a>
+    <div class="nav-section-label">Admin</div>
+    <a href="/users" class="nav-item"><i class="fas fa-user-shield"></i> User Management</a>
+  </nav>
+  <div class="sidebar-footer"><small>Kitobo Serenity Resort</small></div>
+</aside>
+
+<nav class="navbar">
+  <div class="navbar-left">
+    <button class="hamburger" id="hamburger-btn"><span class="hb-bar"></span><span class="hb-bar"></span><span class="hb-bar"></span></button>
+    <div><div class="page-title"><i class="fas fa-utensils" style="color:#d97706;margin-right:8px;"></i>Restaurant POS</div><div class="page-subtitle">Multi-Order Management</div></div>
+  </div>
+  <div class="navbar-right">
+        <button class="pos-navbar-btn" onclick="openPOSChooser()" title="Point of Sale"><i class="fas fa-cash-register"></i> POS</button>
+    <button class="notif-btn"><i class="fas fa-bell"></i><span class="badge">0</span></button>
+    <div class="user-dropdown">
+      <div class="user-pill" id="userPill"><div class="user-avatar" id="userAvatar">U</div><div class="user-info"><span id="userName">Loading...</span><span id="userRole">Loading...</span></div><i class="fas fa-chevron-down"></i></div>
+      <div class="dropdown-menu" id="dropdownMenu"><button onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button></div>
+    </div>
+  </div>
+</nav>
+
+<main class="main-content">
+  <div class="pos-container">
+    <div class="pos-left">
+      <div class="search-box">
+        <input type="text" id="search-items" placeholder="Search restaurant items...">
+      </div>
+      <div class="category-tabs" id="category-tabs">
+        <div class="cat-tab active" data-cat="all" onclick="selectCategory('all')">All</div>
+      </div>
+      <div class="items-scroll-area">
+        <div class="items-grid" id="items-grid">
+          <div style="text-align:center; padding:40px;">Loading restaurant items...</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pos-right">
+      <div class="order-section">
+        <div class="order-header">
+          <span>ACTIVE ORDERS</span>
+          <button class="new-order-btn" onclick="createNewOrder()">+ New Order</button>
+        </div>
+        <div class="order-tabs" id="order-tabs">
+          <div style="color:#94a3b8;">No orders. Click "New Order"</div>
+        </div>
+      </div>
+
+      <div class="cart-header">
+        <strong><i class="fas fa-utensils"></i> Current Order Items</strong>
+        <span id="item-count">0 items</span>
+      </div>
+
+      <div class="cart-scroll-area" id="cart-scroll-area">
+        <div id="cart-items-list">
+          <div class="empty-cart">No items in this order<br>Click on products to add</div>
+        </div>
+      </div>
+
+      <div class="cart-footer">
+        <div class="total-row">
+          <span>Total Amount:</span>
+          <span id="cart-total">TSh 0</span>
+        </div>
+        <div class="action-buttons">
+          <button class="btn-save" onclick="saveCurrentOrder()"><i class="fas fa-save"></i> Save Order</button>
+          <button class="btn-print" onclick="printCurrentOrder()"><i class="fas fa-print"></i> Print Receipt</button>
+          <button class="btn-cancel" onclick="clearCurrentOrder()"><i class="fas fa-times"></i> Cancel Order</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="toast-container" id="toast-container"></div>
+
+<script>
+  function getCurrentUser() { const u = sessionStorage.getItem('pms_user'); return u ? JSON.parse(u) : null; }
+  function logout() { sessionStorage.removeItem('pms_user'); sessionStorage.removeItem('token'); window.location.href = '/login'; }
+  const currentUser = getCurrentUser(); if (!currentUser) window.location.href = '/login';
+  document.getElementById('userName').innerText = currentUser.fullName || currentUser.username;
+  document.getElementById('userRole').innerText = currentUser.role || 'User';
+  document.getElementById('userAvatar').innerText = (currentUser.fullName || currentUser.username || 'U')[0];
+
+  const hamburger = document.getElementById('hamburger-btn'), sidebar = document.getElementById('sidebar'), overlay = document.getElementById('overlay-main');
+  document.getElementById('sidebar-close-btn')?.addEventListener('click', () => sidebar.classList.remove('open'));
+  hamburger?.addEventListener('click', () => sidebar.classList.toggle('open'));
+  overlay?.addEventListener('click', () => sidebar.classList.remove('open'));
+  const userPill = document.getElementById('userPill'), dropdownMenu = document.getElementById('dropdownMenu');
+  userPill?.addEventListener('click', (e) => { e.stopPropagation(); dropdownMenu.classList.toggle('show'); });
+  document.addEventListener('click', () => dropdownMenu.classList.remove('show'));
+
+  let posItems = [];
+  let orders = [];
+  let currentOrderId = null;
+  let nextOrderNumber = 1;
+  let currentSearchTerm = '';
+  let currentCategory = 'all';
+
+  function escapeHtml(str) { if (!str) return ''; return String(str).replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
+  function fmtTSH(v) { return 'TSh ' + (v || 0).toLocaleString(); }
+  function showToast(msg, type = 'success') {
+    const toast = document.getElementById('toast-container');
+    toast.innerHTML = `<div style="background:${type === 'error' ? '#ef4444' : '#10b981'};color:white;padding:12px 20px;border-radius:40px;margin-bottom:8px;">${msg}</div>`;
+    setTimeout(() => toast.innerHTML = '', 3000);
+  }
+
+  const API_BASE = '';
+  function _getToken() { return sessionStorage.getItem('token'); }
+  function _authHeaders(extra) { const t = _getToken(); return { 'Content-Type': 'application/json', ...(t && { 'Authorization': 'Bearer ' + t }), ...extra }; }
+  function _checkAuth(res) { if (res.status === 401 || res.status === 403) { sessionStorage.clear(); window.location.href = '/login'; throw new Error('Session expired'); } return res; }
+  async function apiGet(url) { const res = _checkAuth(await fetch(API_BASE + url, { headers: _authHeaders() })); if (!res.ok) throw new Error(await res.text()); return res.json(); }
+  async function apiPut(url, body) { const res = _checkAuth(await fetch(API_BASE + url, { method: 'PUT', headers: _authHeaders(), body: JSON.stringify(body) })); if (!res.ok) throw new Error(await res.text()); return res.json(); }
+  async function apiPost(url, body) { const res = _checkAuth(await fetch(API_BASE + url, { method: 'POST', headers: _authHeaders(), body: JSON.stringify(body) })); if (!res.ok) throw new Error(await res.text()); return res.json(); }
+
+  async function loadItems() {
+    try {
+      const items = await apiGet('/api/store/items');
+      posItems = items
+        .filter(item => item.pos === 'restaurant')
+        .map(item => {
+          const parts = (item.quantity || '0 units').trim().split(' ');
+          const numericQty = parseFloat(parts[0]) || 0;
+          const unit = parts[1] || 'units';
+          return {
+            id: item.id,
+            name: item.name,
+            category: item.category || 'General',
+            price: item.cost,
+            quantity: numericQty,
+            unit: unit,
+            pos: item.pos
+          };
+        });
+      buildCategoryTabs();
+      applyFilters();
+    } catch(err) {
+      showToast('Failed to load items: ' + err.message, 'error');
+      document.getElementById('items-grid').innerHTML = '<div style="text-align:center;padding:40px;">Error loading items</div>';
+    }
+  }
+
+  function buildCategoryTabs() {
+    const cats = ['all', ...new Set(posItems.map(i => i.category).filter(Boolean).sort())];
+    const container = document.getElementById('category-tabs');
+    container.innerHTML = cats.map(cat =>
+      `<div class="cat-tab ${cat === currentCategory ? 'active' : ''}" data-cat="${escapeHtml(cat)}" onclick="selectCategory('${escapeHtml(cat)}')">${cat === 'all' ? 'All' : escapeHtml(cat)}</div>`
+    ).join('');
+  }
+
+  function selectCategory(cat) {
+    currentCategory = cat;
+    document.querySelectorAll('.cat-tab').forEach(t => t.classList.toggle('active', t.dataset.cat === cat));
+    applyFilters();
+  }
+
+  function applyFilters() {
+    let filtered = [...posItems];
+    if (currentCategory !== 'all') {
+      filtered = filtered.filter(item => item.category === currentCategory);
+    }
+    if (currentSearchTerm) {
+      filtered = filtered.filter(item => item.name.toLowerCase().includes(currentSearchTerm.toLowerCase()));
+    }
+    renderItemsGrid(filtered);
+  }
+
+  function renderItemsGrid(items) {
+    const container = document.getElementById('items-grid');
+    if (!items.length) {
+      container.innerHTML = '<div style="text-align:center;padding:40px;color:#94a3b8;">No restaurant items found</div>';
+      return;
+    }
+    let html = '';
+    items.forEach(item => {
+      const outOfStock = item.quantity <= 0;
+      const stockText = outOfStock ? 'Out of stock' : `${item.quantity} ${item.unit.substring(0,4)}`;
+      html += `
+        <div class="item-card ${outOfStock ? 'out-of-stock' : ''}" onclick="${outOfStock ? '' : `addToCurrentOrder(${item.id})`}">
+          <div class="item-name">${escapeHtml(item.name)}</div>
+          <div class="item-price">${fmtTSH(item.price)}</div>
+          <div class="item-category"><i class="fas fa-tag"></i> ${escapeHtml(item.category)}</div>
+          <div class="item-stock"><i class="fas fa-box"></i> ${stockText}</div>
+        </div>
+      `;
+    });
+    container.innerHTML = html;
+  }
+
+  document.getElementById('search-items').addEventListener('input', (e) => {
+    currentSearchTerm = e.target.value;
+    applyFilters();
+  });
+
+  function createNewOrder() {
+    const newOrder = { id: Date.now(), orderNumber: nextOrderNumber++, items: [], total: 0 };
+    orders.push(newOrder);
+    currentOrderId = newOrder.id;
+    renderOrderTabs();
+    renderCurrentOrder();
+    showToast(`Order #${newOrder.orderNumber} created`);
+  }
+
+  function switchToOrder(orderId) {
+    currentOrderId = orderId;
+    renderOrderTabs();
+    renderCurrentOrder();
+  }
+
+  function deleteOrder(orderId) {
+    const order = orders.find(o => o.id === orderId);
+    if (!order) return;
+    if (confirm(`Delete Order #${order.orderNumber}?`)) {
+      orders = orders.filter(o => o.id !== orderId);
+      if (currentOrderId === orderId) currentOrderId = orders.length > 0 ? orders[0].id : null;
+      renderOrderTabs();
+      renderCurrentOrder();
+      showToast(`Order #${order.orderNumber} deleted`);
+    }
+  }
+
+  function getCurrentOrder() { return orders.find(o => o.id === currentOrderId); }
+
+  function addToCurrentOrder(itemId) {
+    const item = posItems.find(i => i.id === itemId);
+    if (!item) return;
+    if (item.quantity <= 0) { showToast(`${item.name} is out of stock!`, 'error'); return; }
+    let order = getCurrentOrder();
+    if (!order) { createNewOrder(); order = getCurrentOrder(); }
+    const existing = order.items.find(c => c.id === itemId);
+    if (existing) {
+      if (existing.quantity + 1 > item.quantity) { showToast(`Only ${item.quantity} ${item.unit} available`, 'error'); return; }
+      existing.quantity++;
+    } else {
+      order.items.push({ id: item.id, name: item.name, category: item.category, unit: item.unit, price: item.price, quantity: 1 });
+    }
+    updateOrderTotal(order);
+    renderCurrentOrder();
+    renderOrderTabs();
+  }
+
+  function updateOrderTotal(order) { order.total = order.items.reduce((sum, i) => sum + (i.price * i.quantity), 0); }
+
+  function updateCartItemQuantity(itemId, delta) {
+    const order = getCurrentOrder();
+    if (!order) return;
+    const index = order.items.findIndex(i => i.id === itemId);
+    if (index === -1) return;
+    const item = order.items[index];
+    const storeItem = posItems.find(i => i.id === itemId);
+    const newQty = item.quantity + delta;
+    if (newQty <= 0) { order.items.splice(index, 1); }
+    else if (newQty > storeItem.quantity) { showToast(`Only ${storeItem.quantity} ${storeItem.unit} available`, 'error'); return; }
+    else { item.quantity = newQty; }
+    updateOrderTotal(order);
+    renderCurrentOrder();
+    renderOrderTabs();
+  }
+
+  function removeCartItem(itemId) {
+    const order = getCurrentOrder();
+    if (!order) return;
+    order.items = order.items.filter(i => i.id !== itemId);
+    updateOrderTotal(order);
+    renderCurrentOrder();
+    renderOrderTabs();
+  }
+
+  function clearCurrentOrder() {
+    const order = getCurrentOrder();
+    if (!order || order.items.length === 0) return;
+    if (confirm(`Clear all items from Order #${order.orderNumber}?`)) {
+      order.items = []; order.total = 0;
+      renderCurrentOrder(); renderOrderTabs();
+      showToast(`Order #${order.orderNumber} cleared`);
+    }
+  }
+
+  function renderOrderTabs() {
+    const container = document.getElementById('order-tabs');
+    if (orders.length === 0) { container.innerHTML = '<div style="color:#94a3b8;">No orders. Click "New Order"</div>'; return; }
+    let html = '';
+    orders.forEach(order => {
+      const itemCount = order.items.reduce((sum, i) => sum + i.quantity, 0);
+      const isActive = currentOrderId === order.id;
+      html += `
+        <div class="order-tab ${isActive ? 'active' : ''}" onclick="switchToOrder(${order.id})">
+          <span>#${order.orderNumber}</span>
+          <span style="font-size:10px;">${itemCount} items</span>
+          <button class="delete-order" onclick="event.stopPropagation(); deleteOrder(${order.id})"><i class="fas fa-times"></i></button>
+        </div>`;
+    });
+    container.innerHTML = html;
+  }
+
+  function renderCurrentOrder() {
+    const order = getCurrentOrder();
+    const container = document.getElementById('cart-items-list');
+    const countSpan = document.getElementById('item-count');
+    const totalSpan = document.getElementById('cart-total');
+    if (!order || order.items.length === 0) {
+      container.innerHTML = '<div class="empty-cart">No items in this order<br>Click on products to add</div>';
+      countSpan.innerText = '0 items'; totalSpan.innerText = fmtTSH(0); return;
+    }
+    let html = '', grandTotal = 0;
+    order.items.forEach(item => {
+      const total = item.price * item.quantity; grandTotal += total;
+      html += `
+        <div class="cart-item">
+          <div style="flex:2">
+            <div class="cart-item-name">${escapeHtml(item.name)}</div>
+            <div class="cart-item-price">${fmtTSH(item.price)} / ${escapeHtml(item.unit)}</div>
+          </div>
+          <div class="cart-item-controls">
+            <button class="qty-btn" onclick="updateCartItemQuantity(${item.id}, -1)">-</button>
+            <span class="cart-item-qty">${item.quantity}</span>
+            <button class="qty-btn" onclick="updateCartItemQuantity(${item.id}, 1)">+</button>
+            <span class="cart-item-total">${fmtTSH(total)}</span>
+            <span class="remove-item" onclick="removeCartItem(${item.id})"><i class="fas fa-trash-alt"></i></span>
+          </div>
+        </div>`;
+    });
+    container.innerHTML = html;
+    countSpan.innerText = order.items.reduce((acc, i) => acc + i.quantity, 0) + ' items';
+    totalSpan.innerText = fmtTSH(grandTotal);
+  }
+
+  async function saveCurrentOrder() {
+    const order = getCurrentOrder();
+    if (!order || order.items.length === 0) { showToast('No items to save', 'error'); return; }
+    if (!confirm(`Confirm sale for Order #${order.orderNumber}?\nTotal: ${fmtTSH(order.total)}`)) return;
+    try {
+      for (const cartItem of order.items) {
+        const storeItem = posItems.find(i => i.id === cartItem.id);
+        const newQty = storeItem.quantity - cartItem.quantity;
+        await apiPut(`/api/store/items/${cartItem.id}`, {
+          name: storeItem.name, category: storeItem.category, cost: storeItem.price,
+          quantity: `${newQty} ${storeItem.unit}`, unit: storeItem.unit, pos: storeItem.pos
+        });
+        storeItem.quantity = newQty;
+      }
+      const saleData = {
+        items: order.items.map(item => ({
+          item_id: item.id, item_name: item.name, category: item.category,
+          unit: item.unit, quantity: item.quantity, unit_price: item.price, total_price: item.price * item.quantity
+        })),
+        total_amount: order.total,
+        cashier_id: currentUser.id,
+        cashier_name: currentUser.fullName || currentUser.username,
+        pos_type: 'restaurant'
+      };
+      const result = await apiPost('/api/sales', saleData);
+      const receiptData = {
+        orderNumber: order.orderNumber, date: new Date().toLocaleString(),
+        cashier: currentUser.fullName || currentUser.username,
+        items: order.items.map(i => ({ name: i.name, quantity: i.quantity, price: i.price, total: i.price * i.quantity })),
+        total: order.total, db_order_number: result.order_number, pos_type: 'Restaurant'
+      };
+      const receipts = JSON.parse(localStorage.getItem('pos_receipts') || '[]');
+      receipts.push(receiptData);
+      localStorage.setItem('pos_receipts', JSON.stringify(receipts));
+      orders = orders.filter(o => o.id !== order.id);
+      currentOrderId = orders.length > 0 ? orders[0].id : null;
+      await loadItems();
+      renderOrderTabs(); renderCurrentOrder();
+      showToast(`Order #${order.orderNumber} completed!`);
+      if (confirm('Print receipt?')) printReceipt(receiptData);
+    } catch (err) {
+      console.error('Save error:', err);
+      showToast('Error: ' + err.message, 'error');
+    }
+  }
+
+  function printCurrentOrder() {
+    const order = getCurrentOrder();
+    if (!order || order.items.length === 0) { showToast('No items to print', 'error'); return; }
+    const receiptData = {
+      orderNumber: order.orderNumber, date: new Date().toLocaleString(),
+      cashier: currentUser.fullName || currentUser.username,
+      items: order.items.map(i => ({ name: i.name, quantity: i.quantity, price: i.price, total: i.price * i.quantity })),
+      total: order.total, pos_type: 'Restaurant'
+    };
+    printReceipt(receiptData);
+  }
+
+  function printReceipt(data) {
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`<html><head><title>Receipt - Order #${data.orderNumber}</title>
+      <style>body{font-family:monospace;padding:20px;max-width:300px;margin:0 auto}.header{text-align:center;border-bottom:1px dashed #000;margin-bottom:15px}.items th,.items td{text-align:left;padding:4px 0}.total{font-weight:bold;border-top:1px solid #000;margin-top:10px;padding-top:10px}</style>
+      </head><body>
+      <div class="header"><h2>Kitobo Serenity Resort</h2><p>Restaurant POS Receipt</p><p>Order #${data.orderNumber}</p><p>${data.date}</p><p>Cashier: ${data.cashier}</p></div>
+      <table class="items" width="100%"><thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead><tbody>`);
+    data.items.forEach(item => {
+      printWindow.document.write(`<tr><td>${escapeHtml(item.name)}</td><td style="text-align:center">${item.quantity}</td><td>${fmtTSH(item.price)}</td><td style="text-align:right">${fmtTSH(item.total)}</td></tr>`);
+    });
+    printWindow.document.write(`</tbody></table><div class="total">Total: ${fmtTSH(data.total)}</div>
+      <div style="text-align:center;margin-top:20px;">Thank you!</div>
+      <script>window.print(); window.close();<\/script>
+      </body></html>`);
+    printWindow.document.close();
+  }
+
+  loadItems();
+  createNewOrder();
+
+  window.addToCurrentOrder = addToCurrentOrder;
+  window.updateCartItemQuantity = updateCartItemQuantity;
+  window.removeCartItem = removeCartItem;
+  window.saveCurrentOrder = saveCurrentOrder;
+  window.clearCurrentOrder = clearCurrentOrder;
+  window.printCurrentOrder = printCurrentOrder;
+  window.createNewOrder = createNewOrder;
+  window.switchToOrder = switchToOrder;
+  window.deleteOrder = deleteOrder;
+  window.selectCategory = selectCategory;
+</script>
+
+<!-- POS Chooser Modal -->
+<div id="pos-chooser-overlay" onclick="if(event.target===this)closePOSChooser()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:18px;padding:40px 36px;max-width:460px;width:92%;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,0.28);position:relative;">
+    <div style="font-size:22px;font-weight:700;color:#1e293b;margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:10px;"><i class="fas fa-cash-register" style="color:#2d9c6e;"></i> Point of Sale</div>
+    <p style="color:#64748b;margin:0 0 28px;font-size:14px;">Select the POS system to open</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px;">
+      <a href="/bar" onclick="closePOSChooser()" style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:26px 16px;background:linear-gradient(135deg,#1e3a5f,#2563eb);border-radius:14px;color:#fff;text-decoration:none;font-weight:700;font-size:15px;transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 10px 28px rgba(37,99,235,0.4)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='none'">
+        <i class="fas fa-wine-glass-alt" style="font-size:34px;opacity:0.95;"></i>
+        Bar
+      </a>
+      <a href="/restaurant" onclick="closePOSChooser()" style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:26px 16px;background:linear-gradient(135deg,#7c2d12,#ea580c);border-radius:14px;color:#fff;text-decoration:none;font-weight:700;font-size:15px;transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 10px 28px rgba(234,88,12,0.4)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='none'">
+        <i class="fas fa-utensils" style="font-size:34px;opacity:0.95;"></i>
+        Restaurant
+      </a>
+    </div>
+    <button onclick="closePOSChooser()" style="padding:9px 28px;border:1.5px solid #e2e8f0;border-radius:8px;background:#f8fafc;cursor:pointer;color:#64748b;font-size:13px;font-weight:500;">Cancel</button>
+  </div>
+</div>
+<script>
+function openPOSChooser(){var o=document.getElementById('pos-chooser-overlay');if(o){o.style.display='flex';}}
+function closePOSChooser(){var o=document.getElementById('pos-chooser-overlay');if(o){o.style.display='none';}}
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closePOSChooser();});
+</script>
+</body>
+</html>
