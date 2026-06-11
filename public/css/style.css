@@ -2070,3 +2070,18 @@ h1, h2, h3, .logo-text, .card-title {
   0% { transform: translate(-50%, -50%) rotate(0deg); }
   100% { transform: translate(-50%, -50%) rotate(360deg); }
 }
+
+
+.nav-item i {
+  width: 24px;
+  margin-right: 12px;
+  text-align: center;
+  font-size: 16px;
+}
+
+/* For regular outline icons */
+.nav-item .far {
+  width: 24px;
+  margin-right: 12px;
+  text-align: center;
+}

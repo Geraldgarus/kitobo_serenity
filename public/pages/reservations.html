@@ -554,10 +554,11 @@
 <div class="overlay" id="overlay-main"></div>
 
 <!-- Sidebar -->
+<!-- Sidebar -->
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-top">
     <a class="sidebar-logo" href="/">
-      <div class="logo-icon">🏨</div>
+      <div class="logo-icon"><i class="fas fa-building"></i></div>
       <div class="logo-text">
         <span>Steps</span>
         <span>Premier Suites</span>
@@ -567,44 +568,71 @@
   </div>
   
   <nav class="sidebar-nav">
-    <div class="nav-section-label">Core Operations</div>
-    <a href="/dashboard" class="nav-item">📊 Stay View</a>
-    <a href="/reservations" class="nav-item active">📅 Reservations</a>
-    <a href="/housekeeping" class="nav-item">🧹 Housekeeping</a>
+    <!-- ============================================================ -->
+    <!-- DASHBOARD -->
+    <!-- ============================================================ -->
+    <div class="nav-section-label">Dashboard</div>
+    <a href="/dashboard" class="nav-item"><i class="fas fa-tachometer-alt"></i> Overview</a>
     
+    <!-- ============================================================ -->
+    <!-- OPERATIONS -->
+    <!-- ============================================================ -->
+    <div class="nav-section-label">Operations</div>
+    <a href="/reservations" class="nav-item active"><i class="fas fa-calendar-alt"></i> Reservations</a>
+    <a href="/housekeeping" class="nav-item"><i class="fas fa-broom"></i> Housekeeping</a>
+    <a href="/maintenance" class="nav-item"><i class="fas fa-wrench"></i> Maintenance</a>
+    
+    <!-- ============================================================ -->
+    <!-- PROPERTY -->
+    <!-- ============================================================ -->
     <div class="nav-section-label">Property</div>
-    <a href="/apartments" class="nav-item">🏠 Apartments View</a>
-    <a href="/apartments-list" class="nav-item">📋 Apartments List</a>
+    <a href="/apartments" class="nav-item"><i class="fas fa-building"></i> Apartments View</a>
+    <a href="/apartments-list" class="nav-item "><i class="fas fa-list-ul"></i> Apartments List</a>
     
-    <div class="nav-section-label">Store & Procurement</div>
-    <a href="/store-main" class="nav-item">🏬 Main Store</a>
-    <a href="/store-outlets" class="nav-item">🏪 Outlets Store</a>
-    <a href="/purchase-orders" class="nav-item">📦 Purchase Orders</a>
-    <a href="/goods-receipt" class="nav-item">✅ Goods Receipt</a>
+    <!-- ============================================================ -->
+    <!-- INVENTORY -->
+    <!-- ============================================================ -->
+    <div class="nav-section-label">Inventory</div>
+    <a href="/store-main" class="nav-item"><i class="fas fa-store"></i> Main Store</a>
+    <a href="/store-outlets" class="nav-item"><i class="fas fa-truck"></i> Outlets Store</a>
+    <a href="/purchase-orders" class="nav-item"><i class="fas fa-file-invoice"></i> Purchase Orders</a>
+    <a href="/goods-receipt" class="nav-item"><i class="fas fa-clipboard-list"></i> Goods Receipt</a>
     
-    <div class="nav-section-label">Maintenance</div>
-    <a href="/maintenance" class="nav-item">🔧 Maintenance</a>
+    <!-- ============================================================ -->
+    <!-- STAFF -->
+    <!-- ============================================================ -->
+    <div class="nav-section-label">Staff</div>
+    <a href="/staff-activities" class="nav-item"><i class="fas fa-users"></i> Staff Activities</a>
     
-    <div class="nav-section-label">Staff Activities</div>
-    <a href="/staff-activities" class="nav-item">📋 Staff Activities</a>
-    
+    <!-- ============================================================ -->
+    <!-- REPORTS -->
+    <!-- ============================================================ -->
     <div class="nav-section-label">Reports</div>
-    <a href="/reports" class="nav-item">📊 Reservations Report</a>
-    <a href="/maintenance-report" class="nav-item">🔧 Maintenance Report</a>
-    <a href="/staff-activities-report" class="nav-item">📋 Activity Report</a>
-    <a href="/purchase-orders-reports" class="nav-item">📄 Purchase Orders Report</a>
-    <a href="/goods-receipt-reports" class="nav-item">📋 Goods Receipt Report</a>
-    <a href="/store-inventory-reports" class="nav-item">📦 Store Inventory Report</a>
-    <a href="/financial-report" class="nav-item">💰 Financial Report</a>
+    <a href="/reports" class="nav-item"><i class="fas fa-chart-bar"></i> Reservations Report</a>
+    <a href="/maintenance-report" class="nav-item"><i class="fas fa-chart-line"></i> Maintenance Report</a>
+    <a href="/staff-activities-report" class="nav-item"><i class="fas fa-chart-pie"></i> Activity Report</a>
+    <a href="/purchase-orders-reports" class="nav-item"><i class="fas fa-file-alt"></i> Purchase Orders Report</a>
+    <a href="/goods-receipt-reports" class="nav-item"><i class="fas fa-stamp"></i> Goods Receipt Report</a>
+    <a href="/store-inventory-reports" class="nav-item"><i class="fas fa-boxes"></i> Store Inventory Report</a>
+    <a href="/financial-report" class="nav-item"><i class="fas fa-chart-line"></i> Financial Report</a>
     
-    <div class="nav-section-label">Financial</div>
-    <a href="/expenditures" class="nav-item">💸 Expenditures</a>
+    <!-- ============================================================ -->
+    <!-- FINANCE -->
+    <!-- ============================================================ -->
+    <div class="nav-section-label">Finance</div>
+    <a href="/expenditures" class="nav-item"><i class="fas fa-money-bill-wave"></i> Expenditures</a>
     
-    <div class="nav-section-label">Guest Management</div>
-    <a href="/guest-database" class="nav-item">👥 Guest Database</a>
+    <!-- ============================================================ -->
+    <!-- GUESTS -->
+    <!-- ============================================================ -->
+    <div class="nav-section-label">Guests</div>
+    <a href="/guest-database" class="nav-item"><i class="fas fa-id-card"></i> Guest Database</a>
     
-    <div class="nav-section-label">Administration</div>
-    <a href="/users" class="nav-item">👥 User Management</a>
+    <!-- ============================================================ -->
+    <!-- ADMIN -->
+    <!-- ============================================================ -->
+    <div class="nav-section-label">Admin</div>
+    <a href="/users" class="nav-item"><i class="fas fa-user-shield"></i> User Management</a>
   </nav>
   
   <div class="sidebar-footer">

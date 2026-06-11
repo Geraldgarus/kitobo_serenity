@@ -98,10 +98,10 @@ function renderGantt() {
     html += `<tr>
       <td style="padding:0 12px; min-width:100px; border-right:2px solid ${apt.color}; background:#fafafa;">
         <div style="display:flex; align-items:center; gap:8px;">
-          <span style="font-size:20px;">${apt.emoji || '🏠'}</span>
+          <i class="fas fa-building" style="font-size:18px;"></i>
           <span style="font-weight:600;">${escapeHtml(apt.name)}</span>
         </div>
-       </td>`;
+      </td>`;
     
     let i = 0;
     while (i < days.length) {
