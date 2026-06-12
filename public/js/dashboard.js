@@ -1,4 +1,25 @@
 ﻿// Dashboard specific functions
+
+// Distinct color palette for Gantt bars — one per reservation slot
+const GANTT_COLORS = [
+  { bg: '#dbeafe', border: '#2563eb', text: '#1e3a8a' }, // blue
+  { bg: '#dcfce7', border: '#16a34a', text: '#14532d' }, // green
+  { bg: '#fce7f3', border: '#db2777', text: '#831843' }, // pink
+  { bg: '#fef3c7', border: '#d97706', text: '#78350f' }, // amber
+  { bg: '#ede9fe', border: '#7c3aed', text: '#3b0764' }, // purple
+  { bg: '#fee2e2', border: '#dc2626', text: '#7f1d1d' }, // red
+  { bg: '#ccfbf1', border: '#0d9488', text: '#134e4a' }, // teal
+  { bg: '#ffedd5', border: '#ea580c', text: '#7c2d12' }, // orange
+  { bg: '#f0fdf4', border: '#15803d', text: '#052e16' }, // emerald
+  { bg: '#e0e7ff', border: '#4338ca', text: '#1e1b4b' }, // indigo
+  { bg: '#fdf4ff', border: '#a21caf', text: '#4a044e' }, // fuchsia
+  { bg: '#f0f9ff', border: '#0284c7', text: '#0c4a6e' }, // sky
+];
+
+function ganttColor(index) {
+  return GANTT_COLORS[index % GANTT_COLORS.length];
+}
+
 function renderRoomIcon(emoji) {
   if (!emoji) return '<i class="fas fa-home"></i>';
   if (emoji.startsWith('fa-')) return `<i class="fas ${emoji}"></i>`;
@@ -89,6 +110,11 @@ function renderGantt() {
   });
   html += '</td></thead><tbody>';
 
+  // Build a stable color map: each reservation gets a unique color by its position in sorted list
+  const allResIds = [...reservations].sort((a, b) => a.id - b.id).map(r => r.id);
+  const resColorMap = {};
+  allResIds.forEach((id, idx) => { resColorMap[id] = ganttColor(idx); });
+
   apts.forEach(apt => {
     // ── MAINTENANCE ROW ──────────────────────────────────────────
     if (apt.underMaintenance) {
@@ -171,13 +197,14 @@ function renderGantt() {
           i = startIndex;
         }
         const wkndClass = isWeekend(days[startIndex]) ? 'weekend' : '';
+        const rColor = resColorMap[reservationForDay.id] || ganttColor(0);
         html += `<td colspan="${span}" class="${wkndClass}" style="padding:4px; background:#fff;">
-          <div class="reservation-bar" onclick="openDetail(${reservationForDay.id})" 
-               style="background:${apt.color}20; border-left:3px solid ${apt.color};">
-            <div class="guest-icon"><i class="fas fa-user"></i></div>
+          <div class="reservation-bar" onclick="openDetail(${reservationForDay.id})"
+               style="background:${rColor.bg}; border-left:4px solid ${rColor.border}; color:${rColor.text};">
+            <div class="guest-icon"><i class="fas fa-user" style="color:${rColor.border};"></i></div>
             <div class="guest-info">
-              <div class="guest-name">${escapeHtml(reservationForDay.guest)}</div>
-              <div class="guest-dates">
+              <div class="guest-name" style="color:${rColor.text};">${escapeHtml(reservationForDay.guest)}</div>
+              <div class="guest-dates" style="color:${rColor.border}; opacity:0.85;">
                 ${fmtDateShort(reservationForDay.checkin)} – ${fmtDateShort(reservationForDay.checkout)}
               </div>
             </div>
