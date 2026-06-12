@@ -29,6 +29,22 @@ async function ensurePaymentColumns() {
       ALTER TABLE apartments ADD COLUMN IF NOT EXISTS under_maintenance BOOLEAN DEFAULT FALSE;
       ALTER TABLE apartments ADD COLUMN IF NOT EXISTS rate_per_night INT DEFAULT 90000;
     `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS laundry_services (
+        id               SERIAL PRIMARY KEY,
+        room_number      VARCHAR(50)  NOT NULL,
+        clothes_type     VARCHAR(200),
+        services         TEXT,
+        service_date     DATE         NOT NULL DEFAULT CURRENT_DATE,
+        housekeeper_name VARCHAR(200) NOT NULL,
+        price            DECIMAL(10,2) DEFAULT 0,
+        payment_method   VARCHAR(50),
+        payment_status   VARCHAR(20)  DEFAULT 'pending',
+        amount_paid      DECIMAL(10,2) DEFAULT 0,
+        notes            TEXT,
+        created_at       TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
     console.log('✅ Required columns verified');
   } catch (err) {
     console.log('⚠️ Column check:', err.message);
