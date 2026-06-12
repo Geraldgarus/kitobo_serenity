@@ -818,22 +818,57 @@ app.post('/api/store/requests', async (req, res) => {
   if (!item_name || !category || !quantity_value || !quantity_unit || !requested_by) {
     return res.status(400).json({ error: 'All fields required' });
   }
-  const quantity = `${quantity_value} ${quantity_unit}`;
+  const addVal = parseFloat(quantity_value);
+  if (isNaN(addVal) || addVal <= 0) return res.status(400).json({ error: 'Invalid quantity' });
+
+  const client = await pool.connect();
   try {
-    const { rows } = await pool.query(
-      `INSERT INTO store_requests (item_name, category, quantity, cost, requested_by, status)
-       VALUES ($1, $2, $3, $4, $5, 'pending') RETURNING *`,
-      [item_name, category, quantity, 0, requested_by]
+    await client.query('BEGIN');
+    // Merge with existing pending request for same item+outlet to avoid duplicates
+    const { rows: existing } = await client.query(
+      `SELECT * FROM store_requests WHERE LOWER(TRIM(item_name))=LOWER(TRIM($1)) AND requested_by=$2 AND status='pending' LIMIT 1`,
+      [item_name, requested_by]
     );
+    if (existing.length > 0) {
+      const ex = existing[0];
+      const exVal = parseFloat((ex.quantity || '0').split(' ')[0]) || 0;
+      const newQty = `${exVal + addVal} ${quantity_unit}`;
+      const { rows } = await client.query(
+        `UPDATE store_requests SET quantity=$1, updated_at=NOW() WHERE id=$2 RETURNING *`,
+        [newQty, ex.id]
+      );
+      await client.query('COMMIT');
+      return res.status(200).json({ ...rows[0], merged: true });
+    }
+    const { rows } = await client.query(
+      `INSERT INTO store_requests (item_name, category, quantity, cost, requested_by, status)
+       VALUES ($1, $2, $3, 0, $4, 'pending') RETURNING *`,
+      [item_name, category, `${addVal} ${quantity_unit}`, requested_by]
+    );
+    await client.query('COMMIT');
     res.status(201).json(rows[0]);
   } catch (err) {
+    await client.query('ROLLBACK');
     res.status(500).json({ error: err.message });
+  } finally {
+    client.release();
   }
 });
 
 // PUT approve request - SIMPLIFIED (no units needed)
 // PUT approve request - MODIFIED to update existing outlet inventory
 // PUT approve request - FIXED: Cost based on Main Store average cost
+app.delete('/api/store/requests/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const { rowCount } = await pool.query(`DELETE FROM store_requests WHERE id=$1 AND status='pending'`, [id]);
+    if (rowCount === 0) return res.status(404).json({ error: 'Pending request not found' });
+    res.json({ message: 'Request cancelled' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.put('/api/store/requests/:id/approve', async (req, res) => {
   const { id } = req.params;
   const { authorizedQuantity } = req.body;
@@ -1039,6 +1074,20 @@ app.delete('/api/outlets/:id', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+// DELETE all outlet inventory items by outlet + item name
+app.delete('/api/outlet-inventory/bulk/:outlet/:itemName', async (req, res) => {
+  const { outlet, itemName } = req.params;
+  try {
+    await pool.query(
+      `DELETE FROM outlet_inventory WHERE outlet=$1 AND LOWER(TRIM(item_name))=LOWER(TRIM($2))`,
+      [outlet, itemName]
+    );
+    res.json({ message: 'Items deleted' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // DELETE single item from outlet inventory
 app.delete('/api/outlet-inventory/:id', async (req, res) => {
   const { id } = req.params;

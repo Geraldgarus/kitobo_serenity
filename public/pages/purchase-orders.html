@@ -675,7 +675,7 @@
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-top">
     <a class="sidebar-logo" href="/">
-      <img src="/images/logo.jpeg" alt="Kitobo Serenity Resort" style="height:44px;width:auto;object-fit:contain;display:block;">
+      <img src="/images/logo.png" alt="Kitobo Serenity Resort" style="height:44px;width:auto;object-fit:contain;display:block;">
       <div class="logo-text"><span>Kitobo</span><span>Serenity Resort</span></div>
     </a>
     <button class="sidebar-close-btn" id="sidebar-close-btn"><i class="fas fa-times"></i></button>
@@ -809,10 +809,24 @@
             <input type="date" id="po-date" class="form-control">
           </div>
           <div class="form-group">
-            <label>Vendor</label>
-            <select id="po-vendor" class="form-control">
-              <option value="">Select Vendor</option>
+            <label>Vendor Type</label>
+            <select id="po-vendor-type" class="form-control" onchange="filterVendorsByType()">
+              <option value="">Select Vendor Type</option>
+              <option value="local">Local Vendor</option>
+              <option value="international">International Vendor</option>
             </select>
+          </div>
+        </div>
+        <div class="form-group-row">
+          <div class="form-group">
+            <label>Vendor Name</label>
+            <select id="po-vendor" class="form-control">
+              <option value="">— Select type first —</option>
+            </select>
+          </div>
+          <div class="form-group" id="new-vendor-group" style="display:none;">
+            <label>New Vendor Name</label>
+            <input type="text" id="po-new-vendor-name" class="form-control" placeholder="Enter vendor name">
           </div>
         </div>
         
@@ -1116,12 +1130,6 @@ document.addEventListener('DOMContentLoaded', function() {
   notificationCheckInterval = setInterval(loadNotifications, 60000);
 });
 
-// Reload notifications when purchase orders change
-const originalLoadPurchaseOrders = window.loadPurchaseOrders;
-window.loadPurchaseOrders = async function() {
-  await originalLoadPurchaseOrders();
-  setTimeout(() => loadNotifications(), 500);
-};
 
 function escapeHtml(str) {
   if (!str) return '';
@@ -1283,7 +1291,10 @@ function escapeHtml(str) {
     selectedItems = [];
     renderSelectedItems();
     document.getElementById('po-notes').value = '';
-    document.getElementById('po-vendor').value = '';
+    document.getElementById('po-vendor-type').value = '';
+    document.getElementById('po-vendor').innerHTML = '<option value="">— Select type first —</option>';
+    var nvg = document.getElementById('new-vendor-group');
+    if (nvg) nvg.style.display = 'none';
     updateOrderTotal();
     document.getElementById('po-form').classList.remove('active');
     showingForm = false;
@@ -1294,19 +1305,50 @@ function escapeHtml(str) {
   
   async function loadVendors() {
     try {
-      var data = await apiGet('/vendors');
-      vendors = data;
-      var select = document.getElementById('po-vendor');
-      select.innerHTML = '<option value="">Select Vendor</option>';
-      for (var i = 0; i < vendors.length; i++) {
-        var opt = document.createElement('option');
-        opt.value = vendors[i].id;
-        opt.textContent = vendors[i].name + ' (' + vendors[i].type + ')';
-        select.appendChild(opt);
-      }
+      vendors = await apiGet('/vendors');
     } catch(err) {
       showToast('Failed to load vendors: ' + err.message, 'error');
     }
+  }
+
+  function filterVendorsByType() {
+    var type = document.getElementById('po-vendor-type').value;
+    var select = document.getElementById('po-vendor');
+    var newVendorGroup = document.getElementById('new-vendor-group');
+    newVendorGroup.style.display = 'none';
+    select.innerHTML = '<option value="">Select Vendor</option>';
+    if (!type) return;
+    var filtered = vendors.filter(function(v) { return v.type === type; });
+    filtered.forEach(function(v) {
+      var opt = document.createElement('option');
+      opt.value = v.id;
+      opt.textContent = v.name;
+      select.appendChild(opt);
+    });
+    var newOpt = document.createElement('option');
+    newOpt.value = '__new__';
+    newOpt.textContent = '+ Add New Vendor';
+    select.appendChild(newOpt);
+    select.onchange = function() {
+      newVendorGroup.style.display = this.value === '__new__' ? 'block' : 'none';
+    };
+  }
+
+  async function getOrCreateVendor() {
+    var type = document.getElementById('po-vendor-type').value;
+    var vendorVal = document.getElementById('po-vendor').value;
+    if (!type) { showToast('Please select a vendor type', 'error'); return null; }
+    if (vendorVal === '__new__') {
+      var newName = (document.getElementById('po-new-vendor-name').value || '').trim();
+      if (!newName) { showToast('Please enter a vendor name', 'error'); return null; }
+      try {
+        var newVendor = await apiPost('/vendors', { name: newName, type: type });
+        vendors.push(newVendor);
+        return newVendor.id;
+      } catch(err) { showToast('Failed to create vendor: ' + err.message, 'error'); return null; }
+    }
+    if (!vendorVal) { showToast('Please select a vendor', 'error'); return null; }
+    return parseInt(vendorVal);
   }
   
   async function loadStoreItems() {
@@ -1424,7 +1466,7 @@ function escapeHtml(str) {
       itemsHtml += '</tbody></table></div>';
       itemsHtml += '<div class="po-details-actions">';
       if (data.status === 'pending') {
-        itemsHtml += '<button class="btn btn-success" onclick="receiveGoods(' + data.id + ')"><i class="fas fa-box"></i> Receive Goods</button>';
+        itemsHtml += '<button class="btn btn-success" onclick="receiveGoods(' + data.id + ')" style="background:#16a34a;"><i class="fas fa-check-circle"></i> Confirm Received</button>';
       }
       itemsHtml += '<button class="btn btn-success" onclick="savePOChanges()"><i class="fas fa-save"></i> Save Changes</button>';
       itemsHtml += '<button class="btn btn-gold" onclick="printPurchaseOrder(' + data.id + ')"><i class="fas fa-print"></i> Print</button>';
@@ -1507,64 +1549,187 @@ function escapeHtml(str) {
     }
   }
   
-  async function addItemToExistingPO() {
-    window.currentPOId = currentEditPOId;
-    openItemSelectorForPO();
-  }
-  
-  function openItemSelectorForPO() {
+  var itemSelectorMode = 'new';
+
+  function openItemSelector() {
+    itemSelectorMode = 'new';
     document.getElementById('item-selector-modal').classList.add('show');
-    renderItemListForPO();
+    document.getElementById('item-search-input').value = '';
+    renderItemList();
   }
-  
-  function renderItemListForPO() {
+
+  function openItemSelectorForPO() {
+    itemSelectorMode = 'existing';
+    window.currentPOId = currentEditPOId;
+    document.getElementById('item-selector-modal').classList.add('show');
+    document.getElementById('item-search-input').value = '';
+    renderItemList();
+  }
+
+  function closeItemSelector() {
+    document.getElementById('item-selector-modal').classList.remove('show');
+  }
+
+  function filterItemList() { renderItemList(); }
+
+  function renderItemList() {
     var container = document.getElementById('item-list-container');
     var searchTerm = document.getElementById('item-search-input').value.toLowerCase();
     var filtered = storeItems.filter(function(item) {
-      return item.name.toLowerCase().includes(searchTerm) || item.category.toLowerCase().includes(searchTerm);
+      return item.name.toLowerCase().includes(searchTerm) || (item.category || '').toLowerCase().includes(searchTerm);
     });
+    window.currentFilteredItems = filtered;
     if (filtered.length === 0) {
-      container.innerHTML = '<div style="text-align: center; padding: 20px;">No items found</div>';
+      container.innerHTML = '<div style="text-align:center;padding:20px;color:#737373;">No items found</div>';
       return;
     }
     var html = '';
     for (var i = 0; i < filtered.length; i++) {
       var item = filtered[i];
-      html += '<div class="item-list-item" onclick="addItemToExistingPOFromList(' + i + ')">';
+      html += '<div class="item-list-item" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">';
+      html += '<div style="flex:1;min-width:160px;">';
       html += '<strong>' + escapeHtml(item.name) + '</strong><br>';
-      html += '<small>Category: ' + escapeHtml(item.category) + ' | Unit: ' + escapeHtml(item.unit || 'units') + ' | Price: ' + fmtTSH(item.cost) + '/unit</small>';
+      html += '<small style="color:#64748b;">Cat: ' + escapeHtml(item.category || '') + ' &nbsp;|&nbsp; Unit: ' + escapeHtml(item.unit || 'units') + ' &nbsp;|&nbsp; Cost: ' + fmtTSH(item.cost || 0) + '</small>';
+      html += '</div>';
+      html += '<div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">';
+      html += '<input type="number" id="item-qty-' + i + '" placeholder="Qty" min="0.01" step="0.01" class="form-control" style="width:75px;padding:6px 8px;border-radius:8px;">';
+      html += '<input type="number" id="item-price-' + i + '" placeholder="Price" min="0" step="1" value="' + (item.cost || 0) + '" class="form-control" style="width:100px;padding:6px 8px;border-radius:8px;">';
+      html += '<button class="btn btn-gold btn-sm" onclick="addItemFromSelector(' + i + ')" style="white-space:nowrap;">Add</button>';
+      html += '</div>';
       html += '</div>';
     }
     container.innerHTML = html;
-    window.currentFilteredItems = filtered;
   }
-  
-  async function addItemToExistingPOFromList(index) {
+
+  function addItemFromSelector(index) {
     var item = window.currentFilteredItems[index];
     if (!item) return;
-    
-    var quantity = prompt('Enter quantity for ' + item.name + ':', '1');
-    if (!quantity) return;
-    quantity = parseFloat(quantity);
-    if (isNaN(quantity) || quantity <= 0) {
-      showToast('Please enter a valid quantity', 'error');
-      return;
+    var qty = parseFloat(document.getElementById('item-qty-' + index).value);
+    var price = parseFloat(document.getElementById('item-price-' + index).value);
+    if (isNaN(qty) || qty <= 0) { showToast('Enter a valid quantity', 'error'); return; }
+    if (isNaN(price) || price < 0) { showToast('Enter a valid price', 'error'); return; }
+    if (itemSelectorMode === 'existing') {
+      addItemToExistingPOFromList(item, qty, price);
+    } else {
+      var ex = selectedItems.findIndex(function(si) { return si.name === item.name; });
+      if (ex >= 0) {
+        selectedItems[ex].quantity += qty;
+        selectedItems[ex].total = selectedItems[ex].quantity * selectedItems[ex].unit_price;
+      } else {
+        selectedItems.push({ name: item.name, category: item.category || '', unit: item.unit || 'units', unit_price: price, quantity: qty, total: price * qty });
+      }
+      renderSelectedItems();
+      updateOrderTotal();
+      closeItemSelector();
+      showToast(item.name + ' added', 'success');
     }
-    
+  }
+
+  async function addItemToExistingPO() {
+    openItemSelectorForPO();
+  }
+
+  async function addItemToExistingPOFromList(item, qty, price) {
     try {
       await apiPost('/purchase-order-items', {
         po_id: window.currentPOId,
         item_name: item.name,
-        category: item.category,
+        category: item.category || '',
         unit: item.unit || 'units',
-        unit_price: item.cost,
-        quantity: quantity
+        unit_price: price,
+        quantity: qty
       });
       showToast('Item added to purchase order', 'success');
       closeItemSelector();
       viewPurchaseOrderDetails(window.currentPOId);
     } catch(err) {
       showToast('Failed to add item: ' + err.message, 'error');
+    }
+  }
+
+  function renderSelectedItems() {
+    var container = document.getElementById('selected-items-list');
+    if (!container) return;
+    if (selectedItems.length === 0) {
+      container.innerHTML = '<div style="text-align:center;padding:20px;color:#737373;"><i class="fas fa-box-open"></i> No items added yet. Click Add Item above.</div>';
+      return;
+    }
+    var html = '<div style="overflow-x:auto;"><table class="items-table"><thead><tr><th>Item</th><th>Unit</th><th>Unit Price</th><th>Qty</th><th>Total</th><th></th></tr></thead><tbody>';
+    for (var i = 0; i < selectedItems.length; i++) {
+      var si = selectedItems[i];
+      html += '<tr>';
+      html += '<td><strong>' + escapeHtml(si.name) + '</strong><br><small>' + escapeHtml(si.category) + '</small></td>';
+      html += '<td>' + escapeHtml(si.unit) + '</td>';
+      html += '<td><input type="number" id="new-price-' + i + '" value="' + si.unit_price + '" class="form-control" style="width:100px;" onchange="updateNewItemTotal(' + i + ')"></td>';
+      html += '<td><input type="number" id="new-qty-' + i + '" value="' + si.quantity + '" step="0.01" class="form-control" style="width:80px;" onchange="updateNewItemTotal(' + i + ')"></td>';
+      html += '<td id="new-total-' + i + '">' + fmtTSH(si.total) + '</td>';
+      html += '<td><button class="btn btn-danger btn-sm" onclick="removeNewItem(' + i + ')"><i class="fas fa-trash-alt"></i></button></td>';
+      html += '</tr>';
+    }
+    html += '</tbody></table></div>';
+    container.innerHTML = html;
+  }
+
+  function updateNewItemTotal(index) {
+    var price = parseFloat(document.getElementById('new-price-' + index).value) || 0;
+    var qty = parseFloat(document.getElementById('new-qty-' + index).value) || 0;
+    selectedItems[index].unit_price = price;
+    selectedItems[index].quantity = qty;
+    selectedItems[index].total = price * qty;
+    document.getElementById('new-total-' + index).textContent = fmtTSH(price * qty);
+    updateOrderTotal();
+  }
+
+  function removeNewItem(index) {
+    selectedItems.splice(index, 1);
+    renderSelectedItems();
+    updateOrderTotal();
+  }
+
+  function updateOrderTotal() {
+    var total = selectedItems.reduce(function(sum, si) { return sum + si.total; }, 0);
+    var el = document.getElementById('order-total');
+    if (el) el.textContent = fmtTSH(total);
+  }
+
+  async function savePurchaseOrder() {
+    var vendor_id = await getOrCreateVendor();
+    if (!vendor_id) return null;
+    if (selectedItems.length === 0) { showToast('Please add at least one item', 'error'); return null; }
+    var order_date = document.getElementById('po-date').value;
+    var notes = document.getElementById('po-notes').value;
+    var user = getCurrentUser();
+    var items = selectedItems.map(function(si) {
+      return { item_name: si.name, category: si.category, unit: si.unit, unit_price: si.unit_price, quantity: si.quantity };
+    });
+    try {
+      var result = await apiPost('/purchase-orders', { vendor_id: vendor_id, order_date: order_date, notes: notes, items: items, created_by: user ? user.username : 'system' });
+      showToast('Purchase order created!', 'success');
+      cancelCreatePO();
+      await loadPurchaseOrders();
+      if (result && result.id) viewPurchaseOrderDetails(result.id);
+      return result;
+    } catch(err) {
+      showToast('Failed to save: ' + err.message, 'error');
+      return null;
+    }
+  }
+
+  async function saveAndPrintPurchaseOrder() {
+    var result = await savePurchaseOrder();
+    if (result && result.id) printPurchaseOrder(result.id);
+  }
+
+  async function receiveGoods(poId) {
+    if (!confirm('Confirm receiving goods?\n\nThis will:\n• Create a Goods Receipt Note (GRN)\n• Add quantities to Main Store inventory')) return;
+    var user = getCurrentUser();
+    try {
+      await apiPost('/grn/receive/' + poId, { created_by: user ? user.username : 'system' });
+      showToast('Goods received! GRN created and Main Store inventory updated.', 'success');
+      await loadPurchaseOrders();
+      viewPurchaseOrderDetails(poId);
+    } catch(err) {
+      showToast('Failed to receive goods: ' + err.message, 'error');
     }
   }
   
@@ -1617,6 +1782,14 @@ function escapeHtml(str) {
   }
 }
   
+  // Initialize page
+  document.getElementById('filter-date').addEventListener('change', function() { loadPurchaseOrders(); });
+  (async function init() {
+    await Promise.all([loadVendors(), loadStoreItems()]);
+    await loadPurchaseOrders();
+    renderSelectedItems();
+  })();
+
   async function printPurchaseOrder(id) {
     try {
       var data = await apiGet('/purchase-orders/' + id);
