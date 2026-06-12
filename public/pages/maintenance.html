@@ -335,7 +335,7 @@ function showForm() {
   document.getElementById('labour-cost').value = '0';
   document.getElementById('remarks').value = '';
   updateGrandTotal();
-  document.querySelector('#form-section .form-header h3').textContent = '<i class="fas fa-plus"></i> New Maintenance Record';
+  document.querySelector('#form-section .form-header h3').innerHTML = '<i class="fas fa-plus"></i> New Maintenance Record';
 }
 function cancelForm() {
   document.getElementById('form-section').classList.remove('active');

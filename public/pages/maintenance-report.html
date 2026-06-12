@@ -28,14 +28,15 @@
     }
     
     .filter-bar {
-      background: #f5f5f5;
-      border-radius: 16px;
-      padding: 20px;
+      background: white;
+      border-radius: 20px;
+      padding: 16px 24px;
       margin-bottom: 24px;
       display: flex;
       gap: 15px;
       flex-wrap: wrap;
       align-items: flex-end;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
     
     .filter-group {
@@ -68,29 +69,34 @@
     }
     
     .summary-card {
-      background: linear-gradient(135deg, #1e2a3e, #2c3e4e);
-      color: white;
+      background: white;
+      color: #1e293b;
       padding: 20px;
       border-radius: 20px;
-      text-align: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      border-left: 4px solid #e2e8f0;
     }
-    
+
     .summary-card h4 {
-      font-size: 13px;
-      opacity: 0.8;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: #64748b;
       margin-bottom: 10px;
-      letter-spacing: 1px;
+      opacity: 1;
     }
-    
+
     .summary-card .amount {
       font-size: 28px;
       font-weight: 700;
+      color: #1e293b;
     }
-    
-    .summary-card.pending { background: linear-gradient(135deg, #f59e0b, #d97706); }
-    .summary-card.completed { background: linear-gradient(135deg, #10b981, #059669); }
-    .summary-card.cost { background: linear-gradient(135deg, #c9933a, #a87a2c); }
-    .summary-card.count { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+
+    .summary-card.pending { border-left-color: #f59e0b; }
+    .summary-card.completed { border-left-color: #10b981; }
+    .summary-card.cost { border-left-color: #c9933a; }
+    .summary-card.count { border-left-color: #3b82f6; }
     
     .report-table {
       background: white;
@@ -308,13 +314,19 @@
     }
     
     @media print {
-      .sidebar, .navbar, .filter-bar, .action-buttons, .notif-btn, .user-dropdown, .notification-panel {
-        display: none !important;
-      }
-      .main-content { margin: 0 !important; padding: 0 !important; }
+      .sidebar, .navbar, .filter-bar, .action-buttons, .notif-btn, .user-dropdown,
+      .notification-panel, .pos-navbar-btn, #pos-chooser-overlay, .dropdown-menu,
+      .toast-container, #changePwOverlay, #changePwModal { display: none !important; }
+      .main-content { margin: 0 !important; padding: 20px !important; }
       .report-container { box-shadow: none; padding: 0; }
-      .summary-card { break-inside: avoid; }
+      body { background: white !important; }
+      .summary-card { break-inside: avoid; box-shadow: none; border: 1px solid #e2e8f0; }
+      .report-table { box-shadow: none; }
+      .print-maint-header { display: block !important; text-align: center; margin-bottom: 20px; border-bottom: 2px solid #c9933a; padding-bottom: 14px; }
+      .print-maint-header h1 { font-size: 20px; color: #1a2340; font-family: 'Playfair Display', serif; }
+      .print-maint-header p { font-size: 12px; color: #64748b; margin-top: 4px; }
     }
+    .print-maint-header { display: none; }
   </style>
 </head>
 <body>
@@ -422,6 +434,10 @@
 
 <main class="main-content">
   <div class="report-container">
+    <div class="print-maint-header">
+      <h1><i class="fas fa-tools"></i> Maintenance Report</h1>
+      <p>Kitobo Serenity Resort &mdash; Generated: <span id="print-date"></span></p>
+    </div>
     <!-- Filter Bar -->
     <div class="filter-bar">
       <div class="filter-group">
@@ -470,7 +486,7 @@
       </div>
       <div class="filter-group">
         <label>&nbsp;</label>
-        <button class="btn-print" onclick="window.print()" style="width: 100%;"><i class="fas fa-print"></i> Print Report</button>
+        <button class="btn-print" onclick="var pd=document.getElementById('print-date');if(pd)pd.textContent=new Date().toLocaleString();window.print()" style="width: 100%;"><i class="fas fa-print"></i> Print Report</button>
       </div>
     </div>
 
@@ -530,7 +546,7 @@
     </div>
 
     <div class="action-buttons">
-      <button class="btn-print" onclick="window.print()"><i class="fas fa-print"></i> Print Maintenance Report</button>
+      <button class="btn-print" onclick="var pd=document.getElementById('print-date');if(pd)pd.textContent=new Date().toLocaleString();window.print()"><i class="fas fa-print"></i> Print Maintenance Report</button>
     </div>
   </div>
   
@@ -693,11 +709,6 @@ function resetFilters() {
   loadReport();
 }
 
-// Make sure filter buttons trigger the report
-document.getElementById('filter-from')?.addEventListener('change', function() { loadReport(); });
-document.getElementById('filter-to')?.addEventListener('change', function() { loadReport(); });
-document.getElementById('filter-repair-type')?.addEventListener('change', function() { loadReport(); });
-document.getElementById('filter-status')?.addEventListener('change', function() { loadReport(); });
 
 // ============================================================
 // NOTIFICATION SYSTEM
@@ -782,15 +793,9 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('userName').innerText = user.fullName || user.username;
   document.getElementById('userRole').innerText = user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'User';
   document.getElementById('userAvatar').innerText = (user.fullName || user.username || 'U').charAt(0).toUpperCase();
-  
-  const today = new Date();
-  const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-  document.getElementById('filter-from').value = isoDate(firstDayOfMonth);
-  document.getElementById('filter-to').value = isoDate(today);
-  
+
   loadReport();
-  loadNotifications();
-  setInterval(() => { loadReport(); loadNotifications(); }, 60000);
+  setInterval(() => { loadReport(); }, 60000);
   
   document.getElementById('openChangePwBtn')?.addEventListener('click', openChangePasswordModal);
   document.getElementById('closeChangePwBtn')?.addEventListener('click', closeChangePasswordModal);
@@ -838,21 +843,11 @@ window.logout = logout;
 window.openChangePasswordModal = openChangePasswordModal;
 window.closeChangePasswordModal = closeChangePasswordModal;
 
-// Ensure filters trigger report
-(function() {
-  const fromDate = document.getElementById('filter-from');
-  const toDate = document.getElementById('filter-to');
-  const repairType = document.getElementById('filter-repair-type');
-  const status = document.getElementById('filter-status');
-  
-  if (fromDate) fromDate.addEventListener('change', () => loadReport());
-  if (toDate) toDate.addEventListener('change', () => loadReport());
-  if (repairType) repairType.addEventListener('change', () => loadReport());
-  if (status) status.addEventListener('change', () => loadReport());
-  
-  // Initial load
-  loadReport();
-})();
+// Filter change listeners
+document.getElementById('filter-from')?.addEventListener('change', () => loadReport());
+document.getElementById('filter-to')?.addEventListener('change', () => loadReport());
+document.getElementById('filter-repair-type')?.addEventListener('change', () => loadReport());
+document.getElementById('filter-status')?.addEventListener('change', () => loadReport());
 </script>
 
 <!-- POS Chooser Modal -->

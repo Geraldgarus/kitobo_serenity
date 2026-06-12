@@ -85,6 +85,38 @@
   background: #f8fafc;
 }
 
+.btn-print {
+  background: #1a2340;
+  color: white;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 40px;
+  cursor: pointer;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.2s;
+}
+.btn-print:hover { background: #2a3a5c; }
+
+.print-header { display: none; }
+
+@media print {
+  .sidebar, .navbar, .filter-bar, .notif-btn, .user-dropdown, .notification-panel,
+  .pos-navbar-btn, #pos-chooser-overlay, .dropdown-menu, .toast-container,
+  .items-modal, #change-password-modal, #change-password-modal-overlay,
+  .btn-print, .btn-outline, .btn-gold { display: none !important; }
+  .main-content { margin: 0 !important; padding: 20px !important; }
+  body { background: white !important; }
+  .print-header { display: block !important; text-align: center; margin-bottom: 24px; border-bottom: 2px solid #c9933a; padding-bottom: 16px; }
+  .print-header h1 { font-size: 22px; color: #1a2340; font-family: 'Playfair Display', serif; }
+  .print-header p { font-size: 13px; color: #64748b; margin-top: 4px; }
+  .stat-card { box-shadow: none; border: 1px solid #e2e8f0; }
+  .card { box-shadow: none; border: 1px solid #e2e8f0; }
+  td:last-child, th:last-child { display: none; }
+}
+
 /* Stats Row */
 .stats-row {
   display: flex;
@@ -978,6 +1010,10 @@
 </nav>
 
 <main class="main-content">
+  <div class="print-header">
+    <h1><i class="fas fa-stamp"></i> Goods Receipt Report</h1>
+    <p>Kitobo Serenity Resort &mdash; Generated: <span id="print-date"></span></p>
+  </div>
   <div class="filter-bar">
     <div class="filter-group"><label>From Date</label><input type="date" id="filter-from"></div>
     <div class="filter-group"><label>To Date</label><input type="date" id="filter-to"></div>
@@ -985,6 +1021,7 @@
     <button class="btn-gold" onclick="loadReport()"><i class="fas fa-search"></i> Apply</button>
     <button class="btn-outline" onclick="clearFilters()">Clear</button>
     <button class="btn-outline" onclick="exportToCSV()"><i class="fas fa-file-export"></i> Export</button>
+    <button class="btn-print" onclick="printReport()"><i class="fas fa-print"></i> Print</button>
   </div>
   
   <div class="stats-row">
@@ -1607,11 +1644,18 @@ async function apiPost(url, data) {
   loadReport();
   
   // Make functions global
-  window.loadReport = loadReport; 
-  window.clearFilters = clearFilters; 
-  window.exportToCSV = exportToCSV; 
+  function printReport() {
+    var pd = document.getElementById('print-date');
+    if (pd) pd.textContent = new Date().toLocaleString();
+    window.print();
+  }
+
+  window.loadReport = loadReport;
+  window.clearFilters = clearFilters;
+  window.exportToCSV = exportToCSV;
   window.viewItems = viewItems;
   window.closeModal = closeModal;
+  window.printReport = printReport;
   window.openChangePasswordModal = openChangePasswordModal;
   window.closeChangePasswordModal = closeChangePasswordModal;
   window.logout = logout;
