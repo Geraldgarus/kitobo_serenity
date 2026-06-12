@@ -1374,15 +1374,18 @@ let notificationCheckInterval = null;
 
 async function loadNotifications() {
   try {
-    const today = new Date();
-    const todayStr = today.toISOString().split('T')[0];
+    const todayStr = new Date().toISOString().split('T')[0];
+    // tomorrow's date string
+    const tomorrowDate = new Date();
+    tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+    const tomorrowStr = tomorrowDate.toISOString().split('T')[0];
 
-    const reservations = await apiGet('/reservations');
     notifications = [];
 
-    // Upcoming arrivals: today's check-ins + all future check-ins, sorted by date
+    // 1. Upcoming arrivals: strictly from tomorrow onwards
+    const reservations = await apiGet('/reservations');
     const upcomingCheckins = reservations
-      .filter(r => r.checkin >= todayStr)
+      .filter(r => r.checkin >= tomorrowStr)
       .sort((a, b) => a.checkin.localeCompare(b.checkin));
 
     upcomingCheckins.forEach(r => {
@@ -1391,17 +1394,12 @@ async function loadNotifications() {
         year: 'numeric', month: 'short', day: 'numeric'
       });
 
-      // Day diff using UTC midnight to avoid timezone skew
       const [ty, tm, td] = todayStr.split('-').map(Number);
       const [cy, cm, cd] = r.checkin.split('-').map(Number);
       const daysUntil = Math.round(
         (Date.UTC(cy, cm - 1, cd) - Date.UTC(ty, tm - 1, td)) / 86400000
       );
-
-      let daysText;
-      if (daysUntil === 0) daysText = 'TODAY';
-      else if (daysUntil === 1) daysText = 'tomorrow';
-      else daysText = `in ${daysUntil} days`;
+      const daysText = daysUntil === 1 ? 'tomorrow' : `in ${daysUntil} days`;
 
       notifications.push({
         id: `checkin_${r.id}`,
@@ -1410,18 +1408,34 @@ async function loadNotifications() {
         time: new Date().toLocaleTimeString(),
         read: false,
         reservationId: r.id,
-        icon: daysUntil === 0 ? '<i class="fas fa-user-check"></i>' : '<i class="fas fa-calendar-alt"></i>',
+        icon: '<i class="fas fa-calendar-alt"></i>',
         checkinDate: r.checkin,
         daysUntil: daysUntil
       });
     });
 
-    notifications = notifications.slice(0, 30);
+    // 2. Low stock items
+    try {
+      const storeItems = await apiGet('/store/items');
+      const lowStock = storeItems.filter(i => parseFloat(i.quantity) < 5);
+      lowStock.forEach(item => {
+        notifications.push({
+          id: `stock_${item.id}`,
+          type: 'stock',
+          message: `${item.name} is low in stock (${item.quantity} remaining)`,
+          time: new Date().toLocaleTimeString(),
+          read: false,
+          icon: '<i class="fas fa-exclamation-triangle"></i>'
+        });
+      });
+    } catch (e) {
+      console.log('Store items not available for notifications');
+    }
 
+    notifications = notifications.slice(0, 30);
     renderNotifications();
     updateNotificationBadge();
-
-    console.log(`Loaded ${notifications.length} upcoming arrival notifications`);
+    console.log(`Loaded ${notifications.length} notifications`);
   } catch (err) {
     console.error('Failed to load notifications:', err);
     renderNotifications();
@@ -1440,23 +1454,32 @@ function renderNotifications() {
     return;
   }
   
+  const upcomingNotifs = notifications.filter(n => n.type === 'upcoming');
+  const stockNotifs    = notifications.filter(n => n.type === 'stock');
+
   let html = '';
 
-  html += `<div style="padding: 8px 16px; background: #dbeafe; font-size: 11px; font-weight: 600; color: #1e40af;"><i class="fas fa-calendar-alt"></i> UPCOMING ARRIVALS</div>`;
+  if (upcomingNotifs.length > 0) {
+    html += `<div style="padding:8px 16px;background:#dbeafe;font-size:11px;font-weight:600;color:#1e40af;"><i class="fas fa-calendar-alt"></i> UPCOMING ARRIVALS</div>`;
+    upcomingNotifs.forEach(notif => {
+      html += `
+        <div class="notification-item ${notif.read ? 'read' : 'unread'}" data-id="${notif.id}" data-type="${notif.type}" data-reservation-id="${notif.reservationId || ''}">
+          <div class="notification-message"><span class="notification-icon">${notif.icon}</span>${escapeHtml(notif.message)}</div>
+          <div class="notification-time"><span><i class="fas fa-clock"></i> ${notif.time}</span></div>
+        </div>`;
+    });
+  }
 
-  notifications.forEach(notif => {
-    html += `
-      <div class="notification-item ${notif.read ? 'read' : 'unread'}" data-id="${notif.id}" data-type="${notif.type}" data-reservation-id="${notif.reservationId || ''}">
-        <div class="notification-message">
-          <span class="notification-icon">${notif.icon}</span>
-          ${escapeHtml(notif.message)}
-        </div>
-        <div class="notification-time">
-          <span><i class="fas fa-clock"></i> ${notif.time}</span>
-        </div>
-      </div>
-    `;
-  });
+  if (stockNotifs.length > 0) {
+    html += `<div style="padding:8px 16px;background:#fee2e2;font-size:11px;font-weight:600;color:#991b1b;margin-top:4px;"><i class="fas fa-exclamation-triangle"></i> LOW STOCK ALERTS</div>`;
+    stockNotifs.forEach(notif => {
+      html += `
+        <div class="notification-item ${notif.read ? 'read' : 'unread'}" data-id="${notif.id}" data-type="${notif.type}">
+          <div class="notification-message"><span class="notification-icon">${notif.icon}</span>${escapeHtml(notif.message)}</div>
+          <div class="notification-time"><span><i class="fas fa-clock"></i> ${notif.time}</span></div>
+        </div>`;
+    });
+  }
 
   container.innerHTML = html;
 
@@ -1468,7 +1491,17 @@ function renderNotifications() {
         notif.read = true;
         renderNotifications();
         updateNotificationBadge();
-        if (notif.reservationId) openDetail(notif.reservationId);
+        const resId = parseInt(item.getAttribute('data-reservation-id'));
+        if (notif.type === 'upcoming' && resId) {
+          closeNotificationPanel();
+          openDetail(resId);
+          return;
+        }
+        if (notif.type === 'stock') {
+          closeNotificationPanel();
+          window.location.href = '/store-main';
+          return;
+        }
       }
       closeNotificationPanel();
     });
