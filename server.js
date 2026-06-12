@@ -436,7 +436,7 @@ app.get('/api/reservations/:id', async (req, res) => {
 
 // POST /api/reservations – create new reservation with payment fields
 app.post('/api/reservations', async (req, res) => {
-  let { aptId, guest, email, mobile, country, city, checkin, checkout, adults, children, rateType, total, checkoutTime, userId, username, identification, idType, paymentMethod, paymentStatus, amountPaid } = req.body;
+  let { aptId, guest, email, mobile, country, city, checkin, checkout, adults, children, rateType, total, pricePerNight, checkoutTime, userId, username, identification, idType, paymentMethod, paymentStatus, amountPaid } = req.body;
 
   // CRITICAL FIX: Ensure dates are pure YYYY-MM-DD strings
   if (checkin) checkin = String(checkin).split('T')[0];
@@ -475,16 +475,16 @@ app.post('/api/reservations', async (req, res) => {
 
     const { rows } = await pool.query(`
       INSERT INTO reservations (
-        apt_id, guest, email, mobile, country, city, checkin, checkout, checkout_time, 
-        adults, children, rate_type, total, identification, id_type,
+        apt_id, guest, email, mobile, country, city, checkin, checkout, checkout_time,
+        adults, children, rate_type, total, price_per_night, identification, id_type,
         payment_status, payment_method, amount_paid, balance
       )
-      VALUES ($1,$2,$3,$4,$5,$6,$7::date,$8::date,$9::time,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)
+      VALUES ($1,$2,$3,$4,$5,$6,$7::date,$8::date,$9::time,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20)
       RETURNING *
     `, [
       aptId, guest, email, mobile || null, country || null, city || null,
-      checkin, checkout, finalCheckoutTime, adults || 1, children || 0, 
-      rateType || 'Full', total || 0, identification || null, idType || null,
+      checkin, checkout, finalCheckoutTime, adults || 1, children || 0,
+      rateType || 'Full', total || 0, pricePerNight || 0, identification || null, idType || null,
       finalPaymentStatus, paymentMethod || null, finalAmountPaid, balance
     ]);
 
@@ -505,7 +505,7 @@ app.post('/api/reservations', async (req, res) => {
 
 // PUT /api/reservations/:id – update reservation with payment fields
 app.put('/api/reservations/:id', async (req, res) => {
-  let { aptId, guest, email, mobile, country, city, checkin, checkout, adults, children, rateType, total, userId, username, identification, idType, paymentMethod, paymentStatus, amountPaid } = req.body;
+  let { aptId, guest, email, mobile, country, city, checkin, checkout, adults, children, rateType, total, pricePerNight, userId, username, identification, idType, paymentMethod, paymentStatus, amountPaid } = req.body;
   
   // CRITICAL FIX: Ensure dates are pure YYYY-MM-DD strings
   if (checkin) checkin = String(checkin).split('T')[0];
@@ -554,17 +554,18 @@ app.put('/api/reservations/:id', async (req, res) => {
         children  = COALESCE($10, children),
         rate_type = COALESCE($11, rate_type),
         total     = COALESCE($12, total),
-        identification = COALESCE($13, identification),
-        id_type   = COALESCE($14, id_type),
-        payment_method = COALESCE($15, payment_method),
-        payment_status = COALESCE($16, payment_status),
-        amount_paid = COALESCE($17, amount_paid),
-        balance   = COALESCE($18, balance)
-      WHERE id = $19
+        price_per_night = COALESCE($13, price_per_night),
+        identification = COALESCE($14, identification),
+        id_type   = COALESCE($15, id_type),
+        payment_method = COALESCE($16, payment_method),
+        payment_status = COALESCE($17, payment_status),
+        amount_paid = COALESCE($18, amount_paid),
+        balance   = COALESCE($19, balance)
+      WHERE id = $20
       RETURNING *
     `, [
-      aptId, guest, email, mobile, country, city, checkin, checkout, 
-      adults, children, rateType, total, identification, idType,
+      aptId, guest, email, mobile, country, city, checkin, checkout,
+      adults, children, rateType, total, pricePerNight || null, identification, idType,
       paymentMethod, newPaymentStatus, newAmountPaid, newBalance, req.params.id
     ]);
 
@@ -711,6 +712,7 @@ function camelRes(r) {
     aptColor:  r.apt_color ?? undefined,
     identification: r.identification ?? null,
     idType: r.id_type ?? null,
+    pricePerNight: r.price_per_night ?? 0,
     // Payment fields
     paymentStatus: r.payment_status ?? 'unpaid',
     paymentMethod: r.payment_method ?? null,

@@ -1744,7 +1744,8 @@ async function initEditForm(reservationId) {
     document.getElementById('edit-f-children').value  = reservation.children;
     const savedTotal  = reservation.total || 0;
     const savedNights = Math.max(1, daysBetween(isoDate(reservation.checkin), isoDate(reservation.checkout)));
-    document.getElementById('edit-f-price-per-night').value = savedNights > 0 ? Math.round(savedTotal / savedNights) : 0;
+    const storedRate  = reservation.pricePerNight || 0;
+    document.getElementById('edit-f-price-per-night').value = storedRate > 0 ? storedRate : (savedNights > 0 ? Math.round(savedTotal / savedNights) : 0);
     document.getElementById('edit-f-total-hidden').value    = savedTotal;
     document.getElementById('edit-f-total').innerHTML       = fmtTSH(savedTotal);
     const savedPaid = reservation.amountPaid || 0;
