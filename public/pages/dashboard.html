@@ -2155,7 +2155,7 @@ async function initModalForm() {
     if (apt.underMaintenance) return; // skip rooms under maintenance
     const opt = document.createElement('option');
     opt.value = apt.id;
-    opt.textContent = `${apt.name} – Max ${apt.maxAdults} Adults – ${fmtTSH(apt.ratePerNight)}/night`;
+    opt.textContent = `${apt.name} – Max ${apt.maxAdults} Adults`;
     sel.appendChild(opt);
   });
 
@@ -2263,7 +2263,7 @@ async function initEditForm(reservationId) {
       if (apt.underMaintenance && apt.id !== reservation.aptId) return;
       const opt = document.createElement('option');
       opt.value = apt.id;
-      opt.textContent = `${apt.name} – Max ${apt.maxAdults} Adults – ${fmtTSH(apt.ratePerNight)}/night${apt.underMaintenance ? ' ⚠ Under Maintenance' : ''}`;
+      opt.textContent = `${apt.name} – Max ${apt.maxAdults} Adults${apt.underMaintenance ? ' ⚠ Under Maintenance' : ''}`;
       if (apt.id === reservation.aptId) opt.selected = true;
       sel.appendChild(opt);
     });

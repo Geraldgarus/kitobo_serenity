@@ -74,8 +74,7 @@ function renderReportData(summary, filteredRes, fromVal, toVal) {
       <td>${a.bookings}</td>
       <td>${a.nights}</td>
       <td><strong>${a.revenue > 0 ? fmtTSH(a.revenue) : '—'}</strong></td>
-      <td>${fmtTSH(a.ratePerNight)}</td>
-    </table>`).join('');
+    </tr>`).join('');
   }
 
   const badge = document.getElementById('rpt-filter-badge');
@@ -99,7 +98,7 @@ async function generatePrintReport() {
     const s = summary.summary;
     const byApt = summary.byApartment;
 
-    const aptRows = byApt.map(a => `<tr><td>${a.emoji} ${a.name}</td><td>${a.bookings}</td><td>${a.nights}</td><td><strong>${a.revenue > 0 ? fmtTSH(a.revenue) : '—'}</strong></td><td>${fmtTSH(a.ratePerNight)}/night</td></tr>`).join('');
+    const aptRows = byApt.map(a => `<tr><td>${a.emoji} ${a.name}</td><td>${a.bookings}</td><td>${a.nights}</td><td><strong>${a.revenue > 0 ? fmtTSH(a.revenue) : '—'}</strong></td></tr>`).join('');
 
     const resRows = filtered.map(r => {
       const apt = byApt.find(a => a.id === r.aptId);
@@ -133,7 +132,7 @@ async function generatePrintReport() {
     </style></head><body>
     <div class="header"><div class="logo-area"><h1><i class="fas fa-hotel"></i> Kitobo Serenity Resort</h1><p>Property Management System · Dar es Salaam, Tanzania</p></div><div class="report-meta"><div class="period">Period: ${periodLabel}</div><div class="generated">Generated: ${new Date().toLocaleString('en-GB')}</div></div></div>
     <div class="summary-grid"><div class="summary-box"><div class="label">Total Reservations</div><div class="value">${s.totalReservations}</div></div><div class="summary-box"><div class="label">Total Revenue</div><div class="value" style="font-size:15px">${fmtTSH(s.totalRevenue)}</div></div><div class="summary-box"><div class="label">Total Nights Sold</div><div class="value">${s.totalNights}</div></div><div class="summary-box"><div class="label">Avg. Stay</div><div class="value">${s.avgStayNights ? s.avgStayNights.toFixed(1) : '—'} nts</div></div></div>
-    <h2>Revenue by Apartment</h2><table><thead><tr><th>Apartment</th><th>Bookings</th><th>Nights</th><th>Revenue</th><th>Rate/Night</th></tr></thead><tbody>${aptRows}</tbody></table>
+    <h2>Revenue by Apartment</h2><table><thead><tr><th>Apartment</th><th>Bookings</th><th>Nights</th><th>Revenue</th></tr></thead><tbody>${aptRows}</tbody></table>
     <h2>Reservation Detail (${filtered.length} records)</h2><table><thead><tr><th>Guest</th><th>Apartment</th><th>Check-in</th><th>Check-out</th><th>Nights</th><th>Guests</th><th>Rate</th><th>Total</th></tr></thead><tbody>${resRows || '<tr><td colspan="8" style="text-align:center;color:#9ca3af;padding:20px">No reservations in this period</td></tr>'}</tbody></table>
     <div class="footer"><span>Kitobo Serenity Resort · Confidential</span><span>Page 1</span></div>
     <script>window.onload=()=>window.print();<\/script>

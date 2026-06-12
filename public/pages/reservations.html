@@ -1125,7 +1125,7 @@ function printReservation() {
   const res = window.selectedReservation || selectedReservation;
   
   if (!res) {
-    showToast('No reservation selected', 'error');
+    showToast('No reservation selected', '<i class="fas fa-exclamation-triangle"></i>');
     return;
   }
   
@@ -1154,7 +1154,7 @@ function printReservation() {
   
   const printWindow = window.open('', '_blank', 'width=800,height=600');
   if (!printWindow) {
-    showToast('Please allow popups to print', 'error');
+    showToast('Please allow popups to print', '<i class="fas fa-exclamation-triangle"></i>');
     return;
   }
   
@@ -1312,7 +1312,7 @@ async function initModalForm() {
     if (apt.underMaintenance) return;
     const opt = document.createElement('option');
     opt.value = apt.id;
-    opt.textContent = `${apt.name} – Max ${apt.maxAdults} Adults – ${fmtTSH(apt.ratePerNight)}/night`;
+    opt.textContent = `${apt.name} – Max ${apt.maxAdults} Adults`;
     sel.appendChild(opt);
   });
 
@@ -1434,19 +1434,19 @@ function cancelCustomTotal(type) {
 function applyCustomTotal(type) {
   const inp = document.getElementById(`${type}-custom-input`);
   const val = parseFloat(inp.value);
-  if (isNaN(val) || val <= 0) { showToast('Please enter a valid amount (> 0)', 'error'); return; }
+  if (isNaN(val) || val <= 0) { showToast('Please enter a valid amount (> 0)', '<i class="fas fa-exclamation-triangle"></i>'); return; }
   const checkin  = document.getElementById(`${type}-f-checkin`).value;
   const checkout = document.getElementById(`${type}-f-checkout`).value;
-  if (!checkin || !checkout) { showToast('Please select dates first', 'error'); return; }
+  if (!checkin || !checkout) { showToast('Please select dates first', '<i class="fas fa-exclamation-triangle"></i>'); return; }
   const nights = daysBetween(checkin, checkout);
-  if (nights <= 0) { showToast('Invalid date range', 'error'); return; }
+  if (nights <= 0) { showToast('Invalid date range', '<i class="fas fa-exclamation-triangle"></i>'); return; }
   document.getElementById(`${type}-f-total-hidden`).value = val;
   document.getElementById(`${type}-f-total`).innerHTML = fmtTSH(val);
   const customEl = document.getElementById(`${type}-use-custom-total`);
   if (customEl) customEl.value = '1';
   const ca = document.getElementById(`${type}-custom-area`);
   ca.style.display = 'none'; ca.innerHTML = '';
-  showToast(`Custom total applied: ${fmtTSH(val)}`, 'success');
+  showToast(`Custom total applied: ${fmtTSH(val)}`, '<i class="fas fa-check-circle"></i>');
 }
 
 function resetCustomTotal(type) {
@@ -1635,10 +1635,10 @@ document.getElementById('reservation-form-modal')?.addEventListener('submit', as
   const idNumber = document.getElementById('modal-f-identification').value;
   if (idNumber && idNumber.trim()) {
     const v = validateIdentification(idType, idNumber);
-    if (!v.valid) { showToast(v.message, 'error'); return; }
+    if (!v.valid) { showToast(v.message, '<i class="fas fa-exclamation-triangle"></i>'); return; }
   }
   const finalTotal = parseFloat(document.getElementById('modal-f-total-hidden').value) || 0;
-  if (finalTotal <= 0) { showToast('Please enter price per night and select dates', '<i class="fas fa-exclamation-triangle"></i>'); return; }
+  if (finalTotal <= 0) { showToast('Please set a total amount (click ✎ icon next to Total Rate)', '<i class="fas fa-exclamation-triangle"></i>'); return; }
 
   const payload = {
     aptId:          parseInt(document.getElementById('modal-f-apt').value),
@@ -1650,7 +1650,6 @@ document.getElementById('reservation-form-modal')?.addEventListener('submit', as
     checkin, checkout,
     adults:         parseInt(document.getElementById('modal-f-adults').value),
     children:       parseInt(document.getElementById('modal-f-children').value),
-    pricePerNight:  parseFloat(document.getElementById('modal-f-price-per-night').value) || 0,
     total:          finalTotal,
     identification: document.getElementById('modal-f-identification').value,
     idType:         document.getElementById('modal-f-id-type').value,
@@ -1724,7 +1723,7 @@ async function initEditForm(reservationId) {
       if (apt.underMaintenance && apt.id !== reservation.aptId) return;
       const opt = document.createElement('option');
       opt.value = apt.id;
-      opt.textContent = `${apt.name} – Max ${apt.maxAdults} Adults – ${fmtTSH(apt.ratePerNight)}/night${apt.underMaintenance ? ' ⚠ Under Maintenance' : ''}`;
+      opt.textContent = `${apt.name} – Max ${apt.maxAdults} Adults${apt.underMaintenance ? ' ⚠ Under Maintenance' : ''}`;
       if (apt.id === reservation.aptId) opt.selected = true;
       sel.appendChild(opt);
     });
@@ -1744,8 +1743,6 @@ async function initEditForm(reservationId) {
     document.getElementById('edit-f-children').value  = reservation.children;
     const savedTotal  = reservation.total || 0;
     const savedNights = Math.max(1, daysBetween(isoDate(reservation.checkin), isoDate(reservation.checkout)));
-    const storedRate  = reservation.pricePerNight || 0;
-    document.getElementById('edit-f-price-per-night').value = storedRate > 0 ? storedRate : (savedNights > 0 ? Math.round(savedTotal / savedNights) : 0);
     document.getElementById('edit-f-total-hidden').value    = savedTotal;
     document.getElementById('edit-f-total').innerHTML       = fmtTSH(savedTotal);
     const savedPaid = reservation.amountPaid || 0;
@@ -1795,9 +1792,9 @@ document.getElementById('edit-form-modal')?.addEventListener('submit', async fun
   const idNumber = document.getElementById('edit-f-identification').value;
   if (idNumber && idNumber.trim()) {
     const v = validateIdentification(idType, idNumber);
-    if (!v.valid) { showToast(v.message, 'error'); return; }
+    if (!v.valid) { showToast(v.message, '<i class="fas fa-exclamation-triangle"></i>'); return; }
   }
-  if (forcedTotal <= 0) { showToast('Please enter price per night and ensure dates are selected', '<i class="fas fa-exclamation-triangle"></i>'); return; }
+  if (forcedTotal <= 0) { showToast('Please set a total amount (click ✎ icon next to Total Rate)', '<i class="fas fa-exclamation-triangle"></i>'); return; }
   const amountPaid = parseFloat(document.getElementById('edit-f-amount-paid').value) || 0;
   const balance    = forcedTotal - amountPaid;
   let   paymentStatus = document.getElementById('edit-f-payment-status').value;
@@ -1814,7 +1811,6 @@ document.getElementById('edit-form-modal')?.addEventListener('submit', async fun
     checkin, checkout,
     adults:         parseInt(document.getElementById('edit-f-adults').value),
     children:       parseInt(document.getElementById('edit-f-children').value),
-    pricePerNight:  parseFloat(document.getElementById('edit-f-price-per-night').value) || 0,
     total:          forcedTotal,
     userId:         currentUser?.id,
     username:       currentUser?.fullName || currentUser?.username,
