@@ -268,6 +268,14 @@
   let salesChart = null;
   const API_BASE = '';
 
+  // Set default dates to today and auto-load
+  (function() {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('filter-from').value = today;
+    document.getElementById('filter-to').value   = today;
+    loadSalesReport();
+  })();
+
   function escapeHtml(str) { if (!str) return ''; return String(str).replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
   function fmtTSH(v) { return 'TSh ' + (v || 0).toLocaleString(); }
   function showToast(msg, type = 'success') {
