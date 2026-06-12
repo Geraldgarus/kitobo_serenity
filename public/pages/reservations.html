@@ -752,21 +752,10 @@
       </div>
       
       <div class="form-group-row cols-2">
-        <div class="form-group">
-          <label><i class="fas fa-hotel"></i> Room</label>
-          <select id="modal-f-apt" class="form-control" required>
-            <option value="">Select Room</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label><i class="fas fa-dollar-sign"></i> Rate Type</label>
-          <select id="modal-f-ratetype" class="form-control">
-            <option value="Full">Full (100%)</option>
-            <option value="Partial">Partial (60%)</option>
-          </select>
-        </div>
+        <div class="form-group"><label><i class="fas fa-hotel"></i> Room</label><select id="modal-f-apt" class="form-control" required><option value="">Select Room</option></select></div>
+        <div class="form-group"><label><i class="fas fa-dollar-sign"></i> Price per Night (TSH)</label><input type="number" id="modal-f-price-per-night" class="form-control" min="0" step="1000" placeholder="Enter price per night" oninput="modalUpdateRate()" /></div>
       </div>
-      
+
       <div class="form-group-row" style="grid-template-columns:1fr 1fr 1.2fr">
         <div class="form-group">
           <label><i class="fas fa-user"></i> Adults</label>
@@ -786,15 +775,10 @@
         </div>
         <div class="form-group">
           <label><i class="fas fa-dollar-sign"></i> Total Rate</label>
-          <div id="modal-total-container">
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <div class="rate-display" id="modal-f-total" style="flex: 1;">—</div>
-              <i class="fas fa-pencil-alt custom-rate-edit-icon" onclick="enableCustomTotal('modal')" title="Set custom total"></i>
-            </div>
-            <div id="modal-custom-area" style="display: none; margin-top: 8px;"></div>
-          </div>
+          <div class="rate-display" id="modal-f-total">—</div>
           <input type="hidden" id="modal-f-total-hidden" value="0">
-          <input type="hidden" id="modal-use-custom-total" value="0">
+          <input type="hidden" id="modal-f-identification-hidden" value="">
+          <input type="hidden" id="modal-f-id-type-hidden" value="">
         </div>
       </div>
       
@@ -1324,7 +1308,7 @@ async function initModalForm() {
   document.getElementById('modal-f-checkout').value = isoDate(addDays(today, 1));
   modalUpdateRate();
 
-  ['modal-f-checkin','modal-f-checkout','modal-f-apt','modal-f-ratetype','modal-f-adults','modal-f-children'].forEach(id => {
+  ['modal-f-checkin','modal-f-checkout','modal-f-apt','modal-f-price-per-night','modal-f-adults','modal-f-children'].forEach(id => {
     const el = document.getElementById(id);
     if (el) {
       el.removeEventListener('change', modalUpdateRate);
@@ -1342,8 +1326,6 @@ function modalStepperChange(id, delta) {
 }
 
 function modalUpdateRate() {
-  const useCustom = document.getElementById('modal-use-custom-total')?.value;
-  if (useCustom === '1') return;
   const pricePerNight = parseFloat(document.getElementById('modal-f-price-per-night')?.value) || 0;
   const checkin  = document.getElementById('modal-f-checkin')?.value;
   const checkout = document.getElementById('modal-f-checkout')?.value;
@@ -1638,7 +1620,7 @@ document.getElementById('reservation-form-modal')?.addEventListener('submit', as
     if (!v.valid) { showToast(v.message, '<i class="fas fa-exclamation-triangle"></i>'); return; }
   }
   const finalTotal = parseFloat(document.getElementById('modal-f-total-hidden').value) || 0;
-  if (finalTotal <= 0) { showToast('Please set a total amount (click ✎ icon next to Total Rate)', '<i class="fas fa-exclamation-triangle"></i>'); return; }
+  if (finalTotal <= 0) { showToast('Please enter price per night and select dates', '<i class="fas fa-exclamation-triangle"></i>'); return; }
 
   const payload = {
     aptId:          parseInt(document.getElementById('modal-f-apt').value),
@@ -1650,6 +1632,7 @@ document.getElementById('reservation-form-modal')?.addEventListener('submit', as
     checkin, checkout,
     adults:         parseInt(document.getElementById('modal-f-adults').value),
     children:       parseInt(document.getElementById('modal-f-children').value),
+    pricePerNight:  parseFloat(document.getElementById('modal-f-price-per-night').value) || 0,
     total:          finalTotal,
     identification: document.getElementById('modal-f-identification').value,
     idType:         document.getElementById('modal-f-id-type').value,
