@@ -1402,31 +1402,45 @@ async function loadNotifications() {
       });
     });
     
-    // 2. Check for ALL upcoming check-ins (any future date)
-    const upcomingCheckins = reservations.filter(r => {
-      const checkin = new Date(r.checkin);
-      return checkin > todayDate;
+    // 2a. Check for check-ins TODAY (string comparison avoids UTC/local timezone issues)
+    const checkinsToday = reservations.filter(r => r.checkin === todayStr);
+    checkinsToday.forEach(r => {
+      notifications.push({
+        id: `checkin_${r.id}`,
+        type: 'checkin_today',
+        message: `${r.guest} is arriving TODAY`,
+        time: new Date().toLocaleTimeString(),
+        read: false,
+        reservationId: r.id,
+        icon: '<i class="fas fa-user-check"></i>',
+        checkinDate: r.checkin,
+        daysUntil: 0
+      });
     });
-    
+
+    // 2b. Check for future check-ins (strictly after today — string comparison)
+    const upcomingCheckins = reservations.filter(r => r.checkin > todayStr);
+
     // Sort by check-in date (closest first)
     upcomingCheckins.sort((a, b) => new Date(a.checkin) - new Date(b.checkin));
-    
+
     upcomingCheckins.forEach(r => {
-      const checkinDate = new Date(r.checkin);
-      const formattedDate = checkinDate.toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'short', 
-        day: 'numeric' 
+      const checkinDate = new Date(r.checkin + 'T12:00:00');
+      const formattedDate = checkinDate.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
       });
-      
-      // Calculate days until check-in
-      const daysUntil = Math.ceil((checkinDate - todayDate) / (1000 * 60 * 60 * 24));
-      
-      let daysText = '';
-      if (daysUntil === 0) daysText = 'TODAY';
-      else if (daysUntil === 1) daysText = 'tomorrow';
-      else daysText = `in ${daysUntil} days`;
-      
+
+      // Calculate days until check-in using date strings to avoid timezone issues
+      const todayParts = todayStr.split('-').map(Number);
+      const checkinParts = r.checkin.split('-').map(Number);
+      const todayMs = Date.UTC(todayParts[0], todayParts[1] - 1, todayParts[2]);
+      const checkinMs = Date.UTC(checkinParts[0], checkinParts[1] - 1, checkinParts[2]);
+      const daysUntil = Math.round((checkinMs - todayMs) / (1000 * 60 * 60 * 24));
+
+      const daysText = daysUntil === 1 ? 'tomorrow' : `in ${daysUntil} days`;
+
       notifications.push({
         id: `checkin_${r.id}`,
         type: 'upcoming',
@@ -1467,7 +1481,7 @@ async function loadNotifications() {
     renderNotifications();
     updateNotificationBadge();
     
-    console.log(`<i class="fas fa-bullhorn"></i> Loaded ${notifications.length} notifications (${upcomingCheckins.length} upcoming, ${checkoutsToday.length} checkouts today)`);
+    console.log(`Loaded ${notifications.length} notifications (${checkinsToday.length} arriving today, ${upcomingCheckins.length} upcoming, ${checkoutsToday.length} checkouts today)`);
   } catch (err) {
     console.error('Failed to load notifications:', err);
     renderNotifications();
@@ -1488,11 +1502,12 @@ function renderNotifications() {
   
   // Group notifications by type for better display
   const checkoutNotifs = notifications.filter(n => n.type === 'checkout');
+  const checkinTodayNotifs = notifications.filter(n => n.type === 'checkin_today');
   const upcomingNotifs = notifications.filter(n => n.type === 'upcoming');
   const stockNotifs = notifications.filter(n => n.type === 'stock');
-  
+
   let html = '';
-  
+
   // Checkouts section
   if (checkoutNotifs.length > 0) {
     html += `<div style="padding: 8px 16px; background: #fef3c7; font-size: 11px; font-weight: 600; color: #92400e;"><i class="fas fa-door-open"></i> CHECKOUTS TODAY</div>`;
@@ -1510,7 +1525,25 @@ function renderNotifications() {
       `;
     });
   }
-  
+
+  // Arrivals today section
+  if (checkinTodayNotifs.length > 0) {
+    html += `<div style="padding: 8px 16px; background: #dcfce7; font-size: 11px; font-weight: 600; color: #166534; margin-top: 4px;"><i class="fas fa-user-check"></i> ARRIVALS TODAY</div>`;
+    checkinTodayNotifs.forEach(notif => {
+      html += `
+        <div class="notification-item ${notif.read ? 'read' : 'unread'}" data-id="${notif.id}" data-type="${notif.type}" data-reservation-id="${notif.reservationId || ''}">
+          <div class="notification-message">
+            <span class="notification-icon">${notif.icon}</span>
+            ${escapeHtml(notif.message)}
+          </div>
+          <div class="notification-time">
+            <span><i class="fas fa-clock"></i> ${notif.time}</span>
+          </div>
+        </div>
+      `;
+    });
+  }
+
   // Upcoming section
   if (upcomingNotifs.length > 0) {
     html += `<div style="padding: 8px 16px; background: #dbeafe; font-size: 11px; font-weight: 600; color: #1e40af; margin-top: 4px;"><i class="fas fa-calendar-alt"></i> UPCOMING ARRIVALS</div>`;
@@ -1560,7 +1593,7 @@ function renderNotifications() {
         updateNotificationBadge();
         
         // Handle click action based on type
-        if ((notif.type === 'checkout' || notif.type === 'upcoming') && notif.reservationId) {
+        if ((notif.type === 'checkout' || notif.type === 'upcoming' || notif.type === 'checkin_today') && notif.reservationId) {
           openDetail(notif.reservationId);
         } else if (notif.type === 'stock') {
           window.location.href = '/store-main';
