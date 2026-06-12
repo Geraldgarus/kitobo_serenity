@@ -1261,7 +1261,10 @@ function escapeHtml(str) {
   
   document.getElementById('filter-date').value = currentFilterDate;
   document.getElementById('po-date').value = currentFilterDate;
-  
+
+  var createNewPOBtn = document.getElementById('createNewPOBtn');
+  if (createNewPOBtn) createNewPOBtn.addEventListener('click', function() { showCreateForm(); });
+
   function showCreateForm() {
     document.getElementById('po-form').classList.add('active');
     document.getElementById('po-details-view').classList.remove('active');

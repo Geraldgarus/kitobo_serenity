@@ -13,17 +13,25 @@ const pool    = require('./db/pool');
 // Add this function AFTER the pool is created
 async function ensurePaymentColumns() {
   try {
-    console.log('🔧 Checking payment columns...');
+    console.log('🔧 Checking required columns...');
     await pool.query(`
       ALTER TABLE reservations ADD COLUMN IF NOT EXISTS payment_status VARCHAR(20) DEFAULT 'unpaid';
       ALTER TABLE reservations ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50);
       ALTER TABLE reservations ADD COLUMN IF NOT EXISTS payment_date TIMESTAMP;
       ALTER TABLE reservations ADD COLUMN IF NOT EXISTS amount_paid INT DEFAULT 0;
       ALTER TABLE reservations ADD COLUMN IF NOT EXISTS balance INT DEFAULT 0;
+      ALTER TABLE reservations ADD COLUMN IF NOT EXISTS checkout_time TIME DEFAULT '11:00:00';
+      ALTER TABLE reservations ADD COLUMN IF NOT EXISTS identification VARCHAR(100);
+      ALTER TABLE reservations ADD COLUMN IF NOT EXISTS id_type VARCHAR(50) DEFAULT 'NIDA';
+      ALTER TABLE reservations ADD COLUMN IF NOT EXISTS price_per_night INT DEFAULT 0;
     `);
-    console.log('✅ Payment columns verified');
+    await pool.query(`
+      ALTER TABLE apartments ADD COLUMN IF NOT EXISTS under_maintenance BOOLEAN DEFAULT FALSE;
+      ALTER TABLE apartments ADD COLUMN IF NOT EXISTS rate_per_night INT DEFAULT 90000;
+    `);
+    console.log('✅ Required columns verified');
   } catch (err) {
-    console.log('⚠️ Payment columns check:', err.message);
+    console.log('⚠️ Column check:', err.message);
   }
 }
 
