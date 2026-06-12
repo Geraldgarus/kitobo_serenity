@@ -132,7 +132,7 @@ const pages = [
   'dashboard', 'dashboard1', 'reservations', 'apartments', 
   'apartments-list', 'apartments-list1', 'housekeeping', 'housekeeping-status', 'reports',
   'store-main', 'store-main1', 'store-outlets', 'store-outlets1', 'outlet-store', 'outlet-store1',
-  'store-housekeeping', 'store-kitchen', 'store-public', 'users', 'users1', 'login',
+  'store-housekeeping', 'store-kitchen', 'store-public', 'users', 'users1',
   'activity-logs', 'register', 'back-office', 'index2', 'purchase-orders', 'goods-receipt',
   'purchase-orders-reports', 'goods-receipt-reports', 'store-inventory-reports', 
   'point-of-sale', 'bar', 'restaurant', 'sales-report',  'staff-activities', 'staff-activities-report','add-reservation','guest-database','maintenance','daily-activities', 'expenditures',  'daily-activities-report','financial-report',  'maintenance-report', 'housekeeping-report'
@@ -146,9 +146,14 @@ pages.forEach(page => {
   });
 });
 
-// Redirect root to dashboard
+// Login page served from public/index.html
+app.get('/login', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Redirect root to login
 app.get('/', (req, res) => {
-  res.redirect('/dashboard');
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // ── Health check ─────────────────────────────────────────────────────────────

@@ -56,13 +56,13 @@
 
     .category-tabs { padding: 12px 20px; border-bottom: 1px solid #e2e8f0; flex-shrink: 0; display: flex; gap: 8px; overflow-x: auto; }
     .cat-tab { padding: 6px 16px; border-radius: 40px; font-size: 12px; font-weight: 600; cursor: pointer; border: 1px solid #e2e8f0; background: #f8fafc; color: #64748b; white-space: nowrap; transition: 0.2s; }
-    .cat-tab.active { background: #7c3aed; color: white; border-color: #7c3aed; }
-    .cat-tab:hover:not(.active) { background: #f3e8ff; border-color: #7c3aed; color: #7c3aed; }
+    .cat-tab.active { background: #c9933a; color: #1a2340; border-color: #c9933a; }
+    .cat-tab:hover:not(.active) { background: #fdf6ec; border-color: #c9933a; color: #92400e; }
 
     .items-scroll-area { flex: 1; overflow-y: auto; padding: 16px; }
     .items-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
-    .item-card { background: #fef3c7; border-radius: 12px; padding: 12px; text-align: center; cursor: pointer; transition: all 0.2s; border: 1px solid #fde68a; }
-    .item-card:hover { background: #fde68a; border-color: #c9933a; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(201,147,58,0.25); }
+    .item-card { background: #fdf6ec; border-radius: 12px; padding: 12px; text-align: center; cursor: pointer; transition: all 0.2s; border: 1px solid #f0d0a0; }
+    .item-card:hover { background: #f0d0a0; border-color: #c9933a; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(201,147,58,0.3); }
     .item-card.out-of-stock { opacity: 0.5; cursor: not-allowed; }
     .item-name { font-weight: 600; font-size: 13px; margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .item-price { font-size: 12px; color: #92400e; font-weight: 600; }
@@ -75,9 +75,9 @@
     .order-header span { font-weight: 600; font-size: 11px; color: #64748b; }
     .order-tabs { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; }
     .order-tab { display: flex; align-items: center; gap: 8px; padding: 6px 14px; background: #f1f5f9; border-radius: 40px; cursor: pointer; white-space: nowrap; font-size: 12px; }
-    .order-tab.active { background: #7c3aed; color: white; }
+    .order-tab.active { background: #c9933a; color: #1a2340; font-weight: 700; }
     .order-tab .delete-order { background: none; border: none; cursor: pointer; color: inherit; margin-left: 6px; }
-    .new-order-btn { padding: 6px 14px; background: #10b981; color: white; border: none; border-radius: 40px; cursor: pointer; font-size: 12px; }
+    .new-order-btn { padding: 6px 14px; background: #1a2340; color: white; border: none; border-radius: 40px; cursor: pointer; font-size: 12px; }
 
     .cart-header { padding: 16px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; flex-shrink: 0; }
     .cart-scroll-area { flex: 1; overflow-y: auto; padding: 0 20px; }
@@ -95,8 +95,8 @@
     .total-row { display: flex; justify-content: space-between; font-size: 18px; font-weight: 700; margin-bottom: 12px; }
     .action-buttons { display: flex; gap: 10px; }
     .action-buttons button { flex: 1; padding: 10px; border-radius: 40px; font-weight: 600; cursor: pointer; border: none; }
-    .btn-save { background: #10b981; color: white; }
-    .btn-print { background: #7c3aed; color: white; }
+    .btn-save { background: #c9933a; color: #1a2340; font-weight: 700; }
+    .btn-print { background: #1a2340; color: white; }
     .btn-cancel { background: #f1f5f9; color: #64748b; }
 
     .toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 2000; }
@@ -132,20 +132,14 @@
     <a href="/store-outlets" class="nav-item"><i class="fas fa-truck"></i> Outlets Store</a>
     <a href="/purchase-orders" class="nav-item"><i class="fas fa-file-invoice"></i> Purchase Orders</a>
     <a href="/goods-receipt" class="nav-item"><i class="fas fa-clipboard-list"></i> Goods Receipt</a>
-    <div class="nav-section-label">Staff</div>
-    <a href="/staff-activities" class="nav-item"><i class="fas fa-users"></i> Staff Activities</a>
     <div class="nav-section-label">Reports</div>
     <a href="/reports" class="nav-item"><i class="fas fa-chart-bar"></i> Reservations Report</a>
     <a href="/maintenance-report" class="nav-item"><i class="fas fa-chart-line"></i> Maintenance Report</a>
-    <a href="/staff-activities-report" class="nav-item"><i class="fas fa-chart-pie"></i> Activity Report</a>
     <a href="/purchase-orders-reports" class="nav-item"><i class="fas fa-file-alt"></i> Purchase Orders Report</a>
     <a href="/goods-receipt-reports" class="nav-item"><i class="fas fa-stamp"></i> Goods Receipt Report</a>
     <a href="/store-inventory-reports" class="nav-item"><i class="fas fa-boxes"></i> Store Inventory Report</a>
     <a href="/sales-report" class="nav-item"><i class="fas fa-receipt"></i> Sales Report</a>
     <a href="/housekeeping-report" class="nav-item"><i class="fas fa-soap"></i> Housekeeping Report</a>
-    <a href="/financial-report" class="nav-item"><i class="fas fa-chart-line"></i> Financial Report</a>
-    <div class="nav-section-label">Finance</div>
-    <a href="/expenditures" class="nav-item"><i class="fas fa-receipt"></i> Expenditures</a>
     <div class="nav-section-label">Guests</div>
     <a href="/guest-database" class="nav-item"><i class="fas fa-id-card"></i> Guest Database</a>
     <div class="nav-section-label">Admin</div>
@@ -566,9 +560,11 @@
 </script>
 
 <!-- POS Chooser Modal -->
-<div id="pos-chooser-overlay" onclick="if(event.target===this)closePOSChooser()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;align-items:center;justify-content:center;">
-  <div style="background:#fff;border-radius:18px;padding:40px 36px;max-width:460px;width:92%;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,0.28);position:relative;">
-    <div style="font-size:22px;font-weight:700;color:#1e293b;margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:10px;"><i class="fas fa-cash-register" style="color:#2d9c6e;"></i> Point of Sale</div>
+<div id="pos-chooser-overlay" onclick="if(event.target===this)closePOSChooser()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:18px;padding:40px 36px;max-width:460px;width:92%;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,0.28);">
+    <div style="font-size:22px;font-weight:700;color:#1e293b;margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:10px;">
+      <i class="fas fa-cash-register" style="color:#c9933a;"></i> Point of Sale
+    </div>
     <p style="color:#64748b;margin:0 0 28px;font-size:14px;">Select the POS system to open</p>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px;">
       <a href="/bar" onclick="closePOSChooser()" style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:26px 16px;background:linear-gradient(135deg,#1e3a5f,#2563eb);border-radius:14px;color:#fff;text-decoration:none;font-weight:700;font-size:15px;transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 10px 28px rgba(37,99,235,0.4)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='none'">

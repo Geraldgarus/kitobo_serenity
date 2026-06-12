@@ -598,11 +598,6 @@
     <a href="/purchase-orders" class="nav-item"><i class="fas fa-file-invoice"></i> Purchase Orders</a>
     <a href="/goods-receipt" class="nav-item"><i class="fas fa-clipboard-list"></i> Goods Receipt</a>
     
-    <!-- ============================================================ -->
-    <!-- STAFF -->
-    <!-- ============================================================ -->
-    <div class="nav-section-label">Staff</div>
-    <a href="/staff-activities" class="nav-item"><i class="fas fa-users"></i> Staff Activities</a>
     
     <!-- ============================================================ -->
     <!-- REPORTS -->
@@ -610,19 +605,12 @@
     <div class="nav-section-label">Reports</div>
     <a href="/reports" class="nav-item"><i class="fas fa-chart-bar"></i> Reservations Report</a>
     <a href="/maintenance-report" class="nav-item"><i class="fas fa-chart-line"></i> Maintenance Report</a>
-    <a href="/staff-activities-report" class="nav-item"><i class="fas fa-chart-pie"></i> Activity Report</a>
     <a href="/purchase-orders-reports" class="nav-item"><i class="fas fa-file-alt"></i> Purchase Orders Report</a>
     <a href="/goods-receipt-reports" class="nav-item"><i class="fas fa-stamp"></i> Goods Receipt Report</a>
     <a href="/store-inventory-reports" class="nav-item"><i class="fas fa-boxes"></i> Store Inventory Report</a>
     <a href="/sales-report" class="nav-item"><i class="fas fa-receipt"></i> Sales Report</a>
     <a href="/housekeeping-report" class="nav-item"><i class="fas fa-soap"></i> Housekeeping Report</a>
-    <a href="/financial-report" class="nav-item"><i class="fas fa-chart-line"></i> Financial Report</a>
     
-    <!-- ============================================================ -->
-    <!-- FINANCE -->
-    <!-- ============================================================ -->
-    <div class="nav-section-label">Finance</div>
-    <a href="/expenditures" class="nav-item"><i class="fas fa-receipt"></i> Expenditures</a>
     
     <!-- ============================================================ -->
     <!-- GUESTS -->
@@ -1110,6 +1098,26 @@
 <script>
 
 // ============================================================
+// SIDEBAR TOGGLE
+// ============================================================
+(function() {
+  const sidebar      = document.getElementById('sidebar');
+  const overlayMain  = document.getElementById('overlay-main');
+  const hamburgerBtn = document.getElementById('hamburger-btn');
+  const closeBtn     = document.getElementById('sidebar-close-btn');
+
+  function openSidebar()  { sidebar.classList.add('open');    overlayMain.classList.add('open');    }
+  function closeSidebar() { sidebar.classList.remove('open'); overlayMain.classList.remove('open'); }
+
+  hamburgerBtn?.addEventListener('click', () =>
+    sidebar.classList.contains('open') ? closeSidebar() : openSidebar()
+  );
+  closeBtn?.addEventListener('click', closeSidebar);
+  overlayMain?.addEventListener('click', closeSidebar);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSidebar(); });
+})();
+
+// ============================================================
 // PRINT RESERVATION FUNCTION
 // ============================================================
 
@@ -1231,12 +1239,613 @@ function printReservation() {
   printWindow.document.close();
 }
 
+// ============================================================
+// AUTH & USER DISPLAY
+// ============================================================
+var modalAPARTMENTS = [], editAPARTMENTS = [], currentEditReservation = null;
+
+function getCurrentUser() {
+  const s = sessionStorage.getItem('pms_user');
+  if (!s) return null;
+  try { return JSON.parse(s); } catch(e) { return null; }
+}
+function logout() {
+  sessionStorage.removeItem('pms_user');
+  window.location.href = '/';
+}
+
+const currentUser = getCurrentUser();
+if (!currentUser) window.location.href = '/';
+
+(function() {
+  const u  = currentUser || {};
+  const el = (id) => document.getElementById(id);
+  if (el('userName'))   el('userName').innerText   = u.fullName || u.username || 'User';
+  if (el('userRole'))   el('userRole').innerText    = u.role ? u.role.charAt(0).toUpperCase() + u.role.slice(1) : 'User';
+  if (el('userAvatar')) el('userAvatar').innerText  = (u.fullName || u.username || 'U').charAt(0).toUpperCase();
+  const pill = el('userPill'), menu = el('dropdownMenu');
+  if (pill && menu) {
+    pill.addEventListener('click', e => { e.stopPropagation(); menu.classList.toggle('show'); pill.classList.toggle('active'); });
+    document.addEventListener('click', () => { menu.classList.remove('show'); pill.classList.remove('active'); });
+  }
+})();
+
+function openChangePasswordModal() {
+  showToast('Change password is available on the dashboard.', '<i class="fas fa-info-circle"></i>');
+}
+function closeChangePasswordModal() {}
+
+// ============================================================
+// ADD RESERVATION MODAL
+// ============================================================
+function openReservationModal() {
+  document.getElementById('reservation-modal').classList.add('open');
+  document.getElementById('reservation-modal-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  initModalForm();
+  setTimeout(() => checkCountryDropdown(), 500);
+}
+
+function closeReservationModal() {
+  document.getElementById('reservation-modal').classList.remove('open');
+  document.getElementById('reservation-modal-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+  document.getElementById('reservation-form-modal').reset();
+}
+
+async function initModalForm() {
+  modalAPARTMENTS = (typeof APARTMENTS !== 'undefined' && APARTMENTS.length)
+    ? APARTMENTS
+    : await apiGet('/apartments');
+
+  document.getElementById('modal-f-amount-paid').value = 0;
+  document.getElementById('modal-f-payment-status').value = 'unpaid';
+  document.getElementById('modal-f-payment-method').value = '';
+  updateBalance('modal');
+  initPaymentListeners('modal');
+  document.getElementById('modal-f-identification').value = '';
+  document.getElementById('modal-f-id-type').value = 'NIDA';
+
+  const sel = document.getElementById('modal-f-apt');
+  sel.innerHTML = '<option value="">Select Room</option>';
+  modalAPARTMENTS.forEach(apt => {
+    if (apt.underMaintenance) return;
+    const opt = document.createElement('option');
+    opt.value = apt.id;
+    opt.textContent = `${apt.name} – Max ${apt.maxAdults} Adults – ${fmtTSH(apt.ratePerNight)}/night`;
+    sel.appendChild(opt);
+  });
+
+  await loadModalCountries();
+  initModalCountryDropdown();
+
+  const today = new Date();
+  document.getElementById('modal-f-checkin').value  = isoDate(today);
+  document.getElementById('modal-f-checkout').value = isoDate(addDays(today, 1));
+  modalUpdateRate();
+
+  ['modal-f-checkin','modal-f-checkout','modal-f-apt','modal-f-ratetype','modal-f-adults','modal-f-children'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.removeEventListener('change', modalUpdateRate);
+      el.removeEventListener('input',  modalUpdateRate);
+      el.addEventListener('change', modalUpdateRate);
+      el.addEventListener('input',  modalUpdateRate);
+    }
+  });
+  addResetListeners('modal');
+}
+
+function modalStepperChange(id, delta) {
+  const inp = document.getElementById(id);
+  if (inp) { inp.value = Math.max(parseInt(inp.min||0), Math.min(parseInt(inp.max||999), parseInt(inp.value)+delta)); modalUpdateRate(); }
+}
+
+function modalUpdateRate() {
+  const useCustom = document.getElementById('modal-use-custom-total')?.value;
+  if (useCustom === '1') return;
+  const pricePerNight = parseFloat(document.getElementById('modal-f-price-per-night')?.value) || 0;
+  const checkin  = document.getElementById('modal-f-checkin')?.value;
+  const checkout = document.getElementById('modal-f-checkout')?.value;
+  if (!pricePerNight || !checkin || !checkout) {
+    document.getElementById('modal-f-total').innerHTML = '—';
+    document.getElementById('modal-f-total-hidden').value = 0;
+    setTimeout(() => updateBalance('modal'), 100);
+    return;
+  }
+  const nights = daysBetween(checkin, checkout);
+  const total  = Math.round(pricePerNight * nights);
+  document.getElementById('modal-f-total').innerHTML = total > 0 ? fmtTSH(total) : '—';
+  document.getElementById('modal-f-total-hidden').value = total;
+  setTimeout(() => updateBalance('modal'), 100);
+}
+
+function forceRateUpdate() { setTimeout(() => modalUpdateRate(), 100); }
+
+document.getElementById('modal-f-checkin')?.addEventListener('blur',  forceRateUpdate);
+document.getElementById('modal-f-checkout')?.addEventListener('blur', forceRateUpdate);
+document.getElementById('modal-f-apt')?.addEventListener('change',    forceRateUpdate);
+document.getElementById('modal-f-price-per-night')?.addEventListener('input', forceRateUpdate);
+
+function forceManualCalculation() {
+  modalUpdateRate();
+  return parseFloat(document.getElementById('modal-f-total-hidden').value) || 0;
+}
+
+// ============================================================
+// PAYMENT HELPERS
+// ============================================================
+function updateBalance(type) {
+  const totalFld   = document.getElementById(`${type}-f-total-hidden`);
+  const paidFld    = document.getElementById(`${type}-f-amount-paid`);
+  const balanceEl  = document.getElementById(`${type}-f-balance`);
+  const statusSel  = document.getElementById(`${type}-f-payment-status`);
+  if (!totalFld || !paidFld || !balanceEl) return;
+  const total = parseFloat(totalFld.value) || 0;
+  let   paid  = parseFloat(paidFld.value)  || 0;
+  if (paid > total) { paid = total; paidFld.value = total; }
+  const balance = total - paid;
+  balanceEl.innerHTML = fmtTSH(balance);
+  if (statusSel) {
+    if (balance <= 0)  statusSel.value = 'paid';
+    else if (paid > 0) statusSel.value = 'partial';
+    else               statusSel.value = 'unpaid';
+  }
+}
+
+function initPaymentListeners(type) {
+  const paidFld   = document.getElementById(`${type}-f-amount-paid`);
+  const statusSel = document.getElementById(`${type}-f-payment-status`);
+  if (paidFld) {
+    const fresh = paidFld.cloneNode(true);
+    paidFld.parentNode.replaceChild(fresh, paidFld);
+    fresh.addEventListener('input', () => updateBalance(type));
+  }
+  if (statusSel) {
+    statusSel.addEventListener('change', () => {
+      const total = parseFloat(document.getElementById(`${type}-f-total-hidden`).value) || 0;
+      const fld   = document.getElementById(`${type}-f-amount-paid`);
+      if (statusSel.value === 'paid')   { if (fld) fld.value = total; updateBalance(type); }
+      else if (statusSel.value === 'unpaid') { if (fld) fld.value = 0; updateBalance(type); }
+    });
+  }
+}
+
+// ============================================================
+// CUSTOM TOTAL
+// ============================================================
+function enableCustomTotal(type) {
+  const ca  = document.getElementById(`${type}-custom-area`);
+  const cur = parseFloat(document.getElementById(`${type}-f-total-hidden`).value) || 0;
+  ca.style.display = 'block';
+  ca.innerHTML = `<div class="custom-rate-edit">
+    <input type="number" id="${type}-custom-input" value="${cur}" step="1000" min="0" placeholder="Enter total in TSH">
+    <button class="btn-custom-apply" onclick="applyCustomTotal('${type}')">Apply</button>
+    <button class="btn-custom-cancel" onclick="cancelCustomTotal('${type}')">Cancel</button>
+  </div>`;
+  setTimeout(() => { const inp = document.getElementById(`${type}-custom-input`); if (inp) inp.focus(); }, 100);
+}
+
+function cancelCustomTotal(type) {
+  const ca = document.getElementById(`${type}-custom-area`);
+  ca.style.display = 'none'; ca.innerHTML = '';
+}
+
+function applyCustomTotal(type) {
+  const inp = document.getElementById(`${type}-custom-input`);
+  const val = parseFloat(inp.value);
+  if (isNaN(val) || val <= 0) { showToast('Please enter a valid amount (> 0)', 'error'); return; }
+  const checkin  = document.getElementById(`${type}-f-checkin`).value;
+  const checkout = document.getElementById(`${type}-f-checkout`).value;
+  if (!checkin || !checkout) { showToast('Please select dates first', 'error'); return; }
+  const nights = daysBetween(checkin, checkout);
+  if (nights <= 0) { showToast('Invalid date range', 'error'); return; }
+  document.getElementById(`${type}-f-total-hidden`).value = val;
+  document.getElementById(`${type}-f-total`).innerHTML = fmtTSH(val);
+  const customEl = document.getElementById(`${type}-use-custom-total`);
+  if (customEl) customEl.value = '1';
+  const ca = document.getElementById(`${type}-custom-area`);
+  ca.style.display = 'none'; ca.innerHTML = '';
+  showToast(`Custom total applied: ${fmtTSH(val)}`, 'success');
+}
+
+function resetCustomTotal(type) {
+  const el = document.getElementById(`${type}-use-custom-total`);
+  if (el && el.value === '1') el.value = '0';
+}
+
+function addResetListeners(type) {
+  [`${type}-f-checkin`,`${type}-f-checkout`,`${type}-f-apt`,`${type}-f-ratetype`].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('change', () => resetCustomTotal(type));
+  });
+}
+
+// ============================================================
+// COUNTRY DROPDOWN — ADD MODAL
+// ============================================================
+var modalCountriesList = [];
+
+async function loadModalCountries() {
+  try {
+    const countries = await apiGet('/countries');
+    modalCountriesList = countries;
+    renderModalCountryOptions('');
+    return true;
+  } catch (err) {
+    const c = document.getElementById('modal-country-options');
+    if (c) c.innerHTML = '<div style="padding:20px;text-align:center;color:#ef4444;">Failed to load countries</div>';
+    return false;
+  }
+}
+
+function checkCountryDropdown() {
+  if (!modalCountriesList.length) loadModalCountries();
+}
+
+function renderModalCountryOptions(searchTerm) {
+  searchTerm = searchTerm || '';
+  const c = document.getElementById('modal-country-options');
+  if (!c) return;
+  if (!modalCountriesList.length) { c.innerHTML = '<div style="padding:20px;text-align:center;color:#94a3b8;">No countries available</div>'; return; }
+  const filtered = modalCountriesList.filter(x => x.name.toLowerCase().includes(searchTerm.toLowerCase()));
+  if (!filtered.length) { c.innerHTML = '<div style="padding:20px;text-align:center;color:#94a3b8;">No countries found</div>'; return; }
+  c.innerHTML = filtered.map(ct => `<div class="select-option" data-country="${ct.name.replace(/"/g,'&quot;')}">${escapeHtml(ct.name)}</div>`).join('');
+  c.querySelectorAll('.select-option').forEach(opt => {
+    opt.addEventListener('click', () => {
+      document.getElementById('modal-selected-country-text').textContent = opt.getAttribute('data-country');
+      document.getElementById('modal-f-country').value = opt.getAttribute('data-country');
+      document.getElementById('modal-country-dropdown').classList.remove('show');
+    });
+  });
+}
+
+function initModalCountryDropdown() {
+  const wrapper = document.getElementById('modal-country-wrapper');
+  let   selectBtn = document.getElementById('modal-country-select-btn');
+  const dropdown  = document.getElementById('modal-country-dropdown');
+  if (!wrapper || !selectBtn || !dropdown) return;
+  const newBtn = selectBtn.cloneNode(true);
+  selectBtn.parentNode.replaceChild(newBtn, selectBtn);
+  const finalBtn = document.getElementById('modal-country-select-btn');
+  const finalDD  = document.getElementById('modal-country-dropdown');
+  const finalSrc = document.getElementById('modal-country-search');
+
+  function closeOut(e) {
+    const w = document.getElementById('modal-country-wrapper');
+    if (w && !w.contains(e.target)) { finalDD.classList.remove('show'); document.removeEventListener('click', closeOut); }
+  }
+  finalBtn.addEventListener('click', e => {
+    e.stopPropagation(); e.preventDefault();
+    document.querySelectorAll('.select-dropdown.show').forEach(d => { if (d !== finalDD) d.classList.remove('show'); });
+    finalDD.classList.toggle('show');
+    if (finalDD.classList.contains('show')) {
+      if (finalSrc) { finalSrc.value = ''; finalSrc.focus(); renderModalCountryOptions(''); }
+      setTimeout(() => document.addEventListener('click', closeOut), 100);
+    } else document.removeEventListener('click', closeOut);
+  });
+  if (finalSrc) {
+    finalSrc.addEventListener('input', e => { e.stopPropagation(); renderModalCountryOptions(e.target.value); });
+    finalSrc.addEventListener('click', e => e.stopPropagation());
+  }
+  finalDD.addEventListener('click', e => e.stopPropagation());
+}
+
+// ============================================================
+// COUNTRY DROPDOWN — EDIT MODAL
+// ============================================================
+var editCountriesList = [];
+
+async function loadEditCountries() {
+  try {
+    const countries = await apiGet('/countries');
+    editCountriesList = countries;
+    renderEditCountryOptions('');
+  } catch (err) {
+    const c = document.getElementById('edit-country-options');
+    if (c) c.innerHTML = '<div style="padding:20px;text-align:center;color:#ef4444;">Failed to load countries</div>';
+  }
+}
+
+function renderEditCountryOptions(searchTerm) {
+  searchTerm = searchTerm || '';
+  const c = document.getElementById('edit-country-options');
+  if (!c) return;
+  if (!editCountriesList.length) { c.innerHTML = '<div style="padding:20px;text-align:center;color:#94a3b8;">No countries available</div>'; return; }
+  const filtered = editCountriesList.filter(x => x.name.toLowerCase().includes(searchTerm.toLowerCase()));
+  if (!filtered.length) { c.innerHTML = '<div style="padding:20px;text-align:center;color:#94a3b8;">No countries found</div>'; return; }
+  c.innerHTML = filtered.map(ct => `<div class="select-option" data-country="${ct.name.replace(/"/g,'&quot;')}">${escapeHtml(ct.name)}</div>`).join('');
+  c.querySelectorAll('.select-option').forEach(opt => {
+    opt.addEventListener('click', () => {
+      document.getElementById('edit-selected-country-text').textContent = opt.getAttribute('data-country');
+      document.getElementById('edit-f-country').value = opt.getAttribute('data-country');
+      document.getElementById('edit-country-dropdown').classList.remove('show');
+    });
+  });
+}
+
+function initEditCountryDropdown() {
+  const wrapper = document.getElementById('edit-country-wrapper');
+  let   selectBtn = document.getElementById('edit-country-select-btn');
+  const dropdown  = document.getElementById('edit-country-dropdown');
+  if (!wrapper || !selectBtn || !dropdown) return;
+  const newBtn = selectBtn.cloneNode(true);
+  selectBtn.parentNode.replaceChild(newBtn, selectBtn);
+  const finalBtn = document.getElementById('edit-country-select-btn');
+  const finalDD  = document.getElementById('edit-country-dropdown');
+  const finalSrc = document.getElementById('edit-country-search');
+
+  function closeOut(e) {
+    const w = document.getElementById('edit-country-wrapper');
+    if (w && !w.contains(e.target)) { finalDD.classList.remove('show'); document.removeEventListener('click', closeOut); }
+  }
+  finalBtn.addEventListener('click', e => {
+    e.stopPropagation(); e.preventDefault();
+    document.querySelectorAll('.select-dropdown.show').forEach(d => { if (d !== finalDD) d.classList.remove('show'); });
+    finalDD.classList.toggle('show');
+    if (finalDD.classList.contains('show')) {
+      if (finalSrc) { finalSrc.value = ''; finalSrc.focus(); renderEditCountryOptions(''); }
+      setTimeout(() => document.addEventListener('click', closeOut), 100);
+    } else document.removeEventListener('click', closeOut);
+  });
+  if (finalSrc) {
+    finalSrc.addEventListener('input', e => { e.stopPropagation(); renderEditCountryOptions(e.target.value); });
+    finalSrc.addEventListener('click', e => e.stopPropagation());
+  }
+  finalDD.addEventListener('click', e => e.stopPropagation());
+}
+
+// ============================================================
+// ID VALIDATION
+// ============================================================
+function validateNIDA(n) {
+  return /^\d{20}$/.test(n) ? {valid:true,message:''} : {valid:false,message:'NIDA must be exactly 20 digits'};
+}
+function validatePassport(n) {
+  return /^[A-Z]{1,2}\d{6,9}$/i.test(n) ? {valid:true,message:''} : {valid:false,message:'Passport: 1-2 letters + 6-9 digits (e.g. A1234567)'};
+}
+function validateDrivingLicense(n) {
+  return /^[A-Z]{1,2}\d{5,8}$/i.test(n) ? {valid:true,message:''} : {valid:false,message:'Driving license: 1-2 letters + 5-8 digits'};
+}
+function validateVoterID(n) {
+  return /^\d{8,12}$/.test(n) ? {valid:true,message:''} : {valid:false,message:'Voter ID: 8-12 digits'};
+}
+function validateIdentification(type, number) {
+  if (!number || !number.trim()) return {valid:true,message:''};
+  const t = number.trim();
+  switch(type) {
+    case 'NIDA':            return validateNIDA(t);
+    case 'Passport':        return validatePassport(t);
+    case 'Driving License': return validateDrivingLicense(t);
+    case 'Voter ID':        return validateVoterID(t);
+    default: return t.length < 3 ? {valid:false,message:'Min 3 characters required'} : {valid:true,message:''};
+  }
+}
+
+// ============================================================
+// ADD RESERVATION FORM SUBMIT
+// ============================================================
+document.getElementById('reservation-form-modal')?.addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const forcedTotal = forceManualCalculation();
+  const checkin  = document.getElementById('modal-f-checkin').value;
+  const checkout = document.getElementById('modal-f-checkout').value;
+  if (checkin >= checkout) { showToast('Check-out must be after check-in', '<i class="fas fa-exclamation-triangle"></i>'); return; }
+  const idType   = document.getElementById('modal-f-id-type').value;
+  const idNumber = document.getElementById('modal-f-identification').value;
+  if (idNumber && idNumber.trim()) {
+    const v = validateIdentification(idType, idNumber);
+    if (!v.valid) { showToast(v.message, 'error'); return; }
+  }
+  const finalTotal = parseFloat(document.getElementById('modal-f-total-hidden').value) || 0;
+  if (finalTotal <= 0) { showToast('Please enter price per night and select dates', '<i class="fas fa-exclamation-triangle"></i>'); return; }
+
+  const payload = {
+    aptId:          parseInt(document.getElementById('modal-f-apt').value),
+    guest:          document.getElementById('modal-f-guest').value,
+    email:          document.getElementById('modal-f-email').value,
+    mobile:         document.getElementById('modal-f-mobile').value,
+    country:        document.getElementById('modal-f-country').value,
+    city:           document.getElementById('modal-f-city').value,
+    checkin, checkout,
+    adults:         parseInt(document.getElementById('modal-f-adults').value),
+    children:       parseInt(document.getElementById('modal-f-children').value),
+    pricePerNight:  parseFloat(document.getElementById('modal-f-price-per-night').value) || 0,
+    total:          finalTotal,
+    identification: document.getElementById('modal-f-identification').value,
+    idType:         document.getElementById('modal-f-id-type').value,
+    amountPaid:     parseFloat(document.getElementById('modal-f-amount-paid').value) || 0,
+    paymentMethod:  document.getElementById('modal-f-payment-method').value,
+    paymentStatus:  document.getElementById('modal-f-payment-status').value
+  };
+
+  const btn = e.target.querySelector('button[type="submit"]');
+  const orig = btn ? btn.innerHTML : '';
+  try {
+    if (btn) { btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...'; btn.disabled = true; }
+    await apiPost('/reservations', payload);
+    showToast('Reservation confirmed!', '<i class="fas fa-check-circle"></i>');
+    closeReservationModal();
+    document.getElementById('modal-f-total-hidden').value = 0;
+    loadAndRenderReservations();
+  } catch (err) {
+    showToast(err.message, '<i class="fas fa-exclamation-triangle"></i>');
+  } finally {
+    if (btn) { btn.innerHTML = orig; btn.disabled = false; }
+  }
+});
+
+// ============================================================
+// EDIT RESERVATION MODAL
+// ============================================================
+function editUpdateRate() {
+  const useCustom = document.getElementById('edit-use-custom-total')?.value;
+  if (useCustom === '1') return;
+  const pricePerNight = parseFloat(document.getElementById('edit-f-price-per-night')?.value) || 0;
+  const checkin  = document.getElementById('edit-f-checkin')?.value;
+  const checkout = document.getElementById('edit-f-checkout')?.value;
+  if (!pricePerNight || !checkin || !checkout) {
+    document.getElementById('edit-f-total').textContent = '—';
+    document.getElementById('edit-f-total-hidden').value = 0;
+    setTimeout(() => updateBalance('edit'), 100);
+    return;
+  }
+  const nights = Math.max(0, daysBetween(checkin, checkout));
+  const total  = Math.round(pricePerNight * nights);
+  document.getElementById('edit-f-total').innerHTML = total > 0 ? fmtTSH(total) : '—';
+  document.getElementById('edit-f-total-hidden').value = total;
+  setTimeout(() => updateBalance('edit'), 100);
+}
+
+function editStepperChange(id, delta) {
+  const inp = document.getElementById(id);
+  if (inp) { inp.value = Math.max(parseInt(inp.min||0), Math.min(parseInt(inp.max||999), parseInt(inp.value)+delta)); editUpdateRate(); }
+}
+
+function forceManualCalculationEdit() {
+  editUpdateRate();
+  return parseFloat(document.getElementById('edit-f-total-hidden').value) || 0;
+}
+
+async function initEditForm(reservationId) {
+  try {
+    const reservation = await apiGet(`/reservations/${reservationId}`);
+    currentEditReservation = reservation;
+    if (!editAPARTMENTS.length) {
+      editAPARTMENTS = (typeof APARTMENTS !== 'undefined' && APARTMENTS.length)
+        ? APARTMENTS
+        : await apiGet('/apartments');
+    }
+    document.getElementById('edit-f-identification').value = reservation.identification || '';
+    document.getElementById('edit-f-id-type').value = reservation.idType || 'NIDA';
+    const sel = document.getElementById('edit-f-apt');
+    sel.innerHTML = '<option value="">Select Room</option>';
+    editAPARTMENTS.forEach(apt => {
+      if (apt.underMaintenance && apt.id !== reservation.aptId) return;
+      const opt = document.createElement('option');
+      opt.value = apt.id;
+      opt.textContent = `${apt.name} – Max ${apt.maxAdults} Adults – ${fmtTSH(apt.ratePerNight)}/night${apt.underMaintenance ? ' ⚠ Under Maintenance' : ''}`;
+      if (apt.id === reservation.aptId) opt.selected = true;
+      sel.appendChild(opt);
+    });
+    await loadEditCountries();
+    initEditCountryDropdown();
+    document.getElementById('edit-res-id').value      = reservation.id;
+    document.getElementById('edit-f-guest').value     = reservation.guest;
+    document.getElementById('edit-f-email').value     = reservation.email;
+    document.getElementById('edit-f-mobile').value    = reservation.mobile || '';
+    const cv = reservation.country || '';
+    document.getElementById('edit-selected-country-text').textContent = cv || 'Select Country';
+    document.getElementById('edit-f-country').value   = cv;
+    document.getElementById('edit-f-city').value      = reservation.city || '';
+    document.getElementById('edit-f-checkin').value   = isoDate(reservation.checkin);
+    document.getElementById('edit-f-checkout').value  = isoDate(reservation.checkout);
+    document.getElementById('edit-f-adults').value    = reservation.adults;
+    document.getElementById('edit-f-children').value  = reservation.children;
+    const savedTotal  = reservation.total || 0;
+    const savedNights = Math.max(1, daysBetween(isoDate(reservation.checkin), isoDate(reservation.checkout)));
+    document.getElementById('edit-f-price-per-night').value = savedNights > 0 ? Math.round(savedTotal / savedNights) : 0;
+    document.getElementById('edit-f-total-hidden').value    = savedTotal;
+    document.getElementById('edit-f-total').innerHTML       = fmtTSH(savedTotal);
+    const savedPaid = reservation.amountPaid || 0;
+    document.getElementById('edit-f-amount-paid').value     = savedPaid;
+    document.getElementById('edit-f-payment-status').value  = reservation.paymentStatus || 'unpaid';
+    document.getElementById('edit-f-payment-method').value  = reservation.paymentMethod || '';
+    const balanceEl = document.getElementById('edit-f-balance');
+    if (balanceEl) balanceEl.innerHTML = fmtTSH(savedTotal - savedPaid);
+    initPaymentListeners('edit');
+    addResetListeners('edit');
+  } catch (err) {
+    showToast('Failed to load reservation: ' + err.message, '<i class="fas fa-times-circle"></i>');
+  }
+}
+
+async function openEditModal(reservationId) {
+  closeDetailPanel();
+  document.getElementById('edit-modal').classList.add('open');
+  document.getElementById('edit-modal-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  await initEditForm(reservationId);
+}
+
+function closeEditModal() {
+  document.getElementById('edit-modal').classList.remove('open');
+  document.getElementById('edit-modal-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+  currentEditReservation = null;
+  document.getElementById('edit-form-modal').reset();
+}
+
+function openEditFromDetail() {
+  const res = window.selectedReservation || selectedReservation;
+  if (res && res.id) openEditModal(res.id);
+  else showToast('No reservation selected', '<i class="fas fa-exclamation-triangle"></i>');
+}
+
+// Edit form submit
+document.getElementById('edit-form-modal')?.addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const forcedTotal   = forceManualCalculationEdit();
+  const reservationId = document.getElementById('edit-res-id').value;
+  const checkin  = document.getElementById('edit-f-checkin').value;
+  const checkout = document.getElementById('edit-f-checkout').value;
+  if (checkin >= checkout) { showToast('Check-out must be after check-in', '<i class="fas fa-exclamation-triangle"></i>'); return; }
+  const idType   = document.getElementById('edit-f-id-type').value;
+  const idNumber = document.getElementById('edit-f-identification').value;
+  if (idNumber && idNumber.trim()) {
+    const v = validateIdentification(idType, idNumber);
+    if (!v.valid) { showToast(v.message, 'error'); return; }
+  }
+  if (forcedTotal <= 0) { showToast('Please enter price per night and ensure dates are selected', '<i class="fas fa-exclamation-triangle"></i>'); return; }
+  const amountPaid = parseFloat(document.getElementById('edit-f-amount-paid').value) || 0;
+  const balance    = forcedTotal - amountPaid;
+  let   paymentStatus = document.getElementById('edit-f-payment-status').value;
+  if (balance <= 0)       paymentStatus = 'paid';
+  else if (amountPaid > 0) paymentStatus = 'partial';
+  else                    paymentStatus = 'unpaid';
+  const payload = {
+    aptId:          parseInt(document.getElementById('edit-f-apt').value),
+    guest:          document.getElementById('edit-f-guest').value,
+    email:          document.getElementById('edit-f-email').value,
+    mobile:         document.getElementById('edit-f-mobile').value,
+    country:        document.getElementById('edit-f-country').value,
+    city:           document.getElementById('edit-f-city').value,
+    checkin, checkout,
+    adults:         parseInt(document.getElementById('edit-f-adults').value),
+    children:       parseInt(document.getElementById('edit-f-children').value),
+    pricePerNight:  parseFloat(document.getElementById('edit-f-price-per-night').value) || 0,
+    total:          forcedTotal,
+    userId:         currentUser?.id,
+    username:       currentUser?.fullName || currentUser?.username,
+    identification: document.getElementById('edit-f-identification').value,
+    idType:         document.getElementById('edit-f-id-type').value,
+    amountPaid,
+    paymentMethod:  document.getElementById('edit-f-payment-method').value,
+    paymentStatus
+  };
+  const btn = e.target.querySelector('button[type="submit"]');
+  const orig = btn ? btn.innerHTML : '';
+  try {
+    if (btn) { btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...'; btn.disabled = true; }
+    await apiPut(`/reservations/${reservationId}`, payload);
+    showToast('Reservation updated!', '<i class="fas fa-check-circle"></i>');
+    closeEditModal();
+    loadAndRenderReservations();
+  } catch (err) {
+    showToast('Update failed: ' + err.message, '<i class="fas fa-exclamation-triangle"></i>');
+  } finally {
+    if (btn) { btn.innerHTML = orig; btn.disabled = false; }
+  }
+});
+
 </script>
 
 <!-- POS Chooser Modal -->
-<div id="pos-chooser-overlay" onclick="if(event.target===this)closePOSChooser()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;align-items:center;justify-content:center;">
-  <div style="background:#fff;border-radius:18px;padding:40px 36px;max-width:460px;width:92%;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,0.28);position:relative;">
-    <div style="font-size:22px;font-weight:700;color:#1e293b;margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:10px;"><i class="fas fa-cash-register" style="color:#2d9c6e;"></i> Point of Sale</div>
+<div id="pos-chooser-overlay" onclick="if(event.target===this)closePOSChooser()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:18px;padding:40px 36px;max-width:460px;width:92%;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,0.28);">
+    <div style="font-size:22px;font-weight:700;color:#1e293b;margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:10px;">
+      <i class="fas fa-cash-register" style="color:#c9933a;"></i> Point of Sale
+    </div>
     <p style="color:#64748b;margin:0 0 28px;font-size:14px;">Select the POS system to open</p>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px;">
       <a href="/bar" onclick="closePOSChooser()" style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:26px 16px;background:linear-gradient(135deg,#1e3a5f,#2563eb);border-radius:14px;color:#fff;text-decoration:none;font-weight:700;font-size:15px;transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 10px 28px rgba(37,99,235,0.4)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='none'">

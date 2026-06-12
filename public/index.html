@@ -1,146 +1,186 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover" />
   <title>Kitobo Serenity Resort – Login</title>
-  <style>
-  body { opacity: 0; transition: opacity 0.2s; }
-  body.loaded { opacity: 1; }
-</style>
-<script>
-  document.addEventListener('DOMContentLoaded', function() {
-    document.body.classList.add('loaded');
-  });
-</script>
+  <style>body { opacity: 0; transition: opacity 0.25s; } body.loaded { opacity: 1; }</style>
+  <script>document.addEventListener('DOMContentLoaded', function() { document.body.classList.add('loaded'); });</script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    :root {
-      --navy: #1a2c3e;
-      --gold: #c9933a;
-      --white: #ffffff;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root { --navy: #1a2340; --gold: #c9933a; --gold-light: #e8c07a; }
 
     body {
       font-family: 'Inter', sans-serif;
-      background: #3c4864;
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
       position: relative;
+      background: #0d1b2a;
     }
 
-    /* Luxury gold gradient background */
     body::before {
       content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: radial-gradient(circle at 20% 50%, rgba(201,147,58,0.15) 0%, rgb(75, 89, 122) 70%);
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse at 15% 50%, rgba(201,147,58,0.18) 0%, transparent 55%),
+        radial-gradient(ellipse at 85% 20%, rgba(201,147,58,0.08) 0%, transparent 45%),
+        linear-gradient(160deg, #0d1b2a 0%, #152232 50%, #0a1520 100%);
       pointer-events: none;
     }
 
-    /* Main Container */
     .container {
-      max-width: 1100px;
+      max-width: 1080px;
       width: 100%;
       margin: 0 auto;
-      padding: 20px;
+      padding: 24px;
       position: relative;
       z-index: 1;
     }
 
-    /* Card Layout */
     .login-card {
-      background: var(--white);
+      background: #fff;
       border-radius: 28px;
-      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+      box-shadow: 0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(201,147,58,0.15);
       overflow: hidden;
       display: flex;
       flex-wrap: wrap;
     }
 
-    /* Left Side - Branding */
+    /* ── Brand Side ── */
     .brand-side {
       flex: 1;
-      background: linear-gradient(135deg, #1a2c3e 0%, #0f1a24 100%);
-      padding: 48px 40px;
+      background: linear-gradient(160deg, #1a2c3e 0%, #0d1b2a 100%);
+      padding: 52px 44px;
       color: white;
       display: flex;
       flex-direction: column;
       justify-content: center;
+      align-items: center;
+      text-align: center;
       min-width: 280px;
+      position: relative;
+      overflow: hidden;
     }
 
-    .logo-icon {
-      font-size: 52px;
-      margin-bottom: 20px;
+    .brand-side::before {
+      content: '';
+      position: absolute;
+      top: -60px; right: -60px;
+      width: 220px; height: 220px;
+      background: radial-gradient(circle, rgba(201,147,58,0.12) 0%, transparent 70%);
+      border-radius: 50%;
+    }
+    .brand-side::after {
+      content: '';
+      position: absolute;
+      bottom: -40px; left: -40px;
+      width: 160px; height: 160px;
+      background: radial-gradient(circle, rgba(201,147,58,0.08) 0%, transparent 70%);
+      border-radius: 50%;
+    }
+
+    .logo-wrap {
+      width: 80px; height: 80px;
+      background: linear-gradient(135deg, #c9933a, #e8c07a);
+      border-radius: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      color: #1a2340;
+      margin-bottom: 24px;
+      box-shadow: 0 8px 24px rgba(201,147,58,0.35);
     }
 
     .brand-side h1 {
       font-family: 'Playfair Display', serif;
-      font-size: 28px;
-      margin-bottom: 12px;
-      letter-spacing: -0.3px;
+      font-size: 26px;
+      margin-bottom: 8px;
+      letter-spacing: -0.2px;
+      line-height: 1.2;
     }
 
-    .brand-side p {
+    .brand-tagline {
       font-size: 13px;
-      opacity: 0.7;
-      line-height: 1.5;
+      opacity: 0.65;
+      line-height: 1.6;
+      max-width: 240px;
+      margin-bottom: 36px;
     }
 
-    .apt-icons {
+    .pms-features {
       display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 100%;
+      max-width: 260px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .pms-feature {
+      display: flex;
+      align-items: center;
       gap: 12px;
-      margin-top: 32px;
-      flex-wrap: wrap;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.09);
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.85);
+      text-align: left;
     }
 
-    .apt-icon {
-      text-align: center;
-      background: rgba(255,255,255,0.08);
-      padding: 6px 12px;
-      border-radius: 30px;
-      font-size: 11px;
-      transition: all 0.2s;
+    .pms-feature-icon {
+      width: 30px; height: 30px;
+      background: rgba(201,147,58,0.18);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #c9933a;
+      font-size: 13px;
+      flex-shrink: 0;
     }
 
-    .apt-icon span {
-      font-size: 16px;
-      margin-right: 5px;
-    }
-
-    /* Right Side - Login Form */
+    /* ── Form Side ── */
     .form-side {
-      flex: 0.8;
-      padding: 48px 44px;
+      flex: 0.85;
+      padding: 52px 48px;
       min-width: 320px;
-      background: white;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .form-eyebrow {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: #c9933a;
+      margin-bottom: 8px;
     }
 
     .form-side h2 {
-      font-size: 28px;
+      font-size: 30px;
       color: #0f172a;
-      margin-bottom: 8px;
-      font-weight: 600;
+      margin-bottom: 6px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
     }
 
     .form-side .subtitle {
       color: #64748b;
-      font-size: 13px;
-      margin-bottom: 32px;
+      font-size: 13.5px;
+      margin-bottom: 36px;
     }
 
     .form-group {
@@ -149,56 +189,75 @@
 
     .form-group label {
       display: block;
-      font-size: 12px;
-      font-weight: 600;
+      font-size: 11.5px;
+      font-weight: 700;
       margin-bottom: 8px;
       color: #334155;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.6px;
+    }
+
+    .input-wrap {
+      position: relative;
+    }
+
+    .input-wrap i {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #94a3b8;
+      font-size: 14px;
     }
 
     .form-group input {
       width: 100%;
-      padding: 12px 16px;
+      padding: 13px 16px 13px 40px;
       border: 1.5px solid #e2e8f0;
       border-radius: 14px;
       font-size: 14px;
       transition: all 0.2s;
       background: #f8fafc;
+      color: #0f172a;
     }
 
     .form-group input:focus {
       outline: none;
-      border-color: var(--gold);
-      background: white;
-      box-shadow: 0 0 0 3px rgba(201,147,58,0.1);
+      border-color: #c9933a;
+      background: #fff;
+      box-shadow: 0 0 0 3px rgba(201,147,58,0.12);
     }
 
     .btn-login {
       width: 100%;
-      background: var(--gold);
-      color: white;
+      background: linear-gradient(135deg, #c9933a, #b8842f);
+      color: #fff;
       border: none;
-      padding: 12px;
+      padding: 14px;
       border-radius: 40px;
-      font-weight: 600;
+      font-weight: 700;
       font-size: 14px;
       cursor: pointer;
       transition: all 0.2s;
       margin-top: 8px;
+      letter-spacing: 0.3px;
+      box-shadow: 0 4px 16px rgba(201,147,58,0.3);
     }
 
     .btn-login:hover {
-      background: #b8842f;
+      background: linear-gradient(135deg, #b8842f, #a07028);
       transform: translateY(-2px);
-      box-shadow: 0 8px 20px rgba(201,147,58,0.3);
+      box-shadow: 0 8px 24px rgba(201,147,58,0.4);
     }
+
+    .btn-login:active { transform: translateY(0); }
 
     .error-message {
       color: #ef4444;
       font-size: 12px;
       text-align: center;
       margin-top: 12px;
+      min-height: 18px;
     }
 
     .register-link {
@@ -209,157 +268,98 @@
     }
 
     .register-link a {
-      color: var(--gold);
+      color: #c9933a;
       text-decoration: none;
-      font-weight: 600;
+      font-weight: 700;
+      transition: color 0.15s;
     }
 
-    .demo-credentials {
-      margin-top: 28px;
-      padding-top: 20px;
-      border-top: 1px solid #e2e8f0;
-      font-size: 11px;
-      color: #64748b;
-      text-align: center;
-      background: #f8fafc;
-      border-radius: 16px;
-      padding: 16px;
-    }
+    .register-link a:hover { color: #a07028; }
 
-    .demo-credentials strong {
-      color: #0f172a;
-      display: block;
-      margin-bottom: 6px;
-    }
-
-    /* Mobile Responsive */
+    /* Mobile */
     @media (max-width: 768px) {
-      .container {
-        padding: 16px;
-      }
-      
-      .login-card {
-        flex-direction: column;
-      }
-      
-      .brand-side {
-        padding: 32px 24px;
-        text-align: center;
-      }
-      
-      .apt-icons {
-        justify-content: center;
-      }
-      
-      .form-side {
-        padding: 32px 24px;
-      }
-      
-      .brand-side h1 {
-        font-size: 24px;
-      }
+      .container { padding: 16px; }
+      .login-card { flex-direction: column; }
+      .brand-side { padding: 36px 28px; }
+      .form-side { padding: 36px 28px; }
+      .pms-features { max-width: 100%; flex-direction: row; flex-wrap: wrap; justify-content: center; }
+      .pms-feature { flex: 1 1 130px; }
     }
 
     @media (max-width: 480px) {
-      .container {
-        padding: 12px;
-      }
-      
-      .brand-side {
-        padding: 24px 20px;
-      }
-      
-      .logo-icon {
-        font-size: 40px;
-      }
-      
-      .form-side {
-        padding: 28px 20px;
-      }
-      
-      .form-side h2 {
-        font-size: 24px;
-      }
-      
-      .demo-credentials {
-        margin-top: 20px;
-        padding: 12px;
-      }
+      .container { padding: 12px; }
+      .brand-side { padding: 28px 20px; }
+      .form-side { padding: 28px 20px; }
+      .form-side h2 { font-size: 24px; }
     }
-
-    /* Center the left side content */
-.brand-side {
-  text-align: center;
-  align-items: center;
-}
-
-.logo-icon {
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.brand-side h1 {
-  text-align: center;
-  width: 100%;
-}
-
-.brand-side p {
-  text-align: center;
-  max-width: 80%;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-/* Center apartment icons */
-.apt-icons {
-  justify-content: center;
-  width: 100%;
-}
   </style>
 </head>
 <body>
   <div class="container">
     <div class="login-card">
-      <!-- Left Side - Branding -->
+
+      <!-- Left Side -->
       <div class="brand-side">
-        <div class="logo-icon"><i class="fas fa-hotel"></i></div>
+        <div class="logo-wrap"><i class="fas fa-hotel"></i></div>
         <h1>Kitobo Serenity Resort</h1>
-        <p>Property management system for luxury stays.</p>
-        <div class="apt-icons">
-          <div class="apt-icon"><span><i class="fas fa-building"></i></span> Elephant</div>
-          <div class="apt-icon"><span><i class="fas fa-building"></i></span> Rhino</div>
-          <div class="apt-icon"><span><i class="fas fa-landmark"></i></span> Lion</div>
-          <div class="apt-icon"><span><i class="fas fa-home"></i></span> Leopard</div>
-          <div class="apt-icon"><span><i class="fas fa-industry"></i></span> Buffalo</div>
+        <p class="brand-tagline">Integrated property management system for seamless hotel operations.</p>
+
+        <div class="pms-features">
+          <div class="pms-feature">
+            <div class="pms-feature-icon"><i class="fas fa-calendar-alt"></i></div>
+            <span>Reservations &amp; Booking</span>
+          </div>
+          <div class="pms-feature">
+            <div class="pms-feature-icon"><i class="fas fa-soap"></i></div>
+            <span>Housekeeping</span>
+          </div>
+          <div class="pms-feature">
+            <div class="pms-feature-icon"><i class="fas fa-cash-register"></i></div>
+            <span>Point of Sale</span>
+          </div>
+          <div class="pms-feature">
+            <div class="pms-feature-icon"><i class="fas fa-boxes"></i></div>
+            <span>Inventory &amp; Store</span>
+          </div>
+          <div class="pms-feature">
+            <div class="pms-feature-icon"><i class="fas fa-chart-bar"></i></div>
+            <span>Reports &amp; Analytics</span>
+          </div>
         </div>
       </div>
 
-      <!-- Right Side - Login Form -->
+      <!-- Right Side -->
       <div class="form-side">
+        <div class="form-eyebrow">Property Management System</div>
         <h2>Welcome Back</h2>
-        <p class="subtitle">Login to access your dashboard</p>
-        
+        <p class="subtitle">Sign in to access your dashboard</p>
+
         <form id="loginForm">
           <div class="form-group">
-            <label>Email</label>
-            <input type="email" id="loginEmail" placeholder="user@gmail.com" required>
+            <label>Email Address</label>
+            <div class="input-wrap">
+              <i class="fas fa-envelope"></i>
+              <input type="email" id="loginEmail" placeholder="you@kitobo.com" required>
+            </div>
           </div>
           <div class="form-group">
             <label>Password</label>
-            <input type="password" id="loginPassword" placeholder="Enter your password" required>
+            <div class="input-wrap">
+              <i class="fas fa-lock"></i>
+              <input type="password" id="loginPassword" placeholder="Enter your password" required>
+            </div>
           </div>
-          <button type="submit" class="btn-login" id="submitLogin">Sign In →</button>
+          <button type="submit" class="btn-login" id="submitLogin">
+            <i class="fas fa-sign-in-alt"></i> Sign In
+          </button>
           <div class="error-message" id="loginError"></div>
         </form>
-        
+
         <div class="register-link">
-        
-        </div>
-        
-        <div class="demo-credentials">
-          
+          Don't have an account? <a href="/register">Create one here</a>
         </div>
       </div>
+
     </div>
   </div>
 
@@ -375,7 +375,7 @@
         const submitBtn = document.getElementById('submitLogin');
 
         submitBtn.disabled = true;
-        submitBtn.textContent = 'Signing in...';
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing in...';
         if (loginError) loginError.innerText = '';
 
         try {
@@ -387,10 +387,7 @@
           const data = await response.json();
           if (!response.ok) throw new Error(data.error || 'Login failed');
 
-          // ========== IMPORTANT: SAVE THE JWT TOKEN ==========
           sessionStorage.setItem('token', data.token);
-          
-          // Save user info
           sessionStorage.setItem('pms_user', JSON.stringify({
             id: data.id,
             username: data.username,
@@ -398,13 +395,12 @@
             email: data.email,
             role: data.role
           }));
-          
-          // Redirect to dashboard
+
           window.location.href = '/dashboard';
         } catch (err) {
           if (loginError) loginError.innerText = err.message;
           submitBtn.disabled = false;
-          submitBtn.textContent = 'Sign In →';
+          submitBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Sign In';
         }
       });
     }

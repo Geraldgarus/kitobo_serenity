@@ -52,14 +52,10 @@ function renderStats() {
     return rCheckin > todayDate;
   }).length;
   
-  // Total Revenue: sum of all totals
-  const totalRevenue = reservations.reduce((sum, r) => sum + (r.total || 0), 0);
-  
   document.getElementById('stat-occupied').textContent = occupied;
   document.getElementById('stat-available').textContent = available;
   document.getElementById('stat-checkouts').textContent = checkoutsToday;
   document.getElementById('stat-upcoming').textContent = upcoming;
-  document.getElementById('stat-revenue').textContent = fmtTSH(totalRevenue);
   
   console.log(`<i class="fas fa-chart-bar"></i> Stats: Occupied=${occupied}, Checkouts=${checkoutsToday}, Time=${now.toLocaleTimeString()}`);
 }

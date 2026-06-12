@@ -258,8 +258,8 @@ h1, h2, h3, .logo-text, .card-title {
   display: flex;
   align-items: center;
   gap: 6px;
-  background: #2d9c6e;
-  color: #fff;
+  background: var(--gold);
+  color: var(--navy);
   border: none;
   border-radius: 20px;
   padding: 7px 14px 7px 12px;
@@ -271,9 +271,10 @@ h1, h2, h3, .logo-text, .card-title {
   white-space: nowrap;
 }
 .pos-navbar-btn:hover {
-  background: #238558;
+  background: #b87a2e;
+  color: #fff;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(45,156,110,0.35);
+  box-shadow: 0 4px 12px rgba(201,147,58,0.4);
 }
 .pos-navbar-btn:active {
   transform: translateY(0);
