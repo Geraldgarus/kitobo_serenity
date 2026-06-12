@@ -30,6 +30,9 @@ async function ensurePaymentColumns() {
       ALTER TABLE apartments ADD COLUMN IF NOT EXISTS rate_per_night INT DEFAULT 90000;
     `);
     await pool.query(`
+      ALTER TABLE store_items ADD COLUMN IF NOT EXISTS pos VARCHAR(50);
+    `);
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS laundry_services (
         id               SERIAL PRIMARY KEY,
         room_number      VARCHAR(50)  NOT NULL,
