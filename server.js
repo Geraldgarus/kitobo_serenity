@@ -435,6 +435,7 @@ app.get('/api/reservations/:id', async (req, res) => {
       checkout: row.checkout_str,
       identification: row.identification,
       idType: row.id_type,
+      price_per_night: row.price_per_night,
       paymentStatus: row.payment_status,
       paymentMethod: row.payment_method,
       amountPaid: row.amount_paid,

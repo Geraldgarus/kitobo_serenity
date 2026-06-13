@@ -215,6 +215,9 @@
         <i class="fas fa-chevron-down"></i>
       </div>
       <div class="dropdown-menu" id="dropdownMenu">
+        <button onclick="openChangePasswordModal()"><i class="fas fa-key"></i> Change Password</button>
+        <a href="/users" style="display:flex;align-items:center;gap:8px;padding:10px 16px;font-size:13px;color:#1e293b;text-decoration:none;"><i class="fas fa-users"></i> User Management</a>
+        <hr style="border:none;border-top:1px solid #e2e8f0;margin:4px 0;">
         <button onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
       </div>
     </div>
@@ -520,6 +523,60 @@
 function openPOSChooser(){var o=document.getElementById('pos-chooser-overlay');if(o){o.style.display='flex';}}
 function closePOSChooser(){var o=document.getElementById('pos-chooser-overlay');if(o){o.style.display='none';}}
 document.addEventListener('keydown',function(e){if(e.key==='Escape')closePOSChooser();});
+</script>
+<!-- Change Password Modal -->
+<div class="reservation-modal-overlay" id="cp-overlay" onclick="closeChangePasswordModal()"></div>
+<div class="reservation-modal" id="cp-modal">
+  <div class="reservation-modal-header">
+    <h3><i class="fas fa-lock"></i> Change Password</h3>
+    <button class="reservation-modal-close" onclick="closeChangePasswordModal()"><i class="fas fa-times"></i></button>
+  </div>
+  <div class="reservation-modal-body">
+    <form id="cp-form">
+      <div class="form-group">
+        <label>Current Password</label>
+        <input type="password" id="cp-current" class="form-control" required>
+      </div>
+      <div class="form-group">
+        <label>New Password (min 6 characters)</label>
+        <input type="password" id="cp-new" class="form-control" required>
+      </div>
+      <div class="form-group">
+        <label>Confirm New Password</label>
+        <input type="password" id="cp-confirm" class="form-control" required>
+      </div>
+      <hr class="divider" />
+      <button type="submit" class="btn btn-success"><i class="fas fa-check-circle"></i> Update Password</button>
+      <button type="button" class="btn btn-outline" style="margin-top:10px;width:100%;" onclick="closeChangePasswordModal()">Cancel</button>
+    </form>
+  </div>
+</div>
+<script>
+function openChangePasswordModal() {
+  document.getElementById('cp-modal').classList.add('open');
+  document.getElementById('cp-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeChangePasswordModal() {
+  document.getElementById('cp-modal').classList.remove('open');
+  document.getElementById('cp-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+  document.getElementById('cp-form').reset();
+}
+document.getElementById('cp-form').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const cur = document.getElementById('cp-current').value;
+  const nw  = document.getElementById('cp-new').value;
+  const con = document.getElementById('cp-confirm').value;
+  if (nw !== con) { showToast('Passwords do not match', '<i class="fas fa-exclamation-triangle"></i>'); return; }
+  if (nw.length < 6) { showToast('Password must be at least 6 characters', '<i class="fas fa-exclamation-triangle"></i>'); return; }
+  const user = JSON.parse(sessionStorage.getItem('pms_user') || '{}');
+  try {
+    await apiPost('/auth/change-password', { userId: user.id, oldPassword: cur, newPassword: nw });
+    showToast('Password changed! Please login again.', '<i class="fas fa-check-circle"></i>');
+    setTimeout(() => { sessionStorage.clear(); window.location.href = '/'; }, 1500);
+  } catch(err) { showToast('Failed: ' + err.message, '<i class="fas fa-times-circle"></i>'); }
+});
 </script>
 <script src="../js/permissions.js"></script>
 </body>
