@@ -462,7 +462,7 @@ async function openEditTask(id) {
     document.getElementById('form-section').classList.add('active');
     document.getElementById('empty-state').style.display = 'none';
     document.getElementById('task-details-view').style.display = 'none';
-    document.querySelector('#form-section .form-header h3').textContent = '<i class="fas fa-edit"></i> Edit Maintenance Record';
+    document.querySelector('#form-section .form-header h3').innerHTML = '<i class="fas fa-edit"></i> Edit Maintenance Record';
   } catch(err) { showToast('Failed to load for edit', 'error'); }
 }
 async function updateTaskStatus(id, status) { try { await apiPut(`/maintenance/${id}/status`, { status: status }); showToast(`Record marked as ${status}`, 'success'); loadTasks(); if (currentViewTask && currentViewTask.id === id) viewTaskDetails(id); } catch(err) { showToast('Failed to update status', 'error'); } }

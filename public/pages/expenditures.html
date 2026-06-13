@@ -373,7 +373,7 @@ function showForm() {
   document.getElementById('payment-method').value = 'cash';
   document.getElementById('receipt-number').value = '';
   document.getElementById('remarks').value = '';
-  document.querySelector('#form-section .form-header h3').textContent = '<i class="fas fa-plus"></i> New Expenditure';
+  document.querySelector('#form-section .form-header h3').innerHTML = '<i class="fas fa-plus"></i> New Expenditure';
 }
 
 function cancelForm() {
@@ -615,7 +615,7 @@ async function openEditExpenditure(id) {
     document.getElementById('form-section').classList.add('active');
     document.getElementById('empty-state').style.display = 'none';
     document.getElementById('expenditure-details-view').style.display = 'none';
-    document.querySelector('#form-section .form-header h3').textContent = '<i class="fas fa-edit"></i> Edit Expenditure';
+    document.querySelector('#form-section .form-header h3').innerHTML = '<i class="fas fa-edit"></i> Edit Expenditure';
   } catch(err) {
     showToast('Failed to load for edit', 'error');
   }

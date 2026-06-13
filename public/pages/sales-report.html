@@ -68,7 +68,7 @@
     .dropdown-menu button { display: block; width: 100%; padding: 10px 16px; text-align: left; background: none; border: none; cursor: pointer; font-size: 13px; }
     .dropdown-menu button:hover { background: #f8fafc; }
 
-    .main-content { padding: 24px; }
+    .main-content { padding: 4px 24px 24px; }
     .filter-bar {
       background: white;
       border-radius: 20px;
@@ -233,8 +233,8 @@
     <div style="padding: 20px; border-bottom: 1px solid #e2e8f0;"><h3><i class="fas fa-receipt"></i> Sales Details</h3></div>
     <div style="overflow-x: auto;">
       <table class="data-table" id="sales-table">
-        <thead><tr><th>Date</th><th>Order #</th><th>POS</th><th>Cashier</th><th>Items</th><th>Total Amount</th></tr></thead>
-        <tbody id="sales-body"><tr><td colspan="6" class="empty-state">Select a date range and click Apply Filter</td></tr></tbody>
+        <thead><tr><th>Date</th><th>Order #</th><th>POS</th><th>Payment Method</th><th>Cashier</th><th>Items</th><th>Total Amount</th></tr></thead>
+        <tbody id="sales-body"><tr><td colspan="7" class="empty-state">Select a date range and click Apply Filter</td></tr></tbody>
       </table>
     </div>
   </div>
@@ -317,6 +317,7 @@ async function loadSalesReport() {
           date: order.order_date,
           total: order.total_amount,
           pos_type: order.pos_type || '',
+          payment_method: order.payment_method || 'Cash',
           items: items.map(item => ({
             name: item.item_name,
             quantity: parseFloat(item.quantity),
@@ -336,14 +337,14 @@ async function loadSalesReport() {
     } catch (err) {
       console.error('Error loading sales:', err);
       showToast('Failed to load sales data: ' + err.message, 'error');
-      document.getElementById('sales-body').innerHTML = '<tr><td colspan="6" class="empty-state">Error loading sales data</td></tr>';
+      document.getElementById('sales-body').innerHTML = '<tr><td colspan="7" class="empty-state">Error loading sales data</td></tr>';
     }
   }
   
   function renderTable() {
     const tbody = document.getElementById('sales-body');
     if (!salesData.length) {
-      tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No sales records found for selected date range</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No sales records found for selected date range</td></tr>';
       return;
     }
 
@@ -362,6 +363,7 @@ async function loadSalesReport() {
           <td>${formattedDate}</td>
           <td><strong>${escapeHtml(sale.order_number)}</strong></td>
           <td>${posLabel}</td>
+          <td><span style="display:inline-flex;align-items:center;gap:5px;"><i class="fas fa-${sale.payment_method === 'Cash' ? 'money-bill-wave' : sale.payment_method === 'Card' ? 'credit-card' : ['Mpesa','TigoPesa','AirtelMoney','HaloPesa'].includes(sale.payment_method) ? 'mobile-alt' : 'university'}"></i> ${escapeHtml(sale.payment_method || 'Cash')}</span></td>
           <td>${escapeHtml(sale.cashier)}</td>
           <td>${totalItems} units</td>
           <td>${fmtTSH(sale.total)}</td>
@@ -492,13 +494,13 @@ async function loadSalesReport() {
   }
   
   function exportToCSV() {
-    let csv = 'Date,Order Number,POS,Cashier,Items Count,Total Amount (TSH)\n';
+    let csv = 'Date,Order Number,POS,Payment Method,Cashier,Items Count,Total Amount (TSH)\n';
 
     salesData.forEach(sale => {
       const totalItems = sale.items.reduce((sum, i) => sum + i.quantity, 0);
       const saleDate = new Date(sale.date).toLocaleDateString();
       const posLabel = sale.pos_type || 'N/A';
-      csv += `"${saleDate}","${sale.order_number}","${posLabel}","${sale.cashier}",${totalItems},${sale.total}\n`;
+      csv += `"${saleDate}","${sale.order_number}","${posLabel}","${sale.payment_method || 'Cash'}","${sale.cashier}",${totalItems},${sale.total}\n`;
       
       sale.items.forEach(item => {
         csv += `,,,"  - ${item.name}: ${item.quantity} x ${item.price} = ${item.total}",\n`;

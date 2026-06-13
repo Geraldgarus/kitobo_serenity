@@ -102,7 +102,7 @@ async function generatePrintReport() {
 
     const resRows = filtered.map(r => {
       const apt = byApt.find(a => a.id === r.aptId);
-      return `<tr><td>${r.guest}</td><td>${apt?.name || '—'}</td><td>${fmtDate(r.checkin)}</td><td>${fmtDate(r.checkout)}</td><td>${daysBetween(r.checkin, r.checkout)}n</td><td>${r.adults}A ${r.children}C</td><td>${r.rateType}</td><td><strong>${fmtTSH(r.total)}</strong></td></tr>`;
+      return `<tr><td>${r.guest}</td><td>${apt?.name || '—'}</td><td>${fmtDate(r.checkin)}</td><td>${fmtDate(r.checkout)}</td><td>${daysBetween(r.checkin, r.checkout)}n</td><td>${r.adults}A ${r.children}C</td><td>${r.rateType || 'Bed and Breakfast'}</td><td><strong>${fmtTSH(r.total)}</strong></td></tr>`;
     }).join('');
 
     const periodLabel = fromVal && toVal ? `${fmtDate(fromVal)} to ${fmtDate(toVal)}` : 'All Time';

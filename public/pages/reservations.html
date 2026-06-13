@@ -751,9 +751,10 @@
         </div>
       </div>
       
-      <div class="form-group-row cols-2">
+      <div class="form-group-row" style="grid-template-columns:1fr 1fr 1fr">
         <div class="form-group"><label><i class="fas fa-hotel"></i> Room</label><select id="modal-f-apt" class="form-control" required><option value="">Select Room</option></select></div>
         <div class="form-group"><label><i class="fas fa-dollar-sign"></i> Price per Night (TSH)</label><input type="number" id="modal-f-price-per-night" class="form-control" min="0" step="1000" placeholder="Enter price per night" oninput="modalUpdateRate()" /></div>
+        <div class="form-group"><label><i class="fas fa-utensils"></i> Rate Type</label><select id="modal-f-ratetype" class="form-control"><option value="Bed and Breakfast">Bed and Breakfast</option><option value="Half Board">Half Board</option><option value="Full Board">Full Board</option></select></div>
       </div>
 
       <div class="form-group-row" style="grid-template-columns:1fr 1fr 1.2fr">
@@ -917,8 +918,9 @@
         <div class="form-group">
           <label><i class="fas fa-dollar-sign"></i> Rate Type</label>
           <select id="edit-f-ratetype" class="form-control">
-            <option value="Full">Full (100%)</option>
-            <option value="Partial">Partial (60%)</option>
+            <option value="Bed and Breakfast">Bed and Breakfast</option>
+            <option value="Half Board">Half Board</option>
+            <option value="Full Board">Full Board</option>
           </select>
         </div>
       </div>
@@ -1185,7 +1187,7 @@ function printReservation() {
         <div class="content">
           <div class="info-grid">
             <div class="info-item"><div class="info-label">Reservation ID</div><div class="info-value">#${res.id}</div></div>
-            <div class="info-item"><div class="info-label">Rate Type</div><div class="info-value">${safeEscape(res.rateType || 'Full')}</div></div>
+            <div class="info-item"><div class="info-label">Rate Type</div><div class="info-value">${safeEscape(res.rateType || 'Bed and Breakfast')}</div></div>
             <div class="info-item"><div class="info-label">Booking Date</div><div class="info-value">${formatDateForPrint(res.created_at || new Date())}</div></div>
           </div>
           
@@ -1632,6 +1634,7 @@ document.getElementById('reservation-form-modal')?.addEventListener('submit', as
     checkin, checkout,
     adults:         parseInt(document.getElementById('modal-f-adults').value),
     children:       parseInt(document.getElementById('modal-f-children').value),
+    rateType:       document.getElementById('modal-f-ratetype').value,
     pricePerNight:  parseFloat(document.getElementById('modal-f-price-per-night').value) || 0,
     total:          finalTotal,
     identification: document.getElementById('modal-f-identification').value,
@@ -1724,6 +1727,7 @@ async function initEditForm(reservationId) {
     document.getElementById('edit-f-checkout').value  = isoDate(reservation.checkout);
     document.getElementById('edit-f-adults').value    = reservation.adults;
     document.getElementById('edit-f-children').value  = reservation.children;
+    document.getElementById('edit-f-ratetype').value  = reservation.rateType || 'Bed and Breakfast';
     const savedTotal  = reservation.total || 0;
     const savedNights = Math.max(1, daysBetween(isoDate(reservation.checkin), isoDate(reservation.checkout)));
     document.getElementById('edit-f-total-hidden').value    = savedTotal;
@@ -1794,6 +1798,7 @@ document.getElementById('edit-form-modal')?.addEventListener('submit', async fun
     checkin, checkout,
     adults:         parseInt(document.getElementById('edit-f-adults').value),
     children:       parseInt(document.getElementById('edit-f-children').value),
+    rateType:       document.getElementById('edit-f-ratetype').value,
     total:          forcedTotal,
     userId:         currentUser?.id,
     username:       currentUser?.fullName || currentUser?.username,

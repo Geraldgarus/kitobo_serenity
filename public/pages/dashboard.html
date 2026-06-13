@@ -852,9 +852,10 @@
         <div class="form-group"><label><i class="fas fa-calendar-alt"></i> Check-in Date</label><input type="date" id="modal-f-checkin" class="form-control" required /></div>
         <div class="form-group"><label><i class="fas fa-calendar-alt"></i> Check-out Date</label><input type="date" id="modal-f-checkout" class="form-control" required /></div>
       </div>
-      <div class="form-group-row cols-2">
+      <div class="form-group-row" style="grid-template-columns:1fr 1fr 1fr">
         <div class="form-group"><label><i class="fas fa-hotel"></i> Room</label><select id="modal-f-apt" class="form-control" required><option value="">Select Room</option></select></div>
         <div class="form-group"><label><i class="fas fa-dollar-sign"></i> Price per Night (TSH)</label><input type="number" id="modal-f-price-per-night" class="form-control" min="0" step="1000" placeholder="Enter price per night" oninput="modalUpdateRate()" /></div>
+        <div class="form-group"><label><i class="fas fa-utensils"></i> Rate Type</label><select id="modal-f-ratetype" class="form-control"><option value="Bed and Breakfast">Bed and Breakfast</option><option value="Half Board">Half Board</option><option value="Full Board">Full Board</option></select></div>
       </div>
       <div class="form-group-row" style="grid-template-columns:1fr 1fr 1.2fr">
         <div class="form-group"><label><i class="fas fa-user"></i> Adults</label><div class="stepper"><button type="button" onclick="modalStepperChange('modal-f-adults', -1)">−</button><input type="number" id="modal-f-adults" value="1" min="1" max="6" /><button type="button" onclick="modalStepperChange('modal-f-adults', 1)">+</button></div></div>
@@ -975,9 +976,10 @@
         <div class="form-group"><label><i class="fas fa-calendar-alt"></i> Check-in Date</label><input type="date" id="edit-f-checkin" class="form-control" required /></div>
         <div class="form-group"><label><i class="fas fa-calendar-alt"></i> Check-out Date</label><input type="date" id="edit-f-checkout" class="form-control" required /></div>
       </div>
-      <div class="form-group-row cols-2">
+      <div class="form-group-row" style="grid-template-columns:1fr 1fr 1fr">
         <div class="form-group"><label><i class="fas fa-hotel"></i> Room</label><select id="edit-f-apt" class="form-control" required><option value="">Select Room</option></select></div>
         <div class="form-group"><label><i class="fas fa-dollar-sign"></i> Price per Night (TSH)</label><input type="number" id="edit-f-price-per-night" class="form-control" min="0" step="1000" placeholder="Enter price per night" oninput="editUpdateRate()" /></div>
+        <div class="form-group"><label><i class="fas fa-utensils"></i> Rate Type</label><select id="edit-f-ratetype" class="form-control"><option value="Bed and Breakfast">Bed and Breakfast</option><option value="Half Board">Half Board</option><option value="Full Board">Full Board</option></select></div>
       </div>
       <div class="form-group-row" style="grid-template-columns:1fr 1fr 1.2fr">
         <div class="form-group"><label><i class="fas fa-user"></i> Adults</label><div class="stepper"><button type="button" onclick="editStepperChange('edit-f-adults', -1)">−</button><input type="number" id="edit-f-adults" value="1" min="1" max="6" /><button type="button" onclick="editStepperChange('edit-f-adults', 1)">+</button></div></div>
@@ -2296,6 +2298,7 @@ async function initEditForm(reservationId) {
     const savedNights = Math.max(1, daysBetween(isoDate(reservation.checkin), isoDate(reservation.checkout)));
     const savedPricePerNight = savedNights > 0 ? Math.round(savedTotal / savedNights) : 0;
     document.getElementById('edit-f-price-per-night').value = savedPricePerNight || '';
+    document.getElementById('edit-f-ratetype').value = reservation.rateType || 'Bed and Breakfast';
     document.getElementById('edit-f-total-hidden').value = savedTotal;
     document.getElementById('edit-f-total').innerHTML = fmtTSH(savedTotal);
     
@@ -2438,6 +2441,7 @@ document.getElementById('edit-form-modal')?.addEventListener('submit', async fun
     checkin, checkout,
     adults: parseInt(document.getElementById('edit-f-adults').value),
     children: parseInt(document.getElementById('edit-f-children').value),
+    rateType: document.getElementById('edit-f-ratetype').value,
     pricePerNight: parseFloat(document.getElementById('edit-f-price-per-night').value) || 0,
     total: finalTotal,
     userId: currentUser.id,
@@ -2454,7 +2458,7 @@ document.getElementById('edit-form-modal')?.addEventListener('submit', async fun
   try {
     const submitBtn = e.target.querySelector('button[type="submit"]');
     const originalText = submitBtn.textContent;
-    submitBtn.textContent = '<i class="fas fa-spinner fa-spin"></i> Updating...';
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
     submitBtn.disabled = true;
     
     await apiPut(`/reservations/${reservationId}`, payload);
@@ -2592,9 +2596,9 @@ document.getElementById('reservation-form-modal')?.addEventListener('submit', as
     checkin, checkout,
     adults: parseInt(document.getElementById('modal-f-adults').value),
     children: parseInt(document.getElementById('modal-f-children').value),
+    rateType: document.getElementById('modal-f-ratetype').value,
     pricePerNight: parseFloat(document.getElementById('modal-f-price-per-night').value) || 0,
     total: finalTotal,
-    // <i class="fas fa-check-circle"></i> ADD THESE TWO LINES
     identification: document.getElementById('modal-f-identification').value,
     idType: document.getElementById('modal-f-id-type').value,
     amountPaid: parseFloat(document.getElementById('modal-f-amount-paid').value) || 0,
@@ -2605,7 +2609,7 @@ document.getElementById('reservation-form-modal')?.addEventListener('submit', as
   try {
     const submitBtn = e.target.querySelector('button[type="submit"]');
     const originalText = submitBtn.textContent;
-    submitBtn.textContent = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
     submitBtn.disabled = true;
     
     await apiPost('/reservations', payload);

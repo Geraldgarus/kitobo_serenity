@@ -1189,7 +1189,7 @@ function escapeHtml(str) {
   
   // Add/Edit Modal functions
   function openAddUserModal() {
-    document.getElementById('user-modal-title').innerText = '<i class="fas fa-plus"></i> Add New User';
+    document.getElementById('user-modal-title').innerHTML = '<i class="fas fa-plus"></i> Add New User';
     document.getElementById('user-id').value = '';
     document.getElementById('user-username').value = '';
     document.getElementById('user-fullname').value = '';
@@ -1207,7 +1207,7 @@ function escapeHtml(str) {
   function openEditUserModal(id) {
     const user = users.find(u => u.id === id);
     if (!user) return;
-    document.getElementById('user-modal-title').innerText = '<i class="fas fa-edit"></i> Edit User';
+    document.getElementById('user-modal-title').innerHTML = '<i class="fas fa-edit"></i> Edit User';
     document.getElementById('user-id').value = user.id;
     document.getElementById('user-username').value = user.username;
     document.getElementById('user-fullname').value = user.full_name || '';
@@ -1254,7 +1254,7 @@ function escapeHtml(str) {
         else if (password && password.length < 6) {
           showToast('Password must be at least 6 characters', '<i class="fas fa-exclamation-triangle"></i>');
           submitBtn.disabled = false;
-          submitBtn.textContent = '<i class="fas fa-check-circle"></i> Save User';
+          submitBtn.innerHTML = '<i class="fas fa-check-circle"></i> Save User';
           return;
         }
         await apiPut(`/users/${id}`, payload);
@@ -1263,7 +1263,7 @@ function escapeHtml(str) {
         if (!password || password.length < 6) {
           showToast('Password must be at least 6 characters', '<i class="fas fa-exclamation-triangle"></i>');
           submitBtn.disabled = false;
-          submitBtn.textContent = '<i class="fas fa-check-circle"></i> Save User';
+          submitBtn.innerHTML = '<i class="fas fa-check-circle"></i> Save User';
           return;
         }
         await apiPost('/users', { username, email, password, role, full_name });
@@ -1275,7 +1275,7 @@ function escapeHtml(str) {
       showToast('Failed to save user: ' + err.message, '<i class="fas fa-times-circle"></i>');
     } finally {
       submitBtn.disabled = false;
-      submitBtn.textContent = '<i class="fas fa-check-circle"></i> Save User';
+      submitBtn.innerHTML = '<i class="fas fa-check-circle"></i> Save User';
     }
   });
   

@@ -485,7 +485,7 @@ function showForm() {
   document.getElementById('activity-date').value = new Date().toISOString().split('T')[0];
   document.getElementById('prepared-by').value = '';
   document.getElementById('remarks').value = '';
-  document.querySelector('#form-section .form-header h3').textContent = '<i class="fas fa-plus"></i> New Activity';
+  document.querySelector('#form-section .form-header h3').innerHTML = '<i class="fas fa-plus"></i> New Activity';
 }
 
 function cancelForm() {
@@ -671,7 +671,7 @@ async function openEditActivity(id) {
     document.getElementById('form-section').classList.add('active');
     document.getElementById('empty-state').style.display = 'none';
     document.getElementById('activity-details-view').style.display = 'none';
-    document.querySelector('#form-section .form-header h3').textContent = '<i class="fas fa-edit"></i> Edit Activity';
+    document.querySelector('#form-section .form-header h3').innerHTML = '<i class="fas fa-edit"></i> Edit Activity';
   } catch(err) {
     showToast('Failed to load for edit', 'error');
   }

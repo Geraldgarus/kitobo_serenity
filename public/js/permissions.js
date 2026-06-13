@@ -22,8 +22,8 @@
     housekeeping: { type: 'allow', pages: ['housekeeping', 'store-outlets'] },
 
     // Whole POS: Bar, Restaurant, Point-of-Sale terminal (no sales report)
-    bar:        { type: 'allow', pages: ['bar', 'restaurant', 'point-of-sale'] },
-    restaurant: { type: 'allow', pages: ['bar', 'restaurant', 'point-of-sale'] },
+    bar:        { type: 'allow', pages: ['bar', 'restaurant', 'point-of-sale', 'store-outlets'] },
+    restaurant: { type: 'allow', pages: ['bar', 'restaurant', 'point-of-sale', 'store-outlets'] },
 
     // Whole Inventory: Main store, Outlets, Purchase orders, Goods receipt (no reports)
     store:      { type: 'allow', pages: ['store-main', 'store-outlets', 'purchase-orders', 'goods-receipt'] }

@@ -24,6 +24,7 @@ async function ensurePaymentColumns() {
       ALTER TABLE reservations ADD COLUMN IF NOT EXISTS identification VARCHAR(100);
       ALTER TABLE reservations ADD COLUMN IF NOT EXISTS id_type VARCHAR(50) DEFAULT 'NIDA';
       ALTER TABLE reservations ADD COLUMN IF NOT EXISTS price_per_night INT DEFAULT 0;
+      ALTER TABLE reservations ADD COLUMN IF NOT EXISTS rate_type VARCHAR(50) DEFAULT 'Bed and Breakfast';
     `);
     await pool.query(`
       ALTER TABLE apartments ADD COLUMN IF NOT EXISTS under_maintenance BOOLEAN DEFAULT FALSE;
@@ -34,6 +35,16 @@ async function ensurePaymentColumns() {
     `);
     await pool.query(`
       ALTER TABLE sales_orders ADD COLUMN IF NOT EXISTS pos_type VARCHAR(50);
+      ALTER TABLE sales_orders ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50) DEFAULT 'Cash';
+    `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS menu_items (
+        id           SERIAL PRIMARY KEY,
+        name         VARCHAR(200) NOT NULL,
+        ingredients  TEXT,
+        price        INT NOT NULL DEFAULT 0,
+        created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
     `);
     await pool.query(`
       CREATE TABLE IF NOT EXISTS laundry_services (
@@ -786,6 +797,48 @@ app.delete('/api/store/items/:id', async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+});
+
+// ============================================================
+// MENU ITEMS API (restaurant menu managed from main store)
+// ============================================================
+app.get('/api/menu-items', async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM menu_items ORDER BY name');
+    res.json(rows);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.post('/api/menu-items', async (req, res) => {
+  const { name, ingredients, price } = req.body;
+  if (!name || price == null) return res.status(400).json({ error: 'name and price are required' });
+  try {
+    const { rows } = await pool.query(
+      'INSERT INTO menu_items (name, ingredients, price) VALUES ($1, $2, $3) RETURNING *',
+      [name.trim(), ingredients || null, parseInt(price) || 0]
+    );
+    res.status(201).json(rows[0]);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.put('/api/menu-items/:id', async (req, res) => {
+  const { name, ingredients, price } = req.body;
+  try {
+    const { rows } = await pool.query(
+      'UPDATE menu_items SET name=$1, ingredients=$2, price=$3 WHERE id=$4 RETURNING *',
+      [name.trim(), ingredients || null, parseInt(price) || 0, req.params.id]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Menu item not found' });
+    res.json(rows[0]);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.delete('/api/menu-items/:id', async (req, res) => {
+  try {
+    const { rowCount } = await pool.query('DELETE FROM menu_items WHERE id = $1', [req.params.id]);
+    if (rowCount === 0) return res.status(404).json({ error: 'Menu item not found' });
+    res.json({ message: 'Menu item deleted' });
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 // ============================================================
@@ -2416,7 +2469,7 @@ app.get('/api/purchase-orders/:id/items', async (req, res) => {
 
 // POST /api/sales - Save a completed sale
 app.post('/api/sales', async (req, res) => {
-  const { items, total_amount, cashier_id, cashier_name, pos_type } = req.body;
+  const { items, total_amount, cashier_id, cashier_name, pos_type, payment_method } = req.body;
 
   if (!items || items.length === 0) {
     return res.status(400).json({ error: 'No items in sale' });
@@ -2427,10 +2480,10 @@ app.post('/api/sales', async (req, res) => {
     await client.query('BEGIN');
 
     const orderResult = await client.query(`
-      INSERT INTO sales_orders (cashier_id, cashier_name, total_amount, status, order_date, pos_type)
-      VALUES ($1, $2, $3, 'completed', CURRENT_TIMESTAMP, $4)
+      INSERT INTO sales_orders (cashier_id, cashier_name, total_amount, status, order_date, pos_type, payment_method)
+      VALUES ($1, $2, $3, 'completed', CURRENT_TIMESTAMP, $4, $5)
       RETURNING id, order_number
-    `, [cashier_id || null, cashier_name, total_amount, pos_type || null]);
+    `, [cashier_id || null, cashier_name, total_amount, pos_type || null, payment_method || 'Cash']);
     
     const saleId = orderResult.rows[0].id;
     const orderNumber = orderResult.rows[0].order_number;
@@ -2464,7 +2517,7 @@ app.get('/api/sales', async (req, res) => {
   let query = `
     SELECT
       so.id, so.order_number, so.cashier_name, so.total_amount,
-      so.order_date, so.status, so.pos_type,
+      so.order_date, so.status, so.pos_type, so.payment_method,
       COALESCE((
         SELECT SUM(si.quantity)::INTEGER
         FROM sales_items si
