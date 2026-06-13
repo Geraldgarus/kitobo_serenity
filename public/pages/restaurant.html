@@ -275,7 +275,8 @@
     try {
       const menuData = await apiGet('/api/menu-items');
       menuItems = menuData.map(item => ({
-        type: 'menu', id: 'menu_' + item.id, name: item.name, price: item.price, quantity: Infinity
+        type: 'menu', id: 'menu_' + item.id, name: item.name, price: item.price, quantity: Infinity,
+        category: item.category || 'General'
       }));
       posItems = [];
       allDisplayItems = [...menuItems];
@@ -289,7 +290,10 @@
 
   function buildCategoryTabs() {
     const container = document.getElementById('category-tabs');
-    container.innerHTML = `<div class="cat-tab active" data-cat="all" onclick="selectCategory('all')">All Menu Items</div>`;
+    const cats = ['All', ...new Set(menuItems.map(m => m.category).filter(Boolean))];
+    container.innerHTML = cats.map((c, i) =>
+      `<div class="cat-tab${i === 0 ? ' active' : ''}" data-cat="${c === 'All' ? 'all' : c}" onclick="selectCategory('${c === 'All' ? 'all' : c}')">${c}</div>`
+    ).join('');
   }
 
   function selectCategory(cat) {
@@ -300,6 +304,9 @@
 
   function applyFilters() {
     let filtered = [...allDisplayItems];
+    if (currentCategory && currentCategory !== 'all') {
+      filtered = filtered.filter(item => item.category === currentCategory);
+    }
     if (currentSearchTerm) {
       filtered = filtered.filter(item => item.name.toLowerCase().includes(currentSearchTerm.toLowerCase()));
     }

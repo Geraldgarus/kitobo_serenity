@@ -47,6 +47,9 @@ async function ensurePaymentColumns() {
       )
     `);
     await pool.query(`
+      ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS category VARCHAR(100) DEFAULT 'General';
+    `);
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS laundry_services (
         id               SERIAL PRIMARY KEY,
         room_number      VARCHAR(50)  NOT NULL,
@@ -810,23 +813,23 @@ app.get('/api/menu-items', async (req, res) => {
 });
 
 app.post('/api/menu-items', async (req, res) => {
-  const { name, ingredients, price } = req.body;
+  const { name, ingredients, price, category } = req.body;
   if (!name || price == null) return res.status(400).json({ error: 'name and price are required' });
   try {
     const { rows } = await pool.query(
-      'INSERT INTO menu_items (name, ingredients, price) VALUES ($1, $2, $3) RETURNING *',
-      [name.trim(), ingredients || null, parseInt(price) || 0]
+      'INSERT INTO menu_items (name, ingredients, price, category) VALUES ($1, $2, $3, $4) RETURNING *',
+      [name.trim(), ingredients || null, parseInt(price) || 0, category || 'General']
     );
     res.status(201).json(rows[0]);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.put('/api/menu-items/:id', async (req, res) => {
-  const { name, ingredients, price } = req.body;
+  const { name, ingredients, price, category } = req.body;
   try {
     const { rows } = await pool.query(
-      'UPDATE menu_items SET name=$1, ingredients=$2, price=$3 WHERE id=$4 RETURNING *',
-      [name.trim(), ingredients || null, parseInt(price) || 0, req.params.id]
+      'UPDATE menu_items SET name=$1, ingredients=$2, price=$3, category=$4 WHERE id=$5 RETURNING *',
+      [name.trim(), ingredients || null, parseInt(price) || 0, category || 'General', req.params.id]
     );
     if (!rows.length) return res.status(404).json({ error: 'Menu item not found' });
     res.json(rows[0]);

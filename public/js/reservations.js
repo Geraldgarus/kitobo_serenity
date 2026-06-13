@@ -125,7 +125,7 @@ function updateReservationStats() {
 
 async function openDetail(resId) {
   try {
-    const res = await apiGet(`/reservations/${resId}`);
+    const res = reservations.find(r => r.id === resId) || await apiGet(`/reservations/${resId}`);
     selectedReservation = res;
     const apt = getApt(res.aptId) || { name: res.aptName || '—' };
     const nights = daysBetween(res.checkin, res.checkout);
