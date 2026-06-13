@@ -214,8 +214,8 @@
     <!-- PROPERTY -->
     <!-- ============================================================ -->
     <div class="nav-section-label">Property</div>
-    <a href="/apartments" class="nav-item"><i class="fas fa-building"></i> Rooms View</a>
-    <a href="/apartments-list" class="nav-item "><i class="fas fa-list-ul"></i> Rooms List</a>
+    <a href="/rooms" class="nav-item"><i class="fas fa-building"></i> Rooms View</a>
+    <a href="/rooms-list" class="nav-item "><i class="fas fa-list-ul"></i> Rooms List</a>
     
     <!-- ============================================================ -->
     <!-- INVENTORY -->
@@ -605,11 +605,6 @@ if (userPill) {
 }
 
 
-// Only admin or manager can access this page
-if (currentUser.role !== 'admin' && currentUser.role !== 'manager') {
-  alert('Access denied. Only administrators  can view reports.');
-  window.location.href = '/dashboard';
-}
 
 // ========== CHANGE PASSWORD MODAL ==========
 function openChangePasswordModal() {
@@ -738,5 +733,6 @@ function openPOSChooser(){var o=document.getElementById('pos-chooser-overlay');i
 function closePOSChooser(){var o=document.getElementById('pos-chooser-overlay');if(o){o.style.display='none';}}
 document.addEventListener('keydown',function(e){if(e.key==='Escape')closePOSChooser();});
 </script>
+<script src="../js/permissions.js"></script>
 </body>
 </html>

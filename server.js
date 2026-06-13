@@ -159,8 +159,8 @@ app.use('/api', protectAPI);
 // CLEAN URLS - Access pages without .html extension
 // ============================================================
 const pages = [
-  'dashboard', 'dashboard1', 'reservations', 'apartments', 
-  'apartments-list', 'apartments-list1', 'housekeeping', 'housekeeping-status', 'reports',
+  'dashboard', 'dashboard1', 'reservations', 'rooms',
+  'rooms-list', 'housekeeping', 'housekeeping-status', 'reports',
   'store-main', 'store-main1', 'store-outlets', 'store-outlets1', 'outlet-store', 'outlet-store1',
   'store-housekeeping', 'store-kitchen', 'store-public', 'users', 'users1',
   'activity-logs', 'register', 'back-office', 'index2', 'purchase-orders', 'goods-receipt',

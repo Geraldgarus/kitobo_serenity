@@ -505,8 +505,8 @@
     <!-- PROPERTY -->
     <!-- ============================================================ -->
     <div class="nav-section-label">Property</div>
-    <a href="/apartments" class="nav-item"><i class="fas fa-building"></i> Rooms View</a>
-    <a href="/apartments-list" class="nav-item active"><i class="fas fa-list-ul"></i> Rooms List</a>
+    <a href="/rooms" class="nav-item"><i class="fas fa-building"></i> Rooms View</a>
+    <a href="/rooms-list" class="nav-item active"><i class="fas fa-list-ul"></i> Rooms List</a>
     
     <!-- ============================================================ -->
     <!-- INVENTORY -->
@@ -1047,7 +1047,7 @@ async function apiPut(endpoint, data) {
   // ADD/EDIT MODAL FUNCTIONS
   // ============================================================
   function openAddApartmentModal() {
-    document.getElementById('apt-modal-title').innerText = '<i class="fas fa-plus"></i> Add Room';
+    document.getElementById('apt-modal-title').innerHTML = '<i class="fas fa-plus"></i> Add Room';
     document.getElementById('apt-id').value = '';
     document.getElementById('apt-name').value = '';
     document.getElementById('apt-type').value = '';
@@ -1063,7 +1063,7 @@ async function apiPut(endpoint, data) {
   function openEditApartmentModal(id) {
     const apt = apartments.find(a => a.id === id);
     if (!apt) return;
-    document.getElementById('apt-modal-title').innerText = '<i class="fas fa-edit"></i> Edit Room';
+    document.getElementById('apt-modal-title').innerHTML = '<i class="fas fa-edit"></i> Edit Room';
     document.getElementById('apt-id').value = apt.id;
     document.getElementById('apt-name').value = apt.name;
     document.getElementById('apt-type').value = apt.type;
@@ -1397,5 +1397,6 @@ function openPOSChooser(){var o=document.getElementById('pos-chooser-overlay');i
 function closePOSChooser(){var o=document.getElementById('pos-chooser-overlay');if(o){o.style.display='none';}}
 document.addEventListener('keydown',function(e){if(e.key==='Escape')closePOSChooser();});
 </script>
+<script src="../js/permissions.js"></script>
 </body>
 </html>
