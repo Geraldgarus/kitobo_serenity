@@ -1,0 +1,22 @@
+{
+  "name": "kitobo-serenity-pms",
+  "version": "1.0.0",
+  "description": "Kitobo Serenity Resort - Property Management System",
+  "scripts": {
+    "start": "cd steps-backend && node server.js"
+  },
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "compression": "^1.8.1",
+    "cors": "^2.8.6",
+    "dotenv": "^16.6.1",
+    "express": "^4.22.2",
+    "express-rate-limit": "^8.5.2",
+    "jsonwebtoken": "^9.0.3",
+    "pg": "^8.20.0",
+    "xss-clean": "^0.1.4"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
