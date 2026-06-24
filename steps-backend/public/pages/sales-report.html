@@ -507,12 +507,7 @@ async function loadSalesReport() {
 
 
   async function apiDelete(url) {
-    const token = localStorage.getItem('pms_token');
-    const res = await fetch(API_BASE + url, {
-      method: 'DELETE',
-      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }
-    });
-    if (res.status === 401) { localStorage.removeItem('pms_token'); window.location.href = '/'; return; }
+    const res = _checkAuth(await fetch(API_BASE + url, { method: 'DELETE', headers: _authHeaders() }));
     if (!res.ok) throw new Error(await res.text());
     return res.json();
   }
