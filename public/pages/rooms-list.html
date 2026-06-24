@@ -1,0 +1,1406 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Rooms - Kitobo Serenity Resort</title>
+  <style>
+  body { opacity: 0; transition: opacity 0.2s; }
+  body.loaded { opacity: 1; }
+</style>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    document.body.classList.add('loaded');
+  });
+</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css?v=20260518" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <style>
+    /* Mobile Responsive Styles */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #f4f6fa;
+      color: #1e293b;
+      overflow-x: hidden;
+    }
+
+    /* Mobile-first table styles */
+    .apt-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    
+    .apt-table th, .apt-table td {
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--gray-200, #e2e8f0);
+    }
+    
+    .apt-table th {
+      background: var(--gray-100, #f8fafc);
+      font-weight: 600;
+      color: var(--navy, #1e293b);
+    }
+    
+    .apt-table tr:hover {
+      background: var(--gray-50, #f1f5f9);
+    }
+    
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 12px;
+      margin-right: 6px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .btn-warning {
+      background: #f59e0b;
+      color: white;
+      border: none;
+    }
+    
+    .btn-danger {
+      background: #ef4444;
+      color: white;
+      border: none;
+    }
+    
+    .btn-warning:hover, .btn-danger:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+    
+    .color-preview {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: inline-block;
+      border: 1px solid #e2e8f0;
+    }
+
+    /* ============================================================
+       MOBILE RESPONSIVE STYLES
+    ============================================================ */
+    
+    /* Mobile navigation improvements */
+    @media (max-width: 992px) {
+      .main-content {
+        margin-left: 0;
+        padding: 16px;
+      }
+      
+      .card-header {
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-start;
+      }
+      
+      .card-header .btn-gold {
+        width: 100%;
+        text-align: center;
+      }
+    }
+    
+    /* Small phones (up to 480px) */
+    @media (max-width: 480px) {
+      .main-content {
+        padding: 12px;
+      }
+      
+      .card-header {
+        padding: 16px;
+      }
+      
+      .card-title {
+        font-size: 18px;
+      }
+      
+      /* Make table horizontally scrollable on small screens */
+      .table-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        margin: 0 -16px;
+        padding: 0 16px;
+      }
+      
+      /* Table font size adjustment for mobile */
+      .apt-table th, 
+      .apt-table td {
+        padding: 10px 12px;
+        font-size: 12px;
+      }
+      
+      /* Button size for touch */
+      .btn-sm {
+        padding: 8px 14px;
+        font-size: 12px;
+        margin-right: 8px;
+        min-height: 36px;
+      }
+      
+      /* Action buttons container */
+      td:last-child {
+        white-space: nowrap;
+      }
+      
+      /* Emoji size */
+      .apt-table td:first-child span {
+        font-size: 20px;
+      }
+      
+      /* Color preview size */
+      .color-preview {
+        width: 20px;
+        height: 20px;
+      }
+    }
+    
+    /* Very small phones (up to 360px) */
+    @media (max-width: 360px) {
+      .apt-table th, 
+      .apt-table td {
+        padding: 8px 10px;
+        font-size: 11px;
+      }
+      
+      .btn-sm {
+        padding: 6px 10px;
+        font-size: 11px;
+        min-height: 32px;
+      }
+      
+      .apt-table td:first-child span {
+        font-size: 18px;
+      }
+    }
+    
+    /* Touch-friendly improvements */
+    @media (hover: none) and (pointer: coarse) {
+      .btn-sm {
+        padding: 10px 16px;
+      }
+      
+      .nav-item,
+      .user-pill,
+      button {
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+      }
+      
+      button:active {
+        transform: scale(0.97);
+      }
+    }
+    
+    /* Modal responsive for mobile */
+    @media (max-width: 600px) {
+      .reservation-modal {
+        width: 95%;
+        max-width: 95%;
+        max-height: 90vh;
+        overflow-y: auto;
+      }
+      
+      .reservation-modal-body {
+        padding: 20px;
+      }
+      
+      .form-group-row.cols-2,
+      .form-group-row.cols-3 {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+    }
+    
+    /* Loading state */
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: #94a3b8;
+    }
+    /* Notification Styles */
+.notif-btn {
+  position: relative;
+  background: #f1f5f9;
+  border: none;
+  border-radius: 40px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 18px;
+  transition: all 0.2s;
+}
+
+.notif-btn:hover {
+  background: #e2e8f0;
+  transform: scale(1.05);
+}
+
+.notif-btn .badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: #ef4444;
+  color: white;
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  min-width: 18px;
+  text-align: center;
+  display: none;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.notification-panel {
+  position: absolute;
+  top: 60px;
+  right: 20px;
+  width: 350px;
+  max-width: calc(100vw - 40px);
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+  z-index: 1000;
+  display: none;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+}
+
+.notification-panel.show {
+  display: block;
+  animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.notification-header {
+  padding: 14px 16px;
+  border-bottom: 1px solid #e2e8f0;
+  font-weight: 700;
+  font-size: 14px;
+  color: #1e293b;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f8fafc;
+}
+
+.notification-header button {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  color: #64748b;
+  padding: 4px;
+}
+
+.notification-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.notification-item {
+  padding: 14px 16px;
+  border-bottom: 1px solid #eef2f6;
+  transition: background 0.2s;
+  cursor: pointer;
+}
+
+.notification-item:hover {
+  background: #f8fafc;
+}
+
+.notification-item.unread {
+  background: #fef3c7;
+  border-left: 3px solid #f59e0b;
+}
+
+.notification-item.read {
+  opacity: 0.7;
+}
+
+.notification-message {
+  font-size: 13px;
+  color: #1e293b;
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+
+.notification-time {
+  font-size: 10px;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.notification-icon {
+  font-size: 14px;
+  margin-right: 8px;
+}
+
+.empty-notifications {
+  padding: 40px 20px;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+.mark-all-read {
+  background: none;
+  border: none;
+  color: #c9933a;
+  font-size: 12px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.mark-all-read:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 480px) {
+  .notification-panel {
+    width: calc(100vw - 30px);
+    right: 15px;
+    top: 55px;
+  }
+}
+
+/* Navbar Icons */
+.nav-icons {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.nav-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  background: #f1f5f9;
+  border-radius: 40px;
+  color: #1e2a3e;
+  text-decoration: none;
+  transition: all 0.2s;
+  font-size: 18px;
+}
+
+.nav-icon-btn:hover {
+  background: #c9933a;
+  color: white;
+  transform: translateY(-2px);
+}
+
+.nav-icon-btn:active {
+  transform: translateY(0);
+}
+
+@media (max-width: 768px) {
+  .nav-icons {
+    gap: 8px;
+  }
+  
+  .nav-icon-btn {
+    width: 34px;
+    height: 34px;
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .nav-icons {
+    gap: 6px;
+  }
+  
+  .nav-icon-btn {
+    width: 30px;
+    height: 30px;
+    font-size: 14px;
+  }
+}
+
+
+  /* Icon Picker */
+  .apt-icon-picker { position: relative; }
+  .apt-icon-trigger {
+    display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+    border: 1px solid #e2e8f0; border-radius: 20px; background: white;
+    cursor: pointer; font-size: 0.9rem; user-select: none; transition: border-color 0.2s;
+  }
+  .apt-icon-trigger:hover { border-color: #c9933a; }
+  .apt-icon-trigger .preview-icon { font-size: 18px; color: #1e2a3e; width: 22px; text-align: center; }
+  .apt-icon-trigger .preview-label { flex: 1; color: #1e2a3e; font-size: 0.85rem; }
+  .apt-icon-grid {
+    display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+    background: white; border: 1px solid #c9933a; border-radius: 12px; z-index: 9999;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.13); padding: 10px;
+    display: none; grid-template-columns: repeat(6, 1fr); gap: 6px;
+  }
+  .apt-icon-grid.open { display: grid; }
+  .apt-icon-opt {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 3px; padding: 8px 4px; border-radius: 8px; cursor: pointer;
+    font-size: 18px; color: #1e2a3e; transition: background 0.15s;
+  }
+  .apt-icon-opt:hover { background: #f5f3ef; }
+  .apt-icon-opt.selected { background: #fef9f0; border: 1.5px solid #c9933a; }
+  .apt-icon-opt span { font-size: 9px; color: #64748b; }
+  </style>
+</head>
+<body>
+
+<div class="overlay" id="overlay-main"></div>
+
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-top">
+    <a class="sidebar-logo" href="/">
+      <img src="/images/logo.png" alt="Kitobo Serenity Resort" style="height:44px;width:auto;object-fit:contain;display:block;">
+      <div class="logo-text"><span>Kitobo</span><span>Serenity Resort</span></div>
+    </a>
+    <button class="sidebar-close-btn" id="sidebar-close-btn"><i class="fas fa-times"></i></button>
+  </div>
+  
+  <nav class="sidebar-nav">
+    <!-- ============================================================ -->
+    <!-- DASHBOARD -->
+    <!-- ============================================================ -->
+    <div class="nav-section-label">Dashboard</div>
+    <a href="/dashboard" class="nav-item"><i class="fas fa-tachometer-alt"></i> Overview</a>
+    
+    <!-- ============================================================ -->
+    <!-- OPERATIONS -->
+    <!-- ============================================================ -->
+    <div class="nav-section-label">Operations</div>
+    <a href="/reservations" class="nav-item"><i class="fas fa-calendar-alt"></i> Reservations</a>
+    <a href="/housekeeping" class="nav-item"><i class="fas fa-soap"></i> Housekeeping</a>
+    <a href="/maintenance" class="nav-item"><i class="fas fa-toolbox"></i> Maintenance</a>
+    <div class="nav-section-label">POS</div>
+    <a href="/bar" class="nav-item"><i class="fas fa-wine-glass-alt"></i> Bar</a>
+    <a href="/restaurant" class="nav-item"><i class="fas fa-utensils"></i> Restaurant</a>
+    
+    <!-- ============================================================ -->
+    <!-- PROPERTY -->
+    <!-- ============================================================ -->
+    <div class="nav-section-label">Property</div>
+    <a href="/rooms" class="nav-item"><i class="fas fa-building"></i> Rooms View</a>
+    <a href="/rooms-list" class="nav-item active"><i class="fas fa-list-ul"></i> Rooms List</a>
+    
+    <!-- ============================================================ -->
+    <!-- INVENTORY -->
+    <!-- ============================================================ -->
+    <div class="nav-section-label">Inventory</div>
+    <a href="/store-main" class="nav-item"><i class="fas fa-store"></i> Main Store</a>
+    <a href="/store-outlets" class="nav-item"><i class="fas fa-truck"></i> Outlets Store</a>
+    <a href="/purchase-orders" class="nav-item"><i class="fas fa-file-invoice"></i> Purchase Orders</a>
+    <a href="/goods-receipt" class="nav-item"><i class="fas fa-clipboard-list"></i> Goods Receipt</a>
+    
+    
+    <!-- ============================================================ -->
+    <!-- REPORTS -->
+    <!-- ============================================================ -->
+    <div class="nav-section-label">Reports</div>
+    <a href="/reports" class="nav-item"><i class="fas fa-chart-bar"></i> Reservations Report</a>
+    <a href="/maintenance-report" class="nav-item"><i class="fas fa-chart-line"></i> Maintenance Report</a>
+    <a href="/purchase-orders-reports" class="nav-item"><i class="fas fa-file-alt"></i> Purchase Orders Report</a>
+    <a href="/goods-receipt-reports" class="nav-item"><i class="fas fa-stamp"></i> Goods Receipt Report</a>
+    <a href="/store-inventory-reports" class="nav-item"><i class="fas fa-boxes"></i> Store Inventory Report</a>
+    <a href="/sales-report" class="nav-item"><i class="fas fa-receipt"></i> Sales Report</a>
+    <a href="/housekeeping-report" class="nav-item"><i class="fas fa-soap"></i> Housekeeping Report</a>
+    
+    
+    <!-- ============================================================ -->
+    <!-- GUESTS -->
+    <!-- ============================================================ -->
+    <div class="nav-section-label">Finance</div>
+    <a href="/expenditures" class="nav-item"><i class="fas fa-receipt"></i> Expenditures</a>
+    <a href="/expenses" class="nav-item"><i class="fas fa-wallet"></i> Expenses</a>
+    <div class="nav-section-label">Guests</div>
+    <a href="/guest-database" class="nav-item"><i class="fas fa-id-card"></i> Guest Database</a>
+    
+    <!-- ============================================================ -->
+    <!-- ADMIN -->
+    <!-- ============================================================ -->
+    <div class="nav-section-label">Admin</div>
+    <a href="/users" class="nav-item"><i class="fas fa-user-shield"></i> User Management</a>
+    <a href="/permissions" class="nav-item"><i class="fas fa-lock"></i> Permissions &amp; Access</a>
+  </nav>
+  
+  <div class="sidebar-footer">
+    <small>Kitobo Serenity Resort</small>
+  </div>
+</aside>
+
+<!-- Navbar -->
+<nav class="navbar">
+  <div class="navbar-left">
+    <button class="hamburger" id="hamburger-btn" aria-label="Toggle menu">
+      <span class="hb-bar"></span><span class="hb-bar"></span><span class="hb-bar"></span>
+    </button>
+    <div>
+      <div class="page-title">Room List</div>
+      <div class="page-subtitle">Manage Rooms</div>
+    </div>
+  </div>
+  <div class="navbar-right">
+      <div class="nav-icons">
+    <a href="/reservations" class="nav-icon-btn" title="Reservations">
+      <i class="fas fa-calendar-alt"></i>
+    </a>
+    <a href="/reports" class="nav-icon-btn" title="Reports">
+      <i class="fas fa-chart-line"></i>
+    </a>
+    <button class="" onclick="openReservationModal()"></button>
+        <button class="pos-navbar-btn" onclick="openPOSChooser()" title="Point of Sale"><i class="fas fa-cash-register"></i> POS</button>
+    <button class="notif-btn" id="notif-btn">
+  <i class="fas fa-bell"></i><span class="badge" id="notif-badge">0</span>
+</button>
+    
+    <div class="user-dropdown">
+      <div class="user-pill" id="userPill">
+        <div class="user-avatar" id="userAvatar">U</div>
+        <div class="user-info">
+          <span id="userName">Loading...</span>
+          <span id="userRole">Loading...</span>
+        </div>
+        <i class="fas fa-chevron-down"></i>
+      </div>
+      <div class="dropdown-menu" id="dropdownMenu">
+        <button onclick="openChangePasswordModal()"><i class="fas fa-key"></i> Change Password</button>
+        <a href="/users" class="dropdown-item"><i class="fas fa-users"></i> User Management</a>
+        <hr>
+        <button onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<main class="main-content">
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">All Rooms</span>
+      <button class="btn btn-gold" onclick="openAddApartmentModal()">＋ Add Room</button>
+    </div>
+    <!-- Mobile-friendly scrollable table wrapper -->
+    <div class="table-wrapper" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+      <table class="apt-table" id="apartments-table">
+        <thead>
+          <tr>
+            <th>Icon</th><th>Name</th><th>Type</th><th>Max Adults</th><th>Color</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="apartments-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+  <!-- Notification Panel -->
+<div class="notification-panel" id="notification-panel">
+  <div class="notification-header">
+    <span><i class="fas fa-bullhorn"></i> Notifications</span>
+    <div>
+      <button id="mark-all-read-btn" class="mark-all-read">Mark all read</button>
+      <button id="close-notif-panel"><i class="fas fa-times"></i></button>
+    </div>
+  </div>
+  <div class="notification-list" id="notification-list">
+    <div class="empty-notifications"><i class="fas fa-inbox"></i> No new notifications</div>
+  </div>
+</div>
+</main>
+
+<!-- Add/Edit Apartment Modal -->
+<div class="reservation-modal-overlay" id="apt-modal-overlay" onclick="closeApartmentModal()"></div>
+<div class="reservation-modal" id="apt-modal">
+  <div class="reservation-modal-header">
+    <h3 id="apt-modal-title"><i class="fas fa-plus"></i> Add Room</h3>
+    <button class="reservation-modal-close" onclick="closeApartmentModal()"><i class="fas fa-times"></i></button>
+  </div>
+  <div class="reservation-modal-body">
+    <form id="apt-form">
+      <input type="hidden" id="apt-id">
+      <div class="form-group"><label>Room Name</label><input type="text" id="apt-name" class="form-control" required></div>
+      <div class="form-group"><label>Type</label><input type="text" id="apt-type" class="form-control" required></div>
+      <div class="form-group"><label>Max Adults</label><input type="number" id="apt-max-adults" class="form-control" required min="1" value="2"></div>
+      <div class="form-group">
+        <label><i class="fas fa-icons"></i> Icon</label>
+        <input type="hidden" id="apt-emoji" value="fa-home">
+        <div class="apt-icon-picker">
+          <div class="apt-icon-trigger" id="apt-icon-trigger" onclick="toggleAptIconPicker()">
+            <span class="preview-icon"><i class="fas fa-home" id="apt-icon-preview"></i></span>
+            <span class="preview-label" id="apt-icon-label">Home</span>
+            <i class="fas fa-chevron-down" style="color:#94a3b8;font-size:11px;transition:transform 0.2s" id="apt-icon-chevron"></i>
+          </div>
+          <div class="apt-icon-grid" id="apt-icon-grid"></div>
+        </div>
+      </div>
+      <div class="form-group"><label>Color (hex)</label><input type="color" id="apt-color" class="form-control" value="#2d9c6e"></div>
+      <hr class="divider" />
+      <button type="submit" class="btn btn-success" id="apt-submit-btn"><i class="fas fa-check-circle"></i> Save Room</button>
+      <button type="button" class="btn btn-outline" style="margin-top:10px; width:100%;" onclick="closeApartmentModal()">Cancel</button>
+    </form>
+  </div>
+</div>
+
+<!-- Change Password Modal -->
+<div class="reservation-modal-overlay" id="change-password-modal-overlay" onclick="closeChangePasswordModal()"></div>
+<div class="reservation-modal" id="change-password-modal">
+  <div class="reservation-modal-header">
+    <h3><i class="fas fa-lock"></i> Change Password</h3>
+    <button class="reservation-modal-close" onclick="closeChangePasswordModal()"><i class="fas fa-times"></i></button>
+  </div>
+  <div class="reservation-modal-body">
+    <form id="change-password-form">
+      <div class="form-group"><label>Current Password</label><input type="password" id="current-password" class="form-control" required></div>
+      <div class="form-group"><label>New Password (min 6)</label><input type="password" id="new-password" class="form-control" required></div>
+      <div class="form-group"><label>Confirm Password</label><input type="password" id="confirm-password" class="form-control" required></div>
+      <hr class="divider" />
+      <button type="submit" class="btn btn-success"><i class="fas fa-check-circle"></i> Update Password</button>
+      <button type="button" class="btn btn-outline" style="margin-top:10px; width:100%;" onclick="closeChangePasswordModal()">Cancel</button>
+    </form>
+  </div>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+
+<script src="../js/api.js"></script>
+<script src="../js/utils.js"></script>
+<script>
+// ============================================================
+// NOTIFICATION SYSTEM
+// ============================================================
+let notifications = [];
+let notificationCheckInterval = null;
+
+async function loadNotifications() {
+  try {
+    // Get today's date
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+    
+    // Get reservations
+    const reservations = await apiGet('/reservations');
+    
+    // Clear existing notifications
+    notifications = [];
+    
+    // Check for checkouts today
+    const checkoutsToday = reservations.filter(r => r.checkout === todayStr);
+    checkoutsToday.forEach(r => {
+      notifications.push({
+        id: `checkout_${r.id}`,
+        type: 'checkout',
+        message: `${r.guest} checks out today at 11:00 AM`,
+        time: new Date().toLocaleTimeString(),
+        read: false,
+        reservationId: r.id,
+        icon: '<i class="fas fa-door-open"></i>'
+      });
+    });
+    
+    // Check for upcoming check-ins (next 7 days)
+    const nextWeek = new Date();
+    nextWeek.setDate(today.getDate() + 7);
+    const upcomingCheckins = reservations.filter(r => {
+      const checkin = new Date(r.checkin);
+      return checkin > today && checkin <= nextWeek;
+    });
+    upcomingCheckins.forEach(r => {
+      const checkinDate = new Date(r.checkin).toLocaleDateString();
+      notifications.push({
+        id: `checkin_${r.id}`,
+        type: 'upcoming',
+        message: `${r.guest} arrives on ${checkinDate}`,
+        time: new Date().toLocaleTimeString(),
+        read: false,
+        reservationId: r.id,
+        icon: '<i class="fas fa-calendar-alt"></i>'
+      });
+    });
+    
+    // Check for low stock items (if on store page)
+    try {
+      const storeItems = await apiGet('/store/items');
+      const lowStock = storeItems.filter(i => parseFloat(i.quantity) < 5);
+      lowStock.forEach(item => {
+        notifications.push({
+          id: `stock_${item.id}`,
+          type: 'stock',
+          message: `${item.name} is low in stock (${item.quantity} left)`,
+          time: new Date().toLocaleTimeString(),
+          read: false,
+          icon: '<i class="fas fa-exclamation-triangle"></i>'
+        });
+      });
+    } catch(e) {
+      // Store API might not be accessible, ignore
+    }
+    
+    // Sort by time (newest first) and limit to 20
+    notifications.sort((a, b) => new Date(b.time) - new Date(a.time));
+    notifications = notifications.slice(0, 20);
+    
+    // Update UI
+    renderNotifications();
+    updateNotificationBadge();
+    
+    console.log(`<i class="fas fa-bullhorn"></i> Loaded ${notifications.length} notifications`);
+  } catch (err) {
+    console.error('Failed to load notifications:', err);
+  }
+}
+
+function renderNotifications() {
+  const container = document.getElementById('notification-list');
+  if (!container) return;
+  
+  const unreadCount = notifications.filter(n => !n.read).length;
+  
+  if (notifications.length === 0) {
+    container.innerHTML = '<div class="empty-notifications"><i class="fas fa-inbox"></i> No new notifications</div>';
+    return;
+  }
+  
+  container.innerHTML = notifications.map(notif => `
+    <div class="notification-item ${notif.read ? 'read' : 'unread'}" data-id="${notif.id}" data-type="${notif.type}" data-reservation-id="${notif.reservationId || ''}">
+      <div class="notification-message">
+        <span class="notification-icon">${notif.icon}</span>
+        ${escapeHtml(notif.message)}
+      </div>
+      <div class="notification-time">
+        <span><i class="fas fa-clock"></i> ${notif.time}</span>
+      </div>
+    </div>
+  `).join('');
+  
+  // Add click handlers to notification items
+  document.querySelectorAll('.notification-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const notifId = item.getAttribute('data-id');
+      const notif = notifications.find(n => n.id === notifId);
+      if (notif) {
+        notif.read = true;
+        renderNotifications();
+        updateNotificationBadge();
+        
+        // Handle click action based on type
+        if (notif.type === 'checkout' && notif.reservationId) {
+          openDetail(notif.reservationId);
+        } else if (notif.type === 'upcoming' && notif.reservationId) {
+          openDetail(notif.reservationId);
+        } else if (notif.type === 'stock') {
+          window.location.href = '/store-main';
+        }
+      }
+      closeNotificationPanel();
+    });
+  });
+}
+
+function updateNotificationBadge() {
+  const badge = document.getElementById('notif-badge');
+  if (!badge) return;
+  
+  const unreadCount = notifications.filter(n => !n.read).length;
+  badge.textContent = unreadCount;
+  badge.style.display = unreadCount > 0 ? 'inline-block' : 'none';
+}
+
+function toggleNotificationPanel() {
+  const panel = document.getElementById('notification-panel');
+  if (panel) {
+    panel.classList.toggle('show');
+  }
+}
+
+function closeNotificationPanel() {
+  const panel = document.getElementById('notification-panel');
+  if (panel) {
+    panel.classList.remove('show');
+  }
+}
+
+function markAllNotificationsRead() {
+  notifications.forEach(n => n.read = true);
+  renderNotifications();
+  updateNotificationBadge();
+  showToast('All notifications marked as read', 'success');
+}
+
+// Initialize notification button
+const notifBtn = document.getElementById('notif-btn');
+if (notifBtn) {
+  notifBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleNotificationPanel();
+  });
+}
+
+// Close panel when clicking outside
+document.addEventListener('click', function(e) {
+  const panel = document.getElementById('notification-panel');
+  const btn = document.getElementById('notif-btn');
+  if (panel && btn && !btn.contains(e.target) && !panel.contains(e.target)) {
+    panel.classList.remove('show');
+  }
+});
+
+// Mark all read button
+const markAllBtn = document.getElementById('mark-all-read-btn');
+if (markAllBtn) {
+  markAllBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    markAllNotificationsRead();
+  });
+}
+
+// Close button
+const closeNotifBtn = document.getElementById('close-notif-panel');
+if (closeNotifBtn) {
+  closeNotifBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    closeNotificationPanel();
+  });
+}
+
+// Load notifications on page load
+document.addEventListener('DOMContentLoaded', function() {
+  loadNotifications();
+  // Refresh every 5 minutes
+  if (notificationCheckInterval) clearInterval(notificationCheckInterval);
+  notificationCheckInterval = setInterval(loadNotifications, 300000);
+});
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return str.replace(/[&<>]/g, function(m) {
+    if (m === '&') return '&amp;';
+    if (m === '<') return '&lt;';
+    if (m === '>') return '&gt;';
+    return m;
+  });
+}
+
+
+
+  // ============================================================
+  // SIDEBAR TOGGLE
+  // ============================================================
+  const hamburgerBtn = document.getElementById('hamburger-btn');
+  const sidebar = document.getElementById('sidebar');
+  const overlayMain = document.getElementById('overlay-main');
+  const sidebarClose = document.getElementById('sidebar-close-btn');
+  
+  function openSidebar() { 
+    sidebar.classList.add('open'); 
+    overlayMain.classList.add('open'); 
+    hamburgerBtn.classList.add('active'); 
+  }
+  
+  function closeSidebar() { 
+    sidebar.classList.remove('open'); 
+    overlayMain.classList.remove('open'); 
+    hamburgerBtn.classList.remove('active'); 
+  }
+  
+  hamburgerBtn?.addEventListener('click', () => sidebar.classList.contains('open') ? closeSidebar() : openSidebar());
+  sidebarClose?.addEventListener('click', closeSidebar);
+  overlayMain?.addEventListener('click', closeSidebar);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSidebar(); });
+
+  // ============================================================
+  // APARTMENT CRUD FUNCTIONS
+  // ============================================================
+  let apartments = [];
+
+async function loadApartments() {
+  try {
+    const token = sessionStorage.getItem('token');
+    const response = await fetch('/api/apartments', {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    if (response.status === 401 || response.status === 403) {
+      sessionStorage.clear();
+      window.location.href = '/';
+      return;
+    }
+    
+    if (!response.ok) throw new Error('Failed to load');
+    
+    const data = await response.json();
+    apartments = data;
+    renderApartments();
+  } catch (err) {
+    showToast('Failed to load apartments: ' + err.message, 'error');
+  }
+}
+
+  function renderApartments() {
+    const tbody = document.getElementById('apartments-tbody');
+    if (!tbody) return;
+    if (apartments.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><i class="fas fa-building"></i> No rooms found. Click "Add Room" to create one.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = apartments.map(apt => `
+      <tr>
+        <td><span style="font-size:24px"><i class="fas ${(apt.emoji && apt.emoji.startsWith('fa-')) ? apt.emoji : 'fa-home'}"></i></span></td>
+        <td><strong>${escapeHtml(apt.name)}</strong></td>
+        <td>${escapeHtml(apt.type)}</td>
+        <td>${apt.maxAdults}</td>
+        <td><div class="color-preview" style="background:${apt.color || '#2d9c6e'}"></div></td>
+        <td>
+          <button class="btn-sm btn-warning" onclick="openEditApartmentModal(${apt.id})"><i class="fas fa-edit"></i> Edit</button>
+          <button class="btn-sm btn-danger" onclick="deleteApartment(${apt.id})"><i class="fas fa-trash-alt"></i> Delete</button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+async function apiPost(endpoint, data) {
+  const token = sessionStorage.getItem('token');
+  const response = await fetch(`/api${endpoint}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify(data)
+  });
+  
+  if (response.status === 401 || response.status === 403) {
+    sessionStorage.clear();
+    window.location.href = '/';
+    throw new Error('Session expired');
+  }
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Request failed');
+  }
+  
+  return response.json();
+}
+
+
+
+async function apiPut(endpoint, data) {
+  const token = sessionStorage.getItem('token');
+  const response = await fetch(`/api${endpoint}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify(data)
+  });
+  
+  if (response.status === 401 || response.status === 403) {
+    sessionStorage.clear();
+    window.location.href = '/';
+    throw new Error('Session expired');
+  }
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Request failed');
+  }
+  
+  return response.json();
+}
+
+  async function deleteApartment(id) {
+    const apt = apartments.find(a => a.id === id);
+    if (!apt) return;
+    if (!confirm(`Delete apartment "${apt.name}"? This will also delete all its reservations.`)) return;
+    try {
+      await apiDelete(`/apartments/${id}`);
+      showToast('Room deleted', 'success');
+      await loadApartments();
+    } catch (err) {
+      showToast('Delete failed: ' + err.message, 'error');
+    }
+  }
+
+  // ============================================================
+  // ADD/EDIT MODAL FUNCTIONS
+  // ============================================================
+  function openAddApartmentModal() {
+    document.getElementById('apt-modal-title').innerHTML = '<i class="fas fa-plus"></i> Add Room';
+    document.getElementById('apt-id').value = '';
+    document.getElementById('apt-name').value = '';
+    document.getElementById('apt-type').value = '';
+    document.getElementById('apt-max-adults').value = '2';
+    document.getElementById('apt-emoji').value = 'fa-home';
+    setAptIconPicker('fa-home');
+    document.getElementById('apt-color').value = '#2d9c6e';
+    document.getElementById('apt-modal').classList.add('open');
+    document.getElementById('apt-modal-overlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function openEditApartmentModal(id) {
+    const apt = apartments.find(a => a.id === id);
+    if (!apt) return;
+    document.getElementById('apt-modal-title').innerHTML = '<i class="fas fa-edit"></i> Edit Room';
+    document.getElementById('apt-id').value = apt.id;
+    document.getElementById('apt-name').value = apt.name;
+    document.getElementById('apt-type').value = apt.type;
+    document.getElementById('apt-max-adults').value = apt.maxAdults;
+    const iconVal = apt.emoji || 'fa-home';
+    document.getElementById('apt-emoji').value = iconVal;
+    setAptIconPicker(iconVal);
+    document.getElementById('apt-color').value = apt.color || '#2d9c6e';
+    document.getElementById('apt-modal').classList.add('open');
+    document.getElementById('apt-modal-overlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeApartmentModal() {
+    document.getElementById('apt-modal').classList.remove('open');
+    document.getElementById('apt-modal-overlay').classList.remove('open');
+    document.body.style.overflow = '';
+    document.getElementById('apt-form').reset();
+  }
+
+  // ============================================================
+  // FORM SUBMIT HANDLER
+  // ============================================================
+  document.getElementById('apt-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = document.getElementById('apt-id').value;
+    const name = document.getElementById('apt-name').value.trim();
+    const type = document.getElementById('apt-type').value.trim();
+    const maxAdults = parseInt(document.getElementById('apt-max-adults').value);
+    const emoji = document.getElementById('apt-emoji').value.trim();
+    const color = document.getElementById('apt-color').value;
+
+    if (!name || !type || !maxAdults) {
+      showToast('Please fill all required fields', 'error');
+      return;
+    }
+
+    const payload = { name, type, maxAdults, emoji, color };
+
+    try {
+      if (id) {
+        await apiPut(`/apartments/${id}`, payload);
+        showToast('Room updated successfully!', 'success');
+      } else {
+        await apiPost('/apartments', payload);
+        showToast('Room added successfully!', 'success');
+      }
+      closeApartmentModal();
+      await loadApartments();
+    } catch (err) {
+      showToast('Failed to save room: ' + err.message, 'error');
+    }
+  });
+
+  // ============================================================
+  // HELPER FUNCTIONS
+  // ============================================================
+  function escapeHtml(str) { 
+    if (!str) return ''; 
+    return String(str).replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); 
+  }
+
+  function showToast(msg, type) {
+    const toast = document.getElementById('toast-container');
+    const bgColor = type === 'error' ? '#ef4444' : '#10b981';
+    toast.innerHTML = `<div style="background:${bgColor};color:white;padding:12px 20px;border-radius:40px;margin-bottom:8px;">${msg}</div>`;
+    setTimeout(() => toast.innerHTML = '', 3000);
+  }
+
+  // ============================================================
+  // USER SESSION MANAGEMENT
+  // ============================================================
+  function getCurrentUser() {
+    const userStr = sessionStorage.getItem('pms_user');
+    if (!userStr) return null;
+    try { return JSON.parse(userStr); } catch(e) { return null; }
+  }
+
+  function logout() {
+    sessionStorage.removeItem('pms_user');
+    window.location.href = '/';
+  }
+
+  // Redirect if not logged in
+  const currentUser = getCurrentUser();
+  if (!currentUser) {
+    window.location.href = '/';
+  }
+
+  // Display user info
+  document.getElementById('userName').innerText = currentUser.fullName || currentUser.username;
+  document.getElementById('userRole').innerText = currentUser.role ? currentUser.role.charAt(0).toUpperCase() + currentUser.role.slice(1) : 'User';
+  document.getElementById('userAvatar').innerText = (currentUser.fullName || currentUser.username || 'U').charAt(0).toUpperCase();
+
+  // Dropdown toggle
+  const userPill = document.getElementById('userPill');
+  const dropdownMenu = document.getElementById('dropdownMenu');
+  if (userPill) {
+    userPill.addEventListener('click', (e) => {
+      e.stopPropagation();
+      dropdownMenu.classList.toggle('show');
+      userPill.classList.toggle('active');
+    });
+    document.addEventListener('click', () => {
+      dropdownMenu.classList.remove('show');
+      userPill.classList.remove('active');
+    });
+  }
+
+  // ============================================================
+  // CHANGE PASSWORD MODAL
+  // ============================================================
+// ============================================================
+// CHANGE PASSWORD MODAL
+// ============================================================
+function openChangePasswordModal() {
+  const modal = document.getElementById('change-password-modal');
+  const modalOverlay = document.getElementById('change-password-modal-overlay');
+  if (modal && modalOverlay) {
+    modal.classList.add('open');
+    modalOverlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  if (dropdownMenu) dropdownMenu.classList.remove('show');
+  if (userPill) userPill.classList.remove('active');
+}
+
+function closeChangePasswordModal() {
+  const modal = document.getElementById('change-password-modal');
+  const modalOverlay = document.getElementById('change-password-modal-overlay');
+  if (modal) modal.classList.remove('open');
+  if (modalOverlay) modalOverlay.classList.remove('open');
+  document.body.style.overflow = '';
+  const form = document.getElementById('change-password-form');
+  if (form) form.reset();
+}
+
+// Change Password Form Submit - FIXED
+const changePasswordForm = document.getElementById('change-password-form');
+if (changePasswordForm) {
+  // Remove any existing listeners to avoid duplicates
+  const newForm = changePasswordForm.cloneNode(true);
+  changePasswordForm.parentNode.replaceChild(newForm, changePasswordForm);
+  
+  newForm.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    console.log('Change password form submitted');
+    
+    const currentPassword = document.getElementById('current-password').value;
+    const newPassword = document.getElementById('new-password').value;
+    const confirmPassword = document.getElementById('confirm-password').value;
+    
+    if (newPassword !== confirmPassword) {
+      showToast('New passwords do not match', 'error');
+      return;
+    }
+    if (newPassword.length < 6) {
+      showToast('Password must be at least 6 characters', 'error');
+      return;
+    }
+    
+    const currentUserData = getCurrentUser();
+    if (!currentUserData) {
+      showToast('User not found. Please login again.', 'error');
+      return;
+    }
+    
+    try {
+      const token = sessionStorage.getItem('token');
+      const response = await fetch('/api/auth/change-password', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ 
+          userId: currentUserData.id,  // Use currentUserData.id
+          oldPassword: currentPassword, 
+          newPassword: newPassword 
+        })
+      });
+      
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error);
+      
+      showToast('Password changed successfully! Please login again.', 'success');
+      setTimeout(() => { logout(); }, 1500);
+    } catch (err) {
+      console.error('Change password error:', err);
+      showToast('Failed to change password: ' + err.message, 'error');
+    }
+  });
+}
+
+  // ============================================================
+  // RESERVATION MODAL (for the Add Reservation button)
+  // ============================================================
+  function openReservationModal() {
+    window.location.href = '/add-reservation';
+  }
+
+  // ============================================================
+  // INITIALIZE
+  // ============================================================
+  document.addEventListener('DOMContentLoaded', () => {
+    loadApartments();
+  });
+
+  // Make functions global
+  window.openAddApartmentModal = openAddApartmentModal;
+  window.openEditApartmentModal = openEditApartmentModal;
+  window.closeApartmentModal = closeApartmentModal;
+  window.deleteApartment = deleteApartment;
+  window.openReservationModal = openReservationModal;
+  window.logout = logout;
+  window.openChangePasswordModal = openChangePasswordModal;
+  window.closeChangePasswordModal = closeChangePasswordModal;
+</script>
+
+<script>
+  const APT_ICONS = [
+    { cls: 'fa-home',            label: 'Home' },
+    { cls: 'fa-building',        label: 'Building' },
+    { cls: 'fa-hotel',           label: 'Hotel' },
+    { cls: 'fa-bed',             label: 'Bed' },
+    { cls: 'fa-door-open',       label: 'Door' },
+    { cls: 'fa-star',            label: 'Star' },
+    { cls: 'fa-crown',           label: 'Crown' },
+    { cls: 'fa-gem',             label: 'Gem' },
+    { cls: 'fa-sun',             label: 'Sun' },
+    { cls: 'fa-leaf',            label: 'Leaf' },
+    { cls: 'fa-tree',            label: 'Tree' },
+    { cls: 'fa-city',            label: 'City' },
+    { cls: 'fa-landmark',        label: 'Landmark' },
+    { cls: 'fa-couch',           label: 'Couch' },
+    { cls: 'fa-bath',            label: 'Bath' },
+    { cls: 'fa-concierge-bell',  label: 'Concierge' },
+    { cls: 'fa-key',             label: 'Key' },
+    { cls: 'fa-umbrella-beach',  label: 'Beach' },
+    { cls: 'fa-swimming-pool',   label: 'Pool' },
+    { cls: 'fa-mountain',        label: 'Mountain' },
+    { cls: 'fa-water',           label: 'Water' },
+    { cls: 'fa-wine-glass-alt',  label: 'Wine' },
+    { cls: 'fa-utensils',        label: 'Dining' },
+    { cls: 'fa-spa',             label: 'Spa' },
+  ];
+
+  function buildAptIconGrid() {
+    const grid = document.getElementById('apt-icon-grid');
+    if (!grid || grid.dataset.built) return;
+    grid.dataset.built = '1';
+    const current = document.getElementById('apt-emoji').value || 'fa-home';
+    APT_ICONS.forEach(({ cls, label }) => {
+      const opt = document.createElement('div');
+      opt.className = 'apt-icon-opt' + (cls === current ? ' selected' : '');
+      opt.dataset.cls = cls;
+      opt.innerHTML = `<i class="fas ${cls}"></i><span>${label}</span>`;
+      opt.onclick = () => selectAptIcon(cls, label);
+      grid.appendChild(opt);
+    });
+  }
+
+  function selectAptIcon(cls, label) {
+    document.getElementById('apt-emoji').value = cls;
+    const preview = document.getElementById('apt-icon-preview');
+    preview.className = 'fas ' + cls;
+    document.getElementById('apt-icon-label').textContent = label;
+    document.querySelectorAll('.apt-icon-opt').forEach(o => {
+      o.classList.toggle('selected', o.dataset.cls === cls);
+    });
+    closeAptIconPicker();
+  }
+
+  function setAptIconPicker(cls) {
+    const info = APT_ICONS.find(i => i.cls === cls) || { cls: 'fa-home', label: 'Home' };
+    const preview = document.getElementById('apt-icon-preview');
+    if (preview) {
+      preview.className = 'fas ' + info.cls;
+      document.getElementById('apt-icon-label').textContent = info.label;
+    }
+    document.querySelectorAll('.apt-icon-opt').forEach(o => {
+      o.classList.toggle('selected', o.dataset.cls === info.cls);
+    });
+  }
+
+  function toggleAptIconPicker() {
+    buildAptIconGrid();
+    const grid = document.getElementById('apt-icon-grid');
+    const chevron = document.getElementById('apt-icon-chevron');
+    const isOpen = grid.classList.toggle('open');
+    chevron.style.transform = isOpen ? 'rotate(180deg)' : '';
+  }
+
+  function closeAptIconPicker() {
+    const grid = document.getElementById('apt-icon-grid');
+    const chevron = document.getElementById('apt-icon-chevron');
+    grid.classList.remove('open');
+    chevron.style.transform = '';
+  }
+
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.apt-icon-picker')) closeAptIconPicker();
+  });
+
+  window.toggleAptIconPicker = toggleAptIconPicker;
+  window.setAptIconPicker = setAptIconPicker;
+</script>
+
+<!-- POS Chooser Modal -->
+<div id="pos-chooser-overlay" onclick="if(event.target===this)closePOSChooser()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:18px;padding:40px 36px;max-width:460px;width:92%;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,0.28);">
+    <div style="font-size:22px;font-weight:700;color:#1e293b;margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:10px;">
+      <i class="fas fa-cash-register" style="color:#c9933a;"></i> Point of Sale
+    </div>
+    <p style="color:#64748b;margin:0 0 28px;font-size:14px;">Select the POS system to open</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px;">
+      <a href="/bar" onclick="closePOSChooser()" style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:26px 16px;background:linear-gradient(135deg,#1e3a5f,#2563eb);border-radius:14px;color:#fff;text-decoration:none;font-weight:700;font-size:15px;transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 10px 28px rgba(37,99,235,0.4)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='none'">
+        <i class="fas fa-wine-glass-alt" style="font-size:34px;opacity:0.95;"></i>
+        Bar
+      </a>
+      <a href="/restaurant" onclick="closePOSChooser()" style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:26px 16px;background:linear-gradient(135deg,#7c2d12,#ea580c);border-radius:14px;color:#fff;text-decoration:none;font-weight:700;font-size:15px;transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 10px 28px rgba(234,88,12,0.4)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='none'">
+        <i class="fas fa-utensils" style="font-size:34px;opacity:0.95;"></i>
+        Restaurant
+      </a>
+    </div>
+    <button onclick="closePOSChooser()" style="padding:9px 28px;border:1.5px solid #e2e8f0;border-radius:8px;background:#f8fafc;cursor:pointer;color:#64748b;font-size:13px;font-weight:500;">Cancel</button>
+  </div>
+</div>
+<script>
+function openPOSChooser(){var o=document.getElementById('pos-chooser-overlay');if(o){o.style.display='flex';}}
+function closePOSChooser(){var o=document.getElementById('pos-chooser-overlay');if(o){o.style.display='none';}}
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closePOSChooser();});
+</script>
+<script src="../js/permissions.js"></script>
+</body>
+</html>

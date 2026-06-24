@@ -1,0 +1,2249 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Rooms - Kitobo Serenity Resort</title>
+  <style>
+  body { opacity: 0; transition: opacity 0.2s; }
+  body.loaded { opacity: 1; }
+</style>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    document.body.classList.add('loaded');
+  });
+</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css?v=20260518" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <style>
+    /* Searchable select styles */
+.select-wrapper {
+  position: relative;
+}
+.searchable-select {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 14px;
+  background: white;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.searchable-select:hover {
+  border-color: #c9933a;
+}
+.select-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  margin-top: 4px;
+  max-height: 250px;
+  overflow-y: auto;
+  z-index: 100;
+  display: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+.select-dropdown.show {
+  display: block;
+}
+.select-search {
+  padding: 8px;
+  border-bottom: 1px solid #e2e8f0;
+  position: sticky;
+  top: 0;
+  background: white;
+}
+.select-search input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 12px;
+}
+.select-option {
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.select-option:hover {
+  background: #f8fafc;
+}
+.select-option.selected {
+  background: #fef3c7;
+  color: #c9933a;
+}
+
+/* Notification Styles */
+.notif-btn {
+  position: relative;
+  background: #f1f5f9;
+  border: none;
+  border-radius: 40px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 18px;
+  transition: all 0.2s;
+}
+
+.notif-btn:hover {
+  background: #e2e8f0;
+  transform: scale(1.05);
+}
+
+.notif-btn .badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: #ef4444;
+  color: white;
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  min-width: 18px;
+  text-align: center;
+  display: none;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.notification-panel {
+  position: absolute;
+  top: 60px;
+  right: 20px;
+  width: 350px;
+  max-width: calc(100vw - 40px);
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+  z-index: 1000;
+  display: none;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+}
+
+.notification-panel.show {
+  display: block;
+  animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.notification-header {
+  padding: 14px 16px;
+  border-bottom: 1px solid #e2e8f0;
+  font-weight: 700;
+  font-size: 14px;
+  color: #1e293b;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f8fafc;
+}
+
+.notification-header button {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  color: #64748b;
+  padding: 4px;
+}
+
+.notification-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.notification-item {
+  padding: 14px 16px;
+  border-bottom: 1px solid #eef2f6;
+  transition: background 0.2s;
+  cursor: pointer;
+}
+
+.notification-item:hover {
+  background: #f8fafc;
+}
+
+.notification-item.unread {
+  background: #fef3c7;
+  border-left: 3px solid #f59e0b;
+}
+
+.notification-item.read {
+  opacity: 0.7;
+}
+
+.notification-message {
+  font-size: 13px;
+  color: #1e293b;
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+
+.notification-time {
+  font-size: 10px;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.notification-icon {
+  font-size: 14px;
+  margin-right: 8px;
+}
+
+.empty-notifications {
+  padding: 40px 20px;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+.mark-all-read {
+  background: none;
+  border: none;
+  color: #c9933a;
+  font-size: 12px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.mark-all-read:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 480px) {
+  .notification-panel {
+    width: calc(100vw - 30px);
+    right: 15px;
+    top: 55px;
+  }
+}
+/* Navbar Icons */
+.nav-icons {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.nav-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  background: #f1f5f9;
+  border-radius: 40px;
+  color: #1e2a3e;
+  text-decoration: none;
+  transition: all 0.2s;
+  font-size: 18px;
+}
+
+.nav-icon-btn:hover {
+  background: #c9933a;
+  color: white;
+  transform: translateY(-2px);
+}
+
+.nav-icon-btn:active {
+  transform: translateY(0);
+}
+
+@media (max-width: 768px) {
+  .nav-icons {
+    gap: 8px;
+  }
+  
+  .nav-icon-btn {
+    width: 34px;
+    height: 34px;
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .nav-icons {
+    gap: 6px;
+  }
+  
+  .nav-icon-btn {
+    width: 30px;
+    height: 30px;
+    font-size: 14px;
+  }
+}
+/* Navbar Icons */
+.nav-icons {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.nav-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  background: #f1f5f9;
+  border-radius: 40px;
+  color: #1e2a3e;
+  text-decoration: none;
+  transition: all 0.2s;
+  font-size: 18px;
+}
+
+.nav-icon-btn:hover {
+  background: #c9933a;
+  color: white;
+  transform: translateY(-2px);
+}
+
+.nav-icon-btn:active {
+  transform: translateY(0);
+}
+
+@media (max-width: 768px) {
+  .nav-icons {
+    gap: 8px;
+  }
+  
+  .nav-icon-btn {
+    width: 34px;
+    height: 34px;
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .nav-icons {
+    gap: 6px;
+  }
+  
+  .nav-icon-btn {
+    width: 30px;
+    height: 30px;
+    font-size: 14px;
+  }
+}
+/* Editable Total Rate - Custom CSS */
+.custom-rate-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.custom-rate-edit {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  width: 100%;
+}
+
+.custom-rate-edit input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #c9933a;
+  border-radius: 20px;
+  font-size: 14px;
+}
+
+.btn-custom-apply {
+  background: #c9933a;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 40px;
+  cursor: pointer;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.btn-custom-apply:hover {
+  background: #a87a2c;
+}
+
+.btn-custom-cancel {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 40px;
+  cursor: pointer;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.btn-custom-cancel:hover {
+  background: #dc2626;
+}
+
+.custom-total-badge {
+  font-size: 10px;
+  color: #c9933a;
+  margin-left: 8px;
+  font-style: italic;
+}
+
+.custom-rate-edit-icon {
+  cursor: pointer;
+  margin-left: 8px;
+  font-size: 12px;
+  color: #94a3b8;
+  transition: color 0.2s;
+}
+
+.custom-rate-edit-icon:hover {
+  color: #c9933a;
+}
+
+
+/* Increase Reservation Modal Width */
+@media (min-width: 768px) {
+  .reservation-modal {
+    width: 650px !important;
+    max-width: 90% !important;
+  }
+}
+
+@media (min-width: 1200px) {
+  .reservation-modal {
+    width: 750px !important;
+    max-width: 85% !important;
+  }
+}
+
+/* Ensure custom rate edit section fits properly */
+.custom-rate-edit {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: nowrap;
+  width: 100%;
+}
+
+.custom-rate-edit input {
+  flex: 2;
+  min-width: 0;
+  padding: 8px 12px;
+  border: 1px solid #c9933a;
+  border-radius: 20px;
+  font-size: 13px;
+}
+
+.btn-custom-apply, .btn-custom-cancel {
+  padding: 8px 16px;
+  white-space: nowrap;
+  font-size: 12px;
+}
+
+/* Ensure form groups don't overflow */
+.form-group-row {
+  flex-wrap: wrap;
+}
+
+/* For mobile devices */
+@media (max-width: 768px) {
+  .custom-rate-edit {
+    flex-wrap: wrap;
+  }
+  
+  .custom-rate-edit input {
+    width: 100%;
+    flex: auto;
+  }
+  
+  .btn-custom-apply, .btn-custom-cancel {
+    flex: 1;
+    text-align: center;
+  }
+}
+  </style>
+  
+</head>
+<body>
+
+<!-- Overlay for Sidebar -->
+<div class="overlay" id="overlay-main"></div>
+
+<!-- Sidebar -->
+<!-- Sidebar -->
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-top">
+    <a class="sidebar-logo" href="/">
+      <img src="/images/logo.png" alt="Kitobo Serenity Resort" style="height:44px;width:auto;object-fit:contain;display:block;">
+      <div class="logo-text"><span>Kitobo</span><span>Serenity Resort</span></div>
+    </a>
+    <button class="sidebar-close-btn" id="sidebar-close-btn"><i class="fas fa-times"></i></button>
+  </div>
+  
+  <nav class="sidebar-nav">
+    <!-- ============================================================ -->
+    <!-- DASHBOARD -->
+    <!-- ============================================================ -->
+    <div class="nav-section-label">Dashboard</div>
+    <a href="/dashboard" class="nav-item"><i class="fas fa-tachometer-alt"></i> Overview</a>
+    
+    <!-- ============================================================ -->
+    <!-- OPERATIONS -->
+    <!-- ============================================================ -->
+    <div class="nav-section-label">Operations</div>
+    <a href="/reservations" class="nav-item"><i class="fas fa-calendar-alt"></i> Reservations</a>
+    <a href="/housekeeping" class="nav-item"><i class="fas fa-soap"></i> Housekeeping</a>
+    <a href="/maintenance" class="nav-item"><i class="fas fa-toolbox"></i> Maintenance</a>
+    <div class="nav-section-label">POS</div>
+    <a href="/bar" class="nav-item"><i class="fas fa-wine-glass-alt"></i> Bar</a>
+    <a href="/restaurant" class="nav-item"><i class="fas fa-utensils"></i> Restaurant</a>
+    
+    <!-- ============================================================ -->
+    <!-- PROPERTY -->
+    <!-- ============================================================ -->
+    <div class="nav-section-label">Property</div>
+    <a href="/rooms" class="nav-item active"><i class="fas fa-building"></i> Rooms View</a>
+    <a href="/rooms-list" class="nav-item "><i class="fas fa-list-ul"></i> Rooms List</a>
+    
+    <!-- ============================================================ -->
+    <!-- INVENTORY -->
+    <!-- ============================================================ -->
+    <div class="nav-section-label">Inventory</div>
+    <a href="/store-main" class="nav-item"><i class="fas fa-store"></i> Main Store</a>
+    <a href="/store-outlets" class="nav-item"><i class="fas fa-truck"></i> Outlets Store</a>
+    <a href="/purchase-orders" class="nav-item"><i class="fas fa-file-invoice"></i> Purchase Orders</a>
+    <a href="/goods-receipt" class="nav-item"><i class="fas fa-clipboard-list"></i> Goods Receipt</a>
+    
+    
+    <!-- ============================================================ -->
+    <!-- REPORTS -->
+    <!-- ============================================================ -->
+    <div class="nav-section-label">Reports</div>
+    <a href="/reports" class="nav-item"><i class="fas fa-chart-bar"></i> Reservations Report</a>
+    <a href="/maintenance-report" class="nav-item"><i class="fas fa-chart-line"></i> Maintenance Report</a>
+    <a href="/purchase-orders-reports" class="nav-item"><i class="fas fa-file-alt"></i> Purchase Orders Report</a>
+    <a href="/goods-receipt-reports" class="nav-item"><i class="fas fa-stamp"></i> Goods Receipt Report</a>
+    <a href="/store-inventory-reports" class="nav-item"><i class="fas fa-boxes"></i> Store Inventory Report</a>
+    <a href="/sales-report" class="nav-item"><i class="fas fa-receipt"></i> Sales Report</a>
+    <a href="/housekeeping-report" class="nav-item"><i class="fas fa-soap"></i> Housekeeping Report</a>
+    
+    
+    <!-- ============================================================ -->
+    <!-- GUESTS -->
+    <!-- ============================================================ -->
+    <div class="nav-section-label">Finance</div>
+    <a href="/expenditures" class="nav-item"><i class="fas fa-receipt"></i> Expenditures</a>
+    <a href="/expenses" class="nav-item"><i class="fas fa-wallet"></i> Expenses</a>
+    <div class="nav-section-label">Guests</div>
+    <a href="/guest-database" class="nav-item"><i class="fas fa-id-card"></i> Guest Database</a>
+    
+    <!-- ============================================================ -->
+    <!-- ADMIN -->
+    <!-- ============================================================ -->
+    <div class="nav-section-label">Admin</div>
+    <a href="/users" class="nav-item"><i class="fas fa-user-shield"></i> User Management</a>
+    <a href="/permissions" class="nav-item"><i class="fas fa-lock"></i> Permissions &amp; Access</a>
+  </nav>
+  
+  <div class="sidebar-footer">
+    <small>Kitobo Serenity Resort</small>
+  </div>
+</aside>
+
+
+<!-- Navbar -->
+<!-- Navbar -->
+<nav class="navbar">
+  <div class="navbar-left">
+    <button class="hamburger" id="hamburger-btn" aria-label="Toggle menu">
+      <span class="hb-bar"></span><span class="hb-bar"></span><span class="hb-bar"></span>
+    </button>
+    <div>
+      <div class="page-title">Room View</div>
+      <div class="page-subtitle">Rooms Overview</div>
+    </div>
+  </div>
+  <div class="navbar-right">
+      <div class="nav-icons">
+    <a href="/reservations" class="nav-icon-btn" title="Reservations">
+      <i class="fas fa-calendar-alt"></i>
+    </a>
+    <a href="/reports" class="nav-icon-btn" title="Reports">
+      <i class="fas fa-chart-line"></i>
+    </a>
+    <button class="" onclick="openReservationModal()"></button>
+        <button class="pos-navbar-btn" onclick="openPOSChooser()" title="Point of Sale"><i class="fas fa-cash-register"></i> POS</button>
+    <button class="notif-btn" id="notif-btn">
+  <i class="fas fa-bell"></i><span class="badge" id="notif-badge">0</span>
+</button>
+    
+    <!-- User Dropdown -->
+    <div class="user-dropdown">
+      <div class="user-pill" id="userPill">
+        <div class="user-avatar" id="userAvatar">U</div>
+        <div class="user-info">
+          <span id="userName">Loading...</span>
+          <span id="userRole">Loading...</span>
+        </div>
+        <i class="fas fa-chevron-down"></i>
+      </div>
+      <div class="dropdown-menu" id="dropdownMenu">
+        <button onclick="openChangePasswordModal()"><i class="fas fa-key"></i> Change Password</button>
+        <a href="/users" class="dropdown-item"><i class="fas fa-users"></i> User Management</a>
+        <hr>
+        <button onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<main class="main-content">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+    <div>
+      <h2 style="font-family:'Playfair Display',serif;font-size:22px;color:var(--navy)">Rooms</h2>
+      <p style="color:var(--gray-400);font-size:13px;margin-top:4px">Overview of all 6 rooms and their status</p>
+    </div>
+    <button class="" onclick=""></button>
+  </div>
+  <div class="rooms-grid" id="rooms-grid"></div>
+  <!-- Notification Panel -->
+<div class="notification-panel" id="notification-panel">
+  <div class="notification-header">
+    <span><i class="fas fa-bullhorn"></i> Notifications</span>
+    <div>
+      <button id="mark-all-read-btn" class="mark-all-read">Mark all read</button>
+      <button id="close-notif-panel"><i class="fas fa-times"></i></button>
+    </div>
+  </div>
+  <div class="notification-list" id="notification-list">
+    <div class="empty-notifications"><i class="fas fa-inbox"></i> No new notifications</div>
+  </div>
+</div>
+</main>
+
+<!-- Reservation Modal (Right Side Panel) -->
+<div class="reservation-modal-overlay" id="reservation-modal-overlay" onclick="closeReservationModal()"></div>
+<div class="reservation-modal" id="reservation-modal">
+  <div class="reservation-modal-header">
+    <h3><i class="fas fa-plus"></i> New Reservation</h3>
+    <button class="reservation-modal-close" onclick="closeReservationModal()"><i class="fas fa-times"></i></button>
+  </div>
+  <div class="reservation-modal-body">
+    <form id="reservation-form-modal">
+      <div class="form-group-row cols-2">
+        <div class="form-group">
+          <label><i class="fas fa-calendar-alt"></i> Check-in Date</label>
+          <input type="date" id="modal-f-checkin" class="form-control" required />
+        </div>
+        <div class="form-group">
+          <label><i class="fas fa-calendar-alt"></i> Check-out Date</label>
+          <input type="date" id="modal-f-checkout" class="form-control" required />
+        </div>
+      </div>
+      
+      <div class="form-group-row cols-2">
+        <div class="form-group">
+          <label><i class="fas fa-home"></i> Room</label>
+          <select id="modal-f-apt" class="form-control" required>
+            <option value="">Select Room</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label><i class="fas fa-dollar-sign"></i> Price per Night (TSH)</label>
+          <input type="number" id="modal-f-price-per-night" class="form-control" min="0" step="1000" placeholder="Enter price per night" oninput="modalUpdateRate()" />
+        </div>
+      </div>
+
+      <div class="form-group-row" style="grid-template-columns:1fr 1fr 1.2fr">
+        <div class="form-group">
+          <label><i class="fas fa-user"></i> Adults</label>
+          <div class="stepper">
+            <button type="button" onclick="modalStepperChange('modal-f-adults', -1)">−</button>
+            <input type="number" id="modal-f-adults" value="1" min="1" max="6" />
+            <button type="button" onclick="modalStepperChange('modal-f-adults', 1)">+</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label> Children</label>
+          <div class="stepper">
+            <button type="button" onclick="modalStepperChange('modal-f-children', -1)">−</button>
+            <input type="number" id="modal-f-children" value="0" min="0" max="6" />
+            <button type="button" onclick="modalStepperChange('modal-f-children', 1)">+</button>
+          </div>
+        </div>
+        <div class="form-group">
+  <label><i class="fas fa-money-bill-wave"></i> Total Rate</label>
+  <div class="rate-display" id="modal-f-total">—</div>
+  <input type="hidden" id="modal-f-total-hidden" value="0">
+</div>
+      </div>
+      
+      <hr class="divider" />
+      
+      <div class="form-group-row cols-3">
+        <div class="form-group">
+          <label><i class="fas fa-user"></i> Guest Name</label>
+          <input type="text" id="modal-f-guest" class="form-control" placeholder="Full name" required />
+        </div>
+        <div class="form-group">
+          <label><i class="fas fa-envelope"></i> Email</label>
+          <input type="email" id="modal-f-email" class="form-control" placeholder="Email address" required />
+        </div>
+        <div class="form-group">
+          <label><i class="fas fa-mobile-alt"></i> Mobile</label>
+          <input type="tel" id="modal-f-mobile" class="form-control" placeholder="+255 XXX XXX" required />
+        </div>
+      </div>
+      <!-- NEW ROW: National ID / ID Type - ADD THIS AFTER City field -->
+<div class="form-group-row cols-2">
+  <div class="form-group">
+    <label><i class="fas fa-id-card"></i> NIDA / Passport Number</label>
+    <input type="text" id="modal-f-identification" class="form-control" placeholder="NIDA Number or Passport ID" />
+  </div>
+  <div class="form-group">
+    <label><i class="fas fa-clipboard-list"></i> ID Type</label>
+    <select id="modal-f-id-type" class="form-control">
+      <option value="NIDA">NIDA (National ID)</option>
+      <option value="Passport">Passport</option>
+      <option value="Driving License">Driving License</option>
+      <option value="Voter ID">Voter ID</option>
+      <option value="Other">Other</option>
+    </select>
+  </div>
+</div>
+     <div class="form-group-row cols-2">
+  <div class="form-group">
+    <label><i class="fas fa-globe-africa"></i> Country</label>
+    <div class="select-wrapper" id="modal-country-wrapper">
+      <div class="searchable-select" id="modal-country-select-btn">
+        <span id="modal-selected-country-text">Select Country</span>
+        <i class="fas fa-chevron-down"></i>
+      </div>
+      <div class="select-dropdown" id="modal-country-dropdown">
+        <div class="select-search">
+          <input type="text" id="modal-country-search" placeholder="Search country..." autocomplete="off">
+        </div>
+        <div id="modal-country-options">
+          <div style="padding: 20px; text-align: center; color: #94a3b8;">Loading countries...</div>
+        </div>
+      </div>
+    </div>
+    <input type="hidden" id="modal-f-country" value="">
+  </div>
+  <div class="form-group">
+    <label><i class="fas fa-city"></i> City</label>
+    <input type="text" id="modal-f-city" class="form-control" placeholder="City" />
+  </div>
+</div>
+      <hr class="divider" />
+      
+      <button type="submit" class="btn btn-success"><i class="fas fa-check-circle"></i> Confirm Reservation</button>
+      <button type="button" class="btn btn-outline" style="margin-top: 10px; width: 100%;" onclick="closeReservationModal()">Cancel</button>
+    </form>
+  </div>
+</div>
+
+<!-- Edit Reservation Modal -->
+<div class="reservation-modal-overlay" id="edit-modal-overlay" onclick="closeEditModal()"></div>
+<div class="reservation-modal" id="edit-modal">
+  <div class="reservation-modal-header">
+    <h3><i class="fas fa-edit"></i> Edit Reservation</h3>
+    <button class="reservation-modal-close" onclick="closeEditModal()"><i class="fas fa-times"></i></button>
+  </div>
+  <div class="reservation-modal-body">
+    <form id="edit-form-modal">
+      <input type="hidden" id="edit-res-id" />
+      
+      <div class="form-group-row cols-2">
+        <div class="form-group">
+          <label><i class="fas fa-calendar-alt"></i> Check-in Date</label>
+          <input type="date" id="edit-f-checkin" class="form-control" required />
+        </div>
+        <div class="form-group">
+          <label><i class="fas fa-calendar-alt"></i> Check-out Date</label>
+          <input type="date" id="edit-f-checkout" class="form-control" required />
+        </div>
+      </div>
+      
+      <div class="form-group-row cols-2">
+        <div class="form-group">
+          <label><i class="fas fa-home"></i> Room</label>
+          <select id="edit-f-apt" class="form-control" required>
+            <option value="">Select Room</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label><i class="fas fa-dollar-sign"></i> Price per Night (TSH)</label>
+          <input type="number" id="edit-f-price-per-night" class="form-control" min="0" step="1000" placeholder="Enter price per night" oninput="editUpdateRate()" />
+        </div>
+      </div>
+
+      <div class="form-group-row" style="grid-template-columns:1fr 1fr 1.2fr">
+        <div class="form-group">
+          <label><i class="fas fa-user"></i> Adults</label>
+          <div class="stepper">
+            <button type="button" onclick="editStepperChange('edit-f-adults', -1)">−</button>
+            <input type="number" id="edit-f-adults" value="1" min="1" max="6" />
+            <button type="button" onclick="editStepperChange('edit-f-adults', 1)">+</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label><i class="fas fa-user"></i> Children</label>
+          <div class="stepper">
+            <button type="button" onclick="editStepperChange('edit-f-children', -1)">−</button>
+            <input type="number" id="edit-f-children" value="0" min="0" max="6" />
+            <button type="button" onclick="editStepperChange('edit-f-children', 1)">+</button>
+          </div>
+        </div>
+        <div class="form-group">
+  <label><i class="fas fa-money-bill-wave"></i> Total Rate</label>
+  <div class="rate-display" id="edit-f-total">—</div>
+  <input type="hidden" id="edit-f-total-hidden" value="0">
+  <input type="hidden" id="modal-f-identification-hidden" value="">
+  <input type="hidden" id="modal-f-id-type-hidden" value="">
+</div>
+      </div>
+      
+      <hr class="divider" />
+      
+      <div class="form-group-row cols-3">
+        <div class="form-group">
+          <label><i class="fas fa-user"></i> Guest Name</label>
+          <input type="text" id="edit-f-guest" class="form-control" placeholder="Full name" required />
+        </div>
+        <div class="form-group">
+          <label><i class="fas fa-envelope"></i> Email</label>
+          <input type="email" id="edit-f-email" class="form-control" placeholder="Email address" required />
+        </div>
+        <div class="form-group">
+          <label><i class="fas fa-mobile-alt"></i> Mobile</label>
+          <input type="tel" id="edit-f-mobile" class="form-control" placeholder="+255 XXX XXX" required />
+        </div>
+      </div>
+      <!-- NEW ROW: National ID / ID Type - ADD THIS AFTER City field in Edit Modal -->
+<div class="form-group-row cols-2">
+  <div class="form-group">
+    <label><i class="fas fa-id-card"></i> NIDA / Passport Number</label>
+    <input type="text" id="edit-f-identification" class="form-control" placeholder="NIDA Number or Passport ID" />
+  </div>
+  <div class="form-group">
+    <label><i class="fas fa-clipboard-list"></i> ID Type</label>
+    <select id="edit-f-id-type" class="form-control">
+      <option value="NIDA">NIDA (National ID)</option>
+      <option value="Passport">Passport</option>
+      <option value="Driving License">Driving License</option>
+      <option value="Voter ID">Voter ID</option>
+      <option value="Other">Other</option>
+    </select>
+  </div>
+</div>
+      <div class="form-group-row cols-2">
+  <div class="form-group">
+    <label><i class="fas fa-globe-africa"></i> Country</label>
+    <div class="select-wrapper" id="edit-country-wrapper">
+      <div class="searchable-select" id="edit-country-select-btn">
+        <span id="edit-selected-country-text">Select Country</span>
+        <i class="fas fa-chevron-down"></i>
+      </div>
+      <div class="select-dropdown" id="edit-country-dropdown">
+        <div class="select-search">
+          <input type="text" id="edit-country-search" placeholder="Search country..." autocomplete="off">
+        </div>
+        <div id="edit-country-options">
+          <div style="padding: 20px; text-align: center; color: #94a3b8;">Loading countries...</div>
+        </div>
+      </div>
+    </div>
+    <input type="hidden" id="edit-f-country" value="">
+  </div>
+  <div class="form-group">
+    <label><i class="fas fa-city"></i> City</label>
+    <input type="text" id="edit-f-city" class="form-control" placeholder="City" />
+  </div>
+</div>
+      <hr class="divider" />
+      
+      <button type="submit" class="btn btn-gold"><i class="fas fa-save"></i> Update Reservation</button>
+      <button type="button" class="btn btn-outline" style="margin-top: 10px; width: 100%;" onclick="closeEditModal()">Cancel</button>
+    </form>
+  </div>
+</div>
+
+<!-- Detail Panel -->
+<div class="overlay" id="panel-overlay"></div>
+<div class="detail-panel" id="detail-panel">
+  <div class="detail-panel-header">
+    <h3>Reservation Details</h3>
+    <button class="close-panel" onclick="closeDetailPanel()"><i class="fas fa-times"></i></button>
+  </div>
+  <div class="detail-panel-body" id="detail-body"></div>
+  <div class="detail-panel-footer">
+    <button class="btn btn-outline" style="flex:1" onclick="closeDetailPanel()">Close</button>
+    
+    <button class="btn btn-danger" onclick="deleteSelectedReservation()"><i class="fas fa-trash-alt"></i> Delete</button>
+  </div>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+
+<script src="../js/api.js"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/rooms.js"></script>
+
+<script>
+// ============================================================
+// CUSTOM TOTAL RATE FUNCTIONALITY
+// ============================================================
+
+function enableCustomTotal(type) {
+  const customArea = document.getElementById(`${type}-custom-area`);
+  const currentTotal = parseFloat(document.getElementById(`${type}-f-total-hidden`).value) || 0;
+  
+  customArea.style.display = 'block';
+  customArea.innerHTML = `
+    <div class="custom-rate-edit">
+      <input type="number" id="${type}-custom-input" value="${currentTotal}" step="1000" min="0" placeholder="Enter total amount in TSH">
+      <button class="btn-custom-apply" onclick="applyCustomTotal('${type}')">Apply</button>
+      <button class="btn-custom-cancel" onclick="cancelCustomTotal('${type}')">Cancel</button>
+    </div>
+  `;
+  
+  // Focus the input
+  setTimeout(() => {
+    const input = document.getElementById(`${type}-custom-input`);
+    if (input) input.focus();
+  }, 100);
+}
+
+function cancelCustomTotal(type) {
+  const customArea = document.getElementById(`${type}-custom-area`);
+  customArea.style.display = 'none';
+  customArea.innerHTML = '';
+}
+
+function applyCustomTotal(type) {
+  const customInput = document.getElementById(`${type}-custom-input`);
+  const customTotal = parseFloat(customInput.value);
+  
+  if (isNaN(customTotal) || customTotal <= 0) {
+    showToast('Please enter a valid total amount (greater than 0)', 'error');
+    return;
+  }
+  
+  // Get check-in and check-out dates
+  const checkin = document.getElementById(`${type}-f-checkin`).value;
+  const checkout = document.getElementById(`${type}-f-checkout`).value;
+  
+  if (!checkin || !checkout) {
+    showToast('Please select check-in and check-out dates first', 'error');
+    return;
+  }
+  
+  // Calculate nights
+  const nights = daysBetween(checkin, checkout);
+  
+  if (nights <= 0) {
+    showToast('Invalid date range. Check-out must be after check-in.', 'error');
+    return;
+  }
+  
+  // Calculate nightly rate based on custom total
+  const nightlyRate = Math.round(customTotal / nights);
+  
+  // Store the custom total
+  document.getElementById(`${type}-f-total-hidden`).value = customTotal;
+  document.getElementById(`${type}-f-total`).innerHTML = fmtTSH(customTotal);
+  const useCustomEl = document.getElementById(`${type}-use-custom-total`);
+  if (useCustomEl) useCustomEl.value = '1';
+  
+  // Hide the custom area
+  const customArea = document.getElementById(`${type}-custom-area`);
+  customArea.style.display = 'none';
+  customArea.innerHTML = '';
+  
+  showToast(`<i class="fas fa-check-circle"></i> Custom total applied! Nightly rate: ${fmtTSH(nightlyRate)}`, 'success');
+  console.log(`Custom Total: ${fmtTSH(customTotal)} | Nights: ${nights} | Nightly Rate: ${fmtTSH(nightlyRate)}`);
+}
+
+// OVERRIDE modalUpdateRate to respect custom total
+const originalModalUpdate = modalUpdateRate;
+modalUpdateRate = function() {
+  const useCustom = document.getElementById('modal-use-custom-total')?.value;
+  if (useCustom === '1') {
+    console.log('Custom total active, keeping existing total');
+    return;
+  }
+  originalModalUpdate();
+};
+
+// OVERRIDE editUpdateRate to respect custom total
+const originalEditUpdate = editUpdateRate;
+editUpdateRate = function() {
+  const useCustom = document.getElementById('edit-use-custom-total')?.value;
+  if (useCustom === '1') {
+    console.log('Custom total active, keeping existing total');
+    return;
+  }
+  originalEditUpdate();
+};
+
+// Reset custom total when dates or apartment change
+function resetCustomTotal(type) {
+  const useCustom = document.getElementById(`${type}-use-custom-total`);
+  if (useCustom && useCustom.value === '1') {
+    useCustom.value = '0';
+    console.log(`Custom total reset for ${type}, auto-calculation resumed`);
+  }
+}
+
+// Add reset listeners
+function addResetListeners(type) {
+  const elements = [`${type}-f-checkin`, `${type}-f-checkout`, `${type}-f-apt`, `${type}-f-ratetype`];
+  elements.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener('change', () => resetCustomTotal(type));
+    }
+  });
+}
+
+// Call after initModalForm and initEditForm
+setTimeout(() => {
+  addResetListeners('modal');
+  addResetListeners('edit');
+}, 1000);
+
+
+function daysBetween(date1, date2) {
+  const d1 = new Date(date1);
+  const d2 = new Date(date2);
+  const diffTime = Math.abs(d2 - d1);
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  return diffDays;
+}
+
+
+
+
+
+// ============================================================
+// NOTIFICATION SYSTEM
+// ============================================================
+let notifications = [];
+let notificationCheckInterval = null;
+
+async function loadNotifications() {
+  try {
+    // Get today's date
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+    
+    // Get reservations
+    const reservations = await apiGet('/reservations');
+    
+    // Clear existing notifications
+    notifications = [];
+    
+    // Check for checkouts today
+    const checkoutsToday = reservations.filter(r => r.checkout === todayStr);
+    checkoutsToday.forEach(r => {
+      notifications.push({
+        id: `checkout_${r.id}`,
+        type: 'checkout',
+        message: `${r.guest} checks out today at 11:00 AM`,
+        time: new Date().toLocaleTimeString(),
+        read: false,
+        reservationId: r.id,
+        icon: '<i class="fas fa-door-open"></i>'
+      });
+    });
+    
+    // Check for upcoming check-ins (next 7 days)
+    const nextWeek = new Date();
+    nextWeek.setDate(today.getDate() + 7);
+    const upcomingCheckins = reservations.filter(r => {
+      const checkin = new Date(r.checkin);
+      return checkin > today && checkin <= nextWeek;
+    });
+    upcomingCheckins.forEach(r => {
+      const checkinDate = new Date(r.checkin).toLocaleDateString();
+      notifications.push({
+        id: `checkin_${r.id}`,
+        type: 'upcoming',
+        message: `${r.guest} arrives on ${checkinDate}`,
+        time: new Date().toLocaleTimeString(),
+        read: false,
+        reservationId: r.id,
+        icon: '<i class="fas fa-calendar-alt"></i>'
+      });
+    });
+    
+    // Check for low stock items (if on store page)
+    try {
+      const storeItems = await apiGet('/store/items');
+      const lowStock = storeItems.filter(i => parseFloat(i.quantity) < 5);
+      lowStock.forEach(item => {
+        notifications.push({
+          id: `stock_${item.id}`,
+          type: 'stock',
+          message: `${item.name} is low in stock (${item.quantity} left)`,
+          time: new Date().toLocaleTimeString(),
+          read: false,
+          icon: '<i class="fas fa-exclamation-triangle"></i>'
+        });
+      });
+    } catch(e) {
+      // Store API might not be accessible, ignore
+    }
+    
+    // Sort by time (newest first) and limit to 20
+    notifications.sort((a, b) => new Date(b.time) - new Date(a.time));
+    notifications = notifications.slice(0, 20);
+    
+    // Update UI
+    renderNotifications();
+    updateNotificationBadge();
+    
+    console.log(`<i class="fas fa-bullhorn"></i> Loaded ${notifications.length} notifications`);
+  } catch (err) {
+    console.error('Failed to load notifications:', err);
+  }
+}
+
+function renderNotifications() {
+  const container = document.getElementById('notification-list');
+  if (!container) return;
+  
+  const unreadCount = notifications.filter(n => !n.read).length;
+  
+  if (notifications.length === 0) {
+    container.innerHTML = '<div class="empty-notifications"><i class="fas fa-inbox"></i> No new notifications</div>';
+    return;
+  }
+  
+  container.innerHTML = notifications.map(notif => `
+    <div class="notification-item ${notif.read ? 'read' : 'unread'}" data-id="${notif.id}" data-type="${notif.type}" data-reservation-id="${notif.reservationId || ''}">
+      <div class="notification-message">
+        <span class="notification-icon">${notif.icon}</span>
+        ${escapeHtml(notif.message)}
+      </div>
+      <div class="notification-time">
+        <span><i class="fas fa-clock"></i> ${notif.time}</span>
+      </div>
+    </div>
+  `).join('');
+  
+  // Add click handlers to notification items
+  document.querySelectorAll('.notification-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const notifId = item.getAttribute('data-id');
+      const notif = notifications.find(n => n.id === notifId);
+      if (notif) {
+        notif.read = true;
+        renderNotifications();
+        updateNotificationBadge();
+        
+        // Handle click action based on type
+        if (notif.type === 'checkout' && notif.reservationId) {
+          openDetail(notif.reservationId);
+        } else if (notif.type === 'upcoming' && notif.reservationId) {
+          openDetail(notif.reservationId);
+        } else if (notif.type === 'stock') {
+          window.location.href = '/store-main';
+        }
+      }
+      closeNotificationPanel();
+    });
+  });
+}
+
+function updateNotificationBadge() {
+  const badge = document.getElementById('notif-badge');
+  if (!badge) return;
+  
+  const unreadCount = notifications.filter(n => !n.read).length;
+  badge.textContent = unreadCount;
+  badge.style.display = unreadCount > 0 ? 'inline-block' : 'none';
+}
+
+function toggleNotificationPanel() {
+  const panel = document.getElementById('notification-panel');
+  if (panel) {
+    panel.classList.toggle('show');
+  }
+}
+
+function closeNotificationPanel() {
+  const panel = document.getElementById('notification-panel');
+  if (panel) {
+    panel.classList.remove('show');
+  }
+}
+
+function markAllNotificationsRead() {
+  notifications.forEach(n => n.read = true);
+  renderNotifications();
+  updateNotificationBadge();
+  showToast('All notifications marked as read', 'success');
+}
+
+// Initialize notification button
+const notifBtn = document.getElementById('notif-btn');
+if (notifBtn) {
+  notifBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleNotificationPanel();
+  });
+}
+
+// Close panel when clicking outside
+document.addEventListener('click', function(e) {
+  const panel = document.getElementById('notification-panel');
+  const btn = document.getElementById('notif-btn');
+  if (panel && btn && !btn.contains(e.target) && !panel.contains(e.target)) {
+    panel.classList.remove('show');
+  }
+});
+
+// Mark all read button
+const markAllBtn = document.getElementById('mark-all-read-btn');
+if (markAllBtn) {
+  markAllBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    markAllNotificationsRead();
+  });
+}
+
+// Close button
+const closeNotifBtn = document.getElementById('close-notif-panel');
+if (closeNotifBtn) {
+  closeNotifBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    closeNotificationPanel();
+  });
+}
+
+// Load notifications on page load
+document.addEventListener('DOMContentLoaded', function() {
+  loadNotifications();
+  // Refresh every 5 minutes
+  if (notificationCheckInterval) clearInterval(notificationCheckInterval);
+  notificationCheckInterval = setInterval(loadNotifications, 300000);
+});
+
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return str.replace(/[&<>]/g, function(m) {
+    if (m === '&') return '&amp;';
+    if (m === '<') return '&lt;';
+    if (m === '>') return '&gt;';
+    return m;
+  });
+}
+// Global variables
+let modalAPARTMENTS = [];
+let editAPARTMENTS = [];
+let currentEditReservation = null;
+
+// ========== RESERVATION MODAL FUNCTIONS ========
+// ==
+
+// ============================================================
+// MODAL COUNTRY DROPDOWN FUNCTIONS (Add Modal)
+// ============================================================
+let modalCountriesList = [];
+
+async function loadModalCountries() {
+  try {
+    console.log('<i class="fas fa-globe-africa"></i> Loading countries for add modal...');
+    const countries = await apiGet('/countries');
+    modalCountriesList = countries;
+    console.log(`<i class="fas fa-check-circle"></i> Loaded ${countries.length} countries`);
+    
+    // Pre-render the options so they're ready when dropdown opens
+    renderModalCountryOptions('');
+    return true;
+  } catch (err) {
+    console.error('Error loading countries:', err);
+    const optionsContainer = document.getElementById('modal-country-options');
+    if (optionsContainer) {
+      optionsContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: #ef4444;">Failed to load countries. Please refresh.</div>';
+    }
+    return false;
+  }
+}
+
+function checkCountryDropdown() {
+  const wrapper = document.getElementById('modal-country-wrapper');
+  const selectBtn = document.getElementById('modal-country-select-btn');
+  const dropdown = document.getElementById('modal-country-dropdown');
+  const countriesCount = modalCountriesList.length;
+  
+  console.log('Country Dropdown Debug:');
+  console.log('- Wrapper exists:', !!wrapper);
+  console.log('- Select button exists:', !!selectBtn);
+  console.log('- Dropdown exists:', !!dropdown);
+  console.log('- Countries loaded:', countriesCount);
+  
+  if (countriesCount === 0) {
+    console.log('<i class="fas fa-exclamation-triangle"></i> No countries loaded! Refreshing...');
+    loadModalCountries();
+  }
+}
+
+function renderModalCountryOptions(searchTerm = '') {
+  const optionsContainer = document.getElementById('modal-country-options');
+  if (!optionsContainer) return;
+  
+  if (!modalCountriesList || modalCountriesList.length === 0) {
+    optionsContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: #94a3b8;">No countries available</div>';
+    return;
+  }
+  
+  const filtered = modalCountriesList.filter(c => 
+    c.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  
+  if (filtered.length === 0) {
+    optionsContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: #94a3b8;">No countries found</div>';
+    return;
+  }
+  
+  optionsContainer.innerHTML = filtered.map(country => `
+    <div class="select-option" data-country="${country.name.replace(/"/g, '&quot;')}" data-id="${country.id}">
+      ${escapeHtml(country.name)}
+    </div>
+  `).join('');
+  
+  document.querySelectorAll('#modal-country-options .select-option').forEach(opt => {
+    opt.addEventListener('click', () => {
+      const countryName = opt.getAttribute('data-country');
+      document.getElementById('modal-selected-country-text').textContent = countryName;
+      document.getElementById('modal-f-country').value = countryName;
+      document.getElementById('modal-country-dropdown').classList.remove('show');
+    });
+  });
+}
+
+function initModalCountryDropdown() {
+  const wrapper = document.getElementById('modal-country-wrapper');
+  const selectBtn = document.getElementById('modal-country-select-btn');
+  const dropdown = document.getElementById('modal-country-dropdown');
+  const searchInput = document.getElementById('modal-country-search');
+  
+  if (!wrapper || !selectBtn || !dropdown) {
+    console.log('Country dropdown elements not found');
+    return;
+  }
+  
+  // Remove any existing listeners to prevent duplicates
+  const newSelectBtn = selectBtn.cloneNode(true);
+  selectBtn.parentNode.replaceChild(newSelectBtn, selectBtn);
+  
+  // Re-get the elements after replacement
+  const finalSelectBtn = document.getElementById('modal-country-select-btn');
+  const finalDropdown = document.getElementById('modal-country-dropdown');
+  const finalSearchInput = document.getElementById('modal-country-search');
+  
+  // Close dropdown when clicking outside
+  function closeDropdownOnOutsideClick(e) {
+    const wrapper = document.getElementById('modal-country-wrapper');
+    if (wrapper && !wrapper.contains(e.target)) {
+      if (finalDropdown) finalDropdown.classList.remove('show');
+      document.removeEventListener('click', closeDropdownOnOutsideClick);
+    }
+  }
+  
+  // Open/Close dropdown
+  finalSelectBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    
+    // Close any other open dropdowns first
+    document.querySelectorAll('.select-dropdown.show').forEach(d => {
+      if (d !== finalDropdown) d.classList.remove('show');
+    });
+    
+    finalDropdown.classList.toggle('show');
+    
+    if (finalDropdown.classList.contains('show')) {
+      if (finalSearchInput) {
+        finalSearchInput.value = '';
+        finalSearchInput.focus();
+        renderModalCountryOptions('');
+      }
+      // Add outside click listener
+      setTimeout(() => {
+        document.addEventListener('click', closeDropdownOnOutsideClick);
+      }, 100);
+    } else {
+      document.removeEventListener('click', closeDropdownOnOutsideClick);
+    }
+  });
+  
+  // Search functionality
+  if (finalSearchInput) {
+    finalSearchInput.addEventListener('input', (e) => {
+      e.stopPropagation();
+      renderModalCountryOptions(e.target.value);
+    });
+    
+    finalSearchInput.addEventListener('click', (e) => {
+      e.stopPropagation();
+    });
+  }
+  
+  // Prevent dropdown click from closing
+  finalDropdown.addEventListener('click', (e) => {
+    e.stopPropagation();
+  });
+}
+// ============================================================
+// EDIT MODAL COUNTRY DROPDOWN FUNCTIONS
+// ============================================================
+let editCountriesList = [];
+
+async function loadEditCountries() {
+  try {
+    console.log('<i class="fas fa-globe-africa"></i> Loading countries for edit modal...');
+    const countries = await apiGet('/countries');
+    editCountriesList = countries;
+    renderEditCountryOptions('');
+  } catch (err) {
+    console.error('Error loading countries:', err);
+    const optionsContainer = document.getElementById('edit-country-options');
+    if (optionsContainer) {
+      optionsContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: #ef4444;">Failed to load countries</div>';
+    }
+  }
+}
+
+function renderEditCountryOptions(searchTerm = '') {
+  const optionsContainer = document.getElementById('edit-country-options');
+  if (!optionsContainer) return;
+  
+  if (!editCountriesList || editCountriesList.length === 0) {
+    optionsContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: #94a3b8;">No countries available</div>';
+    return;
+  }
+  
+  const filtered = editCountriesList.filter(c => 
+    c.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  
+  if (filtered.length === 0) {
+    optionsContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: #94a3b8;">No countries found</div>';
+    return;
+  }
+  
+  optionsContainer.innerHTML = filtered.map(country => `
+    <div class="select-option" data-country="${country.name.replace(/"/g, '&quot;')}" data-id="${country.id}">
+      ${escapeHtml(country.name)}
+    </div>
+  `).join('');
+  
+  document.querySelectorAll('#edit-country-options .select-option').forEach(opt => {
+    opt.addEventListener('click', () => {
+      const countryName = opt.getAttribute('data-country');
+      document.getElementById('edit-selected-country-text').textContent = countryName;
+      document.getElementById('edit-f-country').value = countryName;
+      document.getElementById('edit-country-dropdown').classList.remove('show');
+    });
+  });
+}
+
+function initEditCountryDropdown() {
+  const wrapper = document.getElementById('edit-country-wrapper');
+  const selectBtn = document.getElementById('edit-country-select-btn');
+  const dropdown = document.getElementById('edit-country-dropdown');
+  const searchInput = document.getElementById('edit-country-search');
+  
+  if (!wrapper || !selectBtn || !dropdown) {
+    console.log('Edit country dropdown elements not found');
+    return;
+  }
+  
+  // Remove any existing listeners to prevent duplicates
+  const newSelectBtn = selectBtn.cloneNode(true);
+  selectBtn.parentNode.replaceChild(newSelectBtn, selectBtn);
+  
+  // Re-get the elements after replacement
+  const finalSelectBtn = document.getElementById('edit-country-select-btn');
+  const finalDropdown = document.getElementById('edit-country-dropdown');
+  const finalSearchInput = document.getElementById('edit-country-search');
+  
+  function closeDropdownOnOutsideClick(e) {
+    const wrapper = document.getElementById('edit-country-wrapper');
+    if (wrapper && !wrapper.contains(e.target)) {
+      if (finalDropdown) finalDropdown.classList.remove('show');
+      document.removeEventListener('click', closeDropdownOnOutsideClick);
+    }
+  }
+  
+  finalSelectBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    
+    document.querySelectorAll('.select-dropdown.show').forEach(d => {
+      if (d !== finalDropdown) d.classList.remove('show');
+    });
+    
+    finalDropdown.classList.toggle('show');
+    
+    if (finalDropdown.classList.contains('show')) {
+      if (finalSearchInput) {
+        finalSearchInput.value = '';
+        finalSearchInput.focus();
+        renderEditCountryOptions('');
+      }
+      setTimeout(() => {
+        document.addEventListener('click', closeDropdownOnOutsideClick);
+      }, 100);
+    } else {
+      document.removeEventListener('click', closeDropdownOnOutsideClick);
+    }
+  });
+  
+  if (finalSearchInput) {
+    finalSearchInput.addEventListener('input', (e) => {
+      e.stopPropagation();
+      renderEditCountryOptions(e.target.value);
+    });
+    
+    finalSearchInput.addEventListener('click', (e) => {
+      e.stopPropagation();
+    });
+  }
+  
+  finalDropdown.addEventListener('click', (e) => {
+    e.stopPropagation();
+  });
+}
+
+
+
+
+async function initModalForm() {
+  if (!modalAPARTMENTS.length) {
+    try { 
+      modalAPARTMENTS = await apiGet('/apartments'); 
+    } catch(err) { 
+      showToast('Failed to load rooms', '<i class="fas fa-times-circle"></i>'); 
+      return;
+    }
+  }
+    // <i class="fas fa-check-circle"></i> ADD THESE LINES - Reset identification fields
+  document.getElementById('modal-f-identification').value = '';
+  document.getElementById('modal-f-id-type').value = 'NIDA';
+
+  const sel = document.getElementById('modal-f-apt');
+  sel.innerHTML = '<option value="">Select Room</option>';
+  modalAPARTMENTS.forEach(apt => {
+    const opt = document.createElement('option');
+    opt.value = apt.id;
+    opt.textContent = `${apt.name} – Max ${apt.maxAdults} Adults – ${fmtTSH(apt.ratePerNight)}/night`;
+    sel.appendChild(opt);
+  });
+
+  // Load countries from database for add modal
+  await loadModalCountries();
+  initModalCountryDropdown();
+  
+  const today = new Date();
+  document.getElementById('modal-f-checkin').value = isoDate(today);
+  document.getElementById('modal-f-checkout').value = isoDate(addDays(today, 1));
+  modalUpdateRate();
+
+  ['modal-f-checkin', 'modal-f-checkout', 'modal-f-apt', 'modal-f-price-per-night', 'modal-f-adults', 'modal-f-children'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.removeEventListener('change', modalUpdateRate);
+      el.removeEventListener('input', modalUpdateRate);
+      el.addEventListener('change', modalUpdateRate);
+      el.addEventListener('input', modalUpdateRate);
+    }
+  });
+}
+
+function modalStepperChange(id, delta) {
+  const inp = document.getElementById(id);
+  if (inp) {
+    inp.value = Math.max(parseInt(inp.min || 0), Math.min(parseInt(inp.max || 999), parseInt(inp.value) + delta));
+    modalUpdateRate();
+  }
+}
+
+function modalUpdateRate() {
+  const pricePerNight = parseFloat(document.getElementById('modal-f-price-per-night')?.value) || 0;
+  const checkin = document.getElementById('modal-f-checkin')?.value;
+  const checkout = document.getElementById('modal-f-checkout')?.value;
+
+  if (!pricePerNight || !checkin || !checkout) {
+    document.getElementById('modal-f-total').innerHTML = '—';
+    document.getElementById('modal-f-total-hidden').value = 0;
+    return;
+  }
+
+  const nights = daysBetween(checkin, checkout);
+  const total = Math.round(pricePerNight * nights);
+
+  document.getElementById('modal-f-total').innerHTML = total > 0 ? fmtTSH(total) : '—';
+  document.getElementById('modal-f-total-hidden').value = total;
+}
+// Force recalculation when dates lose focus
+function forceRateUpdate() {
+  setTimeout(() => {
+    modalUpdateRate();
+  }, 100);
+}
+
+// Add these event listeners after initModalForm
+document.getElementById('modal-f-checkin')?.addEventListener('blur', forceRateUpdate);
+document.getElementById('modal-f-checkout')?.addEventListener('blur', forceRateUpdate);
+document.getElementById('modal-f-apt')?.addEventListener('change', forceRateUpdate);
+document.getElementById('modal-f-price-per-night')?.addEventListener('input', forceRateUpdate);
+
+function openReservationModal() {
+  document.getElementById('reservation-modal').classList.add('open');
+  document.getElementById('reservation-modal-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  initModalForm();
+  setTimeout(() => checkCountryDropdown(), 500);
+}
+
+function closeReservationModal() {
+  document.getElementById('reservation-modal').classList.remove('open');
+  document.getElementById('reservation-modal-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+  document.getElementById('reservation-form-modal').reset();
+}
+
+// ========== EDIT MODAL FUNCTIONS ==========
+async function initEditForm(reservationId) {
+  try {
+    const reservation = await apiGet(`/reservations/${reservationId}`);
+    currentEditReservation = reservation;
+    
+    if (!editAPARTMENTS.length) {
+      try { 
+        editAPARTMENTS = await apiGet('/apartments'); 
+      } catch(err) { 
+        showToast('Failed to load rooms', '<i class="fas fa-times-circle"></i>'); 
+        return;
+      }
+    }
+
+     // <i class="fas fa-check-circle"></i> ADD THESE LINES - Load identification fields
+    document.getElementById('edit-f-identification').value = reservation.identification || '';
+    document.getElementById('edit-f-id-type').value = reservation.idType || 'NIDA';
+
+    const sel = document.getElementById('edit-f-apt');
+    sel.innerHTML = '<option value="">Select Room</option>';
+    editAPARTMENTS.forEach(apt => {
+      const opt = document.createElement('option');
+      opt.value = apt.id;
+      opt.textContent = `${apt.name} – Max ${apt.maxAdults} Adults – ${fmtTSH(apt.ratePerNight)}/night`;
+      if (apt.id === reservation.aptId) opt.selected = true;
+      sel.appendChild(opt);
+    });
+    
+    // Load countries for edit modal
+    await loadEditCountries();
+    initEditCountryDropdown();
+    
+    document.getElementById('edit-res-id').value = reservation.id;
+    document.getElementById('edit-f-guest').value = reservation.guest;
+    document.getElementById('edit-f-email').value = reservation.email;
+    document.getElementById('edit-f-mobile').value = reservation.mobile || '';
+    
+    // Set country value for custom dropdown
+    const countryValue = reservation.country || '';
+    if (countryValue) {
+      document.getElementById('edit-selected-country-text').textContent = countryValue;
+      document.getElementById('edit-f-country').value = countryValue;
+    } else {
+      document.getElementById('edit-selected-country-text').textContent = 'Select Country';
+      document.getElementById('edit-f-country').value = '';
+    }
+    
+    document.getElementById('edit-f-city').value = reservation.city || '';
+    document.getElementById('edit-f-checkin').value = isoDate(reservation.checkin);
+    document.getElementById('edit-f-checkout').value = isoDate(reservation.checkout);
+    document.getElementById('edit-f-adults').value = reservation.adults;
+    document.getElementById('edit-f-children').value = reservation.children;
+
+    const savedTotal = reservation.total || 0;
+    const savedNights = Math.max(1, daysBetween(isoDate(reservation.checkin), isoDate(reservation.checkout)));
+    document.getElementById('edit-f-price-per-night').value = savedNights > 0 ? Math.round(savedTotal / savedNights) : '';
+    document.getElementById('edit-f-total-hidden').value = savedTotal;
+    document.getElementById('edit-f-total').innerHTML = fmtTSH(savedTotal);
+    
+  } catch (err) {
+    showToast('Failed to load reservation data: ' + err.message, '<i class="fas fa-times-circle"></i>');
+  }
+}
+
+function editStepperChange(id, delta) {
+  const inp = document.getElementById(id);
+  if (inp) {
+    inp.value = Math.max(parseInt(inp.min || 0), Math.min(parseInt(inp.max || 999), parseInt(inp.value) + delta));
+    editUpdateRate();
+  }
+}
+
+function editUpdateRate() {
+  const pricePerNight = parseFloat(document.getElementById('edit-f-price-per-night')?.value) || 0;
+  const checkin = document.getElementById('edit-f-checkin')?.value;
+  const checkout = document.getElementById('edit-f-checkout')?.value;
+  if (!pricePerNight || !checkin || !checkout) {
+    document.getElementById('edit-f-total').textContent = '—';
+    document.getElementById('edit-f-total-hidden').value = 0;
+    return;
+  }
+  const nights = Math.max(0, daysBetween(checkin, checkout));
+  const total = Math.round(pricePerNight * nights);
+  document.getElementById('edit-f-total').innerHTML = total > 0 ? fmtTSH(total) : '—';
+  document.getElementById('edit-f-total-hidden').value = total;
+}
+
+async function openEditModal(reservationId) {
+  closeDetailPanel();
+  document.getElementById('edit-modal').classList.add('open');
+  document.getElementById('edit-modal-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  await initEditForm(reservationId);
+}
+
+function closeEditModal() {
+  document.getElementById('edit-modal').classList.remove('open');
+  document.getElementById('edit-modal-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+  currentEditReservation = null;
+}
+
+function openEditFromDetail() {
+  if (selectedReservation && selectedReservation.id) {
+    openEditModal(selectedReservation.id);
+  } else {
+    showToast('No reservation selected', '<i class="fas fa-exclamation-triangle"></i>');
+  }
+}
+
+// ========== FORM SUBMISSION HANDLERS ==========
+// New Reservation Form
+// Force manual calculation before saving
+function forceManualCalculation() {
+  modalUpdateRate();
+  return parseFloat(document.getElementById('modal-f-total-hidden').value) || 0;
+}
+
+
+
+
+
+
+document.getElementById('reservation-form-modal')?.addEventListener('submit', async function(e) {
+  e.preventDefault();
+  
+  // <i class="fas fa-wrench"></i> FORCE MANUAL CALCULATION BEFORE SAVING
+  const forcedTotal = forceManualCalculation();
+  
+  const checkin = document.getElementById('modal-f-checkin').value;
+  const checkout = document.getElementById('modal-f-checkout').value;
+  
+  if (checkin >= checkout) { 
+    showToast('Check-out must be after check-in', '<i class="fas fa-exclamation-triangle"></i>'); 
+    return; 
+  }
+ // <i class="fas fa-check-circle"></i> ADD VALIDATION HERE
+  const idType = document.getElementById('modal-f-id-type').value;
+  const idNumber = document.getElementById('modal-f-identification').value;
+  
+  if (idNumber && idNumber.trim() !== '') {
+    const validation = validateIdentification(idType, idNumber);
+    if (!validation.valid) {
+      showToast(validation.message, 'error');
+      return;
+    }
+  }
+  
+  const finalTotal = parseFloat(document.getElementById('modal-f-total-hidden').value) || 0;
+
+  if (finalTotal <= 0) {
+    showToast('Please enter price per night and ensure dates are selected', '<i class="fas fa-exclamation-triangle"></i>');
+    return;
+  }
+
+  const payload = {
+    aptId: parseInt(document.getElementById('modal-f-apt').value),
+    guest: document.getElementById('modal-f-guest').value,
+    email: document.getElementById('modal-f-email').value,
+    mobile: document.getElementById('modal-f-mobile').value,
+    country: document.getElementById('modal-f-country').value,
+    city: document.getElementById('modal-f-city').value,
+    checkin, checkout,
+    adults: parseInt(document.getElementById('modal-f-adults').value),
+    children: parseInt(document.getElementById('modal-f-children').value),
+    pricePerNight: parseFloat(document.getElementById('modal-f-price-per-night').value) || 0,
+    total: finalTotal,
+    identification: document.getElementById('modal-f-identification').value,
+    idType: document.getElementById('modal-f-id-type').value
+  };
+
+  try {
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const originalText = submitBtn.textContent;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+    submitBtn.disabled = true;
+    
+    await apiPost('/reservations', payload);
+    showToast('<i class="fas fa-check-circle"></i> Reservation confirmed successfully!', '<i class="fas fa-glass-cheers"></i>');
+    closeReservationModal();
+    document.getElementById('reservation-form-modal').reset();
+    
+    document.getElementById('modal-f-total-hidden').value = 0;
+    loadAndRenderRooms();
+    
+    submitBtn.textContent = originalText;
+    submitBtn.disabled = false;
+  } catch (err) {
+    showToast(err.message, '<i class="fas fa-exclamation-triangle"></i>');
+  }
+});
+
+
+// Force manual calculation for Edit Modal
+function forceManualCalculationEdit() {
+  editUpdateRate();
+  return parseFloat(document.getElementById('edit-f-total-hidden').value) || 0;
+}
+
+// Edit Reservation Form
+document.getElementById('edit-form-modal')?.addEventListener('submit', async function(e) {
+  e.preventDefault();
+  
+  // Force manual calculation
+  const forcedTotal = forceManualCalculationEdit();
+  
+  const reservationId = document.getElementById('edit-res-id').value;
+  const checkin = document.getElementById('edit-f-checkin').value;
+  const checkout = document.getElementById('edit-f-checkout').value;
+  
+  if (checkin >= checkout) { 
+    showToast('Check-out must be after check-in', '<i class="fas fa-exclamation-triangle"></i>'); 
+    return; 
+  }
+    // <i class="fas fa-check-circle"></i> ADD VALIDATION HERE
+  const idType = document.getElementById('edit-f-id-type').value;
+  const idNumber = document.getElementById('edit-f-identification').value;
+  
+  if (idNumber && idNumber.trim() !== '') {
+    const validation = validateIdentification(idType, idNumber);
+    if (!validation.valid) {
+      showToast(validation.message, 'error');
+      return;
+    }
+  }
+  const finalTotal = parseFloat(document.getElementById('edit-f-total-hidden').value) || 0;
+
+  if (finalTotal <= 0) {
+    showToast('Please enter price per night and ensure dates are selected', '<i class="fas fa-exclamation-triangle"></i>');
+    return;
+  }
+
+  const payload = {
+    aptId: parseInt(document.getElementById('edit-f-apt').value),
+    guest: document.getElementById('edit-f-guest').value,
+    email: document.getElementById('edit-f-email').value,
+    mobile: document.getElementById('edit-f-mobile').value,
+    country: document.getElementById('edit-f-country').value,
+    city: document.getElementById('edit-f-city').value,
+    checkin, checkout,
+    adults: parseInt(document.getElementById('edit-f-adults').value),
+    children: parseInt(document.getElementById('edit-f-children').value),
+    pricePerNight: parseFloat(document.getElementById('edit-f-price-per-night').value) || 0,
+    total: finalTotal,
+    userId: currentUser.id,
+    username: currentUser.fullName || currentUser.username,
+    identification: document.getElementById('edit-f-identification').value,
+    idType: document.getElementById('edit-f-id-type').value
+  };
+
+  try {
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const originalText = submitBtn.textContent;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
+    submitBtn.disabled = true;
+    
+    await apiPut(`/reservations/${reservationId}`, payload);
+    showToast('<i class="fas fa-check-circle"></i> Reservation updated successfully!', '<i class="fas fa-pen"></i>');
+    closeEditModal();
+    loadAndRenderRooms();
+    
+    submitBtn.textContent = originalText;
+    submitBtn.disabled = false;
+  } catch (err) {
+    showToast('Update failed: ' + err.message, '<i class="fas fa-exclamation-triangle"></i>');
+  }
+});
+
+// Override the openDetail function from rooms.js to use our edit modal
+const originalOpenDetail = window.openDetail;
+window.openDetail = async function(resId) {
+  try {
+    document.getElementById('detail-body').innerHTML = `
+      <div style="text-align:center;padding:40px;">
+        <div style="font-size:24px;margin-bottom:10px;"><i class="fas fa-spinner fa-spin"></i></div>
+        <div>Loading reservation details...</div>
+      </div>
+    `;
+    
+    document.getElementById('panel-overlay').classList.add('open');
+    document.getElementById('detail-panel').classList.add('open');
+    
+    const res = await apiGet(`/reservations/${resId}`);
+    selectedReservation = res;
+    const apt = getApt(res.aptId) || { name: res.aptName || '—' };
+    const nights = daysBetween(res.checkin, res.checkout);
+    
+    document.getElementById('detail-body').innerHTML = `
+      <div class="detail-row"><div class="detail-icon"><i class="fas fa-user"></i></div><div><div class="detail-label">Guest Name</div><div class="detail-value">${escapeHtml(res.guest)}</div></div></div>
+      <div class="detail-row"><div class="detail-icon"><i class="fas fa-envelope"></i></div><div><div class="detail-label">Email</div><div class="detail-value">${escapeHtml(res.email)}</div></div></div>
+      <div class="detail-row"><div class="detail-icon"><i class="fas fa-mobile-alt"></i></div><div><div class="detail-label">Mobile</div><div class="detail-value">${escapeHtml(res.mobile || '—')}</div></div></div>
+      
+<div class="detail-row">
+  <div class="detail-icon"><i class="fas fa-id-card"></i></div>
+  <div>
+    <div class="detail-label">ID Type</div>
+    <div class="detail-value">${escapeHtml(res.idType || '—')}</div>
+  </div>
+</div>
+<div class="detail-row">
+  <div class="detail-icon"><i class="fas fa-clipboard-list"></i></div>
+  <div>
+    <div class="detail-label">ID Number</div>
+    <div class="detail-value">${escapeHtml(res.identification || '—')}</div>
+  </div>
+</div>
+      <div class="detail-row"><div class="detail-icon"><i class="fas fa-globe-africa"></i></div><div><div class="detail-label">Country</div><div class="detail-value">${escapeHtml(res.country || '—')}</div></div></div>
+      <div class="detail-row"><div class="detail-icon"><i class="fas fa-city"></i></div><div><div class="detail-label">City</div><div class="detail-value">${escapeHtml(res.city || '—')}</div></div></div>
+      <div class="detail-row"><div class="detail-icon"><i class="fas fa-home"></i></div><div><div class="detail-label">Room</div><div class="detail-value">${escapeHtml(apt.name)}</div></div></div>
+      <div class="detail-row"><div class="detail-icon"><i class="fas fa-utensils"></i></div><div><div class="detail-label">Rate Type</div><div class="detail-value">${escapeHtml(res.rateType || 'Bed and Breakfast')}</div></div></div>
+      <div class="detail-row"><div class="detail-icon"><i class="fas fa-calendar-alt"></i></div><div><div class="detail-label">Check-in</div><div class="detail-value">${fmtDate(res.checkin)}</div></div></div>
+      <div class="detail-row"><div class="detail-icon"><i class="fas fa-calendar-alt"></i></div><div><div class="detail-label">Check-out</div><div class="detail-value">${fmtDate(res.checkout)}</div></div></div>
+      <div class="detail-row"><div class="detail-icon"><i class="fas fa-moon"></i></div><div><div class="detail-label">Nights</div><div class="detail-value">${nights} night${nights !== 1 ? 's' : ''}</div></div></div>
+      <div class="detail-row"><div class="detail-icon"><i class="fas fa-users"></i></div><div><div class="detail-label">Adults / Children</div><div class="detail-value">${res.adults} Adults, ${res.children} Children</div></div></div>
+      <div class="detail-total"><span>Total Rate</span><span>${fmtTSH(res.total)}</span></div>
+    `;
+  } catch (err) {
+    showToast('Could not load reservation: ' + err.message, '<i class="fas fa-times-circle"></i>');
+    document.getElementById('detail-body').innerHTML = `
+      <div style="text-align:center;padding:40px;color:var(--red);">
+        <div style="font-size:48px;margin-bottom:10px;"><i class="fas fa-exclamation-triangle"></i></div>
+        <div>Failed to load reservation details</div>
+      </div>
+    `;
+  }
+};
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+
+// ============================================================
+// ID VALIDATION FUNCTIONS
+// ============================================================
+
+function validateNIDA(number) {
+  const nidaRegex = /^\d{20}$/;
+  if (!nidaRegex.test(number)) {
+    return { valid: false, message: 'NIDA number must be exactly 20 digits (e.g., 19810101700000120001)' };
+  }
+  return { valid: true, message: '' };
+}
+
+function validatePassport(number) {
+  const passportRegex = /^[A-Z]{1,2}\d{6,9}$/;
+  if (!passportRegex.test(number.toUpperCase())) {
+    return { valid: false, message: 'Passport number must start with 1-2 letters followed by 6-9 digits (e.g., A1234567 or AB1234567)' };
+  }
+  return { valid: true, message: '' };
+}
+
+function validateDrivingLicense(number) {
+  const licenseRegex = /^[A-Z]{1,2}\d{5,8}$/i;
+  if (!licenseRegex.test(number)) {
+    return { valid: false, message: 'Driving license format: 1-2 letters followed by 5-8 digits (e.g., D12345 or DL1234567)' };
+  }
+  return { valid: true, message: '' };
+}
+
+function validateVoterID(number) {
+  const voterRegex = /^\d{8,12}$/;
+  if (!voterRegex.test(number)) {
+    return { valid: false, message: 'Voter ID must be 8-12 digits (e.g., 12345678)' };
+  }
+  return { valid: true, message: '' };
+}
+
+function validateIdentification(type, number) {
+  if (!number || number.trim() === '') {
+    return { valid: true, message: '' };
+  }
+  
+  const trimmedNumber = number.trim();
+  
+  switch(type) {
+    case 'NIDA':
+      return validateNIDA(trimmedNumber);
+    case 'Passport':
+      return validatePassport(trimmedNumber);
+    case 'Driving License':
+      return validateDrivingLicense(trimmedNumber);
+    case 'Voter ID':
+      return validateVoterID(trimmedNumber);
+    case 'Other':
+      if (trimmedNumber.length < 3) {
+        return { valid: false, message: 'Please enter a valid identification number (min 3 characters)' };
+      }
+      return { valid: true, message: '' };
+    default:
+      return { valid: true, message: '' };
+  }
+}
+
+
+
+// ========== SIDEBAR TOGGLE ==========
+const hamburgerBtn = document.getElementById('hamburger-btn');
+const sidebar = document.getElementById('sidebar');
+const overlayMain = document.getElementById('overlay-main');
+const sidebarClose = document.getElementById('sidebar-close-btn');
+
+function openSidebar() { 
+  sidebar.classList.add('open'); 
+  overlayMain.classList.add('open'); 
+  hamburgerBtn.classList.add('active'); 
+}
+
+function closeSidebar() { 
+  sidebar.classList.remove('open'); 
+  overlayMain.classList.remove('open'); 
+  hamburgerBtn.classList.remove('active'); 
+}
+
+if (hamburgerBtn) {
+  hamburgerBtn.addEventListener('click', () => {
+    sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
+  });
+}
+if (sidebarClose) sidebarClose.addEventListener('click', closeSidebar);
+if (overlayMain) overlayMain.addEventListener('click', closeSidebar);
+
+// Close all modals on Escape key
+document.addEventListener('keydown', e => { 
+  if (e.key === 'Escape') {
+    closeSidebar();
+    if (typeof closeDetailPanel === 'function') closeDetailPanel();
+    closeReservationModal();
+    closeEditModal();
+  }
+});
+
+// ========== USER SESSION MANAGEMENT ==========
+// Get current logged-in user
+function getCurrentUser() {
+  const userStr = sessionStorage.getItem('pms_user');
+  if (!userStr) return null;
+  try { return JSON.parse(userStr); } catch(e) { return null; }
+}
+
+// Logout function
+function logout() {
+  sessionStorage.removeItem('pms_user');
+  window.location.href = '/';
+}
+
+// Switch to back office (placeholder)
+function switchToBack() {
+  alert('Back office feature coming soon');
+}
+
+// Redirect to login if not logged in
+const currentUser = getCurrentUser();
+if (!currentUser) {
+  window.location.href = '/';
+}
+
+// Display user information in the navbar
+document.getElementById('userName').innerText = currentUser.fullName || currentUser.username;
+document.getElementById('userRole').innerText = currentUser.role ? currentUser.role.charAt(0).toUpperCase() + currentUser.role.slice(1) : 'User';
+document.getElementById('userAvatar').innerText = (currentUser.fullName || currentUser.username || 'U').charAt(0).toUpperCase();
+
+// Dropdown toggle
+const userPill = document.getElementById('userPill');
+const dropdownMenu = document.getElementById('dropdownMenu');
+if (userPill) {
+  userPill.addEventListener('click', (e) => {
+    e.stopPropagation();
+    dropdownMenu.classList.toggle('show');
+    userPill.classList.toggle('active');
+  });
+  document.addEventListener('click', () => {
+    dropdownMenu.classList.remove('show');
+    userPill.classList.remove('active');
+  });
+}
+
+// ========== CHANGE PASSWORD MODAL ==========
+function openChangePasswordModal() {
+  // Check if modal already exists, if not create it
+  if (!document.getElementById('change-password-modal')) {
+    const modalHTML = `
+      <div class="reservation-modal-overlay" id="change-password-modal-overlay" onclick="closeChangePasswordModal()"></div>
+      <div class="reservation-modal" id="change-password-modal" style="max-width:400px;width:400px;">
+        <div class="reservation-modal-header">
+          <h3><i class="fas fa-lock"></i> Change Password</h3>
+          <button class="reservation-modal-close" onclick="closeChangePasswordModal()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="reservation-modal-body">
+          <form id="change-password-form">
+            <div class="form-group">
+              <label>Current Password</label>
+              <input type="password" id="current-password" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label>New Password (min 6 characters)</label>
+              <input type="password" id="new-password" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label>Confirm New Password</label>
+              <input type="password" id="confirm-password" class="form-control" required>
+            </div>
+            <hr class="divider" />
+            <button type="submit" class="btn btn-success"><i class="fas fa-check-circle"></i> Update Password</button>
+            <button type="button" class="btn btn-outline" style="margin-top:10px; width:100%;" onclick="closeChangePasswordModal()">Cancel</button>
+          </form>
+        </div>
+      </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Add form submit handler
+    document.getElementById('change-password-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const currentPassword = document.getElementById('current-password').value;
+      const newPassword = document.getElementById('new-password').value;
+      const confirmPassword = document.getElementById('confirm-password').value;
+      
+      if (newPassword !== confirmPassword) {
+        showToast('New passwords do not match', '<i class="fas fa-exclamation-triangle"></i>');
+        return;
+      }
+      if (newPassword.length < 6) {
+        showToast('Password must be at least 6 characters', '<i class="fas fa-exclamation-triangle"></i>');
+        return;
+      }
+      
+ try {
+  await apiPost('/auth/change-password', {
+    userId: currentUser.id,
+    oldPassword: currentPassword,
+    newPassword: newPassword
+  });
+  
+  showToast('Password changed successfully! Please login again.', '<i class="fas fa-check-circle"></i>');
+  setTimeout(() => { logout(); }, 1500);
+} catch (err) {
+  showToast('Failed to change password: ' + err.message, '<i class="fas fa-times-circle"></i>');
+}
+});
+  }
+  
+  document.getElementById('change-password-modal').classList.add('open');
+  document.getElementById('change-password-modal-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  
+  // Close dropdown if open
+  dropdownMenu.classList.remove('show');
+  userPill.classList.remove('active');
+}
+
+function closeChangePasswordModal() {
+  const modal = document.getElementById('change-password-modal');
+  const overlay = document.getElementById('change-password-modal-overlay');
+  if (modal) modal.classList.remove('open');
+  if (overlay) overlay.classList.remove('open');
+  document.body.style.overflow = '';
+  const form = document.getElementById('change-password-form');
+  if (form) form.reset();
+}
+
+// Make functions global
+window.logout = logout;
+window.switchToBack = switchToBack;
+window.openChangePasswordModal = openChangePasswordModal;
+window.closeChangePasswordModal = closeChangePasswordModal;
+
+// Make functions global
+window.openReservationModal = openReservationModal;
+window.closeReservationModal = closeReservationModal;
+window.modalStepperChange = modalStepperChange;
+window.openEditModal = openEditModal;
+window.closeEditModal = closeEditModal;
+window.openEditFromDetail = openEditFromDetail;
+window.editStepperChange = editStepperChange;
+
+</script>
+
+<!-- POS Chooser Modal -->
+<div id="pos-chooser-overlay" onclick="if(event.target===this)closePOSChooser()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:18px;padding:40px 36px;max-width:460px;width:92%;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,0.28);">
+    <div style="font-size:22px;font-weight:700;color:#1e293b;margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:10px;">
+      <i class="fas fa-cash-register" style="color:#c9933a;"></i> Point of Sale
+    </div>
+    <p style="color:#64748b;margin:0 0 28px;font-size:14px;">Select the POS system to open</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px;">
+      <a href="/bar" onclick="closePOSChooser()" style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:26px 16px;background:linear-gradient(135deg,#1e3a5f,#2563eb);border-radius:14px;color:#fff;text-decoration:none;font-weight:700;font-size:15px;transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 10px 28px rgba(37,99,235,0.4)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='none'">
+        <i class="fas fa-wine-glass-alt" style="font-size:34px;opacity:0.95;"></i>
+        Bar
+      </a>
+      <a href="/restaurant" onclick="closePOSChooser()" style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:26px 16px;background:linear-gradient(135deg,#7c2d12,#ea580c);border-radius:14px;color:#fff;text-decoration:none;font-weight:700;font-size:15px;transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 10px 28px rgba(234,88,12,0.4)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='none'">
+        <i class="fas fa-utensils" style="font-size:34px;opacity:0.95;"></i>
+        Restaurant
+      </a>
+    </div>
+    <button onclick="closePOSChooser()" style="padding:9px 28px;border:1.5px solid #e2e8f0;border-radius:8px;background:#f8fafc;cursor:pointer;color:#64748b;font-size:13px;font-weight:500;">Cancel</button>
+  </div>
+</div>
+<script>
+function openPOSChooser(){var o=document.getElementById('pos-chooser-overlay');if(o){o.style.display='flex';}}
+function closePOSChooser(){var o=document.getElementById('pos-chooser-overlay');if(o){o.style.display='none';}}
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closePOSChooser();});
+</script>
+<script src="../js/permissions.js"></script>
+</body>
+</html>

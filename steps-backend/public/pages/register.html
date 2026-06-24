@@ -1,0 +1,446 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover" />
+  <title>Kitobo Serenity Resort – Register</title>
+  <style>body { opacity: 0; transition: opacity 0.25s; } body.loaded { opacity: 1; }</style>
+  <script>document.addEventListener('DOMContentLoaded', function() { document.body.classList.add('loaded'); });</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root { --navy: #1a2340; --gold: #c9933a; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      background: #0d1b2a;
+    }
+
+    body::before {
+      content: '';
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse at 15% 50%, rgba(201,147,58,0.18) 0%, transparent 55%),
+        radial-gradient(ellipse at 85% 20%, rgba(201,147,58,0.08) 0%, transparent 45%),
+        linear-gradient(160deg, #0d1b2a 0%, #152232 50%, #0a1520 100%);
+      pointer-events: none;
+    }
+
+    .container {
+      max-width: 1080px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .register-card {
+      background: #fff;
+      border-radius: 28px;
+      box-shadow: 0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(201,147,58,0.15);
+      overflow: hidden;
+      display: flex;
+      flex-wrap: wrap;
+    }
+
+    /* ── Brand Side ── */
+    .brand-side {
+      flex: 1;
+      background: linear-gradient(160deg, #1a2c3e 0%, #0d1b2a 100%);
+      padding: 52px 44px;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      min-width: 280px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .brand-side::before {
+      content: '';
+      position: absolute; top: -60px; right: -60px;
+      width: 220px; height: 220px;
+      background: radial-gradient(circle, rgba(201,147,58,0.12) 0%, transparent 70%);
+      border-radius: 50%;
+    }
+    .brand-side::after {
+      content: '';
+      position: absolute; bottom: -40px; left: -40px;
+      width: 160px; height: 160px;
+      background: radial-gradient(circle, rgba(201,147,58,0.08) 0%, transparent 70%);
+      border-radius: 50%;
+    }
+
+    .logo-wrap {
+      width: 80px; height: 80px;
+      background: linear-gradient(135deg, #c9933a, #e8c07a);
+      border-radius: 22px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 36px; color: #1a2340;
+      margin-bottom: 24px;
+      box-shadow: 0 8px 24px rgba(201,147,58,0.35);
+    }
+
+    .brand-side h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 26px;
+      margin-bottom: 8px;
+      letter-spacing: -0.2px;
+      line-height: 1.2;
+    }
+
+    .brand-tagline {
+      font-size: 13px;
+      opacity: 0.65;
+      line-height: 1.6;
+      max-width: 240px;
+      margin-bottom: 36px;
+    }
+
+    .access-note {
+      background: rgba(201,147,58,0.12);
+      border: 1px solid rgba(201,147,58,0.25);
+      border-radius: 14px;
+      padding: 18px 20px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.8);
+      line-height: 1.6;
+      text-align: left;
+      position: relative;
+      z-index: 1;
+      max-width: 260px;
+    }
+
+    .access-note strong {
+      display: block;
+      color: #c9933a;
+      font-size: 12px;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* ── Form Side ── */
+    .form-side {
+      flex: 0.85;
+      padding: 52px 48px;
+      min-width: 320px;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .form-eyebrow {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: #c9933a;
+      margin-bottom: 8px;
+    }
+
+    .form-side h2 {
+      font-size: 30px;
+      color: #0f172a;
+      margin-bottom: 6px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .form-side .subtitle {
+      color: #64748b;
+      font-size: 13.5px;
+      margin-bottom: 32px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .form-group { margin-bottom: 18px; }
+
+    .form-group label {
+      display: block;
+      font-size: 11.5px;
+      font-weight: 700;
+      margin-bottom: 7px;
+      color: #334155;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+
+    .input-wrap { position: relative; }
+    .input-wrap i {
+      position: absolute;
+      left: 14px; top: 50%;
+      transform: translateY(-50%);
+      color: #94a3b8;
+      font-size: 14px;
+    }
+
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 12px 16px 12px 40px;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 14px;
+      font-size: 14px;
+      transition: all 0.2s;
+      background: #f8fafc;
+      color: #0f172a;
+      appearance: none;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: #c9933a;
+      background: #fff;
+      box-shadow: 0 0 0 3px rgba(201,147,58,0.12);
+    }
+
+    .btn-register {
+      width: 100%;
+      background: linear-gradient(135deg, #c9933a, #b8842f);
+      color: #fff;
+      border: none;
+      padding: 14px;
+      border-radius: 40px;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 8px;
+      letter-spacing: 0.3px;
+      box-shadow: 0 4px 16px rgba(201,147,58,0.3);
+    }
+
+    .btn-register:hover {
+      background: linear-gradient(135deg, #b8842f, #a07028);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(201,147,58,0.4);
+    }
+
+    .btn-register:active { transform: translateY(0); }
+
+    .message { font-size: 12px; text-align: center; margin-top: 12px; min-height: 18px; }
+    .message.error { color: #ef4444; }
+    .message.success { color: #10b981; }
+
+    .login-link {
+      text-align: center;
+      margin-top: 22px;
+      font-size: 13px;
+      color: #64748b;
+    }
+
+    .login-link a {
+      color: #c9933a;
+      text-decoration: none;
+      font-weight: 700;
+      transition: color 0.15s;
+    }
+
+    .login-link a:hover { color: #a07028; }
+
+    /* password strength bar */
+    .strength-bar {
+      height: 3px;
+      border-radius: 2px;
+      margin-top: 6px;
+      background: #e2e8f0;
+      overflow: hidden;
+    }
+    .strength-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 0.3s, background 0.3s;
+      width: 0%;
+    }
+
+    @media (max-width: 768px) {
+      .container { padding: 16px; }
+      .register-card { flex-direction: column; }
+      .brand-side { padding: 36px 28px; }
+      .form-side { padding: 36px 28px; }
+      .form-row { grid-template-columns: 1fr; gap: 0; }
+    }
+
+    @media (max-width: 480px) {
+      .container { padding: 12px; }
+      .brand-side { padding: 28px 20px; }
+      .form-side { padding: 28px 20px; }
+      .form-side h2 { font-size: 24px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="register-card">
+
+      <!-- Left Side -->
+      <div class="brand-side">
+        <div class="logo-wrap"><i class="fas fa-hotel"></i></div>
+        <h1>Kitobo Serenity Resort</h1>
+        <p class="brand-tagline">Create your staff account to access the property management system.</p>
+
+        <div class="access-note">
+          <strong><i class="fas fa-shield-alt"></i> Access Notice</strong>
+          New accounts require administrator approval before gaining full system access. Contact your manager if you need immediate access.
+        </div>
+      </div>
+
+      <!-- Right Side -->
+      <div class="form-side">
+        <div class="form-eyebrow">Staff Registration</div>
+        <h2>Create Account</h2>
+        <p class="subtitle">Fill in your details to register a new staff account</p>
+
+        <form id="registerForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Full Name</label>
+              <div class="input-wrap">
+                <i class="fas fa-user"></i>
+                <input type="text" id="regFullName" placeholder="John Mwamba" required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Role / Department</label>
+              <div class="input-wrap">
+                <i class="fas fa-id-badge"></i>
+                <select id="regRole" required>
+                  <option value="">Select role…</option>
+                  <option value="admin">Administrator</option>
+                  <option value="manager">Manager</option>
+                  <option value="receptionist">Front Desk / Receptionist</option>
+                  <option value="housekeeping">Housekeeping</option>
+                  <option value="bar_staff">Bar Staff</option>
+                  <option value="restaurant_staff">Restaurant Staff</option>
+                  <option value="maintenance">Maintenance</option>
+                  <option value="store_manager">Store Manager</option>
+                  <option value="accountant">Accountant</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Email Address</label>
+            <div class="input-wrap">
+              <i class="fas fa-envelope"></i>
+              <input type="email" id="regEmail" placeholder="you@kitobo.com" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Password</label>
+              <div class="input-wrap">
+                <i class="fas fa-lock"></i>
+                <input type="password" id="regPassword" placeholder="Min. 6 characters" required oninput="updateStrength(this.value)">
+              </div>
+              <div class="strength-bar"><div class="strength-fill" id="strengthFill"></div></div>
+            </div>
+            <div class="form-group">
+              <label>Confirm Password</label>
+              <div class="input-wrap">
+                <i class="fas fa-lock"></i>
+                <input type="password" id="regConfirm" placeholder="Repeat password" required>
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-register" id="submitRegister">
+            <i class="fas fa-user-plus"></i> Create Account
+          </button>
+          <div class="message" id="regMessage"></div>
+        </form>
+
+        <div class="login-link">
+          Already have an account? <a href="/">Sign in here</a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    function updateStrength(val) {
+      const fill = document.getElementById('strengthFill');
+      let score = 0;
+      if (val.length >= 6) score++;
+      if (val.length >= 10) score++;
+      if (/[A-Z]/.test(val)) score++;
+      if (/[0-9]/.test(val)) score++;
+      if (/[^A-Za-z0-9]/.test(val)) score++;
+      const pct = Math.min(100, score * 20);
+      const colors = ['#ef4444','#f97316','#eab308','#22c55e','#16a34a'];
+      fill.style.width = pct + '%';
+      fill.style.background = colors[score - 1] || '#e2e8f0';
+    }
+
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fullName = document.getElementById('regFullName').value.trim();
+      const email    = document.getElementById('regEmail').value.trim();
+      const password = document.getElementById('regPassword').value;
+      const confirm  = document.getElementById('regConfirm').value;
+      const role     = document.getElementById('regRole').value;
+      const msg      = document.getElementById('regMessage');
+      const btn      = document.getElementById('submitRegister');
+
+      msg.className = 'message';
+      msg.textContent = '';
+
+      if (password !== confirm) {
+        msg.className = 'message error';
+        msg.textContent = 'Passwords do not match.';
+        return;
+      }
+      if (password.length < 6) {
+        msg.className = 'message error';
+        msg.textContent = 'Password must be at least 6 characters.';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating account…';
+
+      try {
+        const res = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fullName, email, password, role })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Registration failed');
+
+        msg.className = 'message success';
+        msg.textContent = 'Account created! Redirecting to login…';
+        setTimeout(() => { window.location.href = '/'; }, 2000);
+      } catch (err) {
+        msg.className = 'message error';
+        msg.textContent = err.message;
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-user-plus"></i> Create Account';
+      }
+    });
+  </script>
+<script src="../js/permissions.js"></script>
+</body>
+</html>

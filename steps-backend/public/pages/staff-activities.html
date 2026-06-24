@@ -1,0 +1,963 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Staff Activities - Kitobo Serenity Resort</title>
+  <style>
+  body { opacity: 0; transition: opacity 0.2s; }
+  body.loaded { opacity: 1; }
+</style>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    document.body.classList.add('loaded');
+  });
+</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css?v=20260518" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    .activities-container { display: flex; gap: 24px; min-height: calc(100vh - 150px); flex-wrap: wrap; }
+    .activities-left { width: 380px; background: white; border-radius: 16px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .activities-right { flex: 1; background: white; border-radius: 16px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .filter-section { background: #f5f5f5; border-radius: 12px; padding: 15px; margin-bottom: 20px; }
+    .filter-section h4 { margin-bottom: 12px; font-size: 14px; color: #1e2a3e; }
+    .filter-row { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+    .filter-row input, .filter-row select { flex: 1; padding: 8px 12px; border: 1px solid #e5e5e5; border-radius: 8px; font-size: 13px; }
+    .filter-actions { display: flex; gap: 8px; margin-top: 10px; }
+    .filter-actions button { flex: 1; padding: 8px; font-size: 12px; }
+    .activities-list { max-height: calc(100vh - 350px); overflow-y: auto; }
+    .activity-item { padding: 12px; border-bottom: 1px solid #e5e5e5; cursor: pointer; transition: background 0.2s; border-radius: 8px; margin-bottom: 8px; }
+    .activity-item:hover { background: #f5f5f5; }
+    .activity-date { font-weight: 700; font-size: 12px; color: #c9933a; margin-bottom: 4px; }
+    .activity-meta { font-size: 11px; color: #737373; display: flex; gap: 12px; flex-wrap: wrap; margin-top: 4px; }
+    .form-section { display: none; }
+    .form-section.active { display: block; }
+    .form-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #e2e8f0; }
+    .form-header h3 { margin: 0; font-size: 18px; }
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { display: block; margin-bottom: 0.3rem; font-weight: 500; font-size: 0.85rem; color: #2c3e4e; }
+    .form-control { width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 20px; font-size: 0.9rem; }
+    textarea.form-control { border-radius: 12px; resize: vertical; }
+    .divider { margin: 1rem 0; border: none; border-top: 1px solid #e2e8f0; }
+    .btn-success { background: #10b981; color: white; border: none; cursor: pointer; padding: 10px 20px; border-radius: 40px; }
+    .btn-gold { background: #c9933a; color: white; border: none; cursor: pointer; padding: 10px 20px; border-radius: 40px; }
+    .btn-outline { background: transparent; border: 1px solid #e2e8f0; cursor: pointer; padding: 10px 20px; border-radius: 40px; }
+    .btn-danger { background: #ef4444; color: white; border: none; cursor: pointer; padding: 10px 20px; border-radius: 40px; }
+    .btn-sm { padding: 4px 10px; font-size: 12px; }
+    .notif-btn { position: relative; background: #f1f5f9; border: none; border-radius: 40px; padding: 8px 12px; cursor: pointer; font-size: 18px; }
+    .notif-btn:hover { background: #e2e8f0; }
+    .notif-btn .badge { position: absolute; top: -5px; right: -5px; background: #ef4444; color: white; border-radius: 50%; font-size: 10px; padding: 2px 6px; min-width: 18px; text-align: center; display: none; }
+    .notification-panel { position: absolute; top: 60px; right: 20px; width: 350px; background: white; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); z-index: 1000; display: none; }
+    .notification-panel.show { display: block; }
+    .notification-header { padding: 14px 16px; border-bottom: 1px solid #e2e8f0; font-weight: 700; display: flex; justify-content: space-between; background: #f8fafc; }
+    .notification-list { max-height: 400px; overflow-y: auto; }
+    .notification-item { padding: 14px 16px; border-bottom: 1px solid #eef2f6; cursor: pointer; }
+    .empty-notifications { padding: 40px 20px; text-align: center; color: #94a3b8; }
+    #changePwOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10000; display: none; }
+    #changePwOverlay.show { display: block; }
+    #changePwModal { position: fixed; top: 0; right: 0; width: 100%; max-width: 450px; height: 100vh; background: white; z-index: 10001; display: none; overflow-y: auto; transform: translateX(100%); transition: transform 0.3s; }
+    #changePwModal.show { display: block; transform: translateX(0); }
+    .change-pw-header { padding: 20px 28px; background: #1e2a3e; color: white; display: flex; justify-content: space-between; align-items: center; }
+    .change-pw-header button { background: none; border: none; color: white; font-size: 24px; cursor: pointer; }
+    .change-pw-body { padding: 28px; }
+    .btn-pw-success { background: #10b981; color: white; border: none; padding: 12px; border-radius: 40px; width: 100%; cursor: pointer; font-weight: 700; }
+    
+    .tasks-container {
+      background: #f8fafc;
+      border-radius: 12px;
+      padding: 15px;
+      margin: 15px 0;
+    }
+    .tasks-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .task-item-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+      align-items: center;
+    }
+    .task-item-row input[type="text"] {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      font-size: 13px;
+    }
+    .task-item-row .task-checkbox {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+      accent-color: #10b981;
+    }
+    .task-item-row button {
+      background: #ef4444;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 12px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .btn-add-task {
+      background: #c9933a;
+      color: white;
+      border: none;
+      border-radius: 20px;
+      padding: 8px 16px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .tasks-summary {
+      background: #fef3c7;
+      padding: 10px;
+      border-radius: 8px;
+      margin-top: 10px;
+      font-size: 12px;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .summary-badge {
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-weight: 600;
+    }
+    .summary-badge.completed { background: #10b981; color: white; }
+    .summary-badge.pending { background: #f59e0b; color: white; }
+    .summary-badge.total { background: #c9933a; color: white; }
+    
+    @media (max-width: 768px) { 
+      .activities-container { flex-direction: column; } 
+      .activities-left { width: 100%; order: 2; } 
+      .activities-right { width: 100%; order: 1; }
+      .task-item-row { flex-wrap: wrap; }
+      .task-item-row input[type="text"] { width: 100%; }
+      .tasks-summary { flex-direction: column; align-items: flex-start; }
+    }
+
+    .notification-icon {
+  font-size: 14px;
+  margin-right: 8px;
+}
+
+.notification-item {
+  padding: 14px 16px;
+  border-bottom: 1px solid #eef2f6;
+  transition: background 0.2s;
+  cursor: pointer;
+}
+
+.notification-item:hover {
+  background: #f8fafc;
+}
+
+.notification-item.unread {
+  background: #fef3c7;
+  border-left: 3px solid #f59e0b;
+}
+
+.notification-item.read {
+  opacity: 0.7;
+}
+
+.notification-message {
+  font-size: 13px;
+  color: #1e293b;
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+
+.notification-time {
+  font-size: 10px;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+  </style>
+</head>
+<body>
+
+<div class="overlay" id="overlay-main"></div>
+
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-top">
+    <a class="sidebar-logo" href="/">
+      <img src="/images/logo.png" alt="Kitobo Serenity Resort" style="height:44px;width:auto;object-fit:contain;display:block;">
+      <div class="logo-text"><span>Kitobo</span><span>Serenity Resort</span></div>
+    </a>
+    <button class="sidebar-close-btn" id="sidebar-close-btn"><i class="fas fa-times"></i></button>
+  </div>
+  
+  <nav class="sidebar-nav">
+    <!-- ============================================================ -->
+    <!-- DASHBOARD -->
+    <!-- ============================================================ -->
+    <div class="nav-section-label">Dashboard</div>
+    <a href="/dashboard" class="nav-item"><i class="fas fa-tachometer-alt"></i> Overview</a>
+    
+    <!-- ============================================================ -->
+    <!-- OPERATIONS -->
+    <!-- ============================================================ -->
+    <div class="nav-section-label">Operations</div>
+    <a href="/reservations" class="nav-item"><i class="fas fa-calendar-alt"></i> Reservations</a>
+    <a href="/housekeeping" class="nav-item"><i class="fas fa-soap"></i> Housekeeping</a>
+    <a href="/maintenance" class="nav-item"><i class="fas fa-toolbox"></i> Maintenance</a>
+    <div class="nav-section-label">POS</div>
+    <a href="/bar" class="nav-item"><i class="fas fa-wine-glass-alt"></i> Bar</a>
+    <a href="/restaurant" class="nav-item"><i class="fas fa-utensils"></i> Restaurant</a>
+    
+    <!-- ============================================================ -->
+    <!-- PROPERTY -->
+    <!-- ============================================================ -->
+    <div class="nav-section-label">Property</div>
+    <a href="/rooms" class="nav-item"><i class="fas fa-building"></i> Rooms View</a>
+    <a href="/rooms-list" class="nav-item "><i class="fas fa-list-ul"></i> Rooms List</a>
+    
+    <!-- ============================================================ -->
+    <!-- INVENTORY -->
+    <!-- ============================================================ -->
+    <div class="nav-section-label">Inventory</div>
+    <a href="/store-main" class="nav-item"><i class="fas fa-store"></i> Main Store</a>
+    <a href="/store-outlets" class="nav-item"><i class="fas fa-truck"></i> Outlets Store</a>
+    <a href="/purchase-orders" class="nav-item"><i class="fas fa-file-invoice"></i> Purchase Orders</a>
+    <a href="/goods-receipt" class="nav-item"><i class="fas fa-clipboard-list"></i> Goods Receipt</a>
+    
+    <a href="/staff-activities" class="nav-item active"><i class="fas fa-users"></i> Staff Activities</a>
+    
+    <!-- ============================================================ -->
+    <!-- REPORTS -->
+    <!-- ============================================================ -->
+    <div class="nav-section-label">Reports</div>
+    <a href="/reports" class="nav-item"><i class="fas fa-chart-bar"></i> Reservations Report</a>
+    <a href="/maintenance-report" class="nav-item"><i class="fas fa-chart-line"></i> Maintenance Report</a>
+    <a href="/purchase-orders-reports" class="nav-item"><i class="fas fa-file-alt"></i> Purchase Orders Report</a>
+    <a href="/goods-receipt-reports" class="nav-item"><i class="fas fa-stamp"></i> Goods Receipt Report</a>
+    <a href="/store-inventory-reports" class="nav-item"><i class="fas fa-boxes"></i> Store Inventory Report</a>
+    <a href="/sales-report" class="nav-item"><i class="fas fa-receipt"></i> Sales Report</a>
+    <a href="/housekeeping-report" class="nav-item"><i class="fas fa-soap"></i> Housekeeping Report</a>
+    <a href="/expenses-report" class="nav-item"><i class="fas fa-file-invoice-dollar"></i> Expenses Report</a>
+    <a href="/profit-report" class="nav-item"><i class="fas fa-chart-pie"></i> Profit Report</a>
+    
+    
+    <!-- ============================================================ -->
+    <!-- GUESTS -->
+    <!-- ============================================================ -->
+    <div class="nav-section-label">Finance</div>
+    <a href="/expenses" class="nav-item"><i class="fas fa-wallet"></i> Expenses</a>
+
+    <div class="nav-section-label">Guests</div>
+    <a href="/guest-database" class="nav-item"><i class="fas fa-id-card"></i> Guest Database</a>
+    
+    <!-- ============================================================ -->
+    <!-- ADMIN -->
+    <!-- ============================================================ -->
+    <div class="nav-section-label">Admin</div>
+    <a href="/users" class="nav-item"><i class="fas fa-user-shield"></i> User Management</a>
+    <a href="/permissions" class="nav-item"><i class="fas fa-lock"></i> Permissions &amp; Access</a>
+  </nav>
+  
+  <div class="sidebar-footer">
+    <small>Kitobo Serenity Resort</small>
+  </div>
+</aside>
+
+<nav class="navbar">
+  <div class="navbar-left">
+    <button class="hamburger" id="hamburger-btn"><span class="hb-bar"></span><span class="hb-bar"></span><span class="hb-bar"></span></button>
+    <div><div class="page-title">Staff Activities</div><div class="page-subtitle">Track daily tasks and activities</div></div>
+  </div>
+  <div class="navbar-right">
+        <button class="pos-navbar-btn" onclick="openPOSChooser()" title="Point of Sale"><i class="fas fa-cash-register"></i> POS</button>
+    <button class="notif-btn" id="notif-btn"><i class="fas fa-bell"></i><span class="badge" id="notif-badge">0</span></button>
+    <div class="user-dropdown">
+      <div class="user-pill" id="userPill">
+        <div class="user-avatar" id="userAvatar">U</div>
+        <div class="user-info"><span id="userName">Loading...</span><span id="userRole">Loading...</span></div>
+        <i class="fas fa-chevron-down"></i>
+      </div>
+      <div class="dropdown-menu" id="dropdownMenu">
+        <button id="openChangePwBtn"><i class="fas fa-key"></i> Change Password</button>
+        <a href="/users" class="dropdown-item"><i class="fas fa-users"></i> User Management</a>
+        <hr><button onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<main class="main-content">
+  <div class="activities-container">
+    <div class="activities-left">
+      <div class="filter-section">
+        <h4><i class="fas fa-search"></i> Filter Activities</h4>
+        <div class="filter-row">
+          <input type="date" id="filter-from" placeholder="From Date">
+          <input type="date" id="filter-to" placeholder="To Date">
+        </div>
+        <div class="filter-row">
+          <input type="text" id="filter-prepared-by" placeholder="Filter by Prepared By">
+        </div>
+        <div class="filter-actions">
+          <button class="btn btn-outline btn-sm" onclick="applyFilters()">Apply Filters</button>
+          <button class="btn btn-outline btn-sm" onclick="resetFilters()">Reset</button>
+        </div>
+      </div>
+      <div style="margin-bottom: 15px; display: flex; justify-content: space-between;">
+        <strong>Staff Activities</strong>
+        <button class="btn btn-outline btn-sm" onclick="loadActivities()"><i class="fas fa-sync-alt"></i> Refresh</button>
+      </div>
+      <div id="activities-list" class="activities-list">
+        <div style="text-align: center; padding: 20px;">Loading activities...</div>
+      </div>
+    </div>
+
+    <div class="activities-right">
+      <div id="form-section" class="form-section">
+        <div class="form-header">
+          <h3><i class="fas fa-plus"></i> New Activity</h3>
+          <button class="btn btn-outline btn-sm" onclick="cancelForm()">Cancel</button>
+        </div>
+        <form id="activity-form">
+          <div class="form-group">
+            <label><i class="fas fa-calendar-alt"></i> Date</label>
+            <input type="date" id="activity-date" class="form-control" required>
+          </div>
+          
+          <div class="tasks-container">
+            <div class="tasks-header">
+              <strong><i class="fas fa-check-circle"></i> Tasks Done Today</strong>
+              <button type="button" class="btn-add-task" onclick="addTaskField()">+ Add Task</button>
+            </div>
+            <div id="tasks-list-container"></div>
+            <div class="tasks-summary" id="tasks-summary">
+              <span class="summary-badge total"><i class="fas fa-chart-bar"></i> Tasks: <span id="total-tasks">0</span></span>
+              <span class="summary-badge completed"><i class="fas fa-check-circle"></i> Completed: <span id="completed-tasks">0</span></span>
+              <span class="summary-badge pending"><i class="fas fa-spinner fa-spin"></i> Pending: <span id="pending-tasks">0</span></span>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label><i class="fas fa-user"></i> Prepared By</label>
+            <input type="text" id="prepared-by" class="form-control" placeholder="Name of person who did the tasks" required>
+          </div>
+          <div class="form-group">
+            <label><i class="fas fa-pen"></i> Remarks / Notes</label>
+            <textarea id="remarks" class="form-control" rows="2" placeholder="Additional notes..."></textarea>
+          </div>
+          <hr class="divider">
+          <div style="display: flex; gap: 10px;">
+            <button type="submit" class="btn btn-success" style="flex:1"><i class="fas fa-save"></i> Save Activity</button>
+            <button type="button" class="btn btn-outline" onclick="cancelForm()" style="flex:1">Cancel</button>
+          </div>
+        </form>
+      </div>
+      
+      <div id="empty-state">
+        <div style="text-align: center; padding: 60px 20px;">
+          <div style="font-size: 64px;"><i class="fas fa-clipboard-list"></i></div>
+          <h3>No Activity Selected</h3>
+          <p>Click "New Activity" to log today's tasks</p>
+          <button class="btn btn-gold" onclick="showForm()"><i class="fas fa-plus"></i> New Activity</button>
+        </div>
+      </div>
+      
+      <div id="activity-details-view" style="display: none;">
+        <div id="activity-details-content"></div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="notification-panel" id="notification-panel">
+    <div class="notification-header">
+      <span><i class="fas fa-bullhorn"></i> Notifications</span>
+      <div>
+        <button id="mark-all-read-btn">Mark all read</button>
+        <button id="close-notif-panel"><i class="fas fa-times"></i></button>
+      </div>
+    </div>
+    <div class="notification-list" id="notification-list">
+      <div class="empty-notifications"><i class="fas fa-inbox"></i> No new notifications</div>
+    </div>
+  </div>
+</main>
+
+<div class="toast-container" id="toast-container"></div>
+<div id="changePwOverlay"></div>
+<div id="changePwModal">
+  <div class="change-pw-header"><h3><i class="fas fa-lock"></i> Change Password</h3><button id="closeChangePwBtn"><i class="fas fa-times"></i></button></div>
+  <div class="change-pw-body">
+    <form id="change-password-form">
+      <div class="form-group"><label>Current Password</label><input type="password" id="current-password" class="form-control" required></div>
+      <div class="form-group"><label>New Password (min 6 characters)</label><input type="password" id="new-password" class="form-control" required></div>
+      <div class="form-group"><label>Confirm New Password</label><input type="password" id="confirm-password" class="form-control" required></div>
+      <hr class="divider"><button type="submit" class="btn-pw-success"><i class="fas fa-check-circle"></i> Update Password</button>
+      <button type="button" id="cancelChangePwBtn" style="background:transparent;border:1px solid #e2e8f0;padding:12px;border-radius:40px;width:100%;margin-top:10px;">Cancel</button>
+    </form>
+  </div>
+</div>
+
+<script src="../js/api.js"></script>
+<script src="../js/utils.js"></script>
+<script>
+let activities = [], currentEditId = null, currentViewActivity = null, notifications = [];
+let tasksList = [];
+
+function addTaskField() {
+  const taskId = Date.now();
+  tasksList.push({
+    id: taskId,
+    description: '',
+    completed: false
+  });
+  renderTasksList();
+  updateTaskSummary();
+}
+
+function removeTask(taskId) {
+  tasksList = tasksList.filter(t => t.id !== taskId);
+  renderTasksList();
+  updateTaskSummary();
+}
+
+function updateTaskDescription(taskId, description) {
+  const task = tasksList.find(t => t.id === taskId);
+  if (task) {
+    task.description = description;
+  }
+}
+
+function toggleTaskCompleted(taskId) {
+  const task = tasksList.find(t => t.id === taskId);
+  if (task) {
+    task.completed = !task.completed;
+    renderTasksList();
+    updateTaskSummary();
+  }
+}
+
+function updateTaskSummary() {
+  const total = tasksList.length;
+  const completed = tasksList.filter(t => t.completed).length;
+  const pending = total - completed;
+  document.getElementById('total-tasks').innerHTML = total;
+  document.getElementById('completed-tasks').innerHTML = completed;
+  document.getElementById('pending-tasks').innerHTML = pending;
+}
+
+function renderTasksList() {
+  const container = document.getElementById('tasks-list-container');
+  if (!container) return;
+  
+  if (tasksList.length === 0) {
+    container.innerHTML = '<div style="text-align:center;padding:20px;color:#94a3b8;">No tasks added. Click "Add Task" to start.</div>';
+    return;
+  }
+  
+  let html = '';
+  for (let task of tasksList) {
+    html += `
+      <div class="task-item-row">
+        <input type="checkbox" class="task-checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTaskCompleted(${task.id})">
+        <input type="text" placeholder="Enter task description..." value="${escapeHtml(task.description)}" 
+               onchange="updateTaskDescription(${task.id}, this.value)">
+        <button type="button" onclick="removeTask(${task.id})"><i class="fas fa-trash-alt"></i></button>
+      </div>
+    `;
+  }
+  container.innerHTML = html;
+}
+
+function getTasksDescription() {
+  return tasksList.map(t => `${t.completed ? '<i class="fas fa-check-circle"></i>' : '<i class="fas fa-spinner fa-spin"></i>'} ${t.description}`).join('\n');
+}
+
+function showForm() {
+  document.getElementById('form-section').classList.add('active');
+  document.getElementById('empty-state').style.display = 'none';
+  document.getElementById('activity-details-view').style.display = 'none';
+  currentEditId = null;
+  tasksList = [];
+  renderTasksList();
+  updateTaskSummary();
+  document.getElementById('activity-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('prepared-by').value = '';
+  document.getElementById('remarks').value = '';
+  document.querySelector('#form-section .form-header h3').innerHTML = '<i class="fas fa-plus"></i> New Activity';
+}
+
+function cancelForm() {
+  document.getElementById('form-section').classList.remove('active');
+  document.getElementById('empty-state').style.display = 'block';
+  document.getElementById('activity-details-view').style.display = 'none';
+  tasksList = [];
+  currentEditId = null;
+}
+
+document.getElementById('activity-form')?.addEventListener('submit', async function(e) {
+  e.preventDefault();
+  
+  if (tasksList.length === 0) {
+    showToast('Please add at least one task', 'error');
+    return;
+  }
+  
+  const incompleteTasks = tasksList.filter(t => !t.description || t.description.trim() === '');
+  if (incompleteTasks.length > 0) {
+    showToast('Please fill in all task descriptions', 'error');
+    return;
+  }
+  
+  const activityData = {
+    date: document.getElementById('activity-date').value,
+    tasks: tasksList,
+    tasksDescription: getTasksDescription(),
+    preparedBy: document.getElementById('prepared-by').value,
+    remarks: document.getElementById('remarks').value
+  };
+  
+  if (!activityData.date || !activityData.preparedBy) {
+    showToast('Please fill all required fields', 'error');
+    return;
+  }
+  
+  try {
+    if (currentEditId) {
+      await apiPut(`/staff-activities/${currentEditId}`, activityData);
+      showToast('Activity updated successfully!', 'success');
+    } else {
+      await apiPost('/staff-activities', activityData);
+      showToast('Activity saved successfully!', 'success');
+    }
+    cancelForm();
+    loadActivities();
+  } catch(err) {
+    showToast('Failed to save: ' + err.message, 'error');
+  }
+});
+
+async function loadActivities() {
+  try {
+    let url = '/staff-activities';
+    let from = document.getElementById('filter-from')?.value;
+    let to = document.getElementById('filter-to')?.value;
+    let preparedBy = document.getElementById('filter-prepared-by')?.value;
+    let params = new URLSearchParams();
+    if (from) params.append('from', from);
+    if (to) params.append('to', to);
+    if (preparedBy) params.append('preparedBy', preparedBy);
+    if (params.toString()) url += '?' + params.toString();
+    activities = await apiGet(url);
+    renderActivitiesList();
+  } catch(err) {
+    document.getElementById('activities-list').innerHTML = '<div style="text-align:center;padding:20px;color:#ef4444;">Error loading activities</div>';
+  }
+}
+
+function applyFilters() { loadActivities(); }
+function resetFilters() {
+  document.getElementById('filter-from').value = '';
+  document.getElementById('filter-to').value = '';
+  document.getElementById('filter-prepared-by').value = '';
+  loadActivities();
+}
+
+function renderActivitiesList() {
+  let container = document.getElementById('activities-list');
+  if (!container) return;
+  if (activities.length === 0) {
+    container.innerHTML = '<div style="text-align:center;padding:20px;"><i class="fas fa-inbox"></i> No activities found</div>';
+    return;
+  }
+  let html = '';
+  for (let activity of activities) {
+    let dateStr = activity.activity_date ? new Date(activity.activity_date).toLocaleDateString() : 'No date';
+    let preparedBy = activity.prepared_by || activity.preparedBy || 'N/A';
+    let taskCount = activity.tasks ? activity.tasks.length : (activity.tasks_description ? 1 : 0);
+    
+    html += `
+      <div class="activity-item" onclick="viewActivityDetails(${activity.id})">
+        <div class="activity-date"><i class="fas fa-calendar-alt"></i> ${dateStr}</div>
+        <div class="activity-meta">
+          <span><i class="fas fa-user"></i> ${escapeHtml(preparedBy)}</span>
+          <span><i class="fas fa-clipboard-list"></i> ${taskCount} task(s)</span>
+        </div>
+      </div>
+    `;
+  }
+  container.innerHTML = html;
+}
+
+async function viewActivityDetails(id) {
+  try {
+    let activity = await apiGet(`/staff-activities/${id}`);
+    currentViewActivity = activity;
+    let dateStr = activity.activity_date ? new Date(activity.activity_date).toLocaleDateString() : 'N/A';
+    
+    let tasksHtml = '<div class="tasks-container" style="margin-top:10px;"><strong><i class="fas fa-check-circle"></i> Tasks Done:</strong><ul style="margin-top:8px;margin-left:20px;">';
+    if (activity.tasks && activity.tasks.length > 0) {
+      for (let task of activity.tasks) {
+        const statusIcon = task.completed ? '<i class="fas fa-check-circle"></i>' : '<i class="fas fa-spinner fa-spin"></i>';
+        tasksHtml += `<li style="margin-bottom:5px;">${statusIcon} ${escapeHtml(task.description)}</li>`;
+      }
+    } else if (activity.tasks_description) {
+      tasksHtml += `<li>${escapeHtml(activity.tasks_description)}</li>`;
+    } else {
+      tasksHtml += '<li>No tasks recorded</li>';
+    }
+    tasksHtml += '</ul></div>';
+    
+    document.getElementById('activity-details-content').innerHTML = `
+      <div class="form-header">
+        <h3><i class="fas fa-clipboard-list"></i> Activity Details</h3>
+        <button class="btn btn-outline btn-sm" onclick="closeActivityDetails()"><i class="fas fa-times"></i> Close</button>
+      </div>
+      <div style="background:#f5f5f5;padding:15px;border-radius:12px;">
+        <p><strong>Date:</strong> ${dateStr}</p>
+        ${tasksHtml}
+        <p><strong>Prepared By:</strong> ${escapeHtml(activity.prepared_by || activity.preparedBy)}</p>
+        <p><strong>Remarks:</strong> ${escapeHtml(activity.remarks) || 'No remarks'}</p>
+        <p><strong>Recorded:</strong> ${activity.created_at ? new Date(activity.created_at).toLocaleString() : 'N/A'}</p>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:20px;">
+        <button class="btn btn-gold" onclick="openEditActivity(${activity.id})" style="flex:1"><i class="fas fa-edit"></i> Edit</button>
+        <button class="btn btn-danger" onclick="deleteActivity(${activity.id})" style="flex:1"><i class="fas fa-trash-alt"></i> Delete</button>
+        <button class="btn btn-outline" onclick="closeActivityDetails()" style="flex:1">Close</button>
+      </div>
+    `;
+    document.getElementById('form-section').classList.remove('active');
+    document.getElementById('empty-state').style.display = 'none';
+    document.getElementById('activity-details-view').style.display = 'block';
+  } catch(err) {
+    showToast('Failed to load details', 'error');
+  }
+}
+
+function closeActivityDetails() {
+  document.getElementById('activity-details-view').style.display = 'none';
+  document.getElementById('empty-state').style.display = 'block';
+  currentViewActivity = null;
+}
+
+async function openEditActivity(id) {
+  try {
+    let activity = await apiGet(`/staff-activities/${id}`);
+    currentEditId = id;
+    document.getElementById('activity-date').value = activity.activity_date || '';
+    document.getElementById('prepared-by').value = activity.prepared_by || activity.preparedBy || '';
+    document.getElementById('remarks').value = activity.remarks || '';
+    
+    if (activity.tasks && activity.tasks.length > 0) {
+      tasksList = activity.tasks.map(t => ({
+        id: t.id || Date.now() + Math.random(),
+        description: t.description,
+        completed: t.completed || false
+      }));
+    } else if (activity.tasks_description) {
+      tasksList = [{
+        id: Date.now(),
+        description: activity.tasks_description,
+        completed: false
+      }];
+    } else {
+      tasksList = [];
+    }
+    renderTasksList();
+    updateTaskSummary();
+    
+    closeActivityDetails();
+    document.getElementById('form-section').classList.add('active');
+    document.getElementById('empty-state').style.display = 'none';
+    document.getElementById('activity-details-view').style.display = 'none';
+    document.querySelector('#form-section .form-header h3').innerHTML = '<i class="fas fa-edit"></i> Edit Activity';
+  } catch(err) {
+    showToast('Failed to load for edit', 'error');
+  }
+}
+
+async function deleteActivity(id) {
+  if (!confirm('Delete this activity?')) return;
+  try {
+    await apiDelete(`/staff-activities/${id}`);
+    showToast('Activity deleted', 'success');
+    loadActivities();
+    if (currentViewActivity && currentViewActivity.id === id) closeActivityDetails();
+  } catch(err) {
+    showToast('Failed to delete', 'error');
+  }
+}
+
+function getCurrentUser() { let str = sessionStorage.getItem('pms_user'); if (!str) return null; try { return JSON.parse(str); } catch(e) { return null; } }
+function logout() { sessionStorage.removeItem('pms_user'); window.location.href = '/'; }
+function openChangePasswordModal() { document.getElementById('changePwOverlay').classList.add('show'); document.getElementById('changePwModal').classList.add('show'); document.body.style.overflow = 'hidden'; if (dropdownMenu) dropdownMenu.classList.remove('show'); if (userPill) userPill.classList.remove('active'); }
+function closeChangePasswordModal() { document.getElementById('changePwOverlay').classList.remove('show'); document.getElementById('changePwModal').classList.remove('show'); document.body.style.overflow = ''; document.getElementById('change-password-form').reset(); }
+
+document.addEventListener('DOMContentLoaded', function() {
+  let user = getCurrentUser();
+  if (!user) { window.location.href = '/'; return; }
+  document.getElementById('userName').innerText = user.fullName || user.username;
+  document.getElementById('userRole').innerText = user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'User';
+  document.getElementById('userAvatar').innerText = (user.fullName || user.username || 'U').charAt(0).toUpperCase();
+  loadActivities();
+  setInterval(() => loadActivities(), 60000);
+  document.getElementById('openChangePwBtn')?.addEventListener('click', openChangePasswordModal);
+  document.getElementById('closeChangePwBtn')?.addEventListener('click', closeChangePasswordModal);
+  document.getElementById('cancelChangePwBtn')?.addEventListener('click', closeChangePasswordModal);
+  document.getElementById('changePwOverlay')?.addEventListener('click', closeChangePasswordModal);
+  document.getElementById('change-password-form')?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    let current = document.getElementById('current-password').value;
+    let newPw = document.getElementById('new-password').value;
+    let confirm = document.getElementById('confirm-password').value;
+    if (newPw !== confirm) { showToast('New passwords do not match', 'error'); return; }
+    if (newPw.length < 6) { showToast('Password must be at least 6 characters', 'error'); return; }
+    try {
+      await apiPost('/auth/change-password', { userId: user.id, oldPassword: current, newPassword: newPw });
+      showToast('Password changed! Please login again.', 'success');
+      setTimeout(() => logout(), 1500);
+    } catch(err) { showToast('Failed to change password', 'error'); }
+  });
+});
+
+let hamburgerBtn = document.getElementById('hamburger-btn'), sidebar = document.getElementById('sidebar'), overlayMain = document.getElementById('overlay-main'), sidebarClose = document.getElementById('sidebar-close-btn'), userPill = document.getElementById('userPill'), dropdownMenu = document.getElementById('dropdownMenu');
+function openSidebar() { sidebar.classList.add('open'); overlayMain.classList.add('open'); if (hamburgerBtn) hamburgerBtn.classList.add('active'); }
+function closeSidebar() { sidebar.classList.remove('open'); overlayMain.classList.remove('open'); if (hamburgerBtn) hamburgerBtn.classList.remove('active'); }
+if (hamburgerBtn) hamburgerBtn.addEventListener('click', () => sidebar.classList.contains('open') ? closeSidebar() : openSidebar());
+if (sidebarClose) sidebarClose.addEventListener('click', closeSidebar);
+if (overlayMain) overlayMain.addEventListener('click', closeSidebar);
+if (userPill) { userPill.addEventListener('click', (e) => { e.stopPropagation(); dropdownMenu.classList.toggle('show'); userPill.classList.toggle('active'); }); document.addEventListener('click', () => { dropdownMenu.classList.remove('show'); if (userPill) userPill.classList.remove('active'); }); }
+
+function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, function(m) { if (m === '&') return '&amp;'; if (m === '<') return '&lt;'; if (m === '>') return '&gt;'; return m; }); }
+function showToast(msg, type) { let toast = document.getElementById('toast-container'); let bg = type === 'error' ? '#ef4444' : '#10b981'; toast.innerHTML = '<div style="background:' + bg + ';color:white;padding:12px 20px;border-radius:40px;">' + msg + '</div>'; setTimeout(() => toast.innerHTML = '', 3000); }
+
+window.showForm = showForm; window.cancelForm = cancelForm; window.loadActivities = loadActivities; window.applyFilters = applyFilters; window.resetFilters = resetFilters;
+window.viewActivityDetails = viewActivityDetails; window.closeActivityDetails = closeActivityDetails; window.openEditActivity = openEditActivity;
+window.deleteActivity = deleteActivity; window.addTaskField = addTaskField; window.removeTask = removeTask;
+window.updateTaskDescription = updateTaskDescription; window.toggleTaskCompleted = toggleTaskCompleted;
+window.logout = logout; window.openChangePasswordModal = openChangePasswordModal; window.closeChangePasswordModal = closeChangePasswordModal;
+
+
+
+// ============================================================
+// NOTIFICATION SYSTEM FOR STAFF ACTIVITIES
+// ============================================================
+
+let staffNotifications = [];
+let staffNotifInterval = null;
+
+async function loadStaffNotifications() {
+  try {
+    staffNotifications = [];
+    
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+    
+    // Get today's activities
+    const todayActivities = activities.filter(a => a.activity_date === todayStr);
+    if (todayActivities.length > 0) {
+      staffNotifications.push({
+        id: 'today_activities',
+        type: 'today',
+        message: `${todayActivities.length} activity(s) recorded today`,
+        time: new Date().toLocaleTimeString(),
+        read: false,
+        icon: '<i class="fas fa-clipboard-list"></i>'
+      });
+    }
+    
+    // Count pending tasks
+    let pendingTasksCount = 0;
+    for (let activity of activities) {
+      if (activity.tasks && Array.isArray(activity.tasks)) {
+        const pending = activity.tasks.filter(t => !t.completed).length;
+        pendingTasksCount += pending;
+      }
+    }
+    if (pendingTasksCount > 0) {
+      staffNotifications.push({
+        id: 'pending_tasks',
+        type: 'pending',
+        message: `${pendingTasksCount} task(s) pending completion`,
+        time: new Date().toLocaleTimeString(),
+        read: false,
+        icon: '<i class="fas fa-spinner fa-spin"></i>'
+      });
+    }
+    
+    // Summary notification
+    if (activities.length > 0) {
+      let totalTasks = 0;
+      for (let activity of activities) {
+        if (activity.tasks && Array.isArray(activity.tasks)) {
+          totalTasks += activity.tasks.length;
+        } else if (activity.tasks_description) {
+          totalTasks += 1;
+        }
+      }
+      staffNotifications.push({
+        id: 'summary',
+        type: 'summary',
+        message: `Total: ${activities.length} activities, ${totalTasks} tasks`,
+        time: new Date().toLocaleTimeString(),
+        read: false,
+        icon: '<i class="fas fa-chart-bar"></i>'
+      });
+    }
+    
+    renderStaffNotifications();
+    updateStaffNotificationBadge();
+    
+  } catch (err) {
+    console.error('Failed to load notifications:', err);
+  }
+}
+
+function renderStaffNotifications() {
+  const container = document.getElementById('notification-list');
+  if (!container) return;
+  
+  if (staffNotifications.length === 0) {
+    container.innerHTML = '<div class="empty-notifications"><i class="fas fa-inbox"></i> No new notifications</div>';
+    return;
+  }
+  
+  let html = '';
+  for (let notif of staffNotifications) {
+    html += `
+      <div class="notification-item ${notif.read ? 'read' : 'unread'}" data-id="${notif.id}">
+        <div class="notification-message">
+          <span class="notification-icon">${notif.icon}</span>
+          ${escapeHtml(notif.message)}
+        </div>
+        <div class="notification-time"><i class="fas fa-clock"></i> ${notif.time}</div>
+      </div>
+    `;
+  }
+  container.innerHTML = html;
+  
+  // Add click handlers
+  document.querySelectorAll('.notification-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const notifId = item.getAttribute('data-id');
+      const notif = staffNotifications.find(n => n.id === notifId);
+      if (notif) {
+        notif.read = true;
+        renderStaffNotifications();
+        updateStaffNotificationBadge();
+      }
+      closeStaffNotificationPanel();
+    });
+  });
+}
+
+function updateStaffNotificationBadge() {
+  const badge = document.getElementById('notif-badge');
+  if (!badge) return;
+  
+  const unreadCount = staffNotifications.filter(n => !n.read).length;
+  badge.textContent = unreadCount;
+  badge.style.display = unreadCount > 0 ? 'inline-block' : 'none';
+}
+
+function toggleStaffNotificationPanel() {
+  const panel = document.getElementById('notification-panel');
+  if (panel) {
+    panel.classList.toggle('show');
+  }
+}
+
+function closeStaffNotificationPanel() {
+  const panel = document.getElementById('notification-panel');
+  if (panel) {
+    panel.classList.remove('show');
+  }
+}
+
+function markAllStaffNotificationsRead() {
+  staffNotifications.forEach(n => n.read = true);
+  renderStaffNotifications();
+  updateStaffNotificationBadge();
+  showToast('All notifications marked as read', 'success');
+}
+
+// Override loadActivities to refresh notifications
+const originalStaffLoadActivities = loadActivities;
+loadActivities = async function() {
+  await originalStaffLoadActivities();
+  setTimeout(() => loadStaffNotifications(), 500);
+};
+
+// Initialize notification button
+const staffNotifBtn = document.getElementById('notif-btn');
+if (staffNotifBtn) {
+  staffNotifBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleStaffNotificationPanel();
+  });
+}
+
+// Close panel when clicking outside
+document.addEventListener('click', function(e) {
+  const panel = document.getElementById('notification-panel');
+  const btn = document.getElementById('notif-btn');
+  if (panel && btn && !btn.contains(e.target) && !panel.contains(e.target)) {
+    panel.classList.remove('show');
+  }
+});
+
+// Mark all read button
+const staffMarkAllBtn = document.getElementById('mark-all-read-btn');
+if (staffMarkAllBtn) {
+  staffMarkAllBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    markAllStaffNotificationsRead();
+  });
+}
+
+// Close button
+const staffCloseNotifBtn = document.getElementById('close-notif-panel');
+if (staffCloseNotifBtn) {
+  staffCloseNotifBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    closeStaffNotificationPanel();
+  });
+}
+</script>
+
+<!-- POS Chooser Modal -->
+<div id="pos-chooser-overlay" onclick="if(event.target===this)closePOSChooser()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:18px;padding:40px 36px;max-width:460px;width:92%;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,0.28);">
+    <div style="font-size:22px;font-weight:700;color:#1e293b;margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:10px;">
+      <i class="fas fa-cash-register" style="color:#c9933a;"></i> Point of Sale
+    </div>
+    <p style="color:#64748b;margin:0 0 28px;font-size:14px;">Select the POS system to open</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px;">
+      <a href="/bar" onclick="closePOSChooser()" style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:26px 16px;background:linear-gradient(135deg,#1e3a5f,#2563eb);border-radius:14px;color:#fff;text-decoration:none;font-weight:700;font-size:15px;transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 10px 28px rgba(37,99,235,0.4)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='none'">
+        <i class="fas fa-wine-glass-alt" style="font-size:34px;opacity:0.95;"></i>
+        Bar
+      </a>
+      <a href="/restaurant" onclick="closePOSChooser()" style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:26px 16px;background:linear-gradient(135deg,#7c2d12,#ea580c);border-radius:14px;color:#fff;text-decoration:none;font-weight:700;font-size:15px;transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 10px 28px rgba(234,88,12,0.4)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='none'">
+        <i class="fas fa-utensils" style="font-size:34px;opacity:0.95;"></i>
+        Restaurant
+      </a>
+    </div>
+    <button onclick="closePOSChooser()" style="padding:9px 28px;border:1.5px solid #e2e8f0;border-radius:8px;background:#f8fafc;cursor:pointer;color:#64748b;font-size:13px;font-weight:500;">Cancel</button>
+  </div>
+</div>
+<script>
+function openPOSChooser(){var o=document.getElementById('pos-chooser-overlay');if(o){o.style.display='flex';}}
+function closePOSChooser(){var o=document.getElementById('pos-chooser-overlay');if(o){o.style.display='none';}}
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closePOSChooser();});
+</script>
+<script src="../js/permissions.js"></script>
+</body>
+</html>
+

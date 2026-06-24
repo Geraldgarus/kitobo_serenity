@@ -1,0 +1,1416 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Purchase Orders Report - Kitobo Serenity Resort</title>
+  <style>
+  body { opacity: 0; transition: opacity 0.2s; }
+  body.loaded { opacity: 1; }
+</style>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    document.body.classList.add('loaded');
+  });
+</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css?v=20260518" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    .filter-bar { background: white; border-radius: 20px; padding: 16px 24px; display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .filter-group { display: flex; flex-direction: column; gap: 4px; }
+    .filter-group label { font-size: 11px; font-weight: 600; text-transform: uppercase; color: #64748b; }
+    .filter-group input, .filter-group select { padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 20px; font-size: 13px; min-width: 160px; }
+    .btn-gold { background: #c9933a; color: white; border: none; padding: 8px 20px; border-radius: 40px; cursor: pointer; font-weight: 500; }
+    .btn-outline { background: transparent; border: 1px solid #e2e8f0; padding: 8px 20px; border-radius: 40px; cursor: pointer; }
+    .btn-print { background: #1a2340; color: white; border: none; padding: 8px 20px; border-radius: 40px; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
+    .btn-print:hover { background: #2a3a5c; }
+    .print-header { display: none; }
+    @media print {
+      .sidebar, .navbar, .filter-bar, .notif-btn, .user-dropdown, .notification-panel,
+      .pos-navbar-btn, #pos-chooser-overlay, .dropdown-menu, .toast-container,
+      .po-modal, #change-password-modal, #change-password-modal-overlay,
+      .btn-print, .btn-outline, .btn-gold { display: none !important; }
+      .main-content { margin: 0 !important; padding: 20px !important; }
+      body { background: white !important; }
+      .print-header { display: block !important; text-align: center; margin-bottom: 24px; border-bottom: 2px solid #c9933a; padding-bottom: 16px; }
+      .print-header h1 { font-size: 22px; color: #1a2340; font-family: 'Playfair Display', serif; }
+      .print-header p { font-size: 13px; color: #64748b; margin-top: 4px; }
+      .stat-card { box-shadow: none; border: 1px solid #e2e8f0; }
+      .card { box-shadow: none; border: 1px solid #e2e8f0; }
+      .card-header { background: #f8fafc !important; }
+      .data-table { min-width: unset !important; }
+      td[onclick], th:last-child, td:last-child { display: none; }
+    }
+    
+    .stats-row { display: flex; gap: 20px; margin-bottom: 24px; flex-wrap: wrap; }
+    .stat-card { background: white; border-radius: 20px; padding: 20px; flex: 1; min-width: 160px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .stat-card .stat-value { font-size: 28px; font-weight: 700; color: #1e293b; margin-top: 8px; }
+    .stat-card .stat-label { font-size: 12px; color: #64748b; text-transform: uppercase; }
+    
+    .data-table { width: 100%; border-collapse: collapse; background: white; border-radius: 16px; overflow: hidden; }
+    .data-table th, .data-table td { padding: 14px 16px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+    .data-table th { background: #f8fafc; font-weight: 600; }
+    
+    .badge-status { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+    .status-pending { background: #fef3c7; color: #d97706; }
+    .status-received { background: #dbeafe; color: #1e40af; }
+    .status-completed { background: #d1fae5; color: #059669; }
+    .status-cancelled { background: #fee2e2; color: #dc2626; }
+    
+    .card { background: white; border-radius: 24px; margin-bottom: 24px; }
+    .card-header { padding: 20px 24px; border-bottom: 1px solid #e2e8f0; font-weight: 700; font-size: 18px; display: flex; justify-content: space-between; align-items: center; }
+    .card-body { padding: 20px 24px; overflow-x: auto; }
+    .empty-state { text-align: center; padding: 48px; color: #94a3b8; }
+    
+    .user-dropdown { position: relative; cursor: pointer; }
+    .dropdown-menu { position: absolute; top: 55px; right: 0; background: white; min-width: 200px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); padding: 0.5rem 0; z-index: 100; display: none; }
+    .dropdown-menu.show { display: block; }
+    .dropdown-menu button, .dropdown-menu a { display: flex; align-items: center; gap: 12px; padding: 10px 18px; background: none; border: none; width: 100%; text-align: left; cursor: pointer; font-family: inherit; text-decoration: none; color: #1e293b; }
+    .dropdown-menu button:hover, .dropdown-menu a:hover { background: #f5f3ef; }
+    .user-pill { display: flex; align-items: center; gap: 8px; padding: 6px 12px; background: #f5f5f5; border-radius: 40px; cursor: pointer; }
+    .fa-chevron-down { transition: transform 0.2s; }
+    .user-pill.active .fa-chevron-down { transform: rotate(180deg); }
+    
+   /* PO Details Modal - Slide from Right */
+.po-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 2000;
+  visibility: hidden;
+}
+
+.po-modal.show {
+  visibility: visible;
+}
+
+.po-modal-content {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 500px;
+  max-width: 90%;
+  height: 100vh;
+  background: white;
+  z-index: 2001;
+  transform: translateX(100%);
+  transition: transform 0.3s ease-in-out;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -2px 0 20px rgba(0, 0, 0, 0.15);
+}
+
+.po-modal.show .po-modal-content {
+  transform: translateX(0);
+}
+
+.po-modal-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(135deg, #1e2a3e 0%, #2a3a5c 100%);
+  color: white;
+  flex-shrink: 0;
+}
+
+.po-modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-family: 'Playfair Display', serif;
+}
+
+.po-modal-header button {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+
+.po-modal-header button:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.po-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .po-modal-content {
+    width: 100%;
+  }
+  
+  .po-modal-body {
+    padding: 16px;
+  }
+  
+  .po-modal-header {
+    padding: 16px 20px;
+  }
+}
+    /* ============================================================
+       CHANGE PASSWORD MODAL - FIXED (CENTERED ON ALL SCREENS)
+    ============================================================ */
+ /* ============================================================
+   CHANGE PASSWORD MODAL - SLIDE FROM RIGHT (like reservations page)
+   ============================================================ */
+.change-pw-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 10000;
+  visibility: hidden;
+}
+.change-pw-overlay.open { visibility: visible; }
+
+.change-pw-modal {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 500px;
+  max-width: 90%;
+  height: 100vh;
+  background: white;
+  z-index: 10001;
+  transform: translateX(100%);
+  transition: transform 0.3s ease-in-out;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -2px 0 20px rgba(0, 0, 0, 0.15);
+  visibility: hidden;
+}
+.change-pw-modal.open {
+  visibility: visible;
+  transform: translateX(0);
+}
+
+.change-pw-modal-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(135deg, #1e2a3e 0%, #2a3a5c 100%);
+  color: white;
+  flex-shrink: 0;
+}
+
+.change-pw-modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-family: 'Playfair Display', serif;
+}
+
+.change-pw-modal-close {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+
+.change-pw-modal-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.change-pw-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .change-pw-modal {
+    width: 100%;
+  }
+  .change-pw-modal-body {
+    padding: 16px;
+  }
+  .change-pw-modal-header {
+    padding: 16px 20px;
+  }
+}
+    
+    /* Form styles */
+    .form-group { margin-bottom: 18px; }
+    .form-group label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 13px; color: #334155; }
+    .form-control { width: 100%; padding: 12px 16px; border: 1px solid #e2e8f0; border-radius: 28px; font-size: 14px; }
+    .form-control:focus { outline: none; border-color: #c9933a; }
+    .btn-success { background: #10b981; color: white; border: none; padding: 12px; border-radius: 40px; width: 100%; cursor: pointer; font-weight: 700; }
+    .divider { margin: 20px 0; border-top: 1px solid #e2e8f0; }
+    .btn-outline-full { background: transparent; border: 1px solid #e2e8f0; padding: 12px; border-radius: 40px; width: 100%; cursor: pointer; margin-top: 10px; }
+    .toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 1100; }
+    
+    /* Mobile Responsive */
+    @media (max-width: 992px) { .main-content { margin-left: 0; padding: 16px; } }
+    @media (max-width: 768px) {
+      .filter-bar { flex-direction: column; align-items: stretch; padding: 16px; }
+      .filter-group { width: 100%; }
+      .filter-group input, .filter-group select { width: 100%; min-width: auto; }
+      .filter-bar .btn-gold, .filter-bar .btn-outline { width: 100%; margin-top: 4px; }
+      .stats-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+      .stat-card { padding: 12px; min-width: auto; }
+      .stat-card .stat-value { font-size: 20px; }
+      .card-header { flex-direction: column; align-items: flex-start; gap: 8px; padding: 16px; }
+      .card-body { overflow-x: auto; padding: 16px; }
+      .data-table { min-width: 700px; }
+      .data-table th, .data-table td { white-space: nowrap; padding: 10px 12px; font-size: 12px; }
+      .po-modal-content { width: 95%; max-width: 95%; max-height: 90vh; }
+      .items-table { min-width: 500px; display: block; overflow-x: auto; }
+      .change-pw-modal { width: 95%; max-width: 95%; }
+      .change-pw-modal-body { padding: 20px; }
+    }
+    @media (max-width: 480px) {
+      .stats-row { grid-template-columns: 1fr; }
+      .stat-card .stat-value { font-size: 18px; }
+      .data-table th, .data-table td { padding: 8px 10px; font-size: 11px; }
+      .badge-status { font-size: 9px; padding: 3px 8px; }
+      .change-pw-modal-body { padding: 16px; }
+    }
+    @media (hover: none) and (pointer: coarse) {
+      .btn-gold, .btn-outline, button { min-height: 44px; }
+      .filter-group input, .filter-group select { min-height: 44px; font-size: 14px; }
+    }
+    /* Notification Styles */
+.notif-btn {
+  position: relative;
+  background: #f1f5f9;
+  border: none;
+  border-radius: 40px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 18px;
+  transition: all 0.2s;
+}
+
+.notif-btn:hover {
+  background: #e2e8f0;
+  transform: scale(1.05);
+}
+
+.notif-btn .badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: #ef4444;
+  color: white;
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  min-width: 18px;
+  text-align: center;
+  display: none;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.notification-panel {
+  position: absolute;
+  top: 60px;
+  right: 20px;
+  width: 350px;
+  max-width: calc(100vw - 40px);
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+  z-index: 1000;
+  display: none;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+}
+
+.notification-panel.show {
+  display: block;
+  animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.notification-header {
+  padding: 14px 16px;
+  border-bottom: 1px solid #e2e8f0;
+  font-weight: 700;
+  font-size: 14px;
+  color: #1e293b;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f8fafc;
+}
+
+.notification-header button {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  color: #64748b;
+  padding: 4px;
+}
+
+.notification-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.notification-item {
+  padding: 14px 16px;
+  border-bottom: 1px solid #eef2f6;
+  transition: background 0.2s;
+  cursor: pointer;
+}
+
+.notification-item:hover {
+  background: #f8fafc;
+}
+
+.notification-item.unread {
+  background: #fef3c7;
+  border-left: 3px solid #f59e0b;
+}
+
+.notification-item.read {
+  opacity: 0.7;
+}
+
+.notification-message {
+  font-size: 13px;
+  color: #1e293b;
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+
+.notification-time {
+  font-size: 10px;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.notification-icon {
+  font-size: 14px;
+  margin-right: 8px;
+}
+
+.empty-notifications {
+  padding: 40px 20px;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+.mark-all-read {
+  background: none;
+  border: none;
+  color: #c9933a;
+  font-size: 12px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.mark-all-read:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 480px) {
+  .notification-panel {
+    width: calc(100vw - 30px);
+    right: 15px;
+    top: 55px;
+  }
+}
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.po-modal.show .po-modal-content {
+  animation: slideInRight 0.3s ease-out;
+}
+
+/* ============================================================
+   PURCHASE ORDER DETAILS MODAL - STYLED
+   ============================================================ */
+
+/* PO Info Section */
+.po-info-section {
+  background: #f8fafc;
+  border-radius: 20px;
+  padding: 20px;
+  margin-bottom: 24px;
+  border: 1px solid #eef2f6;
+}
+
+.po-info-section p {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  font-size: 14px;
+  color: #334155;
+  padding: 8px 0;
+  border-bottom: 1px dashed #e2e8f0;
+}
+
+.po-info-section p:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.po-info-section p strong {
+  width: 100px;
+  color: #1e293b;
+  font-weight: 600;
+}
+
+/* Items Table Styling */
+.po-modal-body h4 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 16px;
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #c9933a;
+  width: fit-content;
+}
+
+.items-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.items-table th {
+  background: #f1f5f9;
+  padding: 14px 12px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 700;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.items-table td {
+  padding: 12px;
+  font-size: 13px;
+  color: #334155;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+
+.items-table tr:hover td {
+  background: #fafbfc;
+}
+
+.items-table tr:last-child td {
+  border-bottom: none;
+}
+
+.items-table td:first-child {
+  font-weight: 500;
+  color: #1e293b;
+}
+
+/* Total Row */
+.items-table tr.total-row td {
+  background: #fef3c7;
+  font-weight: 700;
+  color: #92400e;
+  border-top: 1px solid #fde68a;
+  border-bottom: none;
+}
+
+.items-table tr.total-row td:first-child {
+  font-weight: 700;
+}
+
+.items-table tr.total-row td:last-child {
+  font-size: 16px;
+  font-weight: 800;
+  color: #d97706;
+}
+
+/* Grand Total Styling */
+.items-table td:last-child {
+  font-weight: 600;
+  color: #059669;
+}
+
+/* Empty State */
+.po-modal-body .empty-state {
+  text-align: center;
+  padding: 40px;
+  color: #94a3b8;
+  background: #f8fafc;
+  border-radius: 16px;
+  font-size: 14px;
+}
+
+/* Status Badge in Modal */
+.po-modal-body .badge-status {
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: 30px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Loading State */
+.po-modal-body > div[style*="text-align:center"] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #64748b;
+  font-size: 14px;
+}
+
+/* Scrollbar Styling */
+.po-modal-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.po-modal-body::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 10px;
+}
+
+.po-modal-body::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+
+.po-modal-body::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Responsive for items table */
+@media (max-width: 768px) {
+  .items-table th,
+  .items-table td {
+    padding: 10px 8px;
+    font-size: 11px;
+  }
+  
+  .po-info-section p {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  
+  .po-info-section p strong {
+    width: auto;
+  }
+  
+  .po-modal-body h4 {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .items-table th,
+  .items-table td {
+    padding: 8px 6px;
+    font-size: 10px;
+  }
+  
+  .po-info-section {
+    padding: 14px;
+  }
+  
+  .po-info-section p {
+    font-size: 12px;
+    margin-bottom: 10px;
+  }
+}
+
+
+  </style>
+</head>
+<body>
+<div class="overlay" id="overlay-main"></div>
+
+<!-- Sidebar -->
+<!-- Sidebar -->
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-top">
+    <a class="sidebar-logo" href="/">
+      <img src="/images/logo.png" alt="Kitobo Serenity Resort" style="height:44px;width:auto;object-fit:contain;display:block;">
+      <div class="logo-text"><span>Kitobo</span><span>Serenity Resort</span></div>
+    </a>
+    <button class="sidebar-close-btn" id="sidebar-close-btn"><i class="fas fa-times"></i></button>
+  </div>
+  
+  <nav class="sidebar-nav">
+    <!-- ============================================================ -->
+    <!-- DASHBOARD -->
+    <!-- ============================================================ -->
+    <div class="nav-section-label">Dashboard</div>
+    <a href="/dashboard" class="nav-item"><i class="fas fa-tachometer-alt"></i> Overview</a>
+    
+    <!-- ============================================================ -->
+    <!-- OPERATIONS -->
+    <!-- ============================================================ -->
+    <div class="nav-section-label">Operations</div>
+    <a href="/reservations" class="nav-item"><i class="fas fa-calendar-alt"></i> Reservations</a>
+    <a href="/housekeeping" class="nav-item"><i class="fas fa-soap"></i> Housekeeping</a>
+    <a href="/maintenance" class="nav-item"><i class="fas fa-toolbox"></i> Maintenance</a>
+    <div class="nav-section-label">POS</div>
+    <a href="/bar" class="nav-item"><i class="fas fa-wine-glass-alt"></i> Bar</a>
+    <a href="/restaurant" class="nav-item"><i class="fas fa-utensils"></i> Restaurant</a>
+    
+    <!-- ============================================================ -->
+    <!-- PROPERTY -->
+    <!-- ============================================================ -->
+    <div class="nav-section-label">Property</div>
+    <a href="/rooms" class="nav-item"><i class="fas fa-building"></i> Rooms View</a>
+    <a href="/rooms-list" class="nav-item "><i class="fas fa-list-ul"></i> Rooms List</a>
+    
+    <!-- ============================================================ -->
+    <!-- INVENTORY -->
+    <!-- ============================================================ -->
+    <div class="nav-section-label">Inventory</div>
+    <a href="/store-main" class="nav-item"><i class="fas fa-store"></i> Main Store</a>
+    <a href="/store-outlets" class="nav-item"><i class="fas fa-truck"></i> Outlets Store</a>
+    <a href="/purchase-orders" class="nav-item"><i class="fas fa-file-invoice"></i> Purchase Orders</a>
+    <a href="/goods-receipt" class="nav-item"><i class="fas fa-clipboard-list"></i> Goods Receipt</a>
+    
+    
+    <!-- ============================================================ -->
+    <!-- REPORTS -->
+    <!-- ============================================================ -->
+    <div class="nav-section-label">Reports</div>
+    <a href="/reports" class="nav-item"><i class="fas fa-chart-bar"></i> Reservations Report</a>
+    <a href="/maintenance-report" class="nav-item"><i class="fas fa-chart-line"></i> Maintenance Report</a>
+    <a href="/purchase-orders-reports" class="nav-item active"><i class="fas fa-file-alt"></i> Purchase Orders Report</a>
+    <a href="/goods-receipt-reports" class="nav-item"><i class="fas fa-stamp"></i> Goods Receipt Report</a>
+    <a href="/store-inventory-reports" class="nav-item"><i class="fas fa-boxes"></i> Store Inventory Report</a>
+    <a href="/sales-report" class="nav-item"><i class="fas fa-receipt"></i> Sales Report</a>
+    <a href="/housekeeping-report" class="nav-item"><i class="fas fa-soap"></i> Housekeeping Report</a>
+    
+    
+    <!-- ============================================================ -->
+    <!-- GUESTS -->
+    <!-- ============================================================ -->
+    <div class="nav-section-label">Finance</div>
+    <a href="/expenditures" class="nav-item"><i class="fas fa-receipt"></i> Expenditures</a>
+    <a href="/expenses" class="nav-item"><i class="fas fa-wallet"></i> Expenses</a>
+    <div class="nav-section-label">Guests</div>
+    <a href="/guest-database" class="nav-item"><i class="fas fa-id-card"></i> Guest Database</a>
+    
+    <!-- ============================================================ -->
+    <!-- ADMIN -->
+    <!-- ============================================================ -->
+    <div class="nav-section-label">Admin</div>
+    <a href="/users" class="nav-item"><i class="fas fa-user-shield"></i> User Management</a>
+    <a href="/permissions" class="nav-item"><i class="fas fa-lock"></i> Permissions &amp; Access</a>
+  </nav>
+  
+  <div class="sidebar-footer">
+    <small>Kitobo Serenity Resort</small>
+  </div>
+</aside>
+
+<nav class="navbar">
+  <div class="navbar-left">
+    <button class="hamburger" id="hamburger-btn"><span class="hb-bar"></span><span class="hb-bar"></span><span class="hb-bar"></span></button>
+    <div><div class="page-title">Purchase Orders Report</div><div class="page-subtitle">View and analyze purchase orders</div></div>
+  </div>
+  <div class="navbar-right">
+       <button class="pos-navbar-btn" onclick="openPOSChooser()" title="Point of Sale"><i class="fas fa-cash-register"></i> POS</button>
+    <button class="notif-btn" id="notif-btn">
+  <i class="fas fa-bell"></i><span class="badge" id="notif-badge">0</span>
+</button>
+    <div class="user-dropdown">
+      <div class="user-pill" id="userPill">
+        <div class="user-avatar" id="userAvatar">U</div>
+        <div class="user-info"><span id="userName">Loading...</span><span id="userRole">Loading...</span></div>
+        <i class="fas fa-chevron-down"></i>
+      </div>
+      <div class="dropdown-menu" id="dropdownMenu">
+        <button onclick="openChangePasswordModal()"><i class="fas fa-key"></i> Change Password</button>
+        <a href="/users"><i class="fas fa-users"></i> User Management</a>
+        <hr>
+        <button onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<main class="main-content">
+  <div class="print-header">
+    <h1><i class="fas fa-file-alt"></i> Purchase Orders Report</h1>
+    <p>Kitobo Serenity Resort &mdash; Generated: <span id="print-date"></span></p>
+  </div>
+  <div class="filter-bar">
+    <div class="filter-group"><label>From Date</label><input type="date" id="filter-from"></div>
+    <div class="filter-group"><label>To Date</label><input type="date" id="filter-to"></div>
+    <div class="filter-group"><label>Status</label><select id="filter-status"><option value="all">All</option><option value="pending">Pending</option><option value="received">Received</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select></div>
+    <div class="filter-group"><label>Vendor</label><select id="filter-vendor"><option value="all">All Vendors</option></select></div>
+    <button class="btn-gold" onclick="loadReport()"><i class="fas fa-search"></i> Apply</button>
+    <button class="btn-outline" onclick="clearFilters()">Clear</button>
+    <button class="btn-outline" onclick="exportToCSV()"><i class="fas fa-file-export"></i> Export</button>
+    <button class="btn-print" onclick="printReport()"><i class="fas fa-print"></i> Print</button>
+  </div>
+  
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-label">Total POs</div><div class="stat-value" id="stat-total">—</div></div>
+    <div class="stat-card"><div class="stat-label">Total Amount</div><div class="stat-value" id="stat-amount">—</div></div>
+    <div class="stat-card"><div class="stat-label">Avg Value</div><div class="stat-value" id="stat-avg">—</div></div>
+    <div class="stat-card"><div class="stat-label">Pending</div><div class="stat-value" id="stat-pending">—</div></div>
+  </div>
+  
+  <div class="card">
+    <div class="card-header"><span><i class="fas fa-clipboard-list"></i> Purchase Orders</span><span id="result-count"></span></div>
+    <div class="card-body">
+      <table class="data-table" id="po-table">
+        <thead><tr><th>PO Number</th><th>Date</th><th>Vendor</th><th>Items</th><th>Total Amount</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="po-body"><tr><td colspan="7" class="empty-state">Loading... Please wait</tr</tbody>
+      </table>
+    </div>
+  </div>
+  <!-- Notification Panel -->
+<div class="notification-panel" id="notification-panel">
+  <div class="notification-header">
+    <span><i class="fas fa-bullhorn"></i> Notifications</span>
+    <div>
+      <button id="mark-all-read-btn" class="mark-all-read">Mark all read</button>
+      <button id="close-notif-panel"><i class="fas fa-times"></i></button>
+    </div>
+  </div>
+  <div class="notification-list" id="notification-list">
+    <div class="empty-notifications"><i class="fas fa-inbox"></i> No new notifications</div>
+  </div>
+</div>
+</main>
+
+<!-- PO Details Modal -->
+<!-- PO Details Modal - Slide from Right -->
+<div id="poModal" class="po-modal">
+  <div class="po-modal-content">
+    <div class="po-modal-header">
+      <h3 id="modalTitle"><i class="fas fa-file-alt"></i> Purchase Order Details</h3>
+      <button onclick="closeModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="po-modal-body" id="modalBody">
+      <div style="text-align:center;padding:40px;">Loading...</div>
+    </div>
+  </div>
+</div>
+
+<!-- Change Password Modal - FIXED (Centered on all screens) -->
+<!-- Change Password Modal - Slide from Right -->
+<div class="change-pw-overlay" id="change-password-modal-overlay"></div>
+<div class="change-pw-modal" id="change-password-modal">
+  <div class="change-pw-modal-header">
+    <h3><i class="fas fa-lock"></i> Change Password</h3>
+    <button class="change-pw-modal-close" onclick="closeChangePasswordModal()"><i class="fas fa-times"></i></button>
+  </div>
+  <div class="change-pw-modal-body">
+    <form id="change-password-form">
+      <div class="form-group">
+        <label>Current Password</label>
+        <input type="password" id="current-password" class="form-control" required>
+      </div>
+      <div class="form-group">
+        <label>New Password (min 6 characters)</label>
+        <input type="password" id="new-password" class="form-control" required>
+      </div>
+      <div class="form-group">
+        <label>Confirm New Password</label>
+        <input type="password" id="confirm-password" class="form-control" required>
+      </div>
+      <hr class="divider" />
+      <button type="submit" class="btn-success"><i class="fas fa-check-circle"></i> Update Password</button>
+      <button type="button" class="btn-outline-full" onclick="closeChangePasswordModal()">Cancel</button>
+    </form>
+  </div>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+
+<script>
+// ============================================================
+// NOTIFICATION SYSTEM
+// ============================================================
+// ============================================================
+// SIMPLIFIED NOTIFICATION SYSTEM FOR REPORT PAGES
+// ============================================================
+let notifications = [];
+let notificationCheckInterval = null;
+
+async function loadNotifications() {
+  try {
+    // Clear existing notifications
+    notifications = [];
+    
+    // Get PO data from the current page
+    const poTable = document.getElementById('po-body');
+    if (poTable) {
+      const rows = poTable.querySelectorAll('tr');
+      const pendingPOs = [];
+      
+      // Check for pending purchase orders
+      rows.forEach(row => {
+        const statusCell = row.querySelector('td:nth-child(6)');
+        if (statusCell) {
+          const statusText = statusCell.innerText.toLowerCase();
+          if (statusText.includes('pending')) {
+            const poNumberCell = row.querySelector('td:first-child');
+            if (poNumberCell) {
+              pendingPOs.push(poNumberCell.innerText);
+            }
+          }
+        }
+      });
+      
+      if (pendingPOs.length > 0) {
+        notifications.push({
+          id: 'pending_pos',
+          type: 'po_pending',
+          message: `${pendingPOs.length} purchase order(s) pending approval`,
+          time: new Date().toLocaleTimeString(),
+          read: false,
+          icon: '<i class="fas fa-box"></i>'
+        });
+      }
+    }
+    
+    // Check for low stock (if store items are accessible)
+    try {
+      const token = getAuthToken();
+      const response = await fetch('/api/store/items', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (response.ok) {
+        const storeItems = await response.json();
+        const lowStock = storeItems.filter(i => parseFloat(i.quantity) < 5);
+        if (lowStock.length > 0) {
+          notifications.push({
+            id: 'low_stock',
+            type: 'stock',
+            message: `${lowStock.length} item(s) are low in stock`,
+            time: new Date().toLocaleTimeString(),
+            read: false,
+            icon: '<i class="fas fa-exclamation-triangle"></i>'
+          });
+        }
+      }
+    } catch(e) {
+      // Store API not available, ignore
+      console.log('Store items not available');
+    }
+    
+    // Sort by time (newest first)
+    notifications.sort((a, b) => new Date(b.time) - new Date(a.time));
+    notifications = notifications.slice(0, 10);
+    
+    // Update UI
+    renderNotifications();
+    updateNotificationBadge();
+    
+    console.log(`<i class="fas fa-bullhorn"></i> Loaded ${notifications.length} notifications for report page`);
+  } catch (err) {
+    console.error('Failed to load notifications:', err);
+    renderNotifications();
+    updateNotificationBadge();
+  }
+}
+
+function renderNotifications() {
+  const container = document.getElementById('notification-list');
+  if (!container) return;
+  
+  const unreadCount = notifications.filter(n => !n.read).length;
+  
+  if (notifications.length === 0) {
+    container.innerHTML = '<div class="empty-notifications"><i class="fas fa-inbox"></i> No new notifications</div>';
+    return;
+  }
+  
+  container.innerHTML = notifications.map(notif => `
+    <div class="notification-item ${notif.read ? 'read' : 'unread'}" data-id="${notif.id}" data-type="${notif.type}">
+      <div class="notification-message">
+        <span class="notification-icon">${notif.icon}</span>
+        ${escapeHtml(notif.message)}
+      </div>
+      <div class="notification-time">
+        <span><i class="fas fa-clock"></i> ${notif.time}</span>
+      </div>
+    </div>
+  `).join('');
+  
+  // Add click handlers to notification items
+  document.querySelectorAll('.notification-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const notifId = item.getAttribute('data-id');
+      const notif = notifications.find(n => n.id === notifId);
+      if (notif) {
+        notif.read = true;
+        renderNotifications();
+        updateNotificationBadge();
+        
+        // Handle click based on type
+        if (notif.type === 'po_pending') {
+          // Reload the report to show pending POs
+          loadReport();
+        } else if (notif.type === 'stock') {
+          window.location.href = '/store-main';
+        }
+      }
+      closeNotificationPanel();
+    });
+  });
+}
+
+function updateNotificationBadge() {
+  const badge = document.getElementById('notif-badge');
+  if (!badge) return;
+  
+  const unreadCount = notifications.filter(n => !n.read).length;
+  badge.textContent = unreadCount;
+  badge.style.display = unreadCount > 0 ? 'inline-block' : 'none';
+}
+
+function toggleNotificationPanel() {
+  const panel = document.getElementById('notification-panel');
+  if (panel) {
+    panel.classList.toggle('show');
+  }
+}
+
+function closeNotificationPanel() {
+  const panel = document.getElementById('notification-panel');
+  if (panel) {
+    panel.classList.remove('show');
+  }
+}
+
+function markAllNotificationsRead() {
+  notifications.forEach(n => n.read = true);
+  renderNotifications();
+  updateNotificationBadge();
+  showToast('All notifications marked as read', 'success');
+}
+
+// Initialize notification button
+const notifBtn = document.getElementById('notif-btn');
+if (notifBtn) {
+  notifBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleNotificationPanel();
+  });
+}
+
+// Close panel when clicking outside
+document.addEventListener('click', function(e) {
+  const panel = document.getElementById('notification-panel');
+  const btn = document.getElementById('notif-btn');
+  if (panel && btn && !btn.contains(e.target) && !panel.contains(e.target)) {
+    panel.classList.remove('show');
+  }
+});
+
+// Mark all read button
+const markAllBtn = document.getElementById('mark-all-read-btn');
+if (markAllBtn) {
+  markAllBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    markAllNotificationsRead();
+  });
+}
+
+// Close button
+const closeNotifBtn = document.getElementById('close-notif-panel');
+if (closeNotifBtn) {
+  closeNotifBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    closeNotificationPanel();
+  });
+}
+
+// Load notifications on page load and after report loads
+document.addEventListener('DOMContentLoaded', function() {
+  loadNotifications();
+  // Refresh every 5 minutes
+  if (notificationCheckInterval) clearInterval(notificationCheckInterval);
+  notificationCheckInterval = setInterval(loadNotifications, 300000);
+});
+
+// Also reload notifications when report data changes
+const originalLoadReport = window.loadReport;
+window.loadReport = async function() {
+  await originalLoadReport();
+  loadNotifications();
+};
+function escapeHtml(str) {
+  if (!str) return '';
+  return str.replace(/[&<>]/g, function(m) {
+    if (m === '&') return '&amp;';
+    if (m === '<') return '&lt;';
+    if (m === '>') return '&gt;';
+    return m;
+  });
+}
+
+
+  // Helper Functions
+  function escapeHtml(s) { if(!s) return ''; return s.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
+  function fmtTSH(v) { return 'TSh ' + (v||0).toLocaleString(); }
+  function showToast(msg, type) { 
+    const t = document.getElementById('toast-container'); 
+    const bg = type === 'error' ? '#ef4444' : '#10b981';
+    t.innerHTML = `<div style="background:${bg};color:white;padding:12px 20px;border-radius:40px;">${msg}</div>`; 
+    setTimeout(() => t.innerHTML = '', 3000); 
+  }
+  
+  // Sidebar Toggle
+  const hamburger = document.getElementById('hamburger-btn'), sidebar = document.getElementById('sidebar'), overlay = document.getElementById('overlay-main');
+  const sidebarClose = document.getElementById('sidebar-close-btn');
+  if (sidebarClose) sidebarClose.addEventListener('click', () => sidebar.classList.remove('open'));
+  hamburger?.addEventListener('click', () => sidebar.classList.toggle('open'));
+  overlay?.addEventListener('click', () => sidebar.classList.remove('open'));
+  
+  // User Authentication
+  function getCurrentUser() { const u = sessionStorage.getItem('pms_user'); return u ? JSON.parse(u) : null; }
+  function logout() { sessionStorage.removeItem('pms_user'); window.location.href = '/'; }
+  const cu = getCurrentUser(); if (!cu) window.location.href = '/';
+ // Display user info
+document.getElementById('userName').innerText = cu.fullName || cu.username;
+document.getElementById('userRole').innerText = cu.role || 'User';
+const userInitial = (cu.fullName || cu.username || 'U')[0];
+document.getElementById('userAvatar').innerText = userInitial.toUpperCase();
+  const up = document.getElementById('userPill'), dd = document.getElementById('dropdownMenu');
+  up?.addEventListener('click', (e) => { e.stopPropagation(); dd.classList.toggle('show'); up.classList.toggle('active'); });
+  document.addEventListener('click', () => dd.classList.remove('show'));
+  
+  // API Functions
+ // API Functions
+const API_BASE = '';
+
+// Get token from session storage
+function getAuthToken() {
+  return sessionStorage.getItem('token');
+}
+
+// Handle unauthorized responses
+function handleUnauthorized(response) {
+  if (response.status === 401 || response.status === 403) {
+    sessionStorage.clear();
+    window.location.href = '/';
+    throw new Error('Session expired. Please login again.');
+  }
+  return response;
+}
+
+async function apiGet(url) { 
+  const token = getAuthToken();
+  const res = await fetch(API_BASE + url, {
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    }
+  });
+  handleUnauthorized(res);
+  if (!res.ok) throw new Error(await res.text()); 
+  return res.json(); 
+}
+
+async function apiPost(url, data) {
+  const token = getAuthToken();
+  const res = await fetch(API_BASE + url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify(data)
+  });
+  handleUnauthorized(res);
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+  
+  // Load Vendors
+  async function loadVendors() { 
+    try { 
+      const vendors = await apiGet('/api/vendors'); 
+      const sel = document.getElementById('filter-vendor'); 
+      sel.innerHTML = '<option value="all">All Vendors</option>' + vendors.map(v => `<option value="${v.id}">${escapeHtml(v.name)}</option>`).join(''); 
+    } catch(e) { console.error(e); } 
+  }
+  
+  // Change Password Modal Functions
+  function openChangePasswordModal() {
+    const modal = document.getElementById('change-password-modal');
+    const modalOverlay = document.getElementById('change-password-modal-overlay');
+    if (modal && modalOverlay) {
+      modal.classList.add('open');
+      modalOverlay.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+    if (dd) dd.classList.remove('show');
+    if (up) up.classList.remove('active');
+  }
+  
+  function closeChangePasswordModal() {
+    const modal = document.getElementById('change-password-modal');
+    const modalOverlay = document.getElementById('change-password-modal-overlay');
+    if (modal) modal.classList.remove('open');
+    if (modalOverlay) modalOverlay.classList.remove('open');
+    document.body.style.overflow = '';
+    const form = document.getElementById('change-password-form');
+    if (form) form.reset();
+  }
+  
+  const changePasswordForm = document.getElementById('change-password-form');
+if (changePasswordForm) {
+  changePasswordForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const currentPassword = document.getElementById('current-password').value;
+    const newPassword = document.getElementById('new-password').value;
+    const confirmPassword = document.getElementById('confirm-password').value;
+    if (newPassword !== confirmPassword) { showToast('New passwords do not match', 'error'); return; }
+    if (newPassword.length < 6) { showToast('Password must be at least 6 characters', 'error'); return; }
+    try {
+      await apiPost('/api/auth/change-password', {
+        userId: cu.id,  // ← CHANGE THIS LINE (currentUser → cu)
+        oldPassword: currentPassword,
+        newPassword: newPassword
+      });
+      showToast('Password changed successfully! Please login again.', '<i class="fas fa-check-circle"></i>');
+      setTimeout(() => { logout(); }, 1500);
+    } catch (err) {
+      showToast('Failed to change password: ' + err.message, '<i class="fas fa-times-circle"></i>');
+    }
+  });
+}
+  
+  // Load Report
+  async function loadReport() {
+    const from = document.getElementById('filter-from').value, to = document.getElementById('filter-to').value, status = document.getElementById('filter-status').value, vid = document.getElementById('filter-vendor').value;
+    let url = '/api/reports/purchase-orders?'; 
+    if (from) url += `from=${from}&`; 
+    if (to) url += `to=${to}&`; 
+    if (status !== 'all') url += `status=${status}&`; 
+    if (vid !== 'all') url += `vendorId=${vid}`;
+    try { 
+      const data = await apiGet(url); 
+      renderTable(data); 
+      updateStats(data); 
+    } catch(err) { 
+      document.getElementById('po-body').innerHTML = `<tr><td colspan="7" class="empty-state">Error: ${err.message}</td</tr>`; 
+      showToast('Failed to load: ' + err.message, 'error'); 
+    }
+  }
+  
+  // Render Table - FIXED with proper table cells
+  function renderTable(orders) { 
+    const tbody = document.getElementById('po-body'); 
+    if (!orders.length) { 
+      tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No purchase orders found</td</tr>'; 
+      document.getElementById('result-count').innerText = ''; 
+      return; 
+    }
+    let html = ''; 
+    orders.forEach(po => { 
+      let cls = po.status === 'pending' ? 'status-pending' : (po.status === 'completed' ? 'status-completed' : (po.status === 'cancelled' ? 'status-cancelled' : 'status-received'));
+      html += `<tr>
+        <td><strong>${escapeHtml(po.po_number)}</strong></td>
+        <td>${po.order_date}</td>
+        <td>${escapeHtml(po.vendor_name)}</td>
+        <td>${po.items_count || 0}</td>
+        <td>${fmtTSH(po.total_amount)}</td>
+        <td><span class="badge-status ${cls}">${po.status.toUpperCase()}</span></td>
+        <td><button class="btn-outline" style="padding:4px 12px" onclick="viewPODetails(${po.id}, '${escapeHtml(po.po_number)}')"><i class="fas fa-clipboard-list"></i> View Details</button></td>
+      </tr>`; 
+    });
+    tbody.innerHTML = html; 
+    document.getElementById('result-count').innerText = `Showing ${orders.length} records`;
+  }
+  
+  // View PO Details
+  async function viewPODetails(poId, poNumber) {
+    const modal = document.getElementById('poModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalBody = document.getElementById('modalBody');
+    modalTitle.innerHTML = `<i class="fas fa-file-alt"></i> Purchase Order: ${escapeHtml(poNumber)}`;
+    modalBody.innerHTML = '<div style="text-align:center;padding:40px;">Loading PO details...</div>';
+    modal.classList.add('show');
+    try {
+      const poData = await apiGet(`/api/purchase-orders/${poId}`);
+      let html = `<div class="po-info-section">
+        <p><strong><i class="fas fa-building"></i> Vendor:</strong> ${escapeHtml(poData.vendor_name)}</p>
+        <p><strong><i class="fas fa-calendar-alt"></i> Order Date:</strong> ${poData.order_date}</p>
+        <p><strong><i class="fas fa-chart-bar"></i> Status:</strong> <span class="badge-status ${poData.status === 'pending' ? 'status-pending' : (poData.status === 'completed' ? 'status-completed' : 'status-received')}">${poData.status.toUpperCase()}</span></p>
+        <p><strong><i class="fas fa-pen"></i> Notes:</strong> ${escapeHtml(poData.notes || 'No notes')}</p>
+        <p><strong><i class="fas fa-user"></i> Created By:</strong> ${escapeHtml(poData.created_by || 'System')}</p>
+      </div>`;
+      if (poData.items && poData.items.length > 0) {
+        html += `<h4><i class="fas fa-shopping-cart"></i> Order Items</h4><div style="overflow-x:auto;"><table class="items-table"><thead><tr><th>Item Name</th><th>Category</th><th>Unit</th><th>Unit Price</th><th>Quantity</th><th>Total</th></tr></thead><tbody>`;
+        let grandTotal = 0;
+        for (let i = 0; i < poData.items.length; i++) {
+          const item = poData.items[i];
+          const total = item.unit_price * item.quantity;
+          grandTotal += total;
+          html += `<tr><td><strong>${escapeHtml(item.item_name)}</strong></td><td>${escapeHtml(item.category)}</td><td>${escapeHtml(item.unit || 'units')}</td><td>${fmtTSH(item.unit_price)}</td><td>${item.quantity}</td><td>${fmtTSH(total)}</td></tr>`;
+        }
+        html += `<tr class="total-row"><td colspan="5" style="text-align:right;"><strong>GRAND TOTAL</strong></td><td><strong>${fmtTSH(grandTotal)}</strong></td></tr></tbody></table></div>`;
+      } else {
+        html += `<div class="empty-state" style="padding:20px;">No items found for this purchase order</div>`;
+      }
+      modalBody.innerHTML = html;
+    } catch(err) {
+      modalBody.innerHTML = `<div style="text-align:center;padding:40px;color:#dc2626;">Failed to load PO details: ${err.message}</div>`;
+      showToast('Failed to load PO details: ' + err.message, 'error');
+    }
+  }
+  
+  function closeModal() { 
+  document.getElementById('poModal').classList.remove('show'); 
+}
+  
+  // Update Statistics
+  function updateStats(orders) { 
+    const total = orders.length; 
+    const totalAmt = orders.reduce((s,po) => s + (po.total_amount||0), 0); 
+    const avg = total ? totalAmt/total : 0; 
+    const pending = orders.filter(po => po.status === 'pending').length;
+    document.getElementById('stat-total').innerText = total; 
+    document.getElementById('stat-amount').innerHTML = fmtTSH(totalAmt); 
+    document.getElementById('stat-avg').innerHTML = fmtTSH(Math.round(avg)); 
+    document.getElementById('stat-pending').innerText = pending;
+  }
+  
+  function clearFilters() { 
+    document.getElementById('filter-from').value = ''; 
+    document.getElementById('filter-to').value = ''; 
+    document.getElementById('filter-status').value = 'all'; 
+    document.getElementById('filter-vendor').value = 'all'; 
+    loadReport(); 
+  }
+  
+  function exportToCSV() { 
+    let csv = 'PO Number,Date,Vendor,Items Count,Total Amount,Status,Created By\n'; 
+    document.querySelectorAll('#po-body tr').forEach(row => { 
+      const cells = row.querySelectorAll('td'); 
+      if (cells.length && cells[0] && cells[0].innerText !== 'No purchase orders found') { 
+        csv += `"${cells[0].innerText}","${cells[1].innerText}","${cells[2].innerText}",${cells[3].innerText},"${cells[4].innerText}","${cells[5].innerText}","${cells[6]?.innerText || '-'}"\n`; 
+      } 
+    });
+    const blob = new Blob([csv], {type:'text/csv'}); 
+    const a = document.createElement('a'); 
+    a.href = URL.createObjectURL(blob); 
+    a.download = `po_report_${new Date().toISOString().split('T')[0]}.csv`; 
+    a.click(); 
+    URL.revokeObjectURL(a.href); 
+    showToast('Exported successfully!', 'success'); 
+  }
+  
+  // Initialize
+  document.getElementById('filter-from').value = new Date(new Date().setDate(new Date().getDate()-30)).toISOString().split('T')[0];
+  document.getElementById('filter-to').value = new Date().toISOString().split('T')[0];
+  loadVendors(); 
+  loadReport();
+  
+  function printReport() {
+    const pd = document.getElementById('print-date');
+    if (pd) pd.textContent = new Date().toLocaleString();
+    window.print();
+  }
+
+  window.loadReport = loadReport;
+  window.clearFilters = clearFilters;
+  window.exportToCSV = exportToCSV;
+  window.viewPODetails = viewPODetails;
+  window.closeModal = closeModal;
+  window.printReport = printReport;
+  window.openChangePasswordModal = openChangePasswordModal;
+  window.closeChangePasswordModal = closeChangePasswordModal;
+  window.logout = logout;
+</script>
+
+<!-- POS Chooser Modal -->
+<div id="pos-chooser-overlay" onclick="if(event.target===this)closePOSChooser()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:18px;padding:40px 36px;max-width:460px;width:92%;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,0.28);">
+    <div style="font-size:22px;font-weight:700;color:#1e293b;margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:10px;">
+      <i class="fas fa-cash-register" style="color:#c9933a;"></i> Point of Sale
+    </div>
+    <p style="color:#64748b;margin:0 0 28px;font-size:14px;">Select the POS system to open</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px;">
+      <a href="/bar" onclick="closePOSChooser()" style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:26px 16px;background:linear-gradient(135deg,#1e3a5f,#2563eb);border-radius:14px;color:#fff;text-decoration:none;font-weight:700;font-size:15px;transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 10px 28px rgba(37,99,235,0.4)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='none'">
+        <i class="fas fa-wine-glass-alt" style="font-size:34px;opacity:0.95;"></i>
+        Bar
+      </a>
+      <a href="/restaurant" onclick="closePOSChooser()" style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:26px 16px;background:linear-gradient(135deg,#7c2d12,#ea580c);border-radius:14px;color:#fff;text-decoration:none;font-weight:700;font-size:15px;transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 10px 28px rgba(234,88,12,0.4)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='none'">
+        <i class="fas fa-utensils" style="font-size:34px;opacity:0.95;"></i>
+        Restaurant
+      </a>
+    </div>
+    <button onclick="closePOSChooser()" style="padding:9px 28px;border:1.5px solid #e2e8f0;border-radius:8px;background:#f8fafc;cursor:pointer;color:#64748b;font-size:13px;font-weight:500;">Cancel</button>
+  </div>
+</div>
+<script>
+function openPOSChooser(){var o=document.getElementById('pos-chooser-overlay');if(o){o.style.display='flex';}}
+function closePOSChooser(){var o=document.getElementById('pos-chooser-overlay');if(o){o.style.display='none';}}
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closePOSChooser();});
+</script>
+<script src="../js/permissions.js"></script>
+</body>
+</html>

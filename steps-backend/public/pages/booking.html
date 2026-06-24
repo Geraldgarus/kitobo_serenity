@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Room Inquiries – Kitobo Serenity Resort</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; background: #f0f4f8; color: #1e293b; min-height: 100vh; }
+
+    /* ── HERO ── */
+    .hero {
+      background: linear-gradient(135deg, #163316 0%, #2a5a2a 60%, #163316 100%);
+      padding: 48px 24px 64px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+    .hero-logo { display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: 20px; position: relative; }
+    .hero-logo img { height: 52px; width: auto; }
+    .hero-logo-text .name { font-family: 'Playfair Display', serif; font-size: 22px; color: #fff; }
+    .hero-logo-text .sub  { font-size: 11px; color: rgba(255,255,255,0.55); letter-spacing: 0.1em; text-transform: uppercase; }
+    .hero h1 { font-family: 'Playfair Display', serif; font-size: clamp(26px, 5vw, 42px); color: #fff; margin-bottom: 10px; position: relative; }
+    .hero p  { color: rgba(255,255,255,0.65); font-size: 15px; position: relative; max-width: 520px; margin: 0 auto; line-height: 1.6; }
+    .gold-line { width: 60px; height: 3px; background: #c9933a; border-radius: 2px; margin: 16px auto; }
+
+    /* ── AVAILABILITY BANNER ── */
+    .avail-wrap { max-width: 860px; margin: -32px auto 0; padding: 0 16px; position: relative; z-index: 10; }
+    .avail-card {
+      background: #fff; border-radius: 18px; box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+      padding: 22px 30px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+    }
+    .avail-icon-wrap { width: 56px; height: 56px; border-radius: 14px; background: linear-gradient(135deg, #163316, #2a5a2a); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 24px; flex-shrink: 0; }
+    .avail-info .number { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 700; color: #163316; line-height: 1; }
+    .avail-info .label  { font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 2px; }
+    .avail-divider { width: 1px; height: 48px; background: #e2e8f0; flex-shrink: 0; }
+    .avail-msg { font-size: 13px; color: #475569; }
+    .avail-msg strong { color: #163316; }
+
+    /* ── RATE KEY ── */
+    .rate-key-wrap { max-width: 1100px; margin: 32px auto 0; padding: 0 16px; }
+    .rate-key-card {
+      background: #fff; border-radius: 14px; padding: 14px 24px;
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06); border: 1.5px solid #f1f5f9;
+    }
+    .rate-key-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #64748b; margin-right: 6px; }
+    .rb { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 20px; }
+    .rb.bb { background: #d1fae5; color: #065f46; }
+    .rb.hb { background: #fef3c7; color: #92400e; }
+    .rb.fb { background: #ede9fe; color: #5b21b6; }
+    .rate-note { margin-left: auto; font-size: 11px; color: #94a3b8; }
+
+    /* ── MAIN ── */
+    .main { max-width: 1100px; margin: 36px auto 64px; padding: 0 16px; }
+    .section-header { margin-bottom: 28px; }
+    .section-title { font-family: 'Playfair Display', serif; font-size: 24px; color: #163316; margin-bottom: 6px; }
+    .section-sub   { font-size: 13px; color: #64748b; }
+
+    /* ── ROOM CARDS ── */
+    .rooms-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px; }
+    .room-card {
+      background: #fff; border-radius: 20px; overflow: hidden;
+      box-shadow: 0 3px 14px rgba(0,0,0,0.08); transition: transform 0.22s, box-shadow 0.22s;
+      border: 1.5px solid #f1f5f9; display: flex; flex-direction: column;
+    }
+    .room-card:hover { transform: translateY(-5px); box-shadow: 0 14px 40px rgba(0,0,0,0.14); }
+
+    /* ── CAROUSEL ── */
+    .room-banner { height: 210px; position: relative; overflow: hidden; flex-shrink: 0; }
+    .carousel { width: 100%; height: 100%; position: relative; }
+    .carousel-img {
+      position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+      opacity: 0; transition: opacity 0.5s ease;
+    }
+    .carousel-img.active { opacity: 1; }
+    .car-btn {
+      position: absolute; top: 50%; transform: translateY(-50%); z-index: 6;
+      background: rgba(0,0,0,0.42); border: none; color: #fff;
+      width: 34px; height: 34px; border-radius: 50%; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; font-size: 12px;
+      opacity: 0; transition: opacity 0.22s, background 0.2s;
+    }
+    .room-card:hover .car-btn { opacity: 1; }
+    .car-btn:hover { background: rgba(0,0,0,0.7); }
+    .car-btn.prev { left: 10px; }
+    .car-btn.next { right: 10px; }
+    .car-dots {
+      position: absolute; bottom: 48px; left: 50%; transform: translateX(-50%);
+      display: flex; gap: 6px; z-index: 6;
+    }
+    .car-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: rgba(255,255,255,0.5); cursor: pointer;
+      transition: background 0.2s, transform 0.2s;
+    }
+    .car-dot.active { background: #fff; transform: scale(1.25); }
+    .room-banner-overlay { position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 35%, rgba(15,25,15,0.72)); pointer-events: none; z-index: 5; }
+    .room-banner-title { position: absolute; bottom: 14px; left: 18px; right: 18px; font-family: 'Playfair Display', serif; font-size: 22px; color: #fff; font-weight: 700; z-index: 7; pointer-events: none; }
+
+    /* ── ROOM BODY ── */
+    .room-body { padding: 18px 20px 22px; flex: 1; display: flex; flex-direction: column; }
+    .room-amenities { display: flex; gap: 14px; font-size: 12px; color: #64748b; margin-bottom: 12px; flex-wrap: wrap; }
+    .room-amenities span { display: flex; align-items: center; gap: 4px; }
+    .room-amenities i { color: #c9933a; }
+    .room-desc { font-size: 13px; color: #64748b; line-height: 1.65; margin-bottom: 18px; }
+
+    /* Pricing table */
+    .price-table-wrap { margin-bottom: 18px; }
+    .price-table-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #94a3b8; margin-bottom: 8px; }
+    .price-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .price-table thead tr { background: #f8fafc; }
+    .price-table th { padding: 7px 8px; text-align: left; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; }
+    .price-table td { padding: 8px 8px; border-bottom: 1px solid #f1f5f9; }
+    .price-table tbody tr:last-child td { border-bottom: none; }
+    .price-table .config-cell { font-weight: 600; color: #163316; }
+    .price-table .price-cell { font-weight: 700; color: #163316; }
+    .price-table .usd-cell { color: #94a3b8; font-size: 11px; }
+    .pill { display: inline-block; padding: 2px 7px; border-radius: 10px; font-size: 10px; font-weight: 700; }
+    .pill.bb { background: #d1fae5; color: #065f46; }
+    .pill.hb { background: #fef3c7; color: #92400e; }
+    .pill.fb { background: #ede9fe; color: #5b21b6; }
+
+    /* ── BUTTONS ── */
+    .btn-inquire {
+      width: 100%; padding: 12px; border-radius: 12px; border: none; margin-top: auto;
+      background: linear-gradient(135deg, #163316, #2a5a2a);
+      color: #fff; font-size: 14px; font-weight: 700; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 9px;
+      transition: opacity 0.2s, transform 0.15s, box-shadow 0.15s;
+      box-shadow: 0 4px 14px rgba(22,51,22,0.35);
+    }
+    .btn-inquire:hover { opacity: 0.88; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(22,51,22,0.48); }
+
+    /* ── MODAL ── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.55); z-index: 1000;
+      align-items: center; justify-content: center; padding: 16px;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: #fff; border-radius: 20px; width: 100%; max-width: 560px;
+      max-height: 92vh; overflow-y: auto;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.25);
+      animation: slideUp 0.25s ease;
+    }
+    @keyframes slideUp { from { opacity:0; transform: translateY(24px); } to { opacity:1; transform:translateY(0); } }
+    .modal-header {
+      padding: 20px 24px 16px; border-bottom: 1px solid #f1f5f9;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; background: #fff; z-index: 2;
+    }
+    .modal-header h3 { font-family: 'Playfair Display', serif; font-size: 18px; color: #163316; }
+    .modal-close { background: none; border: none; font-size: 18px; cursor: pointer; color: #94a3b8; padding: 4px; }
+    .modal-close:hover { color: #1e293b; }
+    .modal-body { padding: 20px 24px 26px; }
+
+    .inq-room-strip {
+      background: linear-gradient(135deg, #163316, #2a5a2a);
+      border-radius: 12px; padding: 14px 18px; display: flex; align-items: center; gap: 14px; margin-bottom: 22px;
+    }
+    .inq-room-icon { width: 46px; height: 46px; border-radius: 10px; background: rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; font-size: 20px; color: #c9933a; flex-shrink: 0; }
+    .inq-room-info .room-name { color: #fff; font-weight: 700; font-size: 15px; }
+    .inq-room-info .room-sub  { color: rgba(255,255,255,0.6); font-size: 12px; margin-top: 2px; }
+
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .form-grid .full { grid-column: 1 / -1; }
+    .fg { display: flex; flex-direction: column; gap: 5px; }
+    .fg label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; }
+    .fg input, .fg select, .fg textarea {
+      padding: 10px 13px; border: 1.5px solid #e2e8f0; border-radius: 10px;
+      font-size: 13px; font-family: 'Inter', sans-serif; color: #1e293b; outline: none;
+      transition: border-color 0.2s; background: #fff;
+    }
+    .fg textarea { resize: vertical; min-height: 80px; }
+    .fg input:focus, .fg select:focus, .fg textarea:focus { border-color: #2a5a2a; }
+    .section-divider {
+      font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+      color: #2a5a2a; padding: 14px 0 6px; border-top: 1px solid #f1f5f9; margin-top: 6px;
+      grid-column: 1 / -1; display: flex; align-items: center; gap: 7px;
+    }
+    .qty-row { display: flex; align-items: center; gap: 10px; }
+    .qty-btn  { width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid #e2e8f0; background: #fff; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; transition: border-color 0.2s, color 0.2s; }
+    .qty-btn:hover { border-color: #2a5a2a; color: #163316; }
+    .qty-val  { font-size: 15px; font-weight: 600; min-width: 24px; text-align: center; }
+
+    .btn-send {
+      width: 100%; padding: 14px; border-radius: 12px; border: none;
+      background: linear-gradient(135deg, #163316, #2a5a2a);
+      color: #fff; font-size: 15px; font-weight: 700; cursor: pointer;
+      margin-top: 20px; box-shadow: 0 4px 14px rgba(22,51,22,0.35);
+      transition: transform 0.15s, box-shadow 0.15s, opacity 0.2s;
+      display: flex; align-items: center; justify-content: center; gap: 9px;
+    }
+    .btn-send:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(22,51,22,0.48); opacity: 0.9; }
+    .btn-send:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+
+    /* Success modal */
+    .success-wrap { text-align: center; padding: 36px 24px 24px; }
+    .success-icon { font-size: 60px; color: #163316; margin-bottom: 18px; }
+    .success-wrap h3 { font-family: 'Playfair Display', serif; font-size: 22px; color: #163316; margin-bottom: 10px; }
+    .success-wrap p  { color: #64748b; font-size: 14px; line-height: 1.65; }
+    .btn-done { background: linear-gradient(135deg, #163316, #2a5a2a); color: #fff; border: none; border-radius: 10px; padding: 12px 36px; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 22px; transition: opacity 0.2s; }
+    .btn-done:hover { opacity: 0.85; }
+
+    /* Toast */
+    .toast-box { position: fixed; bottom: 24px; right: 24px; z-index: 9999; }
+    .toast { background: #163316; color: #fff; padding: 12px 20px; border-radius: 40px; font-size: 13px; margin-top: 8px; animation: fadeIn 0.3s ease; }
+    .toast.error { background: #ef4444; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Contact notice */
+    .contact-notice {
+      max-width: 1100px; margin: 0 auto 28px; padding: 0 16px;
+    }
+    .contact-notice-inner {
+      background: #fff8e1; border: 2px solid #c9933a; border-radius: 14px;
+      padding: 16px 22px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+    }
+    .contact-notice-icon { font-size: 26px; color: #c9933a; flex-shrink: 0; }
+    .contact-notice-text { flex: 1; }
+    .contact-notice-text p { font-size: 13px; color: #64748b; line-height: 1.55; }
+    .contact-notice-text strong { color: #163316; }
+    .contact-phone {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: linear-gradient(135deg, #163316, #2a5a2a);
+      color: #fff; font-size: 15px; font-weight: 700;
+      padding: 10px 20px; border-radius: 10px; text-decoration: none;
+      white-space: nowrap; flex-shrink: 0;
+      box-shadow: 0 4px 12px rgba(22,51,22,0.3);
+      transition: opacity 0.2s, transform 0.15s;
+    }
+    .contact-phone:hover { opacity: 0.88; transform: translateY(-1px); }
+
+    /* Notice inside modal */
+    .modal-notice {
+      background: #fff8e1; border: 1.5px solid #c9933a; border-radius: 10px;
+      padding: 12px 16px; display: flex; align-items: flex-start; gap: 10px; margin-bottom: 18px;
+    }
+    .modal-notice i { color: #c9933a; font-size: 16px; margin-top: 2px; flex-shrink: 0; }
+    .modal-notice p { font-size: 12px; color: #64748b; line-height: 1.55; }
+    .modal-notice p strong { color: #163316; }
+
+    /* Footer note */
+    .page-footer { text-align: center; font-size: 12px; color: #94a3b8; padding: 0 16px 40px; max-width: 1100px; margin: 0 auto; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 700px) {
+      .avail-card { gap: 14px; }
+      .avail-divider { display: none; }
+      .form-grid { grid-template-columns: 1fr; }
+      .form-grid .full { grid-column: 1; }
+      .section-divider { grid-column: 1; }
+      .rate-note { display: none; }
+    }
+    @media (max-width: 480px) {
+      .hero { padding: 36px 16px 52px; }
+      .avail-card { padding: 16px 18px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-logo">
+    <img src="/images/logo.png" alt="Kitobo Serenity Resort" onerror="this.style.display='none'">
+    <div class="hero-logo-text">
+      <div class="name">Kitobo Serenity Resort</div>
+      <div class="sub">Tanzania's Premier Getaway</div>
+    </div>
+  </div>
+  <h1>Make a Room Inquiry</h1>
+  <div class="gold-line"></div>
+  <p>Browse our rooms and pricing, then send us your inquiry — our team will create your reservation personally and confirm within 24 hours</p>
+</div>
+
+<!-- AVAILABILITY BANNER -->
+<div class="avail-wrap">
+  <div class="avail-card">
+    <div class="avail-icon-wrap"><i class="fas fa-bed"></i></div>
+    <div class="avail-info">
+      <div class="number" id="avail-number">—</div>
+      <div class="label">Rooms Available</div>
+    </div>
+    <div class="avail-divider"></div>
+    <div class="avail-msg" id="avail-msg">Checking availability…</div>
+  </div>
+</div>
+
+<!-- RATE KEY -->
+<div class="rate-key-wrap">
+  <div class="rate-key-card">
+    <span class="rate-key-label">Rate Types:</span>
+    <span class="rb bb"><i class="fas fa-coffee"></i> BB = Bed &amp; Breakfast</span>
+    <span class="rb hb"><i class="fas fa-utensils"></i> HB = Half Board (Breakfast + Dinner)</span>
+    <span class="rb fb"><i class="fas fa-concierge-bell"></i> FB = Full Board (All 3 Meals)</span>
+    <span class="rate-note">Per room / per night</span>
+  </div>
+</div>
+
+
+<!-- MAIN ROOM CARDS -->
+<div class="main">
+  <div class="section-header">
+    <div class="section-title">Our Room Types</div>
+    <div class="section-sub">All rooms include Wi-Fi, air conditioning, and daily housekeeping. Prices in TSh and USD.</div>
+  </div>
+
+  <div class="rooms-grid">
+
+    <!-- ─── STANDARD ROOM ─── -->
+    <div class="room-card">
+      <div class="room-banner">
+        <div class="carousel" id="car-standard" data-current="0">
+          <img class="carousel-img active" src="/images/standard%20room.jpg"  alt="Standard Room" loading="lazy">
+          <img class="carousel-img"        src="/images/room1.jpeg"           alt="Standard Room" loading="lazy">
+          <img class="carousel-img"        src="/images/room2.jpeg"           alt="Standard Room" loading="lazy">
+          <button class="car-btn prev" onclick="moveSlide('standard',-1)"><i class="fas fa-chevron-left"></i></button>
+          <button class="car-btn next" onclick="moveSlide('standard', 1)"><i class="fas fa-chevron-right"></i></button>
+          <div class="car-dots">
+            <span class="car-dot active" onclick="goSlide('standard',0)"></span>
+            <span class="car-dot"        onclick="goSlide('standard',1)"></span>
+            <span class="car-dot"        onclick="goSlide('standard',2)"></span>
+          </div>
+        </div>
+        <div class="room-banner-overlay"></div>
+        <div class="room-banner-title">Standard Room</div>
+      </div>
+      <div class="room-body">
+        <div class="room-amenities">
+          <span><i class="fas fa-user-friends"></i> Up to 2 guests</span>
+          <span><i class="fas fa-wind"></i> Air conditioning</span>
+          <span><i class="fas fa-bath"></i> Private bathroom</span>
+        </div>
+        <p class="room-desc">Comfortable and cozy rooms available as single (1 bed) or double (2 beds). Perfect for solo travelers, business guests, and couples looking for a relaxing retreat with all essential comforts.</p>
+
+        <div class="price-table-wrap">
+          <div class="price-table-title">Rack Rates — per room / per night</div>
+          <table class="price-table">
+            <thead>
+              <tr>
+                <th>Config</th>
+                <th><span class="pill bb">BB</span></th>
+                <th><span class="pill hb">HB</span></th>
+                <th><span class="pill fb">FB</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="config-cell">Single</td>
+                <td><span class="price-cell">100,000</span> <span class="usd-cell">$40</span></td>
+                <td><span class="price-cell">130,000</span> <span class="usd-cell">$50</span></td>
+                <td><span class="price-cell">160,000</span> <span class="usd-cell">$60</span></td>
+              </tr>
+              <tr>
+                <td class="config-cell">Double</td>
+                <td><span class="price-cell">120,000</span> <span class="usd-cell">$50</span></td>
+                <td><span class="price-cell">150,000</span> <span class="usd-cell">$60</span></td>
+                <td><span class="price-cell">180,000</span> <span class="usd-cell">$70</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <button class="btn-inquire" onclick="openInquiry('Standard Room', true)">
+          <i class="fas fa-paper-plane"></i> Send Inquiry
+        </button>
+      </div>
+    </div>
+
+    <!-- ─── DELUXE ROOM ─── -->
+    <div class="room-card">
+      <div class="room-banner">
+        <div class="carousel" id="car-deluxe" data-current="0">
+          <img class="carousel-img active" src="/images/deluxe%20room.jpeg"  alt="Deluxe Room" loading="lazy">
+          <img class="carousel-img"        src="/images/room3.jpeg"          alt="Deluxe Room" loading="lazy">
+          <img class="carousel-img"        src="/images/room4.jpg"           alt="Deluxe Room" loading="lazy">
+          <button class="car-btn prev" onclick="moveSlide('deluxe',-1)"><i class="fas fa-chevron-left"></i></button>
+          <button class="car-btn next" onclick="moveSlide('deluxe', 1)"><i class="fas fa-chevron-right"></i></button>
+          <div class="car-dots">
+            <span class="car-dot active" onclick="goSlide('deluxe',0)"></span>
+            <span class="car-dot"        onclick="goSlide('deluxe',1)"></span>
+            <span class="car-dot"        onclick="goSlide('deluxe',2)"></span>
+          </div>
+        </div>
+        <div class="room-banner-overlay"></div>
+        <div class="room-banner-title">Deluxe Room</div>
+      </div>
+      <div class="room-body">
+        <div class="room-amenities">
+          <span><i class="fas fa-user-friends"></i> Up to 2 guests</span>
+          <span><i class="fas fa-tv"></i> Flat-screen TV</span>
+          <span><i class="fas fa-star"></i> Premium furnishings</span>
+        </div>
+        <p class="room-desc">Spacious rooms with premium furnishings and stunning resort views. Features a king-size bed, flat-screen TV, minibar, and a luxurious en-suite bathroom. Perfect for guests seeking a superior experience.</p>
+
+        <div class="price-table-wrap">
+          <div class="price-table-title">Rack Rates — per room / per night</div>
+          <table class="price-table">
+            <thead>
+              <tr>
+                <th>Rate Type</th>
+                <th>TSh / Night</th>
+                <th>USD</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="pill bb">BB</span> Bed &amp; Breakfast</td>
+                <td class="price-cell">160,000</td>
+                <td class="usd-cell">$65</td>
+              </tr>
+              <tr>
+                <td><span class="pill hb">HB</span> Half Board</td>
+                <td class="price-cell">190,000</td>
+                <td class="usd-cell">$75</td>
+              </tr>
+              <tr>
+                <td><span class="pill fb">FB</span> Full Board</td>
+                <td class="price-cell">220,000</td>
+                <td class="usd-cell">$85</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <button class="btn-inquire" onclick="openInquiry('Deluxe Room', false)">
+          <i class="fas fa-paper-plane"></i> Send Inquiry
+        </button>
+      </div>
+    </div>
+
+    <!-- ─── EXECUTIVE ROOM ─── -->
+    <div class="room-card">
+      <div class="room-banner">
+        <div class="carousel" id="car-executive" data-current="0">
+          <img class="carousel-img active" src="/images/executive%20room.jpg" alt="Executive Room" loading="lazy">
+          <img class="carousel-img"        src="/images/room5.jpg"            alt="Executive Room" loading="lazy">
+          <img class="carousel-img"        src="/images/room6.jpeg"           alt="Executive Room" loading="lazy">
+          <button class="car-btn prev" onclick="moveSlide('executive',-1)"><i class="fas fa-chevron-left"></i></button>
+          <button class="car-btn next" onclick="moveSlide('executive', 1)"><i class="fas fa-chevron-right"></i></button>
+          <div class="car-dots">
+            <span class="car-dot active" onclick="goSlide('executive',0)"></span>
+            <span class="car-dot"        onclick="goSlide('executive',1)"></span>
+            <span class="car-dot"        onclick="goSlide('executive',2)"></span>
+          </div>
+        </div>
+        <div class="room-banner-overlay"></div>
+        <div class="room-banner-title">Executive Room</div>
+      </div>
+      <div class="room-body">
+        <div class="room-amenities">
+          <span><i class="fas fa-briefcase"></i> Work desk</span>
+          <span><i class="fas fa-gem"></i> Upscale furnishings</span>
+          <span><i class="fas fa-concierge-bell"></i> Exclusive privileges</span>
+        </div>
+        <p class="room-desc">Our finest accommodation featuring upscale furnishings, a private work area, walk-in wardrobe, and exclusive resort privileges. The ultimate choice for discerning guests and business executives.</p>
+
+        <div class="price-table-wrap">
+          <div class="price-table-title">Rack Rates — per room / per night</div>
+          <table class="price-table">
+            <thead>
+              <tr>
+                <th>Rate Type</th>
+                <th>TSh / Night</th>
+                <th>USD</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="pill bb">BB</span> Bed &amp; Breakfast</td>
+                <td class="price-cell">200,000</td>
+                <td class="usd-cell">$80</td>
+              </tr>
+              <tr>
+                <td><span class="pill hb">HB</span> Half Board</td>
+                <td class="price-cell">230,000</td>
+                <td class="usd-cell">$90</td>
+              </tr>
+              <tr>
+                <td><span class="pill fb">FB</span> Full Board</td>
+                <td class="price-cell">260,000</td>
+                <td class="usd-cell">$100</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <button class="btn-inquire" onclick="openInquiry('Executive Room', false)">
+          <i class="fas fa-paper-plane"></i> Send Inquiry
+        </button>
+      </div>
+    </div>
+
+  </div><!-- /.rooms-grid -->
+</div><!-- /.main -->
+
+<div class="page-footer">
+  © 2025–2026 Kitobo Serenity Resort, Tanzania · Room rates quoted in Tanzanian Shillings (TSh) · USD figures shown for convenience only · For reservations contact our team directly
+</div>
+
+<!-- ── INQUIRY MODAL ── -->
+<div class="modal-overlay" id="inquiry-modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h3><i class="fas fa-paper-plane" style="color:#2a5a2a;margin-right:8px;"></i>Send Room Inquiry</h3>
+      <button class="modal-close" onclick="closeInquiryModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+
+      <div class="inq-room-strip">
+        <div class="inq-room-icon"><i class="fas fa-bed"></i></div>
+        <div class="inq-room-info">
+          <div class="room-name" id="inq-room-display">Room Type</div>
+          <div class="room-sub">Kitobo Serenity Resort · Tanzania</div>
+        </div>
+      </div>
+
+      <div class="modal-notice">
+        <i class="fas fa-info-circle"></i>
+        <p>For a <strong>faster reservation</strong>, call us directly on <strong>+255 665 500 118</strong> — our team will confirm your booking immediately.</p>
+      </div>
+
+      <form id="inquiry-form" onsubmit="submitInquiry(event)">
+        <input type="hidden" id="inq-room-type">
+
+        <div class="form-grid">
+          <div class="section-divider"><i class="fas fa-user-circle"></i> Your Details</div>
+
+          <div class="fg full">
+            <label>Full Name *</label>
+            <input type="text" id="inq-name" placeholder="Enter your full name" required>
+          </div>
+          <div class="fg">
+            <label>Email Address *</label>
+            <input type="email" id="inq-email" placeholder="your@email.com" required>
+          </div>
+          <div class="fg">
+            <label>Phone Number *</label>
+            <input type="tel" id="inq-phone" placeholder="+255 XXX XXX XXX" required>
+          </div>
+
+          <div class="section-divider"><i class="fas fa-calendar-alt"></i> Stay Preferences</div>
+
+          <div class="fg">
+            <label>Preferred Check-in</label>
+            <input type="date" id="inq-checkin">
+          </div>
+          <div class="fg">
+            <label>Preferred Check-out</label>
+            <input type="date" id="inq-checkout">
+          </div>
+          <div class="fg">
+            <label>Adults</label>
+            <div class="qty-row">
+              <button type="button" class="qty-btn" onclick="changeQty('inq-adults-val',-1,1)">−</button>
+              <span class="qty-val" id="inq-adults-val">2</span>
+              <button type="button" class="qty-btn" onclick="changeQty('inq-adults-val',1,8)">+</button>
+            </div>
+          </div>
+          <div class="fg">
+            <label>Children</label>
+            <div class="qty-row">
+              <button type="button" class="qty-btn" onclick="changeQty('inq-children-val',-1,0)">−</button>
+              <span class="qty-val" id="inq-children-val">0</span>
+              <button type="button" class="qty-btn" onclick="changeQty('inq-children-val',1,6)">+</button>
+            </div>
+          </div>
+          <div class="fg">
+            <label>Preferred Rate</label>
+            <select id="inq-rate">
+              <option value="BB – Bed &amp; Breakfast">BB – Bed &amp; Breakfast</option>
+              <option value="HB – Half Board">HB – Half Board</option>
+              <option value="FB – Full Board">FB – Full Board</option>
+            </select>
+          </div>
+          <div class="fg" id="inq-config-field">
+            <label>Configuration</label>
+            <select id="inq-config">
+              <option value="Single">Single (1 Bed)</option>
+              <option value="Double">Double (2 Beds)</option>
+            </select>
+          </div>
+
+          <div class="section-divider"><i class="fas fa-comment-alt"></i> Message</div>
+
+          <div class="fg full">
+            <label>Special Requests / Message</label>
+            <textarea id="inq-message" placeholder="Any special requests, preferred arrival time, or questions for our team…"></textarea>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-send" id="btn-send">
+          <i class="fas fa-paper-plane"></i> Send Inquiry
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ── SUCCESS MODAL ── -->
+<div class="modal-overlay" id="success-modal-overlay">
+  <div class="modal" style="max-width:460px;">
+    <div class="modal-body">
+      <div class="success-wrap">
+        <div class="success-icon"><i class="fas fa-phone-alt"></i></div>
+        <h3>Thank You for Your Interest!</h3>
+        <p>To complete your reservation, please call us directly — our team will confirm your booking right away.</p>
+        <div style="display:flex;flex-direction:column;gap:10px;margin:20px auto 0;align-items:center;">
+          <a href="tel:+255665500118" style="
+            display:inline-flex;align-items:center;gap:10px;
+            background:linear-gradient(135deg,#163316,#2a5a2a);color:#fff;
+            font-size:16px;font-weight:700;padding:13px 26px;border-radius:12px;
+            text-decoration:none;box-shadow:0 4px 14px rgba(22,51,22,0.35);width:100%;justify-content:center;
+          "><i class="fas fa-phone-alt"></i> +255 665 500 118</a>
+          <a href="https://wa.me/255790500168" target="_blank" style="
+            display:inline-flex;align-items:center;gap:10px;
+            background:#25D366;color:#fff;
+            font-size:16px;font-weight:700;padding:13px 26px;border-radius:12px;
+            text-decoration:none;box-shadow:0 4px 14px rgba(37,211,102,0.35);width:100%;justify-content:center;
+          "><i class="fab fa-whatsapp" style="font-size:20px;"></i> +255 790 500 168</a>
+        </div>
+        <p style="margin-top:14px;font-size:12px;color:#94a3b8;">Available daily · We respond immediately</p>
+        <button class="btn-done" onclick="closeSuccessModal()" style="margin-top:14px;">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-box" id="toast-box"></div>
+
+<script>
+  const API = '';
+
+  // ── Image carousel ─────────────────────────────────────────────────────────
+  function moveSlide(id, dir) {
+    const car  = document.getElementById('car-' + id);
+    const imgs = car.querySelectorAll('.carousel-img');
+    const dots = car.querySelectorAll('.car-dot');
+    let cur    = parseInt(car.dataset.current);
+    imgs[cur].classList.remove('active');
+    dots[cur].classList.remove('active');
+    cur = (cur + dir + imgs.length) % imgs.length;
+    imgs[cur].classList.add('active');
+    dots[cur].classList.add('active');
+    car.dataset.current = cur;
+  }
+
+  function goSlide(id, idx) {
+    const car  = document.getElementById('car-' + id);
+    const imgs = car.querySelectorAll('.carousel-img');
+    const dots = car.querySelectorAll('.car-dot');
+    const cur  = parseInt(car.dataset.current);
+    imgs[cur].classList.remove('active');
+    dots[cur].classList.remove('active');
+    imgs[idx].classList.add('active');
+    dots[idx].classList.add('active');
+    car.dataset.current = idx;
+  }
+
+  // ── Availability count ─────────────────────────────────────────────────────
+  async function loadAvailability() {
+    try {
+      const res   = await fetch(`${API}/api/booking/rooms`);
+      const rooms = await res.json();
+      if (!res.ok) throw new Error();
+      const total = rooms.length;
+      const avail = rooms.filter(r => r.available && !r.under_maintenance).length;
+      document.getElementById('avail-number').textContent = avail;
+      document.getElementById('avail-msg').innerHTML = avail > 0
+        ? `<strong>${avail} of ${total}</strong> rooms currently available — send an inquiry and we will reserve one for you`
+        : 'All rooms are currently occupied. Please send an inquiry for your preferred dates.';
+    } catch {
+      document.getElementById('avail-number').textContent = '—';
+      document.getElementById('avail-msg').textContent = 'Contact us directly for availability information';
+    }
+  }
+
+  // ── Default date setup ─────────────────────────────────────────────────────
+  (function setDefaultDates() {
+    const today    = new Date();
+    const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
+    const fmt = d => d.toISOString().split('T')[0];
+    document.getElementById('inq-checkin').value  = fmt(today);
+    document.getElementById('inq-checkout').value = fmt(tomorrow);
+    document.getElementById('inq-checkin').min    = fmt(today);
+    document.getElementById('inq-checkin').addEventListener('change', function() {
+      const next = new Date(this.value); next.setDate(next.getDate() + 1);
+      document.getElementById('inq-checkout').min = next.toISOString().split('T')[0];
+      if (document.getElementById('inq-checkout').value <= this.value)
+        document.getElementById('inq-checkout').value = next.toISOString().split('T')[0];
+    });
+  })();
+
+  function changeQty(id, delta, min) {
+    const el = document.getElementById(id);
+    el.textContent = Math.max(min, parseInt(el.textContent) + delta);
+  }
+
+  function showToast(msg, err) {
+    const box = document.getElementById('toast-box');
+    const t   = document.createElement('div');
+    t.className   = 'toast' + (err ? ' error' : '');
+    t.textContent = msg;
+    box.appendChild(t);
+    setTimeout(() => t.remove(), 4000);
+  }
+
+  // ── Modal controls ─────────────────────────────────────────────────────────
+  function openInquiry(roomType, showConfig) {
+    document.getElementById('inq-room-display').textContent = roomType;
+    document.getElementById('inq-room-type').value = roomType;
+    document.getElementById('inq-config-field').style.display = showConfig ? '' : 'none';
+    document.getElementById('inquiry-modal-overlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeInquiryModal() {
+    document.getElementById('inquiry-modal-overlay').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function closeSuccessModal() {
+    document.getElementById('success-modal-overlay').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  // ── Submit inquiry ─────────────────────────────────────────────────────────
+  function submitInquiry(e) {
+    e.preventDefault();
+    const checkin  = document.getElementById('inq-checkin').value;
+    const checkout = document.getElementById('inq-checkout').value;
+    if (checkin && checkout && checkin >= checkout) {
+      showToast('Check-out must be after check-in', true);
+      return;
+    }
+    closeInquiryModal();
+    document.getElementById('inquiry-form').reset();
+    document.getElementById('success-modal-overlay').classList.add('open');
+  }
+
+  // Backdrop click closes modals
+  document.getElementById('inquiry-modal-overlay').addEventListener('click', function(e) {
+    if (e.target === this) closeInquiryModal();
+  });
+  document.getElementById('success-modal-overlay').addEventListener('click', function(e) {
+    if (e.target === this) closeSuccessModal();
+  });
+
+  window.addEventListener('load', loadAvailability);
+</script>
+</body>
+</html>

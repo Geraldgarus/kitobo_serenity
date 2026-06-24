@@ -1,0 +1,718 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Expenses - Kitobo Serenity Resort</title>
+  <style>body { opacity: 0; transition: opacity 0.2s; } body.loaded { opacity: 1; }</style>
+  <script>document.addEventListener('DOMContentLoaded', function() { document.body.classList.add('loaded'); });</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css?v=20260518" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    .expenses-container { display: flex; gap: 24px; min-height: calc(100vh - 150px); flex-wrap: wrap; }
+    .expenses-left  { width: 360px; background: white; border-radius: 16px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .expenses-right { flex: 1; background: white; border-radius: 16px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+
+    /* filter */
+    .filter-section { background: #f5f5f5; border-radius: 12px; padding: 15px; margin-bottom: 16px; }
+    .filter-section h4 { margin-bottom: 12px; font-size: 14px; color: #1e2a3e; }
+    .filter-row { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+    .filter-row input, .filter-row select { flex: 1; padding: 8px 12px; border: 1px solid #e5e5e5; border-radius: 8px; font-size: 13px; }
+    .filter-actions { display: flex; gap: 8px; margin-top: 10px; }
+    .filter-actions button { flex: 1; padding: 8px; font-size: 12px; }
+
+    /* list */
+    .expenses-list { max-height: calc(100vh - 360px); overflow-y: auto; }
+    .expense-item { padding: 12px; border-bottom: 1px solid #e5e5e5; cursor: pointer; transition: background 0.2s; border-radius: 8px; margin-bottom: 6px; }
+    .expense-item:hover { background: #f5f5f5; }
+    .expense-item.selected { background: #eff9ff; border-left: 3px solid #c9933a; }
+    .expense-number   { font-weight: 700; font-size: 12px; color: #c9933a; margin-bottom: 4px; }
+    .expense-category { display: inline-block; background: #e2e8f0; padding: 2px 8px; border-radius: 20px; font-size: 10px; margin-bottom: 6px; }
+    .expense-amount   { font-weight: 600; font-size: 14px; color: #ef4444; margin-top: 4px; }
+    .expense-date     { font-size: 10px; color: #94a3b8; margin-top: 4px; }
+
+    /* form */
+    .form-section { display: none; }
+    .form-section.active { display: block; }
+    .form-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #e2e8f0; }
+    .form-header h3 { margin: 0; font-size: 18px; }
+    .form-group-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 20px; }
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { display: block; margin-bottom: 0.3rem; font-weight: 500; font-size: 0.85rem; color: #2c3e4e; }
+    .form-control { width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 20px; font-size: 0.9rem; }
+    textarea.form-control { border-radius: 12px; resize: vertical; }
+    .divider { margin: 1rem 0; border: none; border-top: 1px solid #e2e8f0; }
+
+    /* buttons */
+    .btn-success { background: #10b981; color: white; border: none; cursor: pointer; padding: 10px 20px; border-radius: 40px; }
+    .btn-gold    { background: #c9933a; color: white; border: none; cursor: pointer; padding: 10px 20px; border-radius: 40px; }
+    .btn-outline { background: transparent; border: 1px solid #e2e8f0; cursor: pointer; padding: 10px 20px; border-radius: 40px; }
+    .btn-danger  { background: #ef4444; color: white; border: none; cursor: pointer; padding: 10px 20px; border-radius: 40px; }
+    .btn-sm { padding: 4px 10px; font-size: 12px; }
+
+    /* details card */
+    .detail-card { background: #f8fafc; border-radius: 12px; padding: 20px; }
+    .detail-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e2e8f0; font-size: 0.88rem; }
+    .detail-row:last-child { border-bottom: none; }
+    .detail-label { color: #64748b; font-weight: 500; }
+    .detail-value { color: #1e2a3e; font-weight: 600; text-align: right; max-width: 55%; }
+
+    /* misc */
+    .notif-btn { position: relative; background: #f1f5f9; border: none; border-radius: 40px; padding: 8px 12px; cursor: pointer; font-size: 18px; }
+    .notif-btn:hover { background: #e2e8f0; }
+    .notif-btn .badge { position: absolute; top: -5px; right: -5px; background: #ef4444; color: white; border-radius: 50%; font-size: 10px; padding: 2px 6px; min-width: 18px; text-align: center; display: none; }
+    .notification-panel { position: absolute; top: 60px; right: 20px; width: 340px; background: white; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); z-index: 1000; display: none; }
+    .notification-panel.show { display: block; }
+    .notification-header { padding: 14px 16px; border-bottom: 1px solid #e2e8f0; font-weight: 700; display: flex; justify-content: space-between; background: #f8fafc; }
+    .notification-list { max-height: 400px; overflow-y: auto; }
+    .notification-item { padding: 14px 16px; border-bottom: 1px solid #eef2f6; cursor: pointer; font-size: 13px; }
+    .empty-notifications { padding: 40px 20px; text-align: center; color: #94a3b8; }
+    #changePwOverlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.7); z-index:10000; display:none; }
+    #changePwOverlay.show { display: block; }
+    #changePwModal { position: fixed; top:0; right:0; width:100%; max-width:450px; height:100vh; background:white; z-index:10001; display:none; overflow-y:auto; transform:translateX(100%); transition:transform 0.3s; }
+    #changePwModal.show { display:block; transform:translateX(0); }
+    .change-pw-header { padding:20px 28px; background:#1e2a3e; color:white; display:flex; justify-content:space-between; align-items:center; }
+    .change-pw-header button { background:none; border:none; color:white; font-size:24px; cursor:pointer; }
+    .change-pw-body { padding: 28px; }
+    .btn-pw-success { background:#10b981; color:white; border:none; padding:12px; border-radius:40px; width:100%; cursor:pointer; font-weight:700; }
+
+    @media (max-width: 768px) {
+      .expenses-container { flex-direction: column; }
+      .expenses-left  { width: 100%; order: 2; }
+      .expenses-right { width: 100%; order: 1; }
+      .form-group-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="overlay" id="overlay-main"></div>
+
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-top">
+    <a class="sidebar-logo" href="/">
+      <img src="/images/logo.png" alt="Kitobo Serenity Resort" style="height:44px;width:auto;object-fit:contain;display:block;">
+      <div class="logo-text"><span>Kitobo</span><span>Serenity Resort</span></div>
+    </a>
+    <button class="sidebar-close-btn" id="sidebar-close-btn"><i class="fas fa-times"></i></button>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Dashboard</div>
+    <a href="/dashboard" class="nav-item"><i class="fas fa-tachometer-alt"></i> Overview</a>
+    <div class="nav-section-label">Operations</div>
+    <a href="/reservations" class="nav-item"><i class="fas fa-calendar-alt"></i> Reservations</a>
+    <a href="/housekeeping" class="nav-item"><i class="fas fa-soap"></i> Housekeeping</a>
+    <a href="/maintenance" class="nav-item"><i class="fas fa-toolbox"></i> Maintenance</a>
+    <div class="nav-section-label">POS</div>
+    <a href="/bar" class="nav-item"><i class="fas fa-wine-glass-alt"></i> Bar</a>
+    <a href="/restaurant" class="nav-item"><i class="fas fa-utensils"></i> Restaurant</a>
+    <div class="nav-section-label">Property</div>
+    <a href="/rooms" class="nav-item"><i class="fas fa-building"></i> Rooms View</a>
+    <a href="/rooms-list" class="nav-item"><i class="fas fa-list-ul"></i> Rooms List</a>
+    <div class="nav-section-label">Inventory</div>
+    <a href="/store-main" class="nav-item"><i class="fas fa-store"></i> Main Store</a>
+    <a href="/store-outlets" class="nav-item"><i class="fas fa-truck"></i> Outlets Store</a>
+    <a href="/purchase-orders" class="nav-item"><i class="fas fa-file-invoice"></i> Purchase Orders</a>
+    <a href="/goods-receipt" class="nav-item"><i class="fas fa-clipboard-list"></i> Goods Receipt</a>
+    <div class="nav-section-label">Finance</div>
+    <a href="/expenses" class="nav-item active"><i class="fas fa-wallet"></i> Expenses</a>
+   
+    <div class="nav-section-label">Reports</div>
+    <a href="/reports" class="nav-item"><i class="fas fa-chart-bar"></i> Reservations Report</a>
+    <a href="/maintenance-report" class="nav-item"><i class="fas fa-chart-line"></i> Maintenance Report</a>
+    <a href="/purchase-orders-reports" class="nav-item"><i class="fas fa-file-alt"></i> Purchase Orders Report</a>
+    <a href="/goods-receipt-reports" class="nav-item"><i class="fas fa-stamp"></i> Goods Receipt Report</a>
+    <a href="/store-inventory-reports" class="nav-item"><i class="fas fa-boxes"></i> Store Inventory Report</a>
+    <a href="/sales-report" class="nav-item"><i class="fas fa-receipt"></i> Sales Report</a>
+    <a href="/housekeeping-report" class="nav-item"><i class="fas fa-soap"></i> Housekeeping Report</a>
+    <a href="/expenses-report" class="nav-item"><i class="fas fa-file-invoice-dollar"></i> Expenses Report</a>
+    <a href="/profit-report" class="nav-item"><i class="fas fa-chart-pie"></i> Profit Report</a>
+    <div class="nav-section-label">Guests</div>
+    <a href="/guest-database" class="nav-item"><i class="fas fa-id-card"></i> Guest Database</a>
+    <div class="nav-section-label">Admin</div>
+    <a href="/users" class="nav-item"><i class="fas fa-user-shield"></i> User Management</a>
+    <a href="/permissions" class="nav-item"><i class="fas fa-lock"></i> Permissions &amp; Access</a>
+  </nav>
+  <div class="sidebar-footer"><small>Kitobo Serenity Resort</small></div>
+</aside>
+
+<!-- Navbar -->
+<nav class="navbar">
+  <div class="navbar-left">
+    <button class="hamburger" id="hamburger-btn"><span class="hb-bar"></span><span class="hb-bar"></span><span class="hb-bar"></span></button>
+    <div>
+      <div class="page-title">Expenses</div>
+      <div class="page-subtitle">Record and track daily business expenses</div>
+    </div>
+  </div>
+  <div class="navbar-right">
+    <button class="pos-navbar-btn" onclick="openPOSChooser()" title="Point of Sale"><i class="fas fa-cash-register"></i> POS</button>
+    <button class="notif-btn" id="notif-btn"><i class="fas fa-bell"></i><span class="badge" id="notif-badge">0</span></button>
+    <div class="user-dropdown">
+      <div class="user-pill" id="userPill">
+        <div class="user-avatar" id="userAvatar">U</div>
+        <div class="user-info"><span id="userName">Loading...</span><span id="userRole">Loading...</span></div>
+        <i class="fas fa-chevron-down"></i>
+      </div>
+      <div class="dropdown-menu" id="dropdownMenu">
+        <button id="openChangePwBtn"><i class="fas fa-key"></i> Change Password</button>
+        <a href="/users" class="dropdown-item"><i class="fas fa-users"></i> User Management</a>
+        <hr><button onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<main class="main-content">
+  <div class="expenses-container">
+
+    <!-- LEFT: List + Filter -->
+    <div class="expenses-left">
+      <div class="filter-section">
+        <h4><i class="fas fa-filter"></i> Filter Expenses</h4>
+        <div class="filter-row">
+          <input type="date" id="filter-from" placeholder="From">
+          <input type="date" id="filter-to"   placeholder="To">
+        </div>
+        <div class="filter-row">
+          <select id="filter-category">
+            <option value="">All Categories</option>
+            <option value="Water">Water</option>
+            <option value="Electricity">Electricity</option>
+            <option value="Internet">Internet</option>
+            <option value="Salary">Salary</option>
+            <option value="Maintenance">Maintenance</option>
+            <option value="Office Supplies">Office Supplies</option>
+            <option value="Marketing and Advertising">Marketing &amp; Advertising</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="filter-actions">
+          <button class="btn btn-outline btn-sm" onclick="applyFilters()"><i class="fas fa-search"></i> Apply</button>
+          <button class="btn btn-outline btn-sm" onclick="resetFilters()"><i class="fas fa-undo"></i> Reset</button>
+        </div>
+      </div>
+
+      <div style="margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+        <strong style="font-size:13px;">Expense Records</strong>
+        <button class="btn btn-outline btn-sm" onclick="loadExpenses()"><i class="fas fa-sync-alt"></i></button>
+      </div>
+
+      <div id="expenses-list" class="expenses-list">
+        <div style="text-align:center;padding:20px;color:#94a3b8;">Loading...</div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Form / Details / Empty state -->
+    <div class="expenses-right">
+
+      <!-- Empty state -->
+      <div id="empty-state">
+        <div style="text-align:center; padding:60px 20px;">
+          <div style="font-size:60px; color:#e2e8f0; margin-bottom:16px;"><i class="fas fa-wallet"></i></div>
+          <h3 style="color:#1e2a3e; margin-bottom:8px;">No Expense Selected</h3>
+          <p style="color:#94a3b8; margin-bottom:24px;">Select an expense from the list or create a new one</p>
+          <button class="btn btn-gold" onclick="showForm()"><i class="fas fa-plus"></i> New Expense</button>
+        </div>
+      </div>
+
+      <!-- Create / Edit Form -->
+      <div id="form-section" class="form-section">
+        <div class="form-header">
+          <h3 id="form-title"><i class="fas fa-plus"></i> New Expense</h3>
+          <button class="btn btn-outline btn-sm" onclick="cancelForm()"><i class="fas fa-times"></i> Cancel</button>
+        </div>
+        <form id="expense-form">
+          <div class="form-group-row">
+            <div class="form-group">
+              <label><i class="fas fa-calendar-alt"></i> Date <span style="color:#ef4444">*</span></label>
+              <input type="date" id="expense-date" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label><i class="fas fa-hashtag"></i> Expense Number</label>
+              <input type="text" id="expense-number" class="form-control" readonly>
+            </div>
+          </div>
+          <div class="form-group-row">
+            <div class="form-group">
+              <label><i class="fas fa-folder-open"></i> Category <span style="color:#ef4444">*</span></label>
+              <select id="expense-category" class="form-control" required>
+                <option value="">Select Category</option>
+                <option value="Water">Water</option>
+                <option value="Electricity">Electricity</option>
+                <option value="Internet">Internet</option>
+                <option value="Salary">Salary</option>
+                <option value="Maintenance">Maintenance</option>
+                <option value="Office Supplies">Office Supplies</option>
+                <option value="Marketing and Advertising">Marketing and Advertising</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label><i class="fas fa-money-bill-wave"></i> Amount (TSh) <span style="color:#ef4444">*</span></label>
+              <input type="number" id="expense-amount" class="form-control" placeholder="0" min="0" step="100" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label><i class="fas fa-pen"></i> Description <span style="color:#ef4444">*</span></label>
+            <textarea id="expense-description" class="form-control" rows="2" placeholder="Describe this expense..." required></textarea>
+          </div>
+          <div class="form-group-row">
+            <div class="form-group">
+              <label><i class="fas fa-credit-card"></i> Payment Method</label>
+              <select id="expense-payment-method" class="form-control">
+                <option value="cash">Cash</option>
+                <option value="bank">Bank Transfer</option>
+                <option value="card">Card</option>
+                <option value="cheque">Cheque</option>
+                <option value="mobile">Mobile Payment</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label><i class="fas fa-user-tie"></i> Paid To / Vendor</label>
+              <input type="text" id="expense-paid-to" class="form-control" placeholder="e.g. TANESCO, Supplier name...">
+            </div>
+          </div>
+          <div class="form-group">
+            <label><i class="fas fa-sticky-note"></i> Remarks</label>
+            <textarea id="expense-remarks" class="form-control" rows="2" placeholder="Additional notes..."></textarea>
+          </div>
+          <hr class="divider">
+          <div style="display:flex; gap:10px;">
+            <button type="submit" class="btn btn-success" style="flex:1"><i class="fas fa-save"></i> Save Expense</button>
+            <button type="button" class="btn btn-outline" onclick="cancelForm()" style="flex:1"><i class="fas fa-times"></i> Cancel</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Details view -->
+      <div id="details-view" style="display:none;">
+        <div id="details-content"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Notification panel -->
+  <div class="notification-panel" id="notification-panel">
+    <div class="notification-header">
+      <span><i class="fas fa-bell"></i> Notifications</span>
+      <div>
+        <button id="mark-all-read-btn" style="background:none;border:none;cursor:pointer;font-size:12px;color:#c9933a;">Mark all read</button>
+        <button id="close-notif-panel" style="background:none;border:none;cursor:pointer;margin-left:8px;"><i class="fas fa-times"></i></button>
+      </div>
+    </div>
+    <div class="notification-list" id="notification-list">
+      <div class="empty-notifications"><i class="fas fa-inbox"></i> No notifications</div>
+    </div>
+  </div>
+</main>
+
+<div class="toast-container" id="toast-container"></div>
+
+<!-- Change Password Modal -->
+<div id="changePwOverlay"></div>
+<div id="changePwModal">
+  <div class="change-pw-header">
+    <h3><i class="fas fa-lock"></i> Change Password</h3>
+    <button id="closeChangePwBtn"><i class="fas fa-times"></i></button>
+  </div>
+  <div class="change-pw-body">
+    <form id="change-password-form">
+      <div class="form-group"><label>Current Password</label><input type="password" id="current-password" class="form-control" required></div>
+      <div class="form-group"><label>New Password (min 6 characters)</label><input type="password" id="new-password" class="form-control" required></div>
+      <div class="form-group"><label>Confirm New Password</label><input type="password" id="confirm-password" class="form-control" required></div>
+      <hr class="divider">
+      <button type="submit" class="btn-pw-success"><i class="fas fa-check-circle"></i> Update Password</button>
+      <button type="button" id="cancelChangePwBtn" style="background:transparent;border:1px solid #e2e8f0;padding:12px;border-radius:40px;width:100%;margin-top:10px;">Cancel</button>
+    </form>
+  </div>
+</div>
+
+<script src="../js/api.js"></script>
+<script src="../js/utils.js"></script>
+<script>
+// ── State ────────────────────────────────────────────────────
+let expenses = [], currentEditId = null;
+
+// ── Helpers ──────────────────────────────────────────────────
+function fmtTSH(v) { return 'TSh ' + (parseInt(v) || 0).toLocaleString(); }
+function isoDate(d) { return d.toISOString().split('T')[0]; }
+function escapeHtml(s) { if (!s) return ''; return String(s).replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
+function showToast(msg, type) {
+  const c = document.getElementById('toast-container');
+  const bg = type === 'error' ? '#ef4444' : (type === 'warning' ? '#f59e0b' : '#10b981');
+  c.innerHTML = `<div style="background:${bg};color:white;padding:12px 20px;border-radius:40px;">${msg}</div>`;
+  setTimeout(() => c.innerHTML = '', 3000);
+}
+function catIcon(cat) {
+  const map = {
+    'Water': 'fa-tint', 'Electricity': 'fa-bolt', 'Internet': 'fa-wifi',
+    'Salary': 'fa-users', 'Maintenance': 'fa-toolbox',
+    'Office Supplies': 'fa-paperclip', 'Marketing and Advertising': 'fa-bullhorn', 'Other': 'fa-tag'
+  };
+  return map[cat] || 'fa-folder-open';
+}
+
+// ── Form ─────────────────────────────────────────────────────
+function showForm() {
+  currentEditId = null;
+  document.getElementById('form-title').innerHTML = '<i class="fas fa-plus"></i> New Expense';
+  document.getElementById('expense-date').value = isoDate(new Date());
+  document.getElementById('expense-number').value = 'EXP-' + Date.now();
+  document.getElementById('expense-category').value = '';
+  document.getElementById('expense-amount').value = '';
+  document.getElementById('expense-description').value = '';
+  document.getElementById('expense-payment-method').value = 'cash';
+  document.getElementById('expense-paid-to').value = '';
+  document.getElementById('expense-remarks').value = '';
+  document.getElementById('form-section').classList.add('active');
+  document.getElementById('empty-state').style.display = 'none';
+  document.getElementById('details-view').style.display = 'none';
+}
+
+function cancelForm() {
+  currentEditId = null;
+  document.getElementById('form-section').classList.remove('active');
+  document.getElementById('details-view').style.display = 'none';
+  document.getElementById('empty-state').style.display = 'block';
+}
+
+document.getElementById('expense-form').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const data = {
+    date: document.getElementById('expense-date').value,
+    expenseNumber: document.getElementById('expense-number').value,
+    category: document.getElementById('expense-category').value,
+    amount: parseInt(document.getElementById('expense-amount').value) || 0,
+    description: document.getElementById('expense-description').value.trim(),
+    paymentMethod: document.getElementById('expense-payment-method').value,
+    paidTo: document.getElementById('expense-paid-to').value.trim(),
+    remarks: document.getElementById('expense-remarks').value.trim()
+  };
+  if (!data.date || !data.category || !data.description || data.amount <= 0) {
+    showToast('Please fill all required fields', 'error'); return;
+  }
+  try {
+    if (currentEditId) {
+      await apiPut(`/expenses/${currentEditId}`, data);
+      showToast('Expense updated!', 'success');
+      addNotification('Expense Updated', `${data.category} — ${fmtTSH(data.amount)}${data.paidTo ? ' | Paid to: ' + data.paidTo : ''}`, 'edit');
+    } else {
+      await apiPost('/expenses', data);
+      showToast('Expense saved!', 'success');
+      addNotification('Expense Recorded', `${data.category} — ${fmtTSH(data.amount)}${data.paidTo ? ' | Paid to: ' + data.paidTo : ''}`, 'new');
+    }
+    cancelForm();
+    loadExpenses();
+  } catch(err) {
+    showToast('Failed: ' + err.message, 'error');
+  }
+});
+
+// ── List ─────────────────────────────────────────────────────
+async function loadExpenses() {
+  try {
+    let url = '/expenses';
+    const from = document.getElementById('filter-from').value;
+    const to   = document.getElementById('filter-to').value;
+    const cat  = document.getElementById('filter-category').value;
+    const p = new URLSearchParams();
+    if (from) p.append('from', from);
+    if (to)   p.append('to', to);
+    if (cat)  p.append('category', cat);
+    if (p.toString()) url += '?' + p.toString();
+    expenses = await apiGet(url);
+    renderList();
+  } catch(err) {
+    document.getElementById('expenses-list').innerHTML = '<div style="text-align:center;padding:20px;color:#ef4444;">Error loading expenses</div>';
+  }
+}
+
+function renderList() {
+  const container = document.getElementById('expenses-list');
+  if (!expenses.length) {
+    container.innerHTML = '<div style="text-align:center;padding:30px;color:#94a3b8;"><i class="fas fa-inbox"></i><br>No expenses found</div>';
+    return;
+  }
+  container.innerHTML = expenses.map(exp => {
+    const d = exp.expense_date ? new Date(exp.expense_date).toLocaleDateString() : '—';
+    return `
+      <div class="expense-item" onclick="viewDetails(${exp.id})" id="item-${exp.id}">
+        <div class="expense-number"># ${escapeHtml(exp.expense_number)}</div>
+        <div class="expense-category"><i class="fas ${catIcon(exp.category)}"></i> ${escapeHtml(exp.category)}</div>
+        <div class="expense-amount"><i class="fas fa-money-bill-wave"></i> ${fmtTSH(exp.amount)}</div>
+        <div class="expense-date"><i class="fas fa-calendar-alt"></i> ${d}</div>
+      </div>`;
+  }).join('');
+}
+
+function applyFilters() { loadExpenses(); }
+function resetFilters() {
+  document.getElementById('filter-from').value = '';
+  document.getElementById('filter-to').value = '';
+  document.getElementById('filter-category').value = '';
+  loadExpenses();
+}
+
+// ── Details ──────────────────────────────────────────────────
+async function viewDetails(id) {
+  try {
+    const exp = await apiGet(`/expenses/${id}`);
+    document.querySelectorAll('.expense-item').forEach(el => el.classList.remove('selected'));
+    const el = document.getElementById('item-' + id);
+    if (el) el.classList.add('selected');
+
+    const d = exp.expense_date ? new Date(exp.expense_date).toLocaleDateString() : '—';
+    const pm = { cash:'Cash', bank:'Bank Transfer', card:'Card', cheque:'Cheque', mobile:'Mobile Payment' };
+
+    document.getElementById('details-content').innerHTML = `
+      <div class="form-header">
+        <h3><i class="fas fa-wallet"></i> Expense Details</h3>
+        <button class="btn btn-outline btn-sm" onclick="closeDetails()"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="detail-card">
+        <div class="detail-row"><span class="detail-label">Expense #</span><span class="detail-value">${escapeHtml(exp.expense_number)}</span></div>
+        <div class="detail-row"><span class="detail-label">Date</span><span class="detail-value">${d}</span></div>
+        <div class="detail-row"><span class="detail-label">Category</span><span class="detail-value"><i class="fas ${catIcon(exp.category)}"></i> ${escapeHtml(exp.category)}</span></div>
+        <div class="detail-row"><span class="detail-label">Amount</span><span class="detail-value" style="color:#ef4444;">${fmtTSH(exp.amount)}</span></div>
+        <div class="detail-row"><span class="detail-label">Description</span><span class="detail-value">${escapeHtml(exp.description)}</span></div>
+        <div class="detail-row"><span class="detail-label">Payment Method</span><span class="detail-value">${pm[exp.payment_method] || exp.payment_method || 'Cash'}</span></div>
+        <div class="detail-row"><span class="detail-label">Paid To / Vendor</span><span class="detail-value">${escapeHtml(exp.paid_to) || '—'}</span></div>
+        <div class="detail-row"><span class="detail-label">Remarks</span><span class="detail-value">${escapeHtml(exp.remarks) || '—'}</span></div>
+        <div class="detail-row"><span class="detail-label">Recorded</span><span class="detail-value">${exp.created_at ? new Date(exp.created_at).toLocaleString() : '—'}</span></div>
+      </div>
+      <div style="display:flex; gap:10px; margin-top:20px;">
+        <button class="btn btn-gold"    onclick="openEdit(${exp.id})" style="flex:1"><i class="fas fa-edit"></i> Edit</button>
+        <button class="btn btn-danger"  onclick="deleteExpense(${exp.id})" style="flex:1"><i class="fas fa-trash-alt"></i> Delete</button>
+        <button class="btn btn-outline" onclick="closeDetails()" style="flex:1">Close</button>
+      </div>`;
+
+    document.getElementById('form-section').classList.remove('active');
+    document.getElementById('empty-state').style.display = 'none';
+    document.getElementById('details-view').style.display = 'block';
+  } catch(err) {
+    showToast('Failed to load details', 'error');
+  }
+}
+
+function closeDetails() {
+  document.getElementById('details-view').style.display = 'none';
+  document.getElementById('empty-state').style.display = 'block';
+  document.querySelectorAll('.expense-item').forEach(el => el.classList.remove('selected'));
+}
+
+async function openEdit(id) {
+  try {
+    const exp = await apiGet(`/expenses/${id}`);
+    currentEditId = id;
+    document.getElementById('form-title').innerHTML = '<i class="fas fa-edit"></i> Edit Expense';
+    document.getElementById('expense-date').value = exp.expense_date ? exp.expense_date.split('T')[0] : '';
+    document.getElementById('expense-number').value = exp.expense_number || '';
+    document.getElementById('expense-category').value = exp.category || '';
+    document.getElementById('expense-amount').value = exp.amount || '';
+    document.getElementById('expense-description').value = exp.description || '';
+    document.getElementById('expense-payment-method').value = exp.payment_method || 'cash';
+    document.getElementById('expense-paid-to').value = exp.paid_to || '';
+    document.getElementById('expense-remarks').value = exp.remarks || '';
+    document.getElementById('details-view').style.display = 'none';
+    document.getElementById('empty-state').style.display = 'none';
+    document.getElementById('form-section').classList.add('active');
+  } catch(err) {
+    showToast('Failed to load for edit', 'error');
+  }
+}
+
+async function deleteExpense(id) {
+  if (!confirm('Delete this expense record?')) return;
+  try {
+    const exp = expenses.find(e => e.id === id) || {};
+    await apiDelete(`/expenses/${id}`);
+    showToast('Expense deleted', 'success');
+    addNotification('Expense Deleted', `${exp.category || 'Record'} — ${fmtTSH(exp.amount || 0)} removed`, 'delete');
+    closeDetails();
+    loadExpenses();
+  } catch(err) {
+    showToast('Failed to delete', 'error');
+  }
+}
+
+// ── Auth / Sidebar ────────────────────────────────────────────
+function getCurrentUser() { try { return JSON.parse(sessionStorage.getItem('pms_user')); } catch(e) { return null; } }
+function logout() { sessionStorage.removeItem('pms_user'); window.location.href = '/'; }
+
+function openChangePasswordModal() {
+  document.getElementById('changePwOverlay').classList.add('show');
+  document.getElementById('changePwModal').classList.add('show');
+  document.body.style.overflow = 'hidden';
+  if (dropdownMenu) dropdownMenu.classList.remove('show');
+  if (userPill) userPill.classList.remove('active');
+}
+function closeChangePasswordModal() {
+  document.getElementById('changePwOverlay').classList.remove('show');
+  document.getElementById('changePwModal').classList.remove('show');
+  document.body.style.overflow = '';
+  document.getElementById('change-password-form').reset();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  const user = getCurrentUser();
+  if (!user) { window.location.href = '/'; return; }
+  document.getElementById('userName').innerText   = user.fullName || user.username;
+  document.getElementById('userRole').innerText   = user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'User';
+  document.getElementById('userAvatar').innerText = (user.fullName || user.username || 'U').charAt(0).toUpperCase();
+
+  // Default date range: current month
+  const today = new Date();
+  document.getElementById('filter-from').value = isoDate(new Date(today.getFullYear(), today.getMonth(), 1));
+  document.getElementById('filter-to').value   = isoDate(today);
+
+  loadExpenses();
+  setInterval(loadExpenses, 60000);
+
+  document.getElementById('openChangePwBtn')?.addEventListener('click', openChangePasswordModal);
+  document.getElementById('closeChangePwBtn')?.addEventListener('click', closeChangePasswordModal);
+  document.getElementById('cancelChangePwBtn')?.addEventListener('click', closeChangePasswordModal);
+  document.getElementById('changePwOverlay')?.addEventListener('click', closeChangePasswordModal);
+
+  document.getElementById('change-password-form')?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const current = document.getElementById('current-password').value;
+    const newPw   = document.getElementById('new-password').value;
+    const confirm = document.getElementById('confirm-password').value;
+    if (newPw !== confirm) { showToast('Passwords do not match', 'error'); return; }
+    if (newPw.length < 6)  { showToast('Password must be at least 6 characters', 'error'); return; }
+    try {
+      await apiPost('/auth/change-password', { userId: user.id, oldPassword: current, newPassword: newPw });
+      showToast('Password changed! Please login again.', 'success');
+      setTimeout(() => logout(), 1500);
+    } catch(err) { showToast('Failed: ' + err.message, 'error'); }
+  });
+});
+
+// Sidebar
+let hamburgerBtn = document.getElementById('hamburger-btn'),
+    sidebar      = document.getElementById('sidebar'),
+    overlayMain  = document.getElementById('overlay-main'),
+    sidebarClose = document.getElementById('sidebar-close-btn'),
+    userPill     = document.getElementById('userPill'),
+    dropdownMenu = document.getElementById('dropdownMenu');
+
+function openSidebar()  { sidebar.classList.add('open');    overlayMain.classList.add('open');    if (hamburgerBtn) hamburgerBtn.classList.add('active'); }
+function closeSidebar() { sidebar.classList.remove('open'); overlayMain.classList.remove('open'); if (hamburgerBtn) hamburgerBtn.classList.remove('active'); }
+if (hamburgerBtn) hamburgerBtn.addEventListener('click', () => sidebar.classList.contains('open') ? closeSidebar() : openSidebar());
+if (sidebarClose) sidebarClose.addEventListener('click', closeSidebar);
+if (overlayMain)  overlayMain.addEventListener('click', closeSidebar);
+if (userPill) {
+  userPill.addEventListener('click', e => { e.stopPropagation(); dropdownMenu.classList.toggle('show'); userPill.classList.toggle('active'); });
+  document.addEventListener('click', () => { dropdownMenu.classList.remove('show'); if (userPill) userPill.classList.remove('active'); });
+}
+
+// ── Notification System (localStorage) ───────────────────────
+const NOTIF_KEY = 'pms_notifications';
+const typeIcon  = { new: '💰', edit: '✏️', delete: '🗑️', warning: '⚠️', info: 'ℹ️' };
+const typeBg    = { new: '#d1fae5', edit: '#dbeafe', delete: '#fee2e2', warning: '#fef3c7', info: '#f3f4f6' };
+
+function getNotifications() { try { return JSON.parse(localStorage.getItem(NOTIF_KEY)) || []; } catch(e) { return []; } }
+function saveNotifications(list) { localStorage.setItem(NOTIF_KEY, JSON.stringify(list.slice(0, 50))); }
+
+function addNotification(title, body, type) {
+  const list = getNotifications();
+  list.unshift({ id: Date.now(), title, body, type: type || 'info', time: new Date().toISOString(), read: false });
+  saveNotifications(list);
+  renderNotifications();
+}
+
+function renderNotifications() {
+  const list  = getNotifications();
+  const unread = list.filter(n => !n.read).length;
+  const badge  = document.getElementById('notif-badge');
+  const el     = document.getElementById('notification-list');
+  if (!badge || !el) return;
+  if (unread > 0) { badge.style.display = 'inline-block'; badge.textContent = unread > 9 ? '9+' : unread; }
+  else            { badge.style.display = 'none'; }
+  if (!list.length) { el.innerHTML = '<div class="empty-notifications"><i class="fas fa-inbox"></i> No notifications</div>'; return; }
+  el.innerHTML = list.map(n => {
+    const t = new Date(n.time).toLocaleString();
+    return `<div class="notification-item" style="background:${n.read ? '#fff' : typeBg[n.type] || '#f8fafc'};" onclick="markRead(${n.id})">
+      <div style="display:flex;gap:10px;align-items:flex-start;">
+        <span style="font-size:18px;">${typeIcon[n.type] || 'ℹ️'}</span>
+        <div style="flex:1;">
+          <div style="font-weight:${n.read ? '400' : '600'};color:#1e2a3e;">${n.title}</div>
+          <div style="font-size:12px;color:#64748b;margin-top:2px;">${n.body}</div>
+          <div style="font-size:11px;color:#94a3b8;margin-top:4px;">${t}</div>
+        </div>
+        ${!n.read ? '<span style="width:8px;height:8px;background:#c9933a;border-radius:50%;display:inline-block;flex-shrink:0;margin-top:4px;"></span>' : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function markRead(id) {
+  const list = getNotifications().map(n => n.id === id ? { ...n, read: true } : n);
+  saveNotifications(list);
+  renderNotifications();
+}
+
+function markAllRead() {
+  saveNotifications(getNotifications().map(n => ({ ...n, read: true })));
+  renderNotifications();
+  showToast('All notifications marked as read', 'success');
+}
+
+const notifBtn = document.getElementById('notif-btn');
+if (notifBtn) {
+  notifBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    document.getElementById('notification-panel').classList.toggle('show');
+  });
+}
+document.addEventListener('click', function(e) {
+  const panel = document.getElementById('notification-panel');
+  const btn   = document.getElementById('notif-btn');
+  if (panel && btn && !btn.contains(e.target) && !panel.contains(e.target)) panel.classList.remove('show');
+});
+document.getElementById('close-notif-panel')?.addEventListener('click', e => { e.stopPropagation(); document.getElementById('notification-panel').classList.remove('show'); });
+document.getElementById('mark-all-read-btn')?.addEventListener('click', e => { e.stopPropagation(); markAllRead(); });
+
+// Initial render
+renderNotifications();
+
+// Expose globals
+window.showForm = showForm; window.cancelForm = cancelForm; window.applyFilters = applyFilters;
+window.resetFilters = resetFilters; window.viewDetails = viewDetails; window.closeDetails = closeDetails;
+window.openEdit = openEdit; window.deleteExpense = deleteExpense; window.logout = logout;
+window.openChangePasswordModal = openChangePasswordModal; window.closeChangePasswordModal = closeChangePasswordModal;
+</script>
+
+<!-- POS Chooser -->
+<div id="pos-chooser-overlay" onclick="if(event.target===this)closePOSChooser()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:18px;padding:40px 36px;max-width:460px;width:92%;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,0.28);">
+    <div style="font-size:22px;font-weight:700;color:#1e293b;margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:10px;">
+      <i class="fas fa-cash-register" style="color:#c9933a;"></i> Point of Sale
+    </div>
+    <p style="color:#64748b;margin:0 0 28px;font-size:14px;">Select the POS system to open</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px;">
+      <a href="/bar" onclick="closePOSChooser()" style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:26px 16px;background:linear-gradient(135deg,#1e3a5f,#2563eb);border-radius:14px;color:#fff;text-decoration:none;font-weight:700;font-size:15px;transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 10px 28px rgba(37,99,235,0.4)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='none'">
+        <i class="fas fa-wine-glass-alt" style="font-size:34px;opacity:0.95;"></i> Bar
+      </a>
+      <a href="/restaurant" onclick="closePOSChooser()" style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:26px 16px;background:linear-gradient(135deg,#7c2d12,#ea580c);border-radius:14px;color:#fff;text-decoration:none;font-weight:700;font-size:15px;transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 10px 28px rgba(37,99,235,0.4)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='none'">
+        <i class="fas fa-utensils" style="font-size:34px;opacity:0.95;"></i> Restaurant
+      </a>
+    </div>
+    <button onclick="closePOSChooser()" style="padding:9px 28px;border:1.5px solid #e2e8f0;border-radius:8px;background:#f8fafc;cursor:pointer;color:#64748b;font-size:13px;">Cancel</button>
+  </div>
+</div>
+<script>
+function openPOSChooser() { document.getElementById('pos-chooser-overlay').style.display = 'flex'; }
+function closePOSChooser() { document.getElementById('pos-chooser-overlay').style.display = 'none'; }
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closePOSChooser(); });
+</script>
+<script src="../js/permissions.js"></script>
+</body>
+</html>
+

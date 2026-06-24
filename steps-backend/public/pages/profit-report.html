@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Profit Report - Kitobo Serenity Resort</title>
+  <style>body { opacity: 0; transition: opacity 0.2s; } body.loaded { opacity: 1; }</style>
+  <script>document.addEventListener('DOMContentLoaded', function() { document.body.classList.add('loaded'); });</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: #f1f5f9; color: #1e293b; }
+
+    /* ── Sidebar ── */
+    .sidebar { position: fixed; top: 0; left: 0; transform: translateX(-100%); width: 280px; height: 100%; background: #1a2340; color: white; z-index: 1000; transition: 0.3s; box-shadow: 2px 0 10px rgba(0,0,0,0.1); overflow-y: auto; }
+    .sidebar.open { transform: translateX(0); }
+    .sidebar-top { padding: 24px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; }
+    .sidebar-logo { display: flex; align-items: center; gap: 12px; text-decoration: none; color: white; }
+    .logo-text span:first-child { font-weight: 800; font-size: 22px; color: #c9933a; letter-spacing: 1.5px; }
+    .logo-text span:last-child  { font-size: 13px; font-weight: 500; opacity: 0.85; letter-spacing: 0.5px; display: block; }
+    .sidebar-close-btn { background: none; border: none; font-size: 20px; cursor: pointer; color: white; opacity: 0.7; }
+    .sidebar-nav { flex: 1; padding: 20px 0; overflow-y: auto; }
+    .nav-section-label { padding: 16px 20px 8px; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,0.5); }
+    .nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 20px; text-decoration: none; color: rgba(255,255,255,0.8); transition: 0.2s; font-size: 14px; background: none; border: none; width: 100%; text-align: left; cursor: pointer; }
+    .nav-item:hover { background: rgba(255,255,255,0.1); color: white; }
+    .nav-item.active { background: #c9933a; color: #1a2340; }
+    .sidebar-footer { padding: 20px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 11px; color: rgba(255,255,255,0.5); }
+    .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; display: none; }
+    .overlay.open { display: block; }
+
+    /* ── Navbar ── */
+    .navbar { background: white; padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 2px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; }
+    .navbar-left { display: flex; align-items: center; gap: 16px; }
+    .hamburger { background: none; border: none; cursor: pointer; width: 32px; height: 32px; display: flex; flex-direction: column; justify-content: center; gap: 4px; }
+    .hb-bar { width: 20px; height: 2px; background: #1e2a3e; display: block; }
+    .page-title { font-size: 20px; font-weight: 700; font-family: 'Playfair Display', serif; color: #1e2a3e; }
+    .page-subtitle { font-size: 12px; color: #64748b; }
+    .navbar-right { display: flex; align-items: center; gap: 16px; }
+    .notif-btn { background: none; border: none; font-size: 18px; cursor: pointer; position: relative; }
+    .badge { position: absolute; top: -5px; right: -8px; background: #ef4444; color: white; font-size: 10px; padding: 2px 5px; border-radius: 10px; display: none; }
+    .notification-panel { position: fixed; top: 68px; right: 20px; width: 340px; background: white; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); z-index: 1000; display: none; }
+    .notification-panel.show { display: block; }
+    .notification-header { padding: 14px 16px; border-bottom: 1px solid #e2e8f0; font-weight: 700; display: flex; justify-content: space-between; background: #f8fafc; border-radius: 16px 16px 0 0; }
+    .notification-list { max-height: 400px; overflow-y: auto; border-radius: 0 0 16px 16px; }
+    .notification-item { padding: 14px 16px; border-bottom: 1px solid #eef2f6; cursor: pointer; font-size: 13px; }
+    .notification-item:last-child { border-bottom: none; }
+    .empty-notifications { padding: 40px 20px; text-align: center; color: #94a3b8; }
+    .user-dropdown { position: relative; }
+    .user-pill { display: flex; align-items: center; gap: 8px; padding: 6px 12px; background: #f8fafc; border-radius: 40px; cursor: pointer; }
+    .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: #c9933a; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; }
+    .user-info span:first-child { font-size: 13px; font-weight: 600; color: #1e2a3e; display: block; }
+    .user-info span:last-child  { font-size: 11px; color: #64748b; display: block; }
+    .dropdown-menu { position: absolute; top: 48px; right: 0; background: white; min-width: 200px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); display: none; z-index: 200; padding: 6px 0; }
+    .dropdown-menu.show { display: block; }
+    .dropdown-menu button, .dropdown-menu a { display: flex; align-items: center; gap: 8px; width: 100%; padding: 10px 16px; text-align: left; background: none; border: none; cursor: pointer; font-size: 13px; color: #1e293b; text-decoration: none; }
+    .dropdown-menu button:hover, .dropdown-menu a:hover { background: #f8fafc; }
+
+    /* ── Main ── */
+    .main-content { padding: 24px; max-width: 1100px; margin: 0 auto; }
+
+    /* ── Print bar ── */
+    .action-bar { display: flex; justify-content: flex-end; gap: 12px; margin-bottom: 24px; }
+    .btn-print { background: #1e2a3e; color: white; border: none; padding: 10px 26px; border-radius: 40px; cursor: pointer; font-weight: 500; font-size: 13px; }
+    .btn-refresh { background: white; color: #1e2a3e; border: 1.5px solid #e2e8f0; padding: 10px 22px; border-radius: 40px; cursor: pointer; font-size: 13px; }
+
+    /* ── Revenue cards row ── */
+    .section-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #64748b; margin-bottom: 14px; padding-left: 2px; }
+    .cards-row { display: flex; gap: 18px; flex-wrap: wrap; margin-bottom: 28px; }
+    .rev-card { flex: 1; min-width: 180px; background: white; border-radius: 20px; padding: 22px 24px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); border-top: 4px solid #e2e8f0; position: relative; overflow: hidden; }
+    .rev-card.reservation { border-top-color: #3b82f6; }
+    .rev-card.restaurant  { border-top-color: #f59e0b; }
+    .rev-card.bar         { border-top-color: #8b5cf6; }
+    .rev-card.total-sales { border-top-color: #10b981; background: linear-gradient(135deg,#f0fdf4,#ecfdf5); }
+    .rev-card .card-icon  { position: absolute; top: 18px; right: 20px; font-size: 28px; opacity: 0.12; }
+    .rev-card .card-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; margin-bottom: 8px; }
+    .rev-card .card-value { font-size: 24px; font-weight: 800; color: #1e2a3e; margin-bottom: 4px; }
+    .rev-card .card-sub   { font-size: 11px; color: #94a3b8; }
+    .rev-card.total-sales .card-value { color: #059669; }
+
+    /* ── Profit / Expense cards ── */
+    .bottom-row { display: flex; gap: 18px; flex-wrap: wrap; margin-bottom: 28px; }
+    .big-card { flex: 1; min-width: 200px; background: white; border-radius: 20px; padding: 28px 28px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); text-align: center; }
+    .big-card.expenses { border: 2px solid #fee2e2; background: #fff7f7; }
+    .big-card.profit-pos { border: 2px solid #bbf7d0; background: #f0fff8; }
+    .big-card.profit-neg { border: 2px solid #fecaca; background: #fff7f7; }
+    .big-card .big-icon { font-size: 36px; margin-bottom: 12px; }
+    .big-card .big-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; color: #64748b; margin-bottom: 10px; }
+    .big-card .big-value { font-size: 34px; font-weight: 900; margin-bottom: 6px; }
+    .big-card.expenses .big-value   { color: #ef4444; }
+    .big-card.profit-pos .big-value { color: #059669; }
+    .big-card.profit-neg .big-value { color: #ef4444; }
+    .big-card .big-sub { font-size: 12px; color: #94a3b8; }
+
+    /* ── Summary table ── */
+    .summary-card { background: white; border-radius: 20px; padding: 28px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); margin-bottom: 28px; }
+    .summary-card h3 { font-size: 16px; font-weight: 700; color: #1e2a3e; margin-bottom: 20px; }
+    .summary-table { width: 100%; border-collapse: collapse; }
+    .summary-table th { background: #f8fafc; padding: 12px 16px; text-align: left; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; }
+    .summary-table td { padding: 14px 16px; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
+    .summary-table tr:last-child td { border-bottom: none; }
+    .summary-table .row-total { background: #fef8e7; font-weight: 700; }
+    .summary-table .row-expense { background: #fff7f7; }
+    .summary-table .row-profit-pos { background: #f0fff8; font-weight: 700; }
+    .summary-table .row-profit-neg { background: #fff7f7; font-weight: 700; }
+    .amount-green { color: #059669; font-weight: 700; }
+    .amount-red   { color: #ef4444; font-weight: 700; }
+    .amount-blue  { color: #3b82f6; font-weight: 700; }
+    .row-icon { width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 14px; margin-right: 8px; }
+
+    /* ── Gauge / Visual ── */
+    .gauge-card { background: white; border-radius: 20px; padding: 28px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); margin-bottom: 28px; }
+    .gauge-card h3 { font-size: 16px; font-weight: 700; color: #1e2a3e; margin-bottom: 20px; }
+    .bar-row { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+    .bar-label { width: 160px; font-size: 13px; color: #374151; flex-shrink: 0; }
+    .bar-track { flex: 1; height: 12px; background: #f1f5f9; border-radius: 6px; overflow: hidden; }
+    .bar-fill  { height: 12px; border-radius: 6px; transition: width 0.8s ease; }
+    .bar-amount { width: 120px; font-size: 13px; font-weight: 700; color: #1e2a3e; text-align: right; flex-shrink: 0; }
+
+    /* ── Change password modal ── */
+    #changePwOverlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.7); z-index:10000; display:none; }
+    #changePwOverlay.show { display: block; }
+    #changePwModal { position: fixed; top:0; right:0; width:100%; max-width:450px; height:100vh; background:white; z-index:10001; display:none; overflow-y:auto; transform:translateX(100%); transition:transform 0.3s; }
+    #changePwModal.show { display:block; transform:translateX(0); }
+    .change-pw-header { padding:20px 28px; background:#1e2a3e; color:white; display:flex; justify-content:space-between; align-items:center; }
+    .change-pw-header button { background:none; border:none; color:white; font-size:24px; cursor:pointer; }
+    .change-pw-body { padding: 28px; }
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { display:block; margin-bottom:0.3rem; font-weight:500; font-size:0.85rem; color:#2c3e4e; }
+    .form-control { width:100%; padding:10px 12px; border:1px solid #e2e8f0; border-radius:20px; font-size:0.9rem; }
+    .divider { margin:1rem 0; border:none; border-top:1px solid #e2e8f0; }
+    .btn-pw-success { background:#10b981; color:white; border:none; padding:12px; border-radius:40px; width:100%; cursor:pointer; font-weight:700; }
+
+    .toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 2000; }
+
+    /* ── Print ── */
+    @media print {
+      .sidebar, .navbar, .action-bar, .overlay, .toast-container { display: none !important; }
+      .main-content { padding: 0; max-width: 100%; }
+      body { background: white; }
+      .rev-card, .big-card, .summary-card, .gauge-card { box-shadow: none; border: 1px solid #e2e8f0 !important; break-inside: avoid; }
+      .print-header { display: block !important; }
+    }
+    .print-header { display: none; text-align: center; margin-bottom: 28px; }
+    .print-header h2 { font-size: 22px; font-weight: 800; color: #1e2a3e; }
+    .print-header p  { font-size: 13px; color: #64748b; margin-top: 4px; }
+  </style>
+</head>
+<body>
+
+<div class="overlay" id="overlay-main"></div>
+
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-top">
+    <a class="sidebar-logo" href="/">
+      <img src="/images/logo.png" alt="Kitobo Serenity Resort" style="height:44px;width:auto;object-fit:contain;display:block;">
+      <div class="logo-text"><span>Kitobo</span><span>Serenity Resort</span></div>
+    </a>
+    <button class="sidebar-close-btn" id="sidebar-close-btn"><i class="fas fa-times"></i></button>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Dashboard</div>
+    <a href="/dashboard" class="nav-item"><i class="fas fa-tachometer-alt"></i> Overview</a>
+    <div class="nav-section-label">Operations</div>
+    <a href="/reservations" class="nav-item"><i class="fas fa-calendar-alt"></i> Reservations</a>
+    <a href="/housekeeping" class="nav-item"><i class="fas fa-soap"></i> Housekeeping</a>
+    <a href="/maintenance" class="nav-item"><i class="fas fa-toolbox"></i> Maintenance</a>
+    <div class="nav-section-label">POS</div>
+    <a href="/bar" class="nav-item"><i class="fas fa-wine-glass-alt"></i> Bar</a>
+    <a href="/restaurant" class="nav-item"><i class="fas fa-utensils"></i> Restaurant</a>
+    <div class="nav-section-label">Property</div>
+    <a href="/rooms" class="nav-item"><i class="fas fa-building"></i> Rooms View</a>
+    <a href="/rooms-list" class="nav-item"><i class="fas fa-list-ul"></i> Rooms List</a>
+    <div class="nav-section-label">Inventory</div>
+    <a href="/store-main" class="nav-item"><i class="fas fa-store"></i> Main Store</a>
+    <a href="/store-outlets" class="nav-item"><i class="fas fa-truck"></i> Outlets Store</a>
+    <a href="/purchase-orders" class="nav-item"><i class="fas fa-file-invoice"></i> Purchase Orders</a>
+    <a href="/goods-receipt" class="nav-item"><i class="fas fa-clipboard-list"></i> Goods Receipt</a>
+    <div class="nav-section-label">Reports</div>
+    <a href="/reports" class="nav-item"><i class="fas fa-chart-bar"></i> Reservations Report</a>
+    <a href="/maintenance-report" class="nav-item"><i class="fas fa-chart-line"></i> Maintenance Report</a>
+    <a href="/purchase-orders-reports" class="nav-item"><i class="fas fa-file-alt"></i> Purchase Orders Report</a>
+    <a href="/goods-receipt-reports" class="nav-item"><i class="fas fa-stamp"></i> Goods Receipt Report</a>
+    <a href="/store-inventory-reports" class="nav-item"><i class="fas fa-boxes"></i> Store Inventory Report</a>
+    <a href="/sales-report" class="nav-item"><i class="fas fa-receipt"></i> Sales Report</a>
+    <a href="/housekeeping-report" class="nav-item"><i class="fas fa-soap"></i> Housekeeping Report</a>
+    <a href="/expenses-report" class="nav-item"><i class="fas fa-file-invoice-dollar"></i> Expenses Report</a>
+    <a href="/profit-report" class="nav-item active"><i class="fas fa-chart-pie"></i> Profit Report</a>
+    <div class="nav-section-label">Finance</div>
+    <a href="/expenses" class="nav-item"><i class="fas fa-wallet"></i> Expenses</a>
+    <div class="nav-section-label">Guests</div>
+    <a href="/guest-database" class="nav-item"><i class="fas fa-id-card"></i> Guest Database</a>
+    <div class="nav-section-label">Admin</div>
+    <a href="/users" class="nav-item"><i class="fas fa-user-shield"></i> User Management</a>
+    <a href="/permissions" class="nav-item"><i class="fas fa-lock"></i> Permissions &amp; Access</a>
+  </nav>
+  <div class="sidebar-footer"><small>Kitobo Serenity Resort</small></div>
+</aside>
+
+<!-- Navbar -->
+<nav class="navbar">
+  <div class="navbar-left">
+    <button class="hamburger" id="hamburger-btn"><span class="hb-bar"></span><span class="hb-bar"></span><span class="hb-bar"></span></button>
+    <div>
+      <div class="page-title">Profit Report</div>
+      <div class="page-subtitle">All-time revenue, expenses &amp; net profit</div>
+    </div>
+  </div>
+  <div class="navbar-right">
+    <button class="pos-navbar-btn" onclick="openPOSChooser()" title="Point of Sale"><i class="fas fa-cash-register"></i> POS</button>
+    <button class="notif-btn" id="notif-btn"><i class="fas fa-bell"></i><span class="badge" id="notif-badge"></span></button>
+    <div class="user-dropdown">
+      <div class="user-pill" id="userPill">
+        <div class="user-avatar" id="userAvatar">U</div>
+        <div class="user-info"><span id="userName">Loading...</span><span id="userRole">Loading...</span></div>
+        <i class="fas fa-chevron-down"></i>
+      </div>
+      <div class="dropdown-menu" id="dropdownMenu">
+        <button onclick="openChangePasswordModal()"><i class="fas fa-key"></i> Change Password</button>
+        <a href="/users"><i class="fas fa-users"></i> User Management</a>
+        <hr style="border:none;border-top:1px solid #e2e8f0;margin:4px 0;">
+        <button onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<main class="main-content">
+
+  <!-- Print header -->
+  <div class="print-header">
+    <h2>Kitobo Serenity Resort — Profit Report</h2>
+    <p>All-time summary &nbsp;|&nbsp; Generated: <span id="print-date"></span></p>
+  </div>
+
+  <!-- Action bar -->
+  <div class="action-bar">
+    <button class="btn-refresh" onclick="loadData()"><i class="fas fa-sync-alt"></i> Refresh</button>
+    <button class="btn-print" onclick="printReport()"><i class="fas fa-print"></i> Print Report</button>
+  </div>
+
+  <!-- Revenue sources -->
+  <div class="section-title"><i class="fas fa-arrow-circle-up" style="color:#10b981;margin-right:6px;"></i> Revenue Sources</div>
+  <div class="cards-row">
+    <div class="rev-card reservation">
+      <i class="fas fa-bed card-icon"></i>
+      <div class="card-label">Reservations</div>
+      <div class="card-value" id="rev-reservations">—</div>
+      <div class="card-sub" id="rev-reservations-count">— bookings</div>
+    </div>
+    <div class="rev-card restaurant">
+      <i class="fas fa-utensils card-icon"></i>
+      <div class="card-label">Restaurant Sales</div>
+      <div class="card-value" id="rev-restaurant">—</div>
+      <div class="card-sub" id="rev-restaurant-count">— orders</div>
+    </div>
+    <div class="rev-card bar">
+      <i class="fas fa-wine-glass-alt card-icon"></i>
+      <div class="card-label">Bar Sales</div>
+      <div class="card-value" id="rev-bar">—</div>
+      <div class="card-sub" id="rev-bar-count">— orders</div>
+    </div>
+    <div class="rev-card total-sales">
+      <i class="fas fa-coins card-icon"></i>
+      <div class="card-label">Total Revenue</div>
+      <div class="card-value" id="rev-total">—</div>
+      <div class="card-sub">combined all sources</div>
+    </div>
+  </div>
+
+  <!-- Expenses + Profit -->
+  <div class="section-title"><i class="fas fa-balance-scale" style="color:#c9933a;margin-right:6px;"></i> Expenses &amp; Net Profit</div>
+  <div class="bottom-row">
+    <div class="big-card expenses">
+      <div class="big-icon">💸</div>
+      <div class="big-label">Total Expenses</div>
+      <div class="big-value" id="exp-total">—</div>
+      <div class="big-sub" id="exp-count">— expense records</div>
+    </div>
+    <div class="big-card" id="profit-card">
+      <div class="big-icon" id="profit-icon">📊</div>
+      <div class="big-label" id="profit-label">Net Profit / Loss</div>
+      <div class="big-value" id="profit-value">—</div>
+      <div class="big-sub" id="profit-sub">Total Revenue − Total Expenses</div>
+    </div>
+  </div>
+
+  <!-- Visual breakdown bars -->
+  <div class="gauge-card">
+    <h3><i class="fas fa-chart-bar" style="color:#c9933a;margin-right:8px;"></i> Revenue Breakdown</h3>
+    <div id="gauge-rows">
+      <div style="color:#94a3b8;font-size:13px;">Loading…</div>
+    </div>
+  </div>
+
+  <!-- Detailed summary table -->
+  <div class="summary-card">
+    <h3><i class="fas fa-table" style="color:#c9933a;margin-right:8px;"></i> Profit &amp; Loss Summary</h3>
+    <table class="summary-table">
+      <thead>
+        <tr>
+          <th style="width:50%">Item</th>
+          <th>Records</th>
+          <th>Amount (TSh)</th>
+          <th>% of Revenue</th>
+        </tr>
+      </thead>
+      <tbody id="summary-tbody">
+        <tr><td colspan="4" style="text-align:center;padding:30px;color:#94a3b8;">Loading…</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</main>
+
+<!-- Notification Panel -->
+<div class="notification-panel" id="notification-panel">
+  <div class="notification-header">
+    <span><i class="fas fa-bell"></i> Notifications</span>
+    <div>
+      <button id="mark-all-read-btn" style="background:none;border:none;cursor:pointer;font-size:12px;color:#c9933a;">Mark all read</button>
+      <button id="close-notif-panel" style="background:none;border:none;cursor:pointer;margin-left:8px;"><i class="fas fa-times"></i></button>
+    </div>
+  </div>
+  <div class="notification-list" id="notification-list">
+    <div class="empty-notifications"><i class="fas fa-inbox"></i> No notifications</div>
+  </div>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+
+<!-- Change Password Modal -->
+<div id="changePwOverlay"></div>
+<div id="changePwModal">
+  <div class="change-pw-header">
+    <h3><i class="fas fa-lock"></i> Change Password</h3>
+    <button id="closeChangePwBtn"><i class="fas fa-times"></i></button>
+  </div>
+  <div class="change-pw-body">
+    <form id="change-password-form">
+      <div class="form-group"><label>Current Password</label><input type="password" id="current-password" class="form-control" required></div>
+      <div class="form-group"><label>New Password (min 6 characters)</label><input type="password" id="new-password" class="form-control" required></div>
+      <div class="form-group"><label>Confirm New Password</label><input type="password" id="confirm-password" class="form-control" required></div>
+      <hr class="divider">
+      <button type="submit" class="btn-pw-success"><i class="fas fa-check-circle"></i> Update Password</button>
+      <button type="button" id="cancelChangePwBtn" style="background:transparent;border:1px solid #e2e8f0;padding:12px;border-radius:40px;width:100%;margin-top:10px;">Cancel</button>
+    </form>
+  </div>
+</div>
+
+<script src="../js/api.js"></script>
+<script src="../js/utils.js"></script>
+<script>
+function fmtTSH(v) { return 'TSh ' + (parseInt(v) || 0).toLocaleString(); }
+function pct(part, total) { return total ? Math.round(part / total * 100) : 0; }
+function showToast(msg, type) {
+  const c = document.getElementById('toast-container');
+  const bg = type === 'error' ? '#ef4444' : '#10b981';
+  c.innerHTML = `<div style="background:${bg};color:white;padding:12px 22px;border-radius:40px;font-size:13px;">${msg}</div>`;
+  setTimeout(() => c.innerHTML = '', 3000);
+}
+
+async function loadData() {
+  try {
+    const d = await apiGet('/reports/profit-summary');
+    renderCards(d);
+    renderGauge(d);
+    renderTable(d);
+    document.getElementById('print-date').textContent = new Date().toLocaleString();
+    // Notify if business is running at a loss
+    if (d.profit < 0) {
+      addNotification('⚠️ Loss Alert', `Business is in a loss of ${fmtTSH(Math.abs(d.profit))}. Revenue: ${fmtTSH(d.totalSales)} | Expenses: ${fmtTSH(d.totalExpenses)}`, 'warning');
+    }
+  } catch (err) {
+    showToast('Failed to load report: ' + err.message, 'error');
+  }
+}
+
+function renderCards(d) {
+  document.getElementById('rev-reservations').textContent       = fmtTSH(d.reservationRevenue);
+  document.getElementById('rev-reservations-count').textContent = d.reservationCount + ' booking' + (d.reservationCount !== 1 ? 's' : '');
+  document.getElementById('rev-restaurant').textContent         = fmtTSH(d.restaurantRevenue);
+  document.getElementById('rev-restaurant-count').textContent   = d.restaurantCount + ' order' + (d.restaurantCount !== 1 ? 's' : '');
+  document.getElementById('rev-bar').textContent                = fmtTSH(d.barRevenue);
+  document.getElementById('rev-bar-count').textContent          = d.barCount + ' order' + (d.barCount !== 1 ? 's' : '');
+  document.getElementById('rev-total').textContent              = fmtTSH(d.totalSales);
+  document.getElementById('exp-total').textContent              = fmtTSH(d.totalExpenses);
+  document.getElementById('exp-count').textContent              = d.expenseCount + ' expense record' + (d.expenseCount !== 1 ? 's' : '');
+
+  const profitCard = document.getElementById('profit-card');
+  profitCard.className = 'big-card ' + (d.profit >= 0 ? 'profit-pos' : 'profit-neg');
+  document.getElementById('profit-icon').textContent  = d.profit >= 0 ? '📈' : '📉';
+  document.getElementById('profit-label').textContent = d.profit >= 0 ? 'Net Profit' : 'Net Loss';
+  const pv = document.getElementById('profit-value');
+  pv.textContent = fmtTSH(Math.abs(d.profit));
+  pv.style.color = d.profit >= 0 ? '#059669' : '#ef4444';
+  document.getElementById('profit-sub').textContent   = 'Total Revenue − Total Expenses';
+}
+
+function renderGauge(d) {
+  const max = Math.max(d.reservationRevenue, d.restaurantRevenue, d.barRevenue, d.totalExpenses, 1);
+  const rows = [
+    { label: 'Reservations',    value: d.reservationRevenue, color: '#3b82f6' },
+    { label: 'Restaurant',      value: d.restaurantRevenue,  color: '#f59e0b' },
+    { label: 'Bar',             value: d.barRevenue,         color: '#8b5cf6' },
+    { label: 'Total Revenue',   value: d.totalSales,         color: '#10b981' },
+    { label: 'Total Expenses',  value: d.totalExpenses,      color: '#ef4444' },
+  ];
+  const maxVal = Math.max(...rows.map(r => r.value), 1);
+  document.getElementById('gauge-rows').innerHTML = rows.map(r => `
+    <div class="bar-row">
+      <div class="bar-label">${r.label}</div>
+      <div class="bar-track">
+        <div class="bar-fill" style="width:${pct(r.value, maxVal)}%;background:${r.color};"></div>
+      </div>
+      <div class="bar-amount">${fmtTSH(r.value)}</div>
+    </div>
+  `).join('');
+}
+
+function renderTable(d) {
+  const rev = d.totalSales || 1;
+  const profitClass = d.profit >= 0 ? 'row-profit-pos' : 'row-profit-neg';
+  const profitColor = d.profit >= 0 ? 'amount-green' : 'amount-red';
+
+  document.getElementById('summary-tbody').innerHTML = `
+    <tr>
+      <td><span class="row-icon" style="background:#dbeafe;color:#3b82f6;"><i class="fas fa-bed"></i></span> Reservations Revenue</td>
+      <td style="color:#64748b;">${d.reservationCount} bookings</td>
+      <td class="amount-blue">${fmtTSH(d.reservationRevenue)}</td>
+      <td style="color:#64748b;">${pct(d.reservationRevenue, rev)}%</td>
+    </tr>
+    <tr>
+      <td><span class="row-icon" style="background:#fef3c7;color:#f59e0b;"><i class="fas fa-utensils"></i></span> Restaurant Sales</td>
+      <td style="color:#64748b;">${d.restaurantCount} orders</td>
+      <td class="amount-green">${fmtTSH(d.restaurantRevenue)}</td>
+      <td style="color:#64748b;">${pct(d.restaurantRevenue, rev)}%</td>
+    </tr>
+    <tr>
+      <td><span class="row-icon" style="background:#ede9fe;color:#8b5cf6;"><i class="fas fa-wine-glass-alt"></i></span> Bar Sales</td>
+      <td style="color:#64748b;">${d.barCount} orders</td>
+      <td class="amount-green">${fmtTSH(d.barRevenue)}</td>
+      <td style="color:#64748b;">${pct(d.barRevenue, rev)}%</td>
+    </tr>
+    <tr class="row-total">
+      <td><span class="row-icon" style="background:#d1fae5;color:#10b981;"><i class="fas fa-coins"></i></span> <strong>Total Revenue</strong></td>
+      <td style="color:#64748b;">—</td>
+      <td class="amount-green" style="font-size:16px;">${fmtTSH(d.totalSales)}</td>
+      <td style="color:#64748b;">100%</td>
+    </tr>
+    <tr class="row-expense">
+      <td><span class="row-icon" style="background:#fee2e2;color:#ef4444;"><i class="fas fa-wallet"></i></span> Total Expenses</td>
+      <td style="color:#64748b;">${d.expenseCount} records</td>
+      <td class="amount-red">${fmtTSH(d.totalExpenses)}</td>
+      <td style="color:#64748b;">${pct(d.totalExpenses, rev)}%</td>
+    </tr>
+    <tr class="${profitClass}">
+      <td><span class="row-icon" style="background:${d.profit >= 0 ? '#d1fae5' : '#fee2e2'};color:${d.profit >= 0 ? '#059669' : '#ef4444'};"><i class="fas fa-${d.profit >= 0 ? 'chart-line' : 'chart-line'}"></i></span> <strong>${d.profit >= 0 ? 'Net Profit' : 'Net Loss'}</strong></td>
+      <td style="color:#64748b;">—</td>
+      <td class="${profitColor}" style="font-size:16px;">${fmtTSH(Math.abs(d.profit))}</td>
+      <td style="color:#64748b;">${pct(Math.abs(d.profit), rev)}%</td>
+    </tr>
+  `;
+}
+
+function printReport() { window.print(); }
+
+/* ── Notification System (shared localStorage) ── */
+const NOTIF_KEY = 'pms_notifications';
+const typeIcon  = { new: '💰', edit: '✏️', delete: '🗑️', warning: '⚠️', info: 'ℹ️' };
+const typeBg    = { new: '#d1fae5', edit: '#dbeafe', delete: '#fee2e2', warning: '#fef3c7', info: '#f3f4f6' };
+function getNotifications() { try { return JSON.parse(localStorage.getItem(NOTIF_KEY)) || []; } catch(e) { return []; } }
+function saveNotifications(list) { localStorage.setItem(NOTIF_KEY, JSON.stringify(list.slice(0, 50))); }
+function addNotification(title, body, type) {
+  const list = getNotifications();
+  list.unshift({ id: Date.now(), title, body, type: type || 'info', time: new Date().toISOString(), read: false });
+  saveNotifications(list);
+  renderNotifications();
+}
+function renderNotifications() {
+  const list   = getNotifications();
+  const unread = list.filter(n => !n.read).length;
+  const badge  = document.getElementById('notif-badge');
+  const el     = document.getElementById('notification-list');
+  if (!badge || !el) return;
+  if (unread > 0) { badge.style.display = 'inline-block'; badge.textContent = unread > 9 ? '9+' : unread; }
+  else            { badge.style.display = 'none'; }
+  if (!list.length) { el.innerHTML = '<div class="empty-notifications"><i class="fas fa-inbox"></i> No notifications</div>'; return; }
+  el.innerHTML = list.map(n => {
+    const t = new Date(n.time).toLocaleString();
+    return `<div class="notification-item" style="background:${n.read ? '#fff' : typeBg[n.type] || '#f8fafc'};" onclick="markRead(${n.id})">
+      <div style="display:flex;gap:10px;align-items:flex-start;">
+        <span style="font-size:18px;">${typeIcon[n.type] || 'ℹ️'}</span>
+        <div style="flex:1;">
+          <div style="font-weight:${n.read ? '400' : '600'};color:#1e2a3e;">${n.title}</div>
+          <div style="font-size:12px;color:#64748b;margin-top:2px;">${n.body}</div>
+          <div style="font-size:11px;color:#94a3b8;margin-top:4px;">${t}</div>
+        </div>
+        ${!n.read ? '<span style="width:8px;height:8px;background:#c9933a;border-radius:50%;display:inline-block;flex-shrink:0;margin-top:4px;"></span>' : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+function markRead(id) {
+  saveNotifications(getNotifications().map(n => n.id === id ? { ...n, read: true } : n));
+  renderNotifications();
+}
+function markAllRead() {
+  saveNotifications(getNotifications().map(n => ({ ...n, read: true })));
+  renderNotifications();
+  showToast('All notifications marked as read', 'success');
+}
+document.getElementById('notif-btn')?.addEventListener('click', e => { e.stopPropagation(); document.getElementById('notification-panel').classList.toggle('show'); });
+document.addEventListener('click', function(e) {
+  const panel = document.getElementById('notification-panel');
+  const btn   = document.getElementById('notif-btn');
+  if (panel && btn && !btn.contains(e.target) && !panel.contains(e.target)) panel.classList.remove('show');
+});
+document.getElementById('close-notif-panel')?.addEventListener('click', e => { e.stopPropagation(); document.getElementById('notification-panel').classList.remove('show'); });
+document.getElementById('mark-all-read-btn')?.addEventListener('click', e => { e.stopPropagation(); markAllRead(); });
+renderNotifications();
+
+/* ── Auth / Sidebar ── */
+function getCurrentUser() { try { return JSON.parse(sessionStorage.getItem('pms_user')); } catch(e) { return null; } }
+function logout() { sessionStorage.removeItem('pms_user'); window.location.href = '/'; }
+function openChangePasswordModal() {
+  document.getElementById('changePwOverlay').classList.add('show');
+  document.getElementById('changePwModal').classList.add('show');
+  document.body.style.overflow = 'hidden';
+  dropdownMenu.classList.remove('show');
+}
+function closeChangePasswordModal() {
+  document.getElementById('changePwOverlay').classList.remove('show');
+  document.getElementById('changePwModal').classList.remove('show');
+  document.body.style.overflow = '';
+  document.getElementById('change-password-form').reset();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  const user = getCurrentUser();
+  if (!user) { window.location.href = '/'; return; }
+  document.getElementById('userName').innerText   = user.fullName || user.username;
+  document.getElementById('userRole').innerText   = user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'User';
+  document.getElementById('userAvatar').innerText = (user.fullName || user.username || 'U').charAt(0).toUpperCase();
+
+  loadData();
+
+  document.getElementById('closeChangePwBtn')?.addEventListener('click', closeChangePasswordModal);
+  document.getElementById('cancelChangePwBtn')?.addEventListener('click', closeChangePasswordModal);
+  document.getElementById('changePwOverlay')?.addEventListener('click', closeChangePasswordModal);
+  document.getElementById('change-password-form')?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const current = document.getElementById('current-password').value;
+    const newPw   = document.getElementById('new-password').value;
+    const confirm = document.getElementById('confirm-password').value;
+    if (newPw !== confirm) { showToast('Passwords do not match', 'error'); return; }
+    if (newPw.length < 6)  { showToast('Min 6 characters required', 'error'); return; }
+    try {
+      await apiPost('/auth/change-password', { userId: user.id, oldPassword: current, newPassword: newPw });
+      showToast('Password changed! Logging out...', 'success');
+      setTimeout(() => logout(), 1500);
+    } catch(err) { showToast('Failed: ' + err.message, 'error'); }
+  });
+});
+
+const hamburgerBtn = document.getElementById('hamburger-btn');
+const sidebar      = document.getElementById('sidebar');
+const overlayMain  = document.getElementById('overlay-main');
+const sidebarClose = document.getElementById('sidebar-close-btn');
+const userPill     = document.getElementById('userPill');
+const dropdownMenu = document.getElementById('dropdownMenu');
+
+function openSidebar()  { sidebar.classList.add('open');    overlayMain.classList.add('open'); }
+function closeSidebar() { sidebar.classList.remove('open'); overlayMain.classList.remove('open'); }
+if (hamburgerBtn) hamburgerBtn.addEventListener('click', () => sidebar.classList.contains('open') ? closeSidebar() : openSidebar());
+if (sidebarClose) sidebarClose.addEventListener('click', closeSidebar);
+if (overlayMain)  overlayMain.addEventListener('click', closeSidebar);
+if (userPill) {
+  userPill.addEventListener('click', e => { e.stopPropagation(); dropdownMenu.classList.toggle('show'); });
+  document.addEventListener('click', () => dropdownMenu.classList.remove('show'));
+}
+</script>
+
+<!-- POS Chooser -->
+<div id="pos-chooser-overlay" onclick="if(event.target===this)closePOSChooser()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:18px;padding:40px 36px;max-width:460px;width:92%;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,0.28);">
+    <div style="font-size:22px;font-weight:700;color:#1e293b;margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:10px;">
+      <i class="fas fa-cash-register" style="color:#c9933a;"></i> Point of Sale
+    </div>
+    <p style="color:#64748b;margin:0 0 28px;font-size:14px;">Select the POS system to open</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px;">
+      <a href="/bar" onclick="closePOSChooser()" style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:26px 16px;background:linear-gradient(135deg,#1e3a5f,#2563eb);border-radius:14px;color:#fff;text-decoration:none;font-weight:700;font-size:15px;">
+        <i class="fas fa-wine-glass-alt" style="font-size:34px;"></i> Bar
+      </a>
+      <a href="/restaurant" onclick="closePOSChooser()" style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:26px 16px;background:linear-gradient(135deg,#7c2d12,#ea580c);border-radius:14px;color:#fff;text-decoration:none;font-weight:700;font-size:15px;">
+        <i class="fas fa-utensils" style="font-size:34px;"></i> Restaurant
+      </a>
+    </div>
+    <button onclick="closePOSChooser()" style="padding:9px 28px;border:1.5px solid #e2e8f0;border-radius:8px;background:#f8fafc;cursor:pointer;color:#64748b;font-size:13px;">Cancel</button>
+  </div>
+</div>
+<script>
+function openPOSChooser() { document.getElementById('pos-chooser-overlay').style.display='flex'; }
+function closePOSChooser() { document.getElementById('pos-chooser-overlay').style.display='none'; }
+document.addEventListener('keydown', e => { if(e.key==='Escape') closePOSChooser(); });
+</script>
+<script src="../js/permissions.js"></script>
+</body>
+</html>

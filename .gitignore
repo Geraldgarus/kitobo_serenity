@@ -1,0 +1,5 @@
+node_modules/
+steps-backend/node_modules/
+steps-backend/.env
+.env
+*.env

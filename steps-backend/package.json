@@ -1,0 +1,26 @@
+{
+  "name": "steps-pms-backend",
+  "version": "1.0.0",
+  "description": "Steps Premium Suite – Property Management System API",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "db:setup": "psql $DATABASE_URL -f db/schema.sql",
+    "build": "exit 0"
+  },
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "compression": "^1.8.1",
+    "cors": "^2.8.6",
+    "dotenv": "^16.6.1",
+    "express": "^4.22.2",
+    "express-rate-limit": "^8.5.2",
+    "jsonwebtoken": "^9.0.3",
+    "pg": "^8.20.0",
+    "xss-clean": "^0.1.4"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}

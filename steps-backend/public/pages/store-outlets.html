@@ -1,0 +1,1402 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Manage Outlets - Kitobo Serenity Resort</title>
+  <style>
+  body { opacity: 0; transition: opacity 0.2s; }
+  body.loaded { opacity: 1; }
+</style>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    document.body.classList.add('loaded');
+  });
+</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+ <link rel="stylesheet" href="../css/style.css?v=20260518" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    .outlet-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .outlet-table th,
+    .outlet-table td {
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid #e5e5e5;
+    }
+    .outlet-table th {
+      background: #f5f5f5;
+      font-weight: 600;
+      color: #1a2340;
+    }
+    .outlet-table tr:hover {
+      background: #fafafa;
+    }
+    .btn-sm {
+      padding: 4px 12px;
+      font-size: 12px;
+      margin-right: 6px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-danger {
+      background: #ef4444;
+      color: white;
+      border: none;
+    }
+    .btn-danger:hover {
+      background: #dc2626;
+    }
+    .btn-gold {
+      background: #c9933a;
+      color: white;
+      border: none;
+      padding: 8px 20px;
+      border-radius: 40px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-gold:hover {
+      background: #b07e2c;
+    }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid #e2e8f0;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 12px;
+    }
+    .btn-outline:hover {
+      background: #f5f5f5;
+    }
+    .btn-success {
+      background: #10b981;
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: 40px;
+      width: 100%;
+      cursor: pointer;
+      font-weight: 700;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: #737373;
+    }
+    .form-group {
+      margin-bottom: 1rem;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 0.3rem;
+      font-weight: 500;
+      font-size: 0.85rem;
+      color: #2c3e4e;
+    }
+    .form-control {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #e2e8f0;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-family: 'Inter', sans-serif;
+    }
+    .form-control:focus {
+      outline: none;
+      border-color: #c9933a;
+    }
+    .divider {
+      margin: 20px 0;
+      border-top: 1px solid #e2e8f0;
+    }
+    
+    /* Card Styles */
+    .card {
+      background: white;
+      border-radius: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      overflow: hidden;
+    }
+    .card-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid #e2e8f0;
+      font-weight: 700;
+      font-size: 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .card-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #1a2340;
+    }
+    
+    /* User Dropdown Styles */
+    .user-dropdown { position: relative; cursor: pointer; }
+    .dropdown-menu {
+      position: absolute;
+      top: 55px;
+      right: 0;
+      background: white;
+      min-width: 200px;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+      padding: 0.5rem 0;
+      z-index: 100;
+      display: none;
+    }
+    .dropdown-menu.show { display: block; }
+    .dropdown-menu a, .dropdown-menu button {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 18px;
+      text-decoration: none;
+      color: #1e2a3e;
+      font-size: 0.85rem;
+      background: none;
+      border: none;
+      width: 100%;
+      text-align: left;
+      cursor: pointer;
+    }
+    .dropdown-menu a:hover, .dropdown-menu button:hover { background: #f5f3ef; }
+    .dropdown-menu hr { margin: 0.3rem 0; }
+    .user-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      background: #f5f5f5;
+      border-radius: 40px;
+      cursor: pointer;
+    }
+    .fa-chevron-down { font-size: 12px; color: #aaa; transition: transform 0.2s; }
+    .user-pill.active .fa-chevron-down { transform: rotate(180deg); }
+
+    /* Toast */
+    .toast-container {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 1100;
+    }
+
+    /* ============================================================
+       ADD OUTLET MODAL - SLIDE FROM RIGHT
+       ============================================================ */
+    #addOutletOverlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 10000;
+      display: none;
+    }
+    #addOutletOverlay.show {
+      display: block;
+    }
+    #addOutletModal {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 100%;
+      max-width: 450px;
+      height: 100vh;
+      background: white;
+      z-index: 10001;
+      display: none;
+      box-shadow: -5px 0 30px rgba(0, 0, 0, 0.2);
+      overflow-y: auto;
+      transform: translateX(100%);
+      transition: transform 0.3s ease-in-out;
+    }
+    #addOutletModal.show {
+      display: block;
+      transform: translateX(0);
+    }
+    @media (max-width: 768px) {
+      #addOutletModal {
+        max-width: 100%;
+        width: 100%;
+      }
+    }
+    .add-outlet-header {
+      padding: 20px 28px;
+      background: #1e2a3e;
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .add-outlet-header h3 {
+      margin: 0;
+      font-size: 18px;
+      font-family: 'Playfair Display', serif;
+    }
+    .add-outlet-header button {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 24px;
+      cursor: pointer;
+    }
+    .add-outlet-body {
+      padding: 28px;
+    }
+
+    /* ============================================================
+       CHANGE PASSWORD MODAL - SLIDE FROM RIGHT
+       ============================================================ */
+    #changePwOverlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 10000;
+      display: none;
+    }
+    #changePwOverlay.show {
+      display: block;
+    }
+    #changePwModal {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 100%;
+      max-width: 450px;
+      height: 100vh;
+      background: white;
+      z-index: 10001;
+      display: none;
+      box-shadow: -5px 0 30px rgba(0, 0, 0, 0.2);
+      overflow-y: auto;
+      transform: translateX(100%);
+      transition: transform 0.3s ease-in-out;
+    }
+    #changePwModal.show {
+      display: block;
+      transform: translateX(0);
+    }
+    @media (max-width: 768px) {
+      #changePwModal {
+        max-width: 100%;
+        width: 100%;
+      }
+    }
+    .change-pw-header {
+      padding: 20px 28px;
+      background: #1e2a3e;
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .change-pw-header h3 {
+      margin: 0;
+      font-size: 18px;
+      font-family: 'Playfair Display', serif;
+    }
+    .change-pw-header button {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 24px;
+      cursor: pointer;
+    }
+    .change-pw-body {
+      padding: 28px;
+    }
+    .btn-pw-success {
+      background: #10b981;
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: 40px;
+      width: 100%;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    /* ============================================================
+       MOBILE RESPONSIVE STYLES
+       ============================================================ */
+    @media (max-width: 992px) {
+      .main-content {
+        margin-left: 0;
+        padding: 16px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 16px;
+      }
+      
+      .outlet-table {
+        display: block;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      
+      .outlet-table th,
+      .outlet-table td {
+        white-space: nowrap;
+        padding: 10px 12px;
+        font-size: 12px;
+      }
+      
+      .btn-sm {
+        padding: 6px 10px;
+        font-size: 11px;
+        margin-right: 4px;
+      }
+      
+      .btn-outline {
+        padding: 6px 10px;
+        font-size: 11px;
+      }
+      
+      .add-outlet-body {
+        padding: 20px;
+      }
+      
+      .change-pw-body {
+        padding: 20px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .card-header .card-title {
+        font-size: 16px;
+      }
+      
+      .outlet-table th,
+      .outlet-table td {
+        padding: 8px 10px;
+        font-size: 11px;
+      }
+      
+      .btn-sm {
+        padding: 4px 8px;
+        font-size: 10px;
+      }
+      
+      .btn-outline {
+        padding: 4px 8px;
+        font-size: 10px;
+      }
+      
+      .add-outlet-body {
+        padding: 16px;
+      }
+      
+      .change-pw-body {
+        padding: 16px;
+      }
+      
+      .change-pw-header {
+        padding: 16px 20px;
+      }
+      
+      .change-pw-header h3 {
+        font-size: 16px;
+      }
+      
+      .empty-state {
+        padding: 30px;
+        font-size: 13px;
+      }
+    }
+
+    @media (hover: none) and (pointer: coarse) {
+      .btn-sm, .btn-gold, .btn-outline, button {
+        min-height: 44px;
+      }
+      
+      button:active {
+        transform: scale(0.97);
+      }
+    }
+    /* Notification Styles */
+.notif-btn {
+  position: relative;
+  background: #f1f5f9;
+  border: none;
+  border-radius: 40px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 18px;
+  transition: all 0.2s;
+}
+
+.notif-btn:hover {
+  background: #e2e8f0;
+  transform: scale(1.05);
+}
+
+.notif-btn .badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: #ef4444;
+  color: white;
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  min-width: 18px;
+  text-align: center;
+  display: none;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.notification-panel {
+  position: absolute;
+  top: 60px;
+  right: 20px;
+  width: 350px;
+  max-width: calc(100vw - 40px);
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+  z-index: 1000;
+  display: none;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+}
+
+.notification-panel.show {
+  display: block;
+  animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.notification-header {
+  padding: 14px 16px;
+  border-bottom: 1px solid #e2e8f0;
+  font-weight: 700;
+  font-size: 14px;
+  color: #1e293b;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f8fafc;
+}
+
+.notification-header button {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  color: #64748b;
+  padding: 4px;
+}
+
+.notification-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.notification-item {
+  padding: 14px 16px;
+  border-bottom: 1px solid #eef2f6;
+  transition: background 0.2s;
+  cursor: pointer;
+}
+
+.notification-item:hover {
+  background: #f8fafc;
+}
+
+.notification-item.unread {
+  background: #fef3c7;
+  border-left: 3px solid #f59e0b;
+}
+
+.notification-item.read {
+  opacity: 0.7;
+}
+
+.notification-message {
+  font-size: 13px;
+  color: #1e293b;
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+
+.notification-time {
+  font-size: 10px;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.notification-icon {
+  font-size: 14px;
+  margin-right: 8px;
+}
+
+.empty-notifications {
+  padding: 40px 20px;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+.mark-all-read {
+  background: none;
+  border: none;
+  color: #c9933a;
+  font-size: 12px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.mark-all-read:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 480px) {
+  .notification-panel {
+    width: calc(100vw - 30px);
+    right: 15px;
+    top: 55px;
+  }
+}
+  </style>
+</head>
+<body>
+
+<div class="overlay" id="overlay-main"></div>
+
+<!-- Sidebar -->
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-top">
+    <a class="sidebar-logo" href="/">
+      <img src="/images/logo.png" alt="Kitobo Serenity Resort" style="height:44px;width:auto;object-fit:contain;display:block;">
+      <div class="logo-text"><span>Kitobo</span><span>Serenity Resort</span></div>
+    </a>
+    <button class="sidebar-close-btn" id="sidebar-close-btn"><i class="fas fa-times"></i></button>
+  </div>
+  
+  <nav class="sidebar-nav">
+    <!-- ============================================================ -->
+    <!-- DASHBOARD -->
+    <!-- ============================================================ -->
+    <div class="nav-section-label">Dashboard</div>
+    <a href="/dashboard" class="nav-item"><i class="fas fa-tachometer-alt"></i> Overview</a>
+    
+    <!-- ============================================================ -->
+    <!-- OPERATIONS -->
+    <!-- ============================================================ -->
+    <div class="nav-section-label">Operations</div>
+    <a href="/reservations" class="nav-item"><i class="fas fa-calendar-alt"></i> Reservations</a>
+    <a href="/housekeeping" class="nav-item"><i class="fas fa-soap"></i> Housekeeping</a>
+    <a href="/maintenance" class="nav-item"><i class="fas fa-toolbox"></i> Maintenance</a>
+    <div class="nav-section-label">POS</div>
+    <a href="/bar" class="nav-item"><i class="fas fa-wine-glass-alt"></i> Bar</a>
+    <a href="/restaurant" class="nav-item"><i class="fas fa-utensils"></i> Restaurant</a>
+    
+    <!-- ============================================================ -->
+    <!-- PROPERTY -->
+    <!-- ============================================================ -->
+    <div class="nav-section-label">Property</div>
+    <a href="/rooms" class="nav-item"><i class="fas fa-building"></i> Rooms View</a>
+    <a href="/rooms-list" class="nav-item "><i class="fas fa-list-ul"></i> Rooms List</a>
+    
+    <!-- ============================================================ -->
+    <!-- INVENTORY -->
+    <!-- ============================================================ -->
+    <div class="nav-section-label">Inventory</div>
+    <a href="/store-main" class="nav-item"><i class="fas fa-store"></i> Main Store</a>
+    <a href="/store-outlets" class="nav-item active"><i class="fas fa-truck"></i> Outlets Store</a>
+    <a href="/purchase-orders" class="nav-item"><i class="fas fa-file-invoice"></i> Purchase Orders</a>
+    <a href="/goods-receipt" class="nav-item"><i class="fas fa-clipboard-list"></i> Goods Receipt</a>
+    
+    
+    <!-- ============================================================ -->
+    <!-- REPORTS -->
+    <!-- ============================================================ -->
+    <div class="nav-section-label">Reports</div>
+    <a href="/reports" class="nav-item"><i class="fas fa-chart-bar"></i> Reservations Report</a>
+    <a href="/maintenance-report" class="nav-item"><i class="fas fa-chart-line"></i> Maintenance Report</a>
+    <a href="/purchase-orders-reports" class="nav-item"><i class="fas fa-file-alt"></i> Purchase Orders Report</a>
+    <a href="/goods-receipt-reports" class="nav-item"><i class="fas fa-stamp"></i> Goods Receipt Report</a>
+    <a href="/store-inventory-reports" class="nav-item"><i class="fas fa-boxes"></i> Store Inventory Report</a>
+    <a href="/sales-report" class="nav-item"><i class="fas fa-receipt"></i> Sales Report</a>
+    <a href="/housekeeping-report" class="nav-item"><i class="fas fa-soap"></i> Housekeeping Report</a>
+    <a href="/expenses-report" class="nav-item"><i class="fas fa-file-invoice-dollar"></i> Expenses Report</a>
+    <a href="/profit-report" class="nav-item"><i class="fas fa-chart-pie"></i> Profit Report</a>
+    
+    
+    <!-- ============================================================ -->
+    <!-- GUESTS -->
+    <!-- ============================================================ -->
+    <div class="nav-section-label">Finance</div>
+    <a href="/expenses" class="nav-item"><i class="fas fa-wallet"></i> Expenses</a>
+
+    <div class="nav-section-label">Guests</div>
+    <a href="/guest-database" class="nav-item"><i class="fas fa-id-card"></i> Guest Database</a>
+    
+    <!-- ============================================================ -->
+    <!-- ADMIN -->
+    <!-- ============================================================ -->
+    <div class="nav-section-label">Admin</div>
+    <a href="/users" class="nav-item"><i class="fas fa-user-shield"></i> User Management</a>
+    <a href="/permissions" class="nav-item"><i class="fas fa-lock"></i> Permissions &amp; Access</a>
+  </nav>
+  
+  <div class="sidebar-footer">
+    <small>Kitobo Serenity Resort</small>
+  </div>
+</aside>
+
+<nav class="navbar">
+  <div class="navbar-left">
+    <button class="hamburger" id="hamburger-btn" aria-label="Toggle menu">
+      <span class="hb-bar"></span><span class="hb-bar"></span><span class="hb-bar"></span>
+    </button>
+    <div>
+      <div class="page-title">Store Outlets</div>
+      <div class="page-subtitle">Outlets Management</div>
+    </div>
+  </div>
+  <div class="navbar-right">
+       <button class="pos-navbar-btn" onclick="openPOSChooser()" title="Point of Sale"><i class="fas fa-cash-register"></i> POS</button>
+    <button class="notif-btn" id="notif-btn">
+  <i class="fas fa-bell"></i><span class="badge" id="notif-badge">0</span>
+</button>
+    
+    <div class="user-dropdown">
+      <div class="user-pill" id="userPill">
+        <div class="user-avatar" id="userAvatar">U</div>
+        <div class="user-info">
+          <span id="userName">Loading...</span>
+          <span id="userRole">Loading...</span>
+        </div>
+        <i class="fas fa-chevron-down"></i>
+      </div>
+      <div class="dropdown-menu" id="dropdownMenu">
+        <button id="openChangePwBtn"><i class="fas fa-key"></i> Change Password</button>
+        <a href="/users" class="dropdown-item"><i class="fas fa-users"></i> User Management</a>
+        <hr>
+        <button onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<main class="main-content">
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">All Outlets</span>
+      <button class="btn btn-gold" onclick="openAddOutletModal()">＋ Add Outlet</button>
+    </div>
+    <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+      <table class="outlet-table" id="outlets-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Outlet Name</th>
+            <th>Created At</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="outlets-tbody">
+          <tr><td colspan="4" class="empty-state">Loading outlets...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <!-- Notification Panel -->
+<div class="notification-panel" id="notification-panel">
+  <div class="notification-header">
+    <span><i class="fas fa-bullhorn"></i> Notifications</span>
+    <div>
+      <button id="mark-all-read-btn" class="mark-all-read">Mark all read</button>
+      <button id="close-notif-panel"><i class="fas fa-times"></i></button>
+    </div>
+  </div>
+  <div class="notification-list" id="notification-list">
+    <div class="empty-notifications"><i class="fas fa-inbox"></i> No new notifications</div>
+  </div>
+</div>
+</main>
+
+<!-- Add Outlet Modal - Slides from Right -->
+<div id="addOutletOverlay"></div>
+<div id="addOutletModal">
+  <div class="add-outlet-header">
+    <h3><i class="fas fa-plus"></i> Add New Outlet</h3>
+    <button id="closeAddOutletBtn"><i class="fas fa-times"></i></button>
+  </div>
+  <div class="add-outlet-body">
+    <form id="add-outlet-form">
+      <div class="form-group">
+        <label>Outlet Name (lowercase, no spaces)</label>
+        <input type="text" id="outlet-name" class="form-control" placeholder="e.g., garden, beach" required>
+        <small style="font-size: 11px; color: #737373;">Use lowercase letters, numbers, and underscores only</small>
+      </div>
+      <hr class="divider" />
+      <button type="submit" class="btn-success"><i class="fas fa-check-circle"></i> Create Outlet</button>
+      <button type="button" id="cancelAddOutletBtn" class="btn-outline" style="margin-top:10px; width:100%;">Cancel</button>
+    </form>
+  </div>
+</div>
+
+<!-- Change Password Modal - Slides from Right -->
+<div id="changePwOverlay"></div>
+<div id="changePwModal">
+  <div class="change-pw-header">
+    <h3><i class="fas fa-lock"></i> Change Password</h3>
+    <button id="closeChangePwBtn"><i class="fas fa-times"></i></button>
+  </div>
+  <div class="change-pw-body">
+    <form id="change-password-form">
+      <div class="form-group">
+        <label>Current Password</label>
+        <input type="password" id="current-password" class="form-control" required>
+      </div>
+      <div class="form-group">
+        <label>New Password (min 6)</label>
+        <input type="password" id="new-password" class="form-control" required>
+      </div>
+      <div class="form-group">
+        <label>Confirm Password</label>
+        <input type="password" id="confirm-password" class="form-control" required>
+      </div>
+      <hr class="divider" />
+      <button type="submit" class="btn-pw-success"><i class="fas fa-check-circle"></i> Update Password</button>
+      <button type="button" id="cancelChangePwBtn" style="background:transparent;border:1px solid #e2e8f0;padding:12px;border-radius:40px;width:100%;cursor:pointer;margin-top:10px;">Cancel</button>
+    </form>
+  </div>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+<script>
+
+  // ============================================================
+// NOTIFICATION SYSTEM
+// ============================================================
+// ============================================================
+// SIMPLIFIED NOTIFICATION SYSTEM FOR OUTLETS PAGE
+// ============================================================
+let notifications = [];
+let notificationCheckInterval = null;
+
+async function loadNotifications() {
+  try {
+    // Clear existing notifications
+    notifications = [];
+    
+    // Get outlets data
+    try {
+      const outlets = await apiGet('/outlets');
+      
+      if (outlets.length > 0) {
+        notifications.push({
+          id: 'outlets_summary',
+          type: 'outlet',
+          message: `${outlets.length} outlet(s) configured in the system`,
+          time: new Date().toLocaleTimeString(),
+          read: false,
+          icon: '<i class="fas fa-store-alt"></i>'
+        });
+      }
+      
+      // Check each outlet for inventory items (this would need separate API calls)
+      // For now, just show a generic notification
+      if (outlets.length > 0) {
+        notifications.push({
+          id: 'outlet_inventory',
+          type: 'inventory',
+          message: `Click on any outlet to view its inventory items`,
+          time: new Date().toLocaleTimeString(),
+          read: false,
+          icon: '<i class="fas fa-box"></i>'
+        });
+      }
+      
+    } catch(e) {
+      console.log('Outlets API not available yet');
+    }
+    
+    // Check for pending requests from outlets (if store requests API is accessible)
+    try {
+      const requests = await apiGet('/store/requests?status=pending');
+      if (requests && requests.length > 0) {
+        notifications.push({
+          id: 'pending_requests',
+          type: 'request',
+          message: `${requests.length} pending request(s) from outlets need approval`,
+          time: new Date().toLocaleTimeString(),
+          read: false,
+          icon: '<i class="fas fa-clipboard-list"></i>'
+        });
+      }
+    } catch(e) {
+      console.log('Store requests API not available');
+    }
+    
+    // Sort by time
+    notifications.sort((a, b) => new Date(b.time) - new Date(a.time));
+    notifications = notifications.slice(0, 10);
+    
+    // Update UI
+    renderNotifications();
+    updateNotificationBadge();
+    
+    console.log(`<i class="fas fa-bullhorn"></i> Loaded ${notifications.length} notifications for outlets page`);
+  } catch (err) {
+    console.error('Failed to load notifications:', err);
+    renderNotifications();
+    updateNotificationBadge();
+  }
+}
+
+function renderNotifications() {
+  const container = document.getElementById('notification-list');
+  if (!container) return;
+  
+  if (notifications.length === 0) {
+    container.innerHTML = '<div class="empty-notifications"><i class="fas fa-inbox"></i> No new notifications</div>';
+    return;
+  }
+  
+  container.innerHTML = notifications.map(notif => `
+    <div class="notification-item ${notif.read ? 'read' : 'unread'}" data-id="${notif.id}" data-type="${notif.type}">
+      <div class="notification-message">
+        <span class="notification-icon">${notif.icon}</span>
+        ${escapeHtml(notif.message)}
+      </div>
+      <div class="notification-time">
+        <span><i class="fas fa-clock"></i> ${notif.time}</span>
+      </div>
+    </div>
+  `).join('');
+  
+  // Add click handlers
+  document.querySelectorAll('.notification-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const notifId = item.getAttribute('data-id');
+      const notif = notifications.find(n => n.id === notifId);
+      if (notif) {
+        notif.read = true;
+        renderNotifications();
+        updateNotificationBadge();
+        
+        // Handle click based on type
+        if (notif.type === 'request') {
+          window.location.href = '/store-main';
+        } else if (notif.type === 'outlet') {
+          // Refresh outlets list
+          loadOutlets();
+        }
+      }
+      closeNotificationPanel();
+    });
+  });
+}
+
+function updateNotificationBadge() {
+  const badge = document.getElementById('notif-badge');
+  if (!badge) return;
+  
+  const unreadCount = notifications.filter(n => !n.read).length;
+  badge.textContent = unreadCount;
+  badge.style.display = unreadCount > 0 ? 'inline-block' : 'none';
+}
+
+function toggleNotificationPanel() {
+  const panel = document.getElementById('notification-panel');
+  if (panel) {
+    panel.classList.toggle('show');
+  }
+}
+
+function closeNotificationPanel() {
+  const panel = document.getElementById('notification-panel');
+  if (panel) {
+    panel.classList.remove('show');
+  }
+}
+
+function markAllNotificationsRead() {
+  notifications.forEach(n => n.read = true);
+  renderNotifications();
+  updateNotificationBadge();
+  showToast('All notifications marked as read', 'success');
+}
+
+// Initialize notification button
+const notifBtn = document.getElementById('notif-btn');
+if (notifBtn) {
+  notifBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleNotificationPanel();
+  });
+}
+
+// Close panel when clicking outside
+document.addEventListener('click', function(e) {
+  const panel = document.getElementById('notification-panel');
+  const btn = document.getElementById('notif-btn');
+  if (panel && btn && !btn.contains(e.target) && !panel.contains(e.target)) {
+    panel.classList.remove('show');
+  }
+});
+
+// Mark all read button
+const markAllBtn = document.getElementById('mark-all-read-btn');
+if (markAllBtn) {
+  markAllBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    markAllNotificationsRead();
+  });
+}
+
+// Close button
+const closeNotifBtn = document.getElementById('close-notif-panel');
+if (closeNotifBtn) {
+  closeNotifBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    closeNotificationPanel();
+  });
+}
+
+// Load notifications on page load
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(() => {
+    loadNotifications();
+  }, 500);
+  if (notificationCheckInterval) clearInterval(notificationCheckInterval);
+  notificationCheckInterval = setInterval(loadNotifications, 60000);
+});
+
+// Reload notifications when outlets change
+const originalLoadOutlets = window.loadOutlets;
+window.loadOutlets = async function() {
+  await originalLoadOutlets();
+  setTimeout(() => loadNotifications(), 500);
+};
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return str.replace(/[&<>]/g, function(m) {
+    if (m === '&') return '&amp;';
+    if (m === '<') return '&lt;';
+    if (m === '>') return '&gt;';
+    return m;
+  });
+}
+  // ========== API FUNCTIONS ==========
+  const API_BASE = '/api';
+
+  // Get token from session storage
+  function getAuthToken() {
+    return sessionStorage.getItem('token');
+  }
+
+  // Handle unauthorized responses
+  function handleUnauthorized(response) {
+    if (response.status === 401 || response.status === 403) {
+      sessionStorage.clear();
+      window.location.href = '/';
+      throw new Error('Session expired. Please login again.');
+    }
+    return response;
+  }
+
+  async function apiGet(endpoint) {
+    try {
+      const token = getAuthToken();
+      const response = await fetch(API_BASE + endpoint, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        }
+      });
+      handleUnauthorized(response);
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error('Server returned ' + response.status);
+      }
+      return await response.json();
+    } catch (err) {
+      console.error('API Get Error:', err);
+      throw err;
+    }
+  }
+
+  async function apiPost(endpoint, data) {
+    try {
+      const token = getAuthToken();
+      const response = await fetch(API_BASE + endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        },
+        body: JSON.stringify(data)
+      });
+      handleUnauthorized(response);
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error('Server returned ' + response.status);
+      }
+      return await response.json();
+    } catch (err) {
+      console.error('API Post Error:', err);
+      throw err;
+    }
+  }
+
+  async function apiDelete(endpoint) {
+    try {
+      const token = getAuthToken();
+      const response = await fetch(API_BASE + endpoint, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        }
+      });
+      handleUnauthorized(response);
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error('Server returned ' + response.status);
+      }
+      return await response.json();
+    } catch (err) {
+      console.error('API Delete Error:', err);
+      throw err;
+    }
+  }
+
+  // ========== HELPER FUNCTIONS ==========
+  function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, function(m) {
+      if (m === '&') return '&amp;';
+      if (m === '<') return '&lt;';
+      if (m === '>') return '&gt;';
+      return m;
+    });
+  }
+  
+  function showToast(msg, type) {
+    var toast = document.getElementById('toast-container');
+    var bg = type === 'error' ? '#ef4444' : '#10b981';
+    toast.innerHTML = '<div style="background:' + bg + ';color:white;padding:12px 20px;border-radius:40px;">' + msg + '</div>';
+    setTimeout(function() { toast.innerHTML = ''; }, 3000);
+  }
+
+  // ========== SIDEBAR TOGGLE ==========
+  var hamburgerBtn = document.getElementById('hamburger-btn');
+  var sidebar = document.getElementById('sidebar');
+  var overlayMain = document.getElementById('overlay-main');
+  var sidebarClose = document.getElementById('sidebar-close-btn');
+  function openSidebar() { sidebar.classList.add('open'); overlayMain.classList.add('open'); if (hamburgerBtn) hamburgerBtn.classList.add('active'); }
+  function closeSidebar() { sidebar.classList.remove('open'); overlayMain.classList.remove('open'); if (hamburgerBtn) hamburgerBtn.classList.remove('active'); }
+  if (hamburgerBtn) { hamburgerBtn.addEventListener('click', function() { sidebar.classList.contains('open') ? closeSidebar() : openSidebar(); }); }
+  if (sidebarClose) { sidebarClose.addEventListener('click', closeSidebar); }
+  if (overlayMain) { overlayMain.addEventListener('click', closeSidebar); }
+  document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeSidebar(); });
+
+  // ========== USER SESSION MANAGEMENT ==========
+  function getCurrentUser() {
+    var userStr = sessionStorage.getItem('pms_user');
+    if (!userStr) return null;
+    try { return JSON.parse(userStr); } catch(e) { return null; }
+  }
+
+  function logout() {
+    sessionStorage.removeItem('pms_user');
+    window.location.href = '/';
+  }
+
+  var currentUser = getCurrentUser();
+  if (!currentUser) {
+    window.location.href = '/';
+  }
+
+  // Display user info
+  document.getElementById('userName').innerText = currentUser.fullName || currentUser.username;
+  document.getElementById('userRole').innerText = currentUser.role ? currentUser.role.charAt(0).toUpperCase() + currentUser.role.slice(1) : 'User';
+  document.getElementById('userAvatar').innerText = (currentUser.fullName || currentUser.username || 'U').charAt(0).toUpperCase();
+
+  // Dropdown toggle
+  var userPill = document.getElementById('userPill');
+  var dropdownMenu = document.getElementById('dropdownMenu');
+  if (userPill) {
+    userPill.addEventListener('click', function(e) {
+      e.stopPropagation();
+      dropdownMenu.classList.toggle('show');
+      userPill.classList.toggle('active');
+    });
+    document.addEventListener('click', function() {
+      dropdownMenu.classList.remove('show');
+      if (userPill) userPill.classList.remove('active');
+    });
+  }
+
+  // ========== ADD OUTLET MODAL ==========
+  var addOutletOverlay = document.getElementById('addOutletOverlay');
+  var addOutletModal = document.getElementById('addOutletModal');
+  var closeAddOutletBtn = document.getElementById('closeAddOutletBtn');
+  var cancelAddOutletBtn = document.getElementById('cancelAddOutletBtn');
+  
+  function openAddOutletModal() {
+    addOutletOverlay.classList.add('show');
+    addOutletModal.classList.add('show');
+    document.body.style.overflow = 'hidden';
+    if (dropdownMenu) dropdownMenu.classList.remove('show');
+    if (userPill) userPill.classList.remove('active');
+  }
+  
+  function closeAddOutletModal() {
+    addOutletOverlay.classList.remove('show');
+    addOutletModal.classList.remove('show');
+    document.body.style.overflow = '';
+    document.getElementById('add-outlet-form').reset();
+  }
+  
+  if (closeAddOutletBtn) { closeAddOutletBtn.addEventListener('click', closeAddOutletModal); }
+  if (cancelAddOutletBtn) { cancelAddOutletBtn.addEventListener('click', closeAddOutletModal); }
+  if (addOutletOverlay) { addOutletOverlay.addEventListener('click', closeAddOutletModal); }
+
+  // ========== CHANGE PASSWORD MODAL ==========
+  var changePwOverlay = document.getElementById('changePwOverlay');
+  var changePwModal = document.getElementById('changePwModal');
+  var openChangePwBtn = document.getElementById('openChangePwBtn');
+  var closeChangePwBtn = document.getElementById('closeChangePwBtn');
+  var cancelChangePwBtn = document.getElementById('cancelChangePwBtn');
+  
+  function openChangePasswordModal() {
+    console.log('Opening change password modal');
+    if (changePwOverlay) changePwOverlay.classList.add('show');
+    if (changePwModal) changePwModal.classList.add('show');
+    document.body.style.overflow = 'hidden';
+    if (dropdownMenu) dropdownMenu.classList.remove('show');
+    if (userPill) userPill.classList.remove('active');
+  }
+  
+  function closeChangePasswordModal() {
+    console.log('Closing change password modal');
+    if (changePwOverlay) changePwOverlay.classList.remove('show');
+    if (changePwModal) changePwModal.classList.remove('show');
+    document.body.style.overflow = '';
+    document.getElementById('change-password-form').reset();
+  }
+  
+  if (openChangePwBtn) { 
+    openChangePwBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      openChangePasswordModal();
+    }); 
+  }
+  if (closeChangePwBtn) { closeChangePwBtn.addEventListener('click', closeChangePasswordModal); }
+  if (cancelChangePwBtn) { cancelChangePwBtn.addEventListener('click', closeChangePasswordModal); }
+  if (changePwOverlay) { changePwOverlay.addEventListener('click', closeChangePasswordModal); }
+  
+  // Change Password Form Submit
+  var changePasswordForm = document.getElementById('change-password-form');
+  if (changePasswordForm) {
+    changePasswordForm.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      console.log('Change password form submitted');
+      
+      var currentPassword = document.getElementById('current-password').value;
+      var newPassword = document.getElementById('new-password').value;
+      var confirmPassword = document.getElementById('confirm-password').value;
+      
+      if (newPassword !== confirmPassword) {
+        showToast('New passwords do not match', 'error');
+        return;
+      }
+      if (newPassword.length < 6) {
+        showToast('Password must be at least 6 characters', 'error');
+        return;
+      }
+      
+      var currentUserData = getCurrentUser();
+      if (!currentUserData) {
+        showToast('User not found. Please login again.', 'error');
+        return;
+      }
+      
+      try {
+        await apiPost('/auth/change-password', {
+          userId: currentUserData.id,
+          oldPassword: currentPassword,
+          newPassword: newPassword
+        });
+        
+        showToast('Password changed successfully! Please login again.', 'success');
+        setTimeout(function() { logout(); }, 1500);
+      } catch (err) {
+        console.error('Change password error:', err);
+        showToast('Failed to change password: ' + err.message, 'error');
+      }
+    });
+  }
+
+  // ========== OUTLET MANAGEMENT ==========
+  var outlets = [];
+
+  async function loadOutlets() {
+    try {
+      var data = await apiGet('/outlets');
+      outlets = data;
+      renderOutlets();
+    } catch (err) { 
+      console.error('Load outlets error:', err);
+      showToast('Failed to load outlets: ' + err.message, 'error'); 
+    }
+  }
+
+  function renderOutlets() {
+    var tbody = document.getElementById('outlets-tbody');
+    if (!tbody) return;
+    if (outlets.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" class="empty-state"><i class="fas fa-store-alt"></i> No outlets found. Click "Add Outlet" to create one.</td></tr>';
+      return;
+    }
+    var html = '';
+    for (var i = 0; i < outlets.length; i++) {
+      var outlet = outlets[i];
+      html += '<tr>';
+      html += '<td>' + outlet.id + '</td>';
+      html += '<td><strong>' + escapeHtml(outlet.name) + '</strong></td>';
+      html += '<td>' + new Date(outlet.created_at).toLocaleDateString() + '</td>';
+      html += '<td>';
+      html += '<a href="/outlet-store?outlet=' + outlet.name + '" class="btn-outline" style="display: inline-block; padding: 4px 12px; text-decoration: none; border-radius: 6px; font-size: 12px; margin-right: 6px;"><i class="fas fa-box"></i> View Items</a>';
+      html += '<button class="btn-sm btn-danger" onclick="deleteOutlet(' + outlet.id + ', \'' + escapeHtml(outlet.name) + '\')"><i class="fas fa-trash-alt"></i> Delete</button>';
+      html += '</td>';
+      html += '</tr>';
+    }
+    tbody.innerHTML = html;
+  }
+
+  async function deleteOutlet(id, name) {
+    if (!confirm('Delete outlet "' + name + '"? This will NOT delete its inventory items.')) return;
+    try {
+      await apiDelete('/outlets/' + id);
+      showToast('Outlet "' + name + '" deleted', 'success');
+      await loadOutlets();
+    } catch (err) { 
+      showToast('Delete failed: ' + err.message, 'error'); 
+    }
+  }
+
+  // Add Outlet Form Submit
+  var addOutletForm = document.getElementById('add-outlet-form');
+  if (addOutletForm) {
+    addOutletForm.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      var name = document.getElementById('outlet-name').value.trim().toLowerCase();
+      if (!name) {
+        showToast('Please enter an outlet name', 'error');
+        return;
+      }
+      if (!/^[a-z][a-z0-9_]*$/.test(name)) {
+        showToast('Name must be lowercase letters, numbers, underscores, starting with a letter', 'error');
+        return;
+      }
+      try {
+        await apiPost('/outlets', { name: name });
+        showToast('Outlet "' + name + '" created successfully!', 'success');
+        closeAddOutletModal();
+        await loadOutlets();
+      } catch (err) { 
+        showToast('Failed to create outlet: ' + err.message, 'error'); 
+      }
+    });
+  }
+
+  // Initialize
+  document.addEventListener('DOMContentLoaded', function() {
+    loadOutlets();
+  });
+
+  // Make functions global
+  window.openAddOutletModal = openAddOutletModal;
+  window.closeAddOutletModal = closeAddOutletModal;
+  window.deleteOutlet = deleteOutlet;
+  window.openChangePasswordModal = openChangePasswordModal;
+  window.closeChangePasswordModal = closeChangePasswordModal;
+  window.logout = logout;
+</script>
+
+<!-- POS Chooser Modal -->
+<div id="pos-chooser-overlay" onclick="if(event.target===this)closePOSChooser()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:18px;padding:40px 36px;max-width:460px;width:92%;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,0.28);">
+    <div style="font-size:22px;font-weight:700;color:#1e293b;margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:10px;">
+      <i class="fas fa-cash-register" style="color:#c9933a;"></i> Point of Sale
+    </div>
+    <p style="color:#64748b;margin:0 0 28px;font-size:14px;">Select the POS system to open</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px;">
+      <a href="/bar" onclick="closePOSChooser()" style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:26px 16px;background:linear-gradient(135deg,#1e3a5f,#2563eb);border-radius:14px;color:#fff;text-decoration:none;font-weight:700;font-size:15px;transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 10px 28px rgba(37,99,235,0.4)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='none'">
+        <i class="fas fa-wine-glass-alt" style="font-size:34px;opacity:0.95;"></i>
+        Bar
+      </a>
+      <a href="/restaurant" onclick="closePOSChooser()" style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:26px 16px;background:linear-gradient(135deg,#7c2d12,#ea580c);border-radius:14px;color:#fff;text-decoration:none;font-weight:700;font-size:15px;transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 10px 28px rgba(234,88,12,0.4)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='none'">
+        <i class="fas fa-utensils" style="font-size:34px;opacity:0.95;"></i>
+        Restaurant
+      </a>
+    </div>
+    <button onclick="closePOSChooser()" style="padding:9px 28px;border:1.5px solid #e2e8f0;border-radius:8px;background:#f8fafc;cursor:pointer;color:#64748b;font-size:13px;font-weight:500;">Cancel</button>
+  </div>
+</div>
+<script>
+function openPOSChooser(){var o=document.getElementById('pos-chooser-overlay');if(o){o.style.display='flex';}}
+function closePOSChooser(){var o=document.getElementById('pos-chooser-overlay');if(o){o.style.display='none';}}
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closePOSChooser();});
+</script>
+<script src="../js/permissions.js"></script>
+</body>
+</html>
+

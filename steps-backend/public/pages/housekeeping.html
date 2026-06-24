@@ -1,0 +1,1782 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Housekeeping Status - Kitobo Serenity Resort</title>
+  <style>
+  body { opacity: 0; transition: opacity 0.2s; }
+  body.loaded { opacity: 1; }
+</style>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    document.body.classList.add('loaded');
+  });
+</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css?v=20260518" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <style>
+ /* Modern Rooms Grid */
+.rooms-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 24px;
+  padding: 8px 0;
+}
+
+/* Room Card - Full Colored Border */
+.room-card {
+  background: white;
+  border-radius: 28px;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border-width: 2px;
+  border-style: solid;
+}
+
+.room-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 30px -12px rgba(0, 0, 0, 0.15);
+}
+
+/* Full Colored Borders for Each Status */
+.room-card.clean {
+  border-color: #c9933a;
+}
+
+.room-card.dirty {
+  border-color: #b33a2e;
+}
+
+.room-card.checkout {
+  border-color: #d9820a;
+}
+
+.room-card.occupied {
+  border-color: #1a2340;
+}
+
+/* Card Header */
+.room-header {
+  padding: 20px 24px 16px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: white;
+}
+
+.room-icon {
+  font-size: 42px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.08));
+}
+
+/* Status Badges */
+.room-status {
+  padding: 6px 16px;
+  border-radius: 40px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  letter-spacing: 0.3px;
+}
+
+.room-status.clean {
+  background: #fdf6ec;
+  color: #7a4a00;
+}
+
+.room-status.dirty {
+  background: #fdf0ee;
+  color: #8b2500;
+}
+
+.room-status.checkout {
+  background: #fffaec;
+  color: #7a4500;
+}
+
+.room-status.occupied {
+  background: #e8ecf5;
+  color: #1a2340;
+}
+
+/* Card Body */
+.room-body {
+  padding: 0 24px 20px 24px;
+  background: white;
+}
+
+/* Room Name */
+.room-name {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: #0f172a;
+  letter-spacing: -0.3px;
+}
+
+.room-details {
+  font-size: 13px;
+  color: #64748b;
+  margin-bottom: 20px;
+  display: flex;
+  gap: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.room-details span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Guest Info */
+.guest-info {
+  background: #f8fafc;
+  border-radius: 20px;
+  padding: 16px;
+  margin: 16px 0;
+  border: 1px solid #eef2f6;
+  transition: all 0.2s ease;
+}
+
+.guest-info:hover {
+  background: #f1f5f9;
+  border-color: #e2e8f0;
+}
+
+.guest-info-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.guest-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #0f172a;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.guest-details {
+  display: flex;
+  gap: 16px;
+  font-size: 12px;
+  color: #475569;
+  flex-wrap: wrap;
+}
+
+.guest-details span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* Checkout Timer */
+.checkout-timer {
+  background: #fffaec;
+  border-radius: 16px;
+  padding: 12px;
+  margin-top: 14px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 500;
+  color: #7a4500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid #f0d0a0;
+}
+
+/* Action Buttons */
+.room-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.room-card.maintenance {
+  border: 2px solid #64748b;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+}
+.room-status.maintenance {
+  background: #f1f5f9;
+  color: #334155;
+  border-radius: 20px;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.btn-maintenance {
+  background: #dc2626;
+  color: white;
+  border: none;
+  padding: 9px 16px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  justify-content: center;
+}
+.btn-maintenance:hover { background: #b91c1c; }
+.btn-maintenance-clear {
+  background: #c9933a;
+  color: #1a2340;
+  border: none;
+  padding: 9px 16px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  justify-content: center;
+}
+.btn-maintenance-clear:hover { background: #b8842f; }
+
+.btn-clean {
+  background: #c9933a;
+  color: #1a2340;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 50px;
+  cursor: pointer;
+  font-weight: 600;
+  flex: 1;
+  transition: all 0.2s ease;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-clean:hover {
+  background: #b8842f;
+  transform: translateY(-1px);
+}
+
+.btn-dirty {
+  background: #1a2340;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 50px;
+  cursor: pointer;
+  font-weight: 500;
+  flex: 1;
+  transition: all 0.2s ease;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-dirty:hover {
+  background: #0f1726;
+  transform: translateY(-1px);
+}
+
+/* Last Updated */
+.last-updated {
+  font-size: 10px;
+  color: #94a3b8;
+  margin-top: 14px;
+  text-align: right;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 5px;
+}
+
+/* Stats Summary */
+.stats-summary {
+  display: flex;
+  gap: 12px;
+  padding: 0 0 24px 0;
+  flex-wrap: wrap;
+}
+
+.stat-pill {
+  background: white;
+  padding: 8px 20px;
+  border-radius: 50px;
+  font-size: 13px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid #eef2f6;
+  transition: all 0.2s ease;
+}
+
+.stat-pill:hover {
+  border-color: #cbd5e1;
+  transform: translateY(-1px);
+}
+
+.stat-pill strong {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+/* Filter Buttons */
+.filter-bar {
+  display: flex;
+  gap: 10px;
+  padding: 0 0 24px 0;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.filter-btn {
+  padding: 8px 24px;
+  border-radius: 50px;
+  border: 1px solid #eef2f6;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 13px;
+  font-weight: 500;
+  color: #475569;
+}
+
+.filter-btn.active {
+  background: #c9933a;
+  color: white;
+  border-color: #c9933a;
+}
+
+.filter-btn:hover:not(.active) {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+/* Loading Overlay */
+.loading-overlay {
+  text-align: center;
+  padding: 80px;
+  color: #94a3b8;
+  font-size: 15px;
+  background: white;
+  border-radius: 28px;
+}
+
+/* Card Animation */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.room-card {
+  animation: fadeInUp 0.4s ease-out forwards;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .rooms-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .room-header {
+    padding: 16px 20px 12px 20px;
+  }
+  
+  .room-body {
+    padding: 0 20px 16px 20px;
+  }
+  
+  .room-icon {
+    font-size: 36px;
+  }
+  
+  .room-name {
+    font-size: 20px;
+  }
+  
+  .guest-details {
+    gap: 12px;
+  }
+  
+  .filter-btn {
+    padding: 6px 18px;
+    font-size: 12px;
+  }
+  
+  .stat-pill {
+    padding: 6px 16px;
+    font-size: 12px;
+  }
+  
+  .stat-pill strong {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .rooms-grid {
+    gap: 12px;
+  }
+  
+  .room-actions {
+    flex-direction: column;
+  }
+  
+  .btn-clean, .btn-dirty {
+    padding: 10px;
+  }
+  
+  .guest-details {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .guest-details span {
+    display: inline-flex;
+    width: fit-content;
+  }
+}
+
+    /* Notification Styles */
+.notif-btn {
+  position: relative;
+  background: #f1f5f9;
+  border: none;
+  border-radius: 40px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 18px;
+  transition: all 0.2s;
+}
+
+.notif-btn:hover {
+  background: #e2e8f0;
+  transform: scale(1.05);
+}
+
+.notif-btn .badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: #ef4444;
+  color: white;
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  min-width: 18px;
+  text-align: center;
+  display: none;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.notification-panel {
+  position: absolute;
+  top: 60px;
+  right: 20px;
+  width: 350px;
+  max-width: calc(100vw - 40px);
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+  z-index: 1000;
+  display: none;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+}
+
+.notification-panel.show {
+  display: block;
+  animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.notification-header {
+  padding: 14px 16px;
+  border-bottom: 1px solid #e2e8f0;
+  font-weight: 700;
+  font-size: 14px;
+  color: #1e293b;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f8fafc;
+}
+
+.notification-header button {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  color: #64748b;
+  padding: 4px;
+}
+
+.notification-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.notification-item {
+  padding: 14px 16px;
+  border-bottom: 1px solid #eef2f6;
+  transition: background 0.2s;
+  cursor: pointer;
+}
+
+.notification-item:hover {
+  background: #f8fafc;
+}
+
+.notification-item.unread {
+  background: #fef3c7;
+  border-left: 3px solid #f59e0b;
+}
+
+.notification-item.read {
+  opacity: 0.7;
+}
+
+.notification-message {
+  font-size: 13px;
+  color: #1e293b;
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+
+.notification-time {
+  font-size: 10px;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.notification-icon {
+  font-size: 14px;
+  margin-right: 8px;
+}
+
+.empty-notifications {
+  padding: 40px 20px;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+.mark-all-read {
+  background: none;
+  border: none;
+  color: #c9933a;
+  font-size: 12px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.mark-all-read:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 480px) {
+  .notification-panel {
+    width: calc(100vw - 30px);
+    right: 15px;
+    top: 55px;
+  }
+}
+/* Navbar Icons */
+.nav-icons {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.nav-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  background: #f1f5f9;
+  border-radius: 40px;
+  color: #1e2a3e;
+  text-decoration: none;
+  transition: all 0.2s;
+  font-size: 18px;
+}
+
+.nav-icon-btn:hover {
+  background: #c9933a;
+  color: white;
+  transform: translateY(-2px);
+}
+
+.nav-icon-btn:active {
+  transform: translateY(0);
+}
+
+@media (max-width: 768px) {
+  .nav-icons {
+    gap: 8px;
+  }
+  
+  .nav-icon-btn {
+    width: 34px;
+    height: 34px;
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .nav-icons {
+    gap: 6px;
+  }
+  
+  .nav-icon-btn {
+    width: 30px;
+    height: 30px;
+    font-size: 14px;
+  }
+}
+
+/* ── Page Tabs ── */
+.page-tabs { display:flex; gap:8px; margin-bottom:24px; }
+.page-tab { padding:10px 24px; border-radius:40px; border:1px solid #e2e8f0; background:#f8fafc; color:#64748b; font-weight:600; font-size:13px; cursor:pointer; transition:0.2s; }
+.page-tab.active { background:#1a2340; color:white; border-color:#1a2340; }
+.page-tab:hover:not(.active) { background:#fef8e7; border-color:#c9933a; color:#c9933a; }
+.tab-section { display:none; }
+.tab-section.active { display:block; }
+
+/* ── Laundry Table ── */
+.laundry-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:12px; }
+.laundry-filters { display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; }
+.laundry-filters input, .laundry-filters select { padding:8px 12px; border:1px solid #e2e8f0; border-radius:20px; font-size:13px; }
+.btn-new-service { background:#c9933a; color:white; border:none; padding:10px 20px; border-radius:40px; font-weight:600; cursor:pointer; font-size:13px; }
+.laundry-table-wrap { overflow-x:auto; border-radius:16px; box-shadow:0 1px 3px rgba(0,0,0,0.05); }
+.laundry-table { width:100%; border-collapse:collapse; background:white; }
+.laundry-table th { background:#f8fafc; padding:12px 14px; text-align:left; font-size:12px; font-weight:600; color:#64748b; text-transform:uppercase; border-bottom:1px solid #e2e8f0; }
+.laundry-table td { padding:12px 14px; border-bottom:1px solid #f1f5f9; font-size:13px; }
+.laundry-table tr:hover td { background:#fefcf8; }
+.status-badge { display:inline-block; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; }
+.status-badge.paid { background:#dcfce7; color:#166534; }
+.status-badge.partial { background:#fef3c7; color:#92400e; }
+.status-badge.pending { background:#fee2e2; color:#991b1b; }
+.action-btn { background:none; border:1px solid #e2e8f0; padding:5px 10px; border-radius:8px; cursor:pointer; font-size:12px; color:#64748b; transition:0.2s; }
+.action-btn:hover { background:#f1f5f9; }
+.action-btn.delete:hover { background:#fee2e2; color:#ef4444; border-color:#ef4444; }
+
+/* ── Modal ── */
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:2000; display:none; align-items:center; justify-content:center; padding:16px; }
+.modal-overlay.open { display:flex; }
+.modal-box { background:white; border-radius:24px; padding:28px; width:100%; max-width:580px; max-height:90vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.2); }
+.modal-title { font-size:18px; font-weight:700; color:#1e2a3e; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center; }
+.modal-close { background:none; border:none; font-size:20px; cursor:pointer; color:#94a3b8; }
+.form-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.form-group { display:flex; flex-direction:column; gap:6px; }
+.form-group.full { grid-column:1/-1; }
+.form-group label { font-size:11px; font-weight:600; text-transform:uppercase; color:#64748b; }
+.form-group input, .form-group select, .form-group textarea { padding:10px 14px; border:1px solid #e2e8f0; border-radius:12px; font-size:13px; font-family:inherit; }
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline:none; border-color:#c9933a; }
+.services-checkboxes { display:flex; flex-wrap:wrap; gap:8px; }
+.service-chip { display:flex; align-items:center; gap:6px; padding:6px 12px; border:1px solid #e2e8f0; border-radius:20px; cursor:pointer; font-size:12px; background:#f8fafc; transition:0.2s; }
+.service-chip:has(input:checked) { background:#fef3c7; border-color:#c9933a; color:#92400e; font-weight:600; }
+.service-chip input { display:none; }
+.modal-footer { display:flex; gap:10px; justify-content:flex-end; margin-top:24px; }
+.btn-save-modal { background:#c9933a; color:white; border:none; padding:10px 24px; border-radius:40px; font-weight:600; cursor:pointer; }
+.btn-cancel-modal { background:#f1f5f9; color:#64748b; border:none; padding:10px 24px; border-radius:40px; cursor:pointer; }
+  </style>
+</head>
+<body>
+
+<div class="overlay" id="overlay-main"></div>
+
+<!-- Laundry Service Modal -->
+<div class="modal-overlay" id="laundry-modal">
+  <div class="modal-box">
+    <div class="modal-title">
+      <span id="modal-title-text"><i class="fas fa-soap"></i> New Laundry Service</span>
+      <button class="modal-close" onclick="closeLaundryModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <input type="hidden" id="edit-laundry-id">
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Room Number *</label>
+        <input type="text" id="l-room" placeholder="e.g. 101">
+      </div>
+      <div class="form-group">
+        <label>Housekeeper Name *</label>
+        <input type="text" id="l-housekeeper" placeholder="Full name">
+      </div>
+      <div class="form-group">
+        <label>Type of Clothes</label>
+        <input type="text" id="l-clothes" placeholder="e.g. Shirts, Trousers, Bedsheets">
+      </div>
+      <div class="form-group">
+        <label>Service Date</label>
+        <input type="date" id="l-date">
+      </div>
+      <div class="form-group full">
+        <label>Services Offered</label>
+        <div class="services-checkboxes" id="services-checkboxes">
+          <label class="service-chip"><input type="checkbox" value="Washing"> <i class="fas fa-water"></i> Washing</label>
+          <label class="service-chip"><input type="checkbox" value="Ironing"> <i class="fas fa-fire"></i> Ironing</label>
+          <label class="service-chip"><input type="checkbox" value="Dry Cleaning"> <i class="fas fa-tshirt"></i> Dry Cleaning</label>
+          <label class="service-chip"><input type="checkbox" value="Folding"> <i class="fas fa-layer-group"></i> Folding</label>
+          <label class="service-chip"><input type="checkbox" value="Stain Removal"> <i class="fas fa-eraser"></i> Stain Removal</label>
+          <label class="service-chip"><input type="checkbox" value="Bedsheet Change"> <i class="fas fa-bed"></i> Bedsheet Change</label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Price (TSh)</label>
+        <input type="number" id="l-price" placeholder="0" min="0">
+      </div>
+      <div class="form-group">
+        <label>Amount Paid (TSh)</label>
+        <input type="number" id="l-amount-paid" placeholder="0" min="0">
+      </div>
+      <div class="form-group">
+        <label>Payment Method</label>
+        <select id="l-payment-method">
+          <option value="">— Select —</option>
+          <option value="Cash">Cash</option>
+          <option value="Card">Card</option>
+          <option value="Mobile Money">Mobile Money</option>
+          <option value="Bank Transfer">Bank Transfer</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Payment Status</label>
+        <select id="l-status">
+          <option value="pending">Pending</option>
+          <option value="partial">Partial Payment</option>
+          <option value="paid">Fully Paid</option>
+        </select>
+      </div>
+      <div class="form-group full">
+        <label>Notes</label>
+        <textarea id="l-notes" rows="2" placeholder="Any additional notes..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel-modal" onclick="closeLaundryModal()">Cancel</button>
+      <button class="btn-save-modal" onclick="saveLaundryService()"><i class="fas fa-save"></i> Save Service</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sidebar -->
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-top">
+    <a class="sidebar-logo" href="/">
+      <img src="/images/logo.png" alt="Kitobo Serenity Resort" style="height:44px;width:auto;object-fit:contain;display:block;">
+      <div class="logo-text"><span>Kitobo</span><span>Serenity Resort</span></div>
+    </a>
+    <button class="sidebar-close-btn" id="sidebar-close-btn"><i class="fas fa-times"></i></button>
+  </div>
+  
+  <nav class="sidebar-nav">
+    <!-- ============================================================ -->
+    <!-- DASHBOARD -->
+    <!-- ============================================================ -->
+    <div class="nav-section-label">Dashboard</div>
+    <a href="/dashboard" class="nav-item"><i class="fas fa-tachometer-alt"></i> Overview</a>
+    
+    <!-- ============================================================ -->
+    <!-- OPERATIONS -->
+    <!-- ============================================================ -->
+    <div class="nav-section-label">Operations</div>
+    <a href="/reservations" class="nav-item"><i class="fas fa-calendar-alt"></i> Reservations</a>
+    <a href="/housekeeping" class="nav-item active"><i class="fas fa-soap"></i> Housekeeping</a>
+    <a href="/maintenance" class="nav-item"><i class="fas fa-toolbox"></i> Maintenance</a>
+    <div class="nav-section-label">POS</div>
+    <a href="/bar" class="nav-item"><i class="fas fa-wine-glass-alt"></i> Bar</a>
+    <a href="/restaurant" class="nav-item"><i class="fas fa-utensils"></i> Restaurant</a>
+    
+    <!-- ============================================================ -->
+    <!-- PROPERTY -->
+    <!-- ============================================================ -->
+    <div class="nav-section-label">Property</div>
+    <a href="/rooms" class="nav-item"><i class="fas fa-building"></i> Rooms View</a>
+    <a href="/rooms-list" class="nav-item "><i class="fas fa-list-ul"></i> Rooms List</a>
+    
+    <!-- ============================================================ -->
+    <!-- INVENTORY -->
+    <!-- ============================================================ -->
+    <div class="nav-section-label">Inventory</div>
+    <a href="/store-main" class="nav-item"><i class="fas fa-store"></i> Main Store</a>
+    <a href="/store-outlets" class="nav-item"><i class="fas fa-truck"></i> Outlets Store</a>
+    <a href="/purchase-orders" class="nav-item"><i class="fas fa-file-invoice"></i> Purchase Orders</a>
+    <a href="/goods-receipt" class="nav-item"><i class="fas fa-clipboard-list"></i> Goods Receipt</a>
+    
+    
+    <!-- ============================================================ -->
+    <!-- REPORTS -->
+    <!-- ============================================================ -->
+    <div class="nav-section-label">Reports</div>
+    <a href="/reports" class="nav-item"><i class="fas fa-chart-bar"></i> Reservations Report</a>
+    <a href="/maintenance-report" class="nav-item"><i class="fas fa-chart-line"></i> Maintenance Report</a>
+    <a href="/purchase-orders-reports" class="nav-item"><i class="fas fa-file-alt"></i> Purchase Orders Report</a>
+    <a href="/goods-receipt-reports" class="nav-item"><i class="fas fa-stamp"></i> Goods Receipt Report</a>
+    <a href="/store-inventory-reports" class="nav-item"><i class="fas fa-boxes"></i> Store Inventory Report</a>
+    <a href="/sales-report" class="nav-item"><i class="fas fa-receipt"></i> Sales Report</a>
+    <a href="/housekeeping-report" class="nav-item"><i class="fas fa-soap"></i> Housekeeping Report</a>
+    <a href="/expenses-report" class="nav-item"><i class="fas fa-file-invoice-dollar"></i> Expenses Report</a>
+    <a href="/profit-report" class="nav-item"><i class="fas fa-chart-pie"></i> Profit Report</a>
+    
+    
+    <!-- ============================================================ -->
+    <!-- GUESTS -->
+    <!-- ============================================================ -->
+    <div class="nav-section-label">Finance</div>
+    <a href="/expenses" class="nav-item"><i class="fas fa-wallet"></i> Expenses</a>
+
+    <div class="nav-section-label">Guests</div>
+    <a href="/guest-database" class="nav-item"><i class="fas fa-id-card"></i> Guest Database</a>
+    
+    <!-- ============================================================ -->
+    <!-- ADMIN -->
+    <!-- ============================================================ -->
+    <div class="nav-section-label">Admin</div>
+    <a href="/users" class="nav-item"><i class="fas fa-user-shield"></i> User Management</a>
+    <a href="/permissions" class="nav-item"><i class="fas fa-lock"></i> Permissions &amp; Access</a>
+  </nav>
+  
+  <div class="sidebar-footer">
+    <small>Kitobo Serenity Resort</small>
+  </div>
+</aside>
+
+<!-- Navbar -->
+<nav class="navbar">
+  <div class="navbar-left">
+    <button class="hamburger" id="hamburger-btn"><span class="hb-bar"></span><span class="hb-bar"></span><span class="hb-bar"></span></button>
+    <div><div class="page-title">Housekeeping Status</div><div class="page-subtitle">Room cleanliness management</div></div>
+  </div>
+  <div class="navbar-right">
+      <div class="nav-icons">
+    <a href="/reservations" class="nav-icon-btn" title="Reservations">
+      <i class="fas fa-calendar-alt"></i>
+    </a>
+    <a href="/reports" class="nav-icon-btn" title="Reports">
+      <i class="fas fa-chart-line"></i>
+    </a>
+    <button class="" onclick="alert('Add reservation')"></button>
+        <button class="pos-navbar-btn" onclick="openPOSChooser()" title="Point of Sale"><i class="fas fa-cash-register"></i> POS</button>
+    <button class="notif-btn" id="notif-btn">
+  <i class="fas fa-bell"></i><span class="badge" id="notif-badge">0</span>
+</button>
+    
+    <div class="user-dropdown">
+      <div class="user-pill" id="userPill">
+        <div class="user-avatar" id="userAvatar">U</div>
+        <div class="user-info">
+          <span id="userName">Loading...</span>
+          <span id="userRole">Loading...</span>
+        </div>
+        <i class="fas fa-chevron-down"></i>
+      </div>
+      <div class="dropdown-menu" id="dropdownMenu">
+        <button onclick="openChangePasswordModal()"><i class="fas fa-key"></i> Change Password</button>
+        <a href="/users"><i class="fas fa-users"></i> User Management</a>
+        <hr>
+        <button onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<main class="main-content">
+
+  <!-- Page Tabs -->
+  <div class="page-tabs">
+    <button class="page-tab active" onclick="switchTab('room-status', this)"><i class="fas fa-bed"></i> Room Status</button>
+    <button class="page-tab" onclick="switchTab('laundry-services', this)"><i class="fas fa-soap"></i> Laundry Services</button>
+  </div>
+
+  <!-- TAB 1: Room Status -->
+  <div class="tab-section active" id="tab-room-status">
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Room Status Overview</span>
+      <button class="btn btn-outline" onclick="refreshStatus()"><i class="fas fa-sync-alt"></i> Refresh</button>
+    </div>
+    
+  <div class="stats-summary" id="stats-summary">
+  <span class="stat-pill"><i class="fas fa-door-open" style="color:#10b981;"></i> Available: <strong id="stat-available">0</strong></span>
+  <span class="stat-pill"><i class="fas fa-user-friends" style="color:#3b82f6;"></i> Occupied: <strong id="stat-occupied">0</strong></span>
+  <span class="stat-pill"><i class="fas fa-tools" style="color:#ef4444;"></i> Under Maintenance: <strong id="stat-maintenance">0</strong></span>
+</div>
+
+    <div class="filter-bar">
+      <button class="filter-btn active" data-filter="all">All Rooms</button>
+      <button class="filter-btn" data-filter="available">Available</button>
+      <button class="filter-btn" data-filter="occupied">Occupied</button>
+      <button class="filter-btn" data-filter="maintenance">Under Maintenance</button>
+    </div>
+    
+    <div id="hk-status-grid" class="rooms-grid">
+      <div class="loading-overlay"><i class="fas fa-clipboard-list"></i> Loading room status...</div>
+    </div>
+  </div>
+  </div><!-- end tab-room-status -->
+
+  <!-- TAB 2: Laundry Services -->
+  <div class="tab-section" id="tab-laundry-services">
+    <div class="laundry-header">
+      <div>
+        <h2 style="font-size:18px;font-weight:700;color:#1e2a3e;"><i class="fas fa-soap" style="color:#c9933a;"></i> Laundry Services</h2>
+        <p style="font-size:12px;color:#64748b;margin-top:2px;">Manage laundry and housekeeping service requests</p>
+      </div>
+      <button class="btn-new-service" onclick="openLaundryModal()"><i class="fas fa-plus"></i> New Service</button>
+    </div>
+
+    <!-- Filters -->
+    <div style="background:white;border-radius:20px;padding:16px 20px;margin-bottom:20px;display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+      <div style="display:flex;flex-direction:column;gap:4px;">
+        <label style="font-size:11px;font-weight:600;text-transform:uppercase;color:#64748b;">From Date</label>
+        <input type="date" id="l-filter-from" style="padding:8px 12px;border:1px solid #e2e8f0;border-radius:20px;font-size:13px;">
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px;">
+        <label style="font-size:11px;font-weight:600;text-transform:uppercase;color:#64748b;">To Date</label>
+        <input type="date" id="l-filter-to" style="padding:8px 12px;border:1px solid #e2e8f0;border-radius:20px;font-size:13px;">
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px;">
+        <label style="font-size:11px;font-weight:600;text-transform:uppercase;color:#64748b;">Status</label>
+        <select id="l-filter-status" style="padding:8px 12px;border:1px solid #e2e8f0;border-radius:20px;font-size:13px;background:white;">
+          <option value="">All Statuses</option>
+          <option value="pending">Pending</option>
+          <option value="partial">Partial Payment</option>
+          <option value="paid">Fully Paid</option>
+        </select>
+      </div>
+      <button onclick="loadLaundryServices()" style="background:#c9933a;color:white;border:none;padding:8px 20px;border-radius:40px;cursor:pointer;font-weight:500;"><i class="fas fa-search"></i> Filter</button>
+      <button onclick="clearLaundryFilters()" style="background:#f1f5f9;color:#64748b;border:none;padding:8px 20px;border-radius:40px;cursor:pointer;"><i class="fas fa-times"></i> Clear</button>
+    </div>
+
+    <!-- Stats row -->
+    <div style="display:flex;gap:16px;margin-bottom:20px;flex-wrap:wrap;" id="laundry-stats-row">
+      <div style="background:white;border-radius:16px;padding:16px 20px;flex:1;min-width:140px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+        <div style="font-size:11px;color:#64748b;text-transform:uppercase;margin-bottom:6px;">Total Services</div>
+        <div style="font-size:26px;font-weight:700;" id="ls-total">—</div>
+      </div>
+      <div style="background:white;border-radius:16px;padding:16px 20px;flex:1;min-width:140px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+        <div style="font-size:11px;color:#64748b;text-transform:uppercase;margin-bottom:6px;">Total Revenue</div>
+        <div style="font-size:26px;font-weight:700;color:#10b981;" id="ls-revenue">—</div>
+      </div>
+      <div style="background:white;border-radius:16px;padding:16px 20px;flex:1;min-width:140px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+        <div style="font-size:11px;color:#64748b;text-transform:uppercase;margin-bottom:6px;">Pending Payment</div>
+        <div style="font-size:26px;font-weight:700;color:#ef4444;" id="ls-pending">—</div>
+      </div>
+      <div style="background:white;border-radius:16px;padding:16px 20px;flex:1;min-width:140px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+        <div style="font-size:11px;color:#64748b;text-transform:uppercase;margin-bottom:6px;">Amount Collected</div>
+        <div style="font-size:26px;font-weight:700;color:#c9933a;" id="ls-collected">—</div>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="laundry-table-wrap">
+      <table class="laundry-table" id="laundry-table">
+        <thead>
+          <tr>
+            <th>Date</th><th>Room</th><th>Clothes Type</th><th>Services</th>
+            <th>Housekeeper</th><th>Price</th><th>Paid</th><th>Method</th><th>Status</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="laundry-tbody">
+          <tr><td colspan="10" style="text-align:center;padding:40px;color:#94a3b8;">No records found</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div><!-- end tab-laundry-services -->
+
+  <!-- Notification Panel -->
+<div class="notification-panel" id="notification-panel">
+  <div class="notification-header">
+    <span><i class="fas fa-bullhorn"></i> Notifications</span>
+    <div>
+      <button id="mark-all-read-btn" class="mark-all-read">Mark all read</button>
+      <button id="close-notif-panel"><i class="fas fa-times"></i></button>
+    </div>
+  </div>
+  <div class="notification-list" id="notification-list">
+    <div class="empty-notifications"><i class="fas fa-inbox"></i> No new notifications</div>
+  </div>
+</div>
+</main>
+
+<div class="toast-container" id="toast-container"></div>
+
+<script src="../js/api.js"></script>
+<script src="../js/utils.js"></script>
+<script>
+
+
+
+// ============================================================
+// NOTIFICATION SYSTEM
+// ============================================================
+let notifications = [];
+let notificationCheckInterval = null;
+
+async function loadNotifications() {
+  try {
+    // Get today's date
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+    
+    // Get reservations
+    const reservations = await apiGet('/reservations');
+    
+    // Clear existing notifications
+    notifications = [];
+    
+    // Check for checkouts today
+    const checkoutsToday = reservations.filter(r => r.checkout === todayStr);
+    checkoutsToday.forEach(r => {
+      notifications.push({
+        id: `checkout_${r.id}`,
+        type: 'checkout',
+        message: `${r.guest} checks out today at 11:00 AM`,
+        time: new Date().toLocaleTimeString(),
+        read: false,
+        reservationId: r.id,
+        icon: '<i class="fas fa-door-open"></i>'
+      });
+    });
+    
+    // Check for upcoming check-ins (next 7 days)
+    const nextWeek = new Date();
+    nextWeek.setDate(today.getDate() + 7);
+    const upcomingCheckins = reservations.filter(r => {
+      const checkin = new Date(r.checkin);
+      return checkin > today && checkin <= nextWeek;
+    });
+    upcomingCheckins.forEach(r => {
+      const checkinDate = new Date(r.checkin).toLocaleDateString();
+      notifications.push({
+        id: `checkin_${r.id}`,
+        type: 'upcoming',
+        message: `${r.guest} arrives on ${checkinDate}`,
+        time: new Date().toLocaleTimeString(),
+        read: false,
+        reservationId: r.id,
+        icon: '<i class="fas fa-calendar-alt"></i>'
+      });
+    });
+    
+    // Check for low stock items (if on store page)
+    try {
+      const storeItems = await apiGet('/store/items');
+      const lowStock = storeItems.filter(i => parseFloat(i.quantity) < 5);
+      lowStock.forEach(item => {
+        notifications.push({
+          id: `stock_${item.id}`,
+          type: 'stock',
+          message: `${item.name} is low in stock (${item.quantity} left)`,
+          time: new Date().toLocaleTimeString(),
+          read: false,
+          icon: '<i class="fas fa-exclamation-triangle"></i>'
+        });
+      });
+    } catch(e) {
+      // Store API might not be accessible, ignore
+    }
+    
+    // Sort by time (newest first) and limit to 20
+    notifications.sort((a, b) => new Date(b.time) - new Date(a.time));
+    notifications = notifications.slice(0, 20);
+    
+    // Update UI
+    renderNotifications();
+    updateNotificationBadge();
+    
+    console.log(`<i class="fas fa-bullhorn"></i> Loaded ${notifications.length} notifications`);
+  } catch (err) {
+    console.error('Failed to load notifications:', err);
+  }
+}
+
+function renderNotifications() {
+  const container = document.getElementById('notification-list');
+  if (!container) return;
+  
+  const unreadCount = notifications.filter(n => !n.read).length;
+  
+  if (notifications.length === 0) {
+    container.innerHTML = '<div class="empty-notifications"><i class="fas fa-inbox"></i> No new notifications</div>';
+    return;
+  }
+  
+  container.innerHTML = notifications.map(notif => `
+    <div class="notification-item ${notif.read ? 'read' : 'unread'}" data-id="${notif.id}" data-type="${notif.type}" data-reservation-id="${notif.reservationId || ''}">
+      <div class="notification-message">
+        <span class="notification-icon">${notif.icon}</span>
+        ${escapeHtml(notif.message)}
+      </div>
+      <div class="notification-time">
+        <span><i class="fas fa-clock"></i> ${notif.time}</span>
+      </div>
+    </div>
+  `).join('');
+  
+  // Add click handlers to notification items
+  document.querySelectorAll('.notification-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const notifId = item.getAttribute('data-id');
+      const notif = notifications.find(n => n.id === notifId);
+      if (notif) {
+        notif.read = true;
+        renderNotifications();
+        updateNotificationBadge();
+        
+        // Handle click action based on type
+        if (notif.type === 'checkout' && notif.reservationId) {
+          openDetail(notif.reservationId);
+        } else if (notif.type === 'upcoming' && notif.reservationId) {
+          openDetail(notif.reservationId);
+        } else if (notif.type === 'stock') {
+          window.location.href = '/store-main';
+        }
+      }
+      closeNotificationPanel();
+    });
+  });
+}
+
+function updateNotificationBadge() {
+  const badge = document.getElementById('notif-badge');
+  if (!badge) return;
+  
+  const unreadCount = notifications.filter(n => !n.read).length;
+  badge.textContent = unreadCount;
+  badge.style.display = unreadCount > 0 ? 'inline-block' : 'none';
+}
+
+function toggleNotificationPanel() {
+  const panel = document.getElementById('notification-panel');
+  if (panel) {
+    panel.classList.toggle('show');
+  }
+}
+
+function closeNotificationPanel() {
+  const panel = document.getElementById('notification-panel');
+  if (panel) {
+    panel.classList.remove('show');
+  }
+}
+
+function markAllNotificationsRead() {
+  notifications.forEach(n => n.read = true);
+  renderNotifications();
+  updateNotificationBadge();
+  showToast('All notifications marked as read', 'success');
+}
+
+// Initialize notification button
+const notifBtn = document.getElementById('notif-btn');
+if (notifBtn) {
+  notifBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleNotificationPanel();
+  });
+}
+
+// Close panel when clicking outside
+document.addEventListener('click', function(e) {
+  const panel = document.getElementById('notification-panel');
+  const btn = document.getElementById('notif-btn');
+  if (panel && btn && !btn.contains(e.target) && !panel.contains(e.target)) {
+    panel.classList.remove('show');
+  }
+});
+
+// Mark all read button
+const markAllBtn = document.getElementById('mark-all-read-btn');
+if (markAllBtn) {
+  markAllBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    markAllNotificationsRead();
+  });
+}
+
+// Close button
+const closeNotifBtn = document.getElementById('close-notif-panel');
+if (closeNotifBtn) {
+  closeNotifBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    closeNotificationPanel();
+  });
+}
+
+// Load notifications on page load
+document.addEventListener('DOMContentLoaded', function() {
+  loadNotifications();
+  // Refresh every 5 minutes
+  if (notificationCheckInterval) clearInterval(notificationCheckInterval);
+  notificationCheckInterval = setInterval(loadNotifications, 300000);
+});
+
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return str.replace(/[&<>]/g, function(m) {
+    if (m === '&') return '&amp;';
+    if (m === '<') return '&lt;';
+    if (m === '>') return '&gt;';
+    return m;
+  });
+}
+  // ============================================================
+  // HELPER FUNCTIONS
+  // ============================================================
+  function escapeHtml(str) { if (!str) return ''; return String(str).replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
+  function formatDate(date) { if (!date) return ''; return new Date(date).toLocaleDateString(); }
+  function showToast(msg, type) { 
+    const toast = document.getElementById('toast-container'); 
+    const bgColor = type === 'error' ? '#ef4444' : '#10b981';
+    toast.innerHTML = `<div style="background:${bgColor};color:white;padding:12px 20px;border-radius:40px;margin-bottom:8px;">${msg}</div>`; 
+    setTimeout(() => toast.innerHTML = '', 3000); 
+  }
+  
+  // ============================================================
+  // SIDEBAR TOGGLE
+  // ============================================================
+  const hamburgerBtn = document.getElementById('hamburger-btn');
+  const sidebar = document.getElementById('sidebar');
+  const overlayMain = document.getElementById('overlay-main');
+  const sidebarClose = document.getElementById('sidebar-close-btn');
+  
+  function openSidebar() { sidebar.classList.add('open'); overlayMain.classList.add('open'); hamburgerBtn.classList.add('active'); }
+  function closeSidebar() { sidebar.classList.remove('open'); overlayMain.classList.remove('open'); hamburgerBtn.classList.remove('active'); }
+  
+  hamburgerBtn?.addEventListener('click', () => sidebar.classList.contains('open') ? closeSidebar() : openSidebar());
+  sidebarClose?.addEventListener('click', closeSidebar);
+  overlayMain?.addEventListener('click', closeSidebar);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSidebar(); });
+  
+  // ============================================================
+  // USER AUTHENTICATION
+  // ============================================================
+  function getCurrentUser() { const u = sessionStorage.getItem('pms_user'); return u ? JSON.parse(u) : null; }
+  function logout() { sessionStorage.removeItem('pms_user'); window.location.href = '/'; }
+  
+  const cu = getCurrentUser(); if (!cu) window.location.href = '/';
+ // Display user info
+document.getElementById('userName').innerText = cu.fullName || cu.username;
+document.getElementById('userRole').innerText = cu.role || 'User';
+const userInitial = (cu.fullName || cu.username || 'U')[0];
+document.getElementById('userAvatar').innerText = userInitial.toUpperCase();;
+  
+  // User Dropdown Toggle
+  const up = document.getElementById('userPill');
+  const dd = document.getElementById('dropdownMenu');
+  if (up && dd) {
+    up.addEventListener('click', (e) => { e.stopPropagation(); dd.classList.toggle('show'); up.classList.toggle('active'); });
+    document.addEventListener('click', () => { dd.classList.remove('show'); if (up) up.classList.remove('active'); });
+    dd.addEventListener('click', (e) => e.stopPropagation());
+  }
+  
+  // ============================================================
+  // CHANGE PASSWORD MODAL
+  // ============================================================
+  function openChangePasswordModal() {
+    if (!document.getElementById('change-password-modal')) {
+      const modalHTML = `
+        <div class="reservation-modal-overlay" id="change-password-modal-overlay" onclick="closeChangePasswordModal()"></div>
+        <div class="reservation-modal" id="change-password-modal">
+          <div class="reservation-modal-header">
+            <h3><i class="fas fa-lock"></i> Change Password</h3>
+            <button class="reservation-modal-close" onclick="closeChangePasswordModal()"><i class="fas fa-times"></i></button>
+          </div>
+          <div class="reservation-modal-body">
+            <form id="change-password-form">
+              <div class="form-group"><label>Current Password</label><input type="password" id="current-password" class="form-control" required></div>
+              <div class="form-group"><label>New Password (min 6)</label><input type="password" id="new-password" class="form-control" required></div>
+              <div class="form-group"><label>Confirm Password</label><input type="password" id="confirm-password" class="form-control" required></div>
+              <hr class="divider" />
+              <button type="submit" class="btn btn-success"><i class="fas fa-check-circle"></i> Update Password</button>
+              <button type="button" class="btn btn-outline" style="margin-top:10px; width:100%;" onclick="closeChangePasswordModal()">Cancel</button>
+            </form>
+          </div>
+        </div>
+      `;
+      document.body.insertAdjacentHTML('beforeend', modalHTML);
+      
+     document.getElementById('change-password-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const oldPass = document.getElementById('current-password').value;
+  const newPass = document.getElementById('new-password').value;
+  const confirmPass = document.getElementById('confirm-password').value;
+  if (newPass !== confirmPass) { showToast('Passwords do not match', 'error'); return; }
+  if (newPass.length < 6) { showToast('Password must be at least 6 characters', 'error'); return; }
+  try {
+    const token = sessionStorage.getItem('token');
+    const response = await fetch('/api/auth/change-password', {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ userId: cu.id, oldPassword: oldPass, newPassword: newPass })
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error);
+    showToast('Password changed! Please login again.', 'success');
+    setTimeout(() => logout(), 1500);
+  } catch(err) { 
+    showToast('Failed: ' + err.message, 'error'); 
+  }
+});
+    }
+    document.getElementById('change-password-modal').classList.add('open');
+    document.getElementById('change-password-modal-overlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    if (dd) dd.classList.remove('show'); if (up) up.classList.remove('active');
+  }
+  
+  function closeChangePasswordModal() {
+    const modal = document.getElementById('change-password-modal');
+    const overlay = document.getElementById('change-password-modal-overlay');
+    if (modal) modal.classList.remove('open');
+    if (overlay) overlay.classList.remove('open');
+    document.body.style.overflow = '';
+    const form = document.getElementById('change-password-form');
+    if (form) form.reset();
+  }
+  
+  // ============================================================
+  // HOUSEKEEPING STATUS FUNCTIONS
+  // ============================================================
+  let allStatuses = [];
+  let currentFilter = 'all';
+  const userName = cu.fullName || cu.username;
+  
+ async function loadHousekeepingStatus() {
+  const grid = document.getElementById('hk-status-grid');
+  grid.innerHTML = '<div class="loading-overlay"><i class="fas fa-spinner fa-spin"></i> Loading room status...</div>';
+  
+  try {
+    // Get token from session storage
+    const token = sessionStorage.getItem('token');
+    
+    // Make fetch request with token
+    const response = await fetch('/api/housekeeping/status', {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    // Handle unauthorized
+    if (response.status === 401 || response.status === 403) {
+      sessionStorage.clear();
+      window.location.href = '/login';
+      return;
+    }
+    
+    if (!response.ok) {
+      throw new Error('Server returned ' + response.status);
+    }
+    
+    const data = await response.json();
+    console.log('Loaded statuses:', data);
+    allStatuses = data;
+    updateStats();
+    renderStatusGrid();
+  } catch (err) {
+    console.error('Load error:', err);
+    grid.innerHTML = '<div class="loading-overlay"><i class="fas fa-times-circle"></i> Failed to load room status. Please refresh.</div>';
+    showToast('Failed to load status: ' + err.message, 'error');
+  }
+}
+  
+  function updateStats() {
+    const maintenance = allStatuses.filter(s => s.under_maintenance).length;
+    const occupied = allStatuses.filter(s => s.reservation_status === 'occupied' && !s.under_maintenance).length;
+    const available = allStatuses.filter(s => !s.under_maintenance && s.reservation_status !== 'occupied').length;
+    document.getElementById('stat-available').innerHTML = available;
+    document.getElementById('stat-occupied').innerHTML = occupied;
+    document.getElementById('stat-maintenance').innerHTML = maintenance;
+  }
+  
+  function renderStatusGrid() {
+    const grid = document.getElementById('hk-status-grid');
+    let filtered = allStatuses;
+
+    if (currentFilter === 'maintenance') {
+      filtered = allStatuses.filter(s => s.under_maintenance);
+    } else if (currentFilter === 'occupied') {
+      filtered = allStatuses.filter(s => s.reservation_status === 'occupied' && !s.under_maintenance);
+    } else if (currentFilter === 'available') {
+      filtered = allStatuses.filter(s => !s.under_maintenance && s.reservation_status !== 'occupied');
+    }
+
+    if (filtered.length === 0) {
+      grid.innerHTML = '<div class="loading-overlay"><i class="fas fa-inbox"></i> No rooms match the selected filter.</div>';
+      return;
+    }
+
+    let html = '';
+    for (let i = 0; i < filtered.length; i++) {
+      const apt = filtered[i];
+      const isMaintenance = apt.under_maintenance;
+      const isOccupied = apt.reservation_status === 'occupied' && !isMaintenance;
+      const guestName = apt.guest_name || '';
+      const checkinDate = apt.checkin_date || '';
+      const checkoutDate = apt.checkout_date || '';
+
+      let cardClass, statusClass, statusIcon, statusText;
+      if (isMaintenance) {
+        cardClass = 'maintenance'; statusClass = 'maintenance';
+        statusIcon = '<i class="fas fa-tools" style="color:#ef4444"></i>';
+        statusText = 'Under Maintenance';
+      } else if (isOccupied) {
+        cardClass = 'occupied'; statusClass = 'occupied';
+        statusIcon = '<i class="fas fa-circle" style="color:#3b82f6"></i>';
+        statusText = 'Occupied';
+      } else {
+        cardClass = 'clean'; statusClass = 'clean';
+        statusIcon = '<i class="fas fa-check-circle"></i>';
+        statusText = 'Available';
+      }
+
+      html += `
+        <div class="room-card ${cardClass}" data-apt-id="${apt.apartment_id}">
+          <div class="room-header">
+            <span class="room-icon">${(apt.emoji && apt.emoji.startsWith('fa-')) ? `<i class="fas ${apt.emoji}"></i>` : (apt.emoji || '<i class="fas fa-home"></i>')}</span>
+            <span class="room-status ${statusClass}">${statusIcon} ${statusText}</span>
+          </div>
+          <div class="room-body">
+            <div class="room-name">${escapeHtml(apt.name)}</div>
+            <div class="room-details">
+              <span><i class="fas fa-users"></i> Max ${apt.max_adults || 2}</span>
+              <span><i class="fas fa-tag"></i> ${apt.type || 'Suite'}</span>
+            </div>`;
+
+      if (isOccupied && guestName) {
+        html += `
+            <div class="guest-info">
+              <div class="guest-info-title"><i class="fas fa-user"></i> Current Guest</div>
+              <div class="guest-name"><i class="fas fa-user-circle"></i> ${escapeHtml(guestName)}</div>
+              <div class="guest-details">
+                <span><i class="fas fa-calendar-check"></i> In: ${formatDate(checkinDate)}</span>
+                <span><i class="fas fa-calendar-times"></i> Out: ${formatDate(checkoutDate)}</span>
+              </div>
+            </div>`;
+      }
+
+      if (isMaintenance) {
+        html += `
+            <div class="room-actions">
+              <button class="btn-maintenance-clear" onclick="clearMaintenance(${apt.apartment_id}, '${escapeHtml(apt.name)}')">
+                <i class="fas fa-check"></i> Clear Maintenance
+              </button>
+            </div>`;
+      } else {
+        html += `
+            <div class="room-actions">
+              <button class="btn-maintenance" onclick="markUnderMaintenance(${apt.apartment_id}, '${escapeHtml(apt.name)}')">
+                <i class="fas fa-tools"></i> Mark Under Maintenance
+              </button>
+            </div>`;
+      }
+
+      html += `
+            ${apt.last_updated ? `<div class="last-updated"><i class="fas fa-clock"></i> ${new Date(apt.last_updated).toLocaleString()}</div>` : ''}
+          </div>
+        </div>`;
+    }
+    grid.innerHTML = html;
+  }
+  
+async function markUnderMaintenance(apartmentId, aptName) {
+  if (!confirm(`Mark "${aptName}" as Under Maintenance?\n\nThis room will not be available for new reservations.`)) return;
+  try {
+    await apiPut(`/apartments/${apartmentId}/maintenance`, { under_maintenance: true });
+    showToast(`${aptName} marked as Under Maintenance`, 'error');
+    setTimeout(() => loadHousekeepingStatus(), 400);
+  } catch (err) {
+    showToast('Failed to update: ' + err.message, 'error');
+  }
+}
+
+async function clearMaintenance(apartmentId, aptName) {
+  if (!confirm(`Clear maintenance for "${aptName}"?\n\nThis room will become available for reservations again.`)) return;
+  try {
+    await apiPut(`/apartments/${apartmentId}/maintenance`, { under_maintenance: false });
+    showToast(`${aptName} is now available`, 'success');
+    setTimeout(() => loadHousekeepingStatus(), 400);
+  } catch (err) {
+    showToast('Failed to update: ' + err.message, 'error');
+  }
+}
+  
+  function refreshStatus() {
+    loadHousekeepingStatus();
+    showToast('Refreshing room status...', 'success');
+  }
+  
+  // Filter buttons
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentFilter = btn.getAttribute('data-filter');
+      renderStatusGrid();
+    });
+  });
+  
+  // Initialize
+  document.addEventListener('DOMContentLoaded', () => {
+    loadHousekeepingStatus();
+  });
+  
+  // Make functions global
+  window.markUnderMaintenance = markUnderMaintenance;
+  window.clearMaintenance = clearMaintenance;
+  window.refreshStatus = refreshStatus;
+  window.openChangePasswordModal = openChangePasswordModal;
+  window.closeChangePasswordModal = closeChangePasswordModal;
+  window.logout = logout;
+
+  // ============================================================
+  // TAB SWITCHING
+  // ============================================================
+  function switchTab(tabId, btn) {
+    document.querySelectorAll('.tab-section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.page-tab').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + tabId).classList.add('active');
+    btn.classList.add('active');
+    if (tabId === 'laundry-services') loadLaundryServices();
+  }
+  window.switchTab = switchTab;
+
+  // ============================================================
+  // LAUNDRY SERVICES
+  // ============================================================
+  let laundryData = [];
+
+  function fmtTSH(v) { return 'TSh ' + (parseFloat(v) || 0).toLocaleString(); }
+
+  async function loadLaundryServices() {
+    const from = document.getElementById('l-filter-from').value;
+    const to = document.getElementById('l-filter-to').value;
+    const status = document.getElementById('l-filter-status').value;
+    const params = new URLSearchParams();
+    if (from) params.set('from', from);
+    if (to) params.set('to', to);
+    if (status) params.set('payment_status', status);
+    try {
+      laundryData = await apiGet(`/laundry?${params.toString()}`);
+      renderLaundryTable();
+      renderLaundryStats();
+    } catch(err) {
+      showToast('Failed to load services: ' + err.message, 'error');
+    }
+  }
+
+  function renderLaundryStats() {
+    const total = laundryData.length;
+    const revenue = laundryData.reduce((s, r) => s + parseFloat(r.price || 0), 0);
+    const collected = laundryData.reduce((s, r) => s + parseFloat(r.amount_paid || 0), 0);
+    const pending = laundryData.filter(r => r.payment_status === 'pending').length;
+    document.getElementById('ls-total').innerText = total;
+    document.getElementById('ls-revenue').innerText = fmtTSH(revenue);
+    document.getElementById('ls-pending').innerText = pending;
+    document.getElementById('ls-collected').innerText = fmtTSH(collected);
+  }
+
+  function renderLaundryTable() {
+    const tbody = document.getElementById('laundry-tbody');
+    if (!laundryData.length) {
+      tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:40px;color:#94a3b8;">No records found</td></tr>';
+      return;
+    }
+    tbody.innerHTML = laundryData.map(r => {
+      const statusClass = r.payment_status === 'paid' ? 'paid' : r.payment_status === 'partial' ? 'partial' : 'pending';
+      const statusLabel = r.payment_status === 'paid' ? 'Fully Paid' : r.payment_status === 'partial' ? 'Partial' : 'Pending';
+      const date = new Date(r.service_date).toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+      return `<tr>
+        <td>${date}</td>
+        <td><strong>${escapeHtml(r.room_number)}</strong></td>
+        <td>${escapeHtml(r.clothes_type || '—')}</td>
+        <td style="max-width:160px;font-size:12px;">${escapeHtml(r.services || '—')}</td>
+        <td>${escapeHtml(r.housekeeper_name)}</td>
+        <td>${fmtTSH(r.price)}</td>
+        <td>${fmtTSH(r.amount_paid)}</td>
+        <td>${escapeHtml(r.payment_method || '—')}</td>
+        <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
+        <td style="white-space:nowrap;">
+          <button class="action-btn" onclick="editLaundryService(${r.id})"><i class="fas fa-edit"></i></button>
+          <button class="action-btn delete" onclick="deleteLaundryService(${r.id})"><i class="fas fa-trash"></i></button>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  function clearLaundryFilters() {
+    document.getElementById('l-filter-from').value = '';
+    document.getElementById('l-filter-to').value = '';
+    document.getElementById('l-filter-status').value = '';
+    loadLaundryServices();
+  }
+
+  function openLaundryModal(record = null) {
+    document.getElementById('edit-laundry-id').value = record ? record.id : '';
+    document.getElementById('modal-title-text').innerHTML = record
+      ? '<i class="fas fa-edit"></i> Edit Laundry Service'
+      : '<i class="fas fa-soap"></i> New Laundry Service';
+    document.getElementById('l-room').value = record ? record.room_number : '';
+    document.getElementById('l-housekeeper').value = record ? record.housekeeper_name : '';
+    document.getElementById('l-clothes').value = record ? (record.clothes_type || '') : '';
+    document.getElementById('l-date').value = record ? record.service_date.split('T')[0] : new Date().toISOString().split('T')[0];
+    document.getElementById('l-price').value = record ? record.price : '';
+    document.getElementById('l-amount-paid').value = record ? record.amount_paid : '';
+    document.getElementById('l-payment-method').value = record ? (record.payment_method || '') : '';
+    document.getElementById('l-status').value = record ? record.payment_status : 'pending';
+    document.getElementById('l-notes').value = record ? (record.notes || '') : '';
+    // Checkboxes
+    const selectedServices = record ? (record.services || '').split(',').map(s => s.trim()) : [];
+    document.querySelectorAll('#services-checkboxes input[type=checkbox]').forEach(cb => {
+      cb.checked = selectedServices.includes(cb.value);
+    });
+    document.getElementById('laundry-modal').classList.add('open');
+  }
+
+  function closeLaundryModal() {
+    document.getElementById('laundry-modal').classList.remove('open');
+  }
+
+  async function saveLaundryService() {
+    const id = document.getElementById('edit-laundry-id').value;
+    const selectedServices = [...document.querySelectorAll('#services-checkboxes input[type=checkbox]:checked')]
+      .map(cb => cb.value).join(', ');
+    const payload = {
+      room_number: document.getElementById('l-room').value.trim(),
+      housekeeper_name: document.getElementById('l-housekeeper').value.trim(),
+      clothes_type: document.getElementById('l-clothes').value.trim(),
+      services: selectedServices,
+      service_date: document.getElementById('l-date').value,
+      price: document.getElementById('l-price').value,
+      amount_paid: document.getElementById('l-amount-paid').value,
+      payment_method: document.getElementById('l-payment-method').value,
+      payment_status: document.getElementById('l-status').value,
+      notes: document.getElementById('l-notes').value.trim()
+    };
+    if (!payload.room_number || !payload.housekeeper_name) {
+      showToast('Room number and housekeeper name are required', 'error'); return;
+    }
+    try {
+      if (id) {
+        await apiPut(`/laundry/${id}`, payload);
+        showToast('Service updated successfully');
+      } else {
+        await apiPost('/laundry', payload);
+        showToast('Service added successfully');
+      }
+      closeLaundryModal();
+      loadLaundryServices();
+    } catch(err) {
+      showToast('Error: ' + err.message, 'error');
+    }
+  }
+
+  function editLaundryService(id) {
+    const record = laundryData.find(r => r.id === id);
+    if (record) openLaundryModal(record);
+  }
+
+  async function deleteLaundryService(id) {
+    if (!confirm('Delete this laundry service record?')) return;
+    try {
+      await apiDelete(`/laundry/${id}`);
+      showToast('Record deleted');
+      loadLaundryServices();
+    } catch(err) {
+      showToast('Error: ' + err.message, 'error');
+    }
+  }
+
+  window.openLaundryModal = openLaundryModal;
+  window.closeLaundryModal = closeLaundryModal;
+  window.saveLaundryService = saveLaundryService;
+  window.editLaundryService = editLaundryService;
+  window.deleteLaundryService = deleteLaundryService;
+  window.loadLaundryServices = loadLaundryServices;
+  window.clearLaundryFilters = clearLaundryFilters;
+</script>
+
+<!-- POS Chooser Modal -->
+<div id="pos-chooser-overlay" onclick="if(event.target===this)closePOSChooser()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:18px;padding:40px 36px;max-width:460px;width:92%;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,0.28);">
+    <div style="font-size:22px;font-weight:700;color:#1e293b;margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:10px;">
+      <i class="fas fa-cash-register" style="color:#c9933a;"></i> Point of Sale
+    </div>
+    <p style="color:#64748b;margin:0 0 28px;font-size:14px;">Select the POS system to open</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px;">
+      <a href="/bar" onclick="closePOSChooser()" style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:26px 16px;background:linear-gradient(135deg,#1e3a5f,#2563eb);border-radius:14px;color:#fff;text-decoration:none;font-weight:700;font-size:15px;transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 10px 28px rgba(37,99,235,0.4)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='none'">
+        <i class="fas fa-wine-glass-alt" style="font-size:34px;opacity:0.95;"></i>
+        Bar
+      </a>
+      <a href="/restaurant" onclick="closePOSChooser()" style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:26px 16px;background:linear-gradient(135deg,#7c2d12,#ea580c);border-radius:14px;color:#fff;text-decoration:none;font-weight:700;font-size:15px;transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 10px 28px rgba(234,88,12,0.4)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='none'">
+        <i class="fas fa-utensils" style="font-size:34px;opacity:0.95;"></i>
+        Restaurant
+      </a>
+    </div>
+    <button onclick="closePOSChooser()" style="padding:9px 28px;border:1.5px solid #e2e8f0;border-radius:8px;background:#f8fafc;cursor:pointer;color:#64748b;font-size:13px;font-weight:500;">Cancel</button>
+  </div>
+</div>
+<script>
+function openPOSChooser(){var o=document.getElementById('pos-chooser-overlay');if(o){o.style.display='flex';}}
+function closePOSChooser(){var o=document.getElementById('pos-chooser-overlay');if(o){o.style.display='none';}}
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closePOSChooser();});
+</script>
+<script src="../js/permissions.js"></script>
+</body>
+</html>
+
