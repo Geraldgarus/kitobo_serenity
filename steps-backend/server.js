@@ -2892,6 +2892,26 @@ app.get('/api/sales/top-products', async (req, res) => {
 
 
 
+// DELETE /api/sales/:id - Delete a sales order and its items
+app.delete('/api/sales/:id', async (req, res) => {
+  const { id } = req.params;
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    await client.query('DELETE FROM sales_items WHERE sale_id = $1', [id]);
+    const { rowCount } = await client.query('DELETE FROM sales_orders WHERE id = $1', [id]);
+    if (rowCount === 0) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'Sale not found' }); }
+    await client.query('COMMIT');
+    res.json({ message: 'Sale deleted successfully' });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('Delete sale error:', err);
+    res.status(500).json({ error: err.message });
+  } finally {
+    client.release();
+  }
+});
+
 // ============================================================
 // LAUNDRY SERVICES API
 // ============================================================

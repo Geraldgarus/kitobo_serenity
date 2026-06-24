@@ -135,6 +135,38 @@
 
     .toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 2000; }
 
+    /* ── Mobile Responsiveness ── */
+    @media (max-width: 768px) {
+      .main-content { padding: 12px; max-width: 100%; }
+      .action-bar { flex-wrap: wrap; gap: 8px; }
+      .btn-print, .btn-refresh { flex: 1; text-align: center; padding: 10px 14px; }
+      .cards-row { gap: 10px; }
+      .rev-card { min-width: calc(50% - 5px); flex: none; padding: 16px; }
+      .rev-card .card-value { font-size: 18px; }
+      .bottom-row { gap: 10px; }
+      .big-card { min-width: calc(50% - 5px); flex: none; padding: 18px; }
+      .big-card .big-value { font-size: 24px; }
+      .gauge-card, .summary-card { padding: 16px; }
+      .bar-row { gap: 8px; }
+      .bar-label { width: 90px; font-size: 12px; }
+      .bar-amount { width: 80px; font-size: 12px; }
+      .summary-table { font-size: 12px; }
+      .summary-table th, .summary-table td { padding: 10px 10px; }
+      .summary-table th:nth-child(2),
+      .summary-table td:nth-child(2) { display: none; }
+      .row-icon { display: none; }
+      .page-subtitle { display: none; }
+      .user-info { display: none; }
+      .navbar { padding: 10px 14px; }
+      .section-title { font-size: 11px; }
+    }
+    @media (max-width: 480px) {
+      .rev-card { min-width: 100%; }
+      .big-card { min-width: 100%; }
+      .summary-table th:nth-child(4),
+      .summary-table td:nth-child(4) { display: none; }
+    }
+
     /* ── Print ── */
     @media print {
       .sidebar, .navbar, .action-bar, .overlay, .toast-container { display: none !important; }
@@ -299,6 +331,7 @@
   <!-- Detailed summary table -->
   <div class="summary-card">
     <h3><i class="fas fa-table" style="color:#c9933a;margin-right:8px;"></i> Profit &amp; Loss Summary</h3>
+    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
     <table class="summary-table">
       <thead>
         <tr>
@@ -312,6 +345,7 @@
         <tr><td colspan="4" style="text-align:center;padding:30px;color:#94a3b8;">Loading…</td></tr>
       </tbody>
     </table>
+    </div>
   </div>
 
 </main>
