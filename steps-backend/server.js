@@ -42,6 +42,9 @@ async function ensurePaymentColumns() {
       ALTER TABLE sales_orders ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50) DEFAULT 'Cash';
     `);
     await pool.query(`
+      ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS category VARCHAR(100) DEFAULT 'other';
+    `);
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS menu_items (
         id           SERIAL PRIMARY KEY,
         name         VARCHAR(200) NOT NULL,
@@ -2208,32 +2211,32 @@ app.get('/api/purchase-orders/:id', async (req, res) => {
 
 // POST create new purchase order
 app.post('/api/purchase-orders', async (req, res) => {
-  const { vendor_id, order_date, notes, items, created_by } = req.body;
-  
+  const { vendor_id, order_date, notes, items, created_by, category } = req.body;
+
   if (!vendor_id || !items || items.length === 0) {
     return res.status(400).json({ error: 'Vendor and at least one item required' });
   }
-  
+
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-    
+
     // Generate PO number
     const dateStr = new Date().toISOString().slice(0,10).replace(/-/g, '');
     const countResult = await client.query('SELECT COUNT(*) FROM purchase_orders');
     const poNumber = `PO-${dateStr}-${(parseInt(countResult.rows[0].count) + 1).toString().padStart(4, '0')}`;
-    
+
     // Calculate total amount
     let totalAmount = 0;
     for (const item of items) {
       totalAmount += item.unit_price * item.quantity;
     }
-    
+
     // Insert purchase order
     const poResult = await client.query(`
-      INSERT INTO purchase_orders (po_number, vendor_id, order_date, status, total_amount, notes, created_by)
-      VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *
-    `, [poNumber, vendor_id, order_date || new Date().toISOString().slice(0,10), 'pending', totalAmount, notes || null, created_by || 'system']);
+      INSERT INTO purchase_orders (po_number, vendor_id, order_date, status, total_amount, notes, created_by, category)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *
+    `, [poNumber, vendor_id, order_date || new Date().toISOString().slice(0,10), 'pending', totalAmount, notes || null, created_by || 'system', category || 'other']);
     
     const poId = poResult.rows[0].id;
     
@@ -2547,7 +2550,24 @@ app.post('/api/grn/receive/:poId', async (req, res) => {
     await client.query(`
       UPDATE purchase_orders SET status = 'received', received_status = 'received', grn_id = $1 WHERE id = $2
     `, [grn.id, poId]);
-    
+
+    // Auto-create expense entry for this purchase
+    const expCount = await client.query('SELECT COUNT(*) FROM expenses');
+    const expDateStr = new Date().toISOString().slice(0,10).replace(/-/g, '');
+    const expNumber = `EXP-${expDateStr}-${(parseInt(expCount.rows[0].count) + 1).toString().padStart(4, '0')}`;
+    await client.query(`
+      INSERT INTO expenses (expense_number, category, description, amount, expense_date, payment_method, paid_to, remarks, created_by)
+      VALUES ($1, $2, $3, $4, CURRENT_DATE, 'cash', $5, $6, $7)
+    `, [
+      expNumber,
+      po.category || 'other',
+      `Purchase Order ${po.po_number} received`,
+      Math.round(po.total_amount),
+      po.vendor_name,
+      `Auto-created from PO ${po.po_number}`,
+      created_by || 'system'
+    ]);
+
     await client.query('COMMIT');
     
     res.status(201).json({ 

@@ -835,6 +835,16 @@
         </div>
         
         <div class="form-group">
+          <label>Category *</label>
+          <select id="po-category" class="form-control">
+            <option value="bar">Bar</option>
+            <option value="restaurant">Restaurant</option>
+            <option value="housekeeping">Housekeeping</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+
+        <div class="form-group">
           <label>Notes (Optional)</label>
           <textarea id="po-notes" class="form-control" rows="2" placeholder="Additional notes..."></textarea>
         </div>
@@ -1295,6 +1305,7 @@ function escapeHtml(str) {
     selectedItems = [];
     renderSelectedItems();
     document.getElementById('po-notes').value = '';
+    document.getElementById('po-category').value = 'bar';
     document.getElementById('po-vendor-type').value = '';
     document.getElementById('po-vendor').innerHTML = '<option value="">— Select type first —</option>';
     var nvg = document.getElementById('new-vendor-group');
@@ -1702,12 +1713,13 @@ function escapeHtml(str) {
     if (selectedItems.length === 0) { showToast('Please add at least one item', 'error'); return null; }
     var order_date = document.getElementById('po-date').value;
     var notes = document.getElementById('po-notes').value;
+    var category = document.getElementById('po-category').value;
     var user = getCurrentUser();
     var items = selectedItems.map(function(si) {
       return { item_name: si.name, category: si.category, unit: si.unit, unit_price: si.unit_price, quantity: si.quantity };
     });
     try {
-      var result = await apiPost('/purchase-orders', { vendor_id: vendor_id, order_date: order_date, notes: notes, items: items, created_by: user ? user.username : 'system' });
+      var result = await apiPost('/purchase-orders', { vendor_id: vendor_id, order_date: order_date, notes: notes, category: category, items: items, created_by: user ? user.username : 'system' });
       showToast('Purchase order created!', 'success');
       cancelCreatePO();
       await loadPurchaseOrders();
