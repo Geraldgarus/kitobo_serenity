@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Book a Room – Kitobo Serenity Resort</title>
+  <title>Room Inquiries – Kitobo Serenity Resort</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous"/>
@@ -13,8 +13,8 @@
 
     /* ── HERO ── */
     .hero {
-      background: linear-gradient(135deg, #1a2340 0%, #2d3f6b 60%, #1a2340 100%);
-      padding: 48px 24px 56px;
+      background: linear-gradient(135deg, #163316 0%, #2a5a2a 60%, #163316 100%);
+      padding: 48px 24px 64px;
       text-align: center;
       position: relative;
       overflow: hidden;
@@ -26,103 +26,121 @@
     }
     .hero-logo { display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: 20px; position: relative; }
     .hero-logo img { height: 52px; width: auto; }
-    .hero-logo-text { text-align: left; }
     .hero-logo-text .name { font-family: 'Playfair Display', serif; font-size: 22px; color: #fff; }
     .hero-logo-text .sub  { font-size: 11px; color: rgba(255,255,255,0.55); letter-spacing: 0.1em; text-transform: uppercase; }
     .hero h1 { font-family: 'Playfair Display', serif; font-size: clamp(26px, 5vw, 42px); color: #fff; margin-bottom: 10px; position: relative; }
-    .hero p  { color: rgba(255,255,255,0.65); font-size: 15px; position: relative; }
+    .hero p  { color: rgba(255,255,255,0.65); font-size: 15px; position: relative; max-width: 520px; margin: 0 auto; line-height: 1.6; }
     .gold-line { width: 60px; height: 3px; background: #c9933a; border-radius: 2px; margin: 16px auto; }
 
-    /* ── SEARCH BAR ── */
-    .search-wrap { max-width: 900px; margin: -28px auto 0; padding: 0 16px; position: relative; z-index: 10; }
-    .search-card {
-      background: #fff;
-      border-radius: 18px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.15);
-      padding: 24px 28px;
-      display: grid;
-      grid-template-columns: 1fr 1fr 80px 80px auto;
-      gap: 14px;
-      align-items: end;
+    /* ── AVAILABILITY BANNER ── */
+    .avail-wrap { max-width: 860px; margin: -32px auto 0; padding: 0 16px; position: relative; z-index: 10; }
+    .avail-card {
+      background: #fff; border-radius: 18px; box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+      padding: 22px 30px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
     }
-    .search-field label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #64748b; margin-bottom: 6px; }
-    .search-field input, .search-field select {
-      width: 100%; padding: 10px 14px; border: 1.5px solid #e2e8f0;
-      border-radius: 10px; font-size: 14px; font-family: 'Inter', sans-serif;
-      color: #1e293b; outline: none; transition: border-color 0.2s;
-    }
-    .search-field input:focus, .search-field select:focus { border-color: #c9933a; }
-    .btn-search {
-      background: linear-gradient(135deg, #c9933a, #e0a94a);
-      color: #fff; border: none; border-radius: 10px;
-      padding: 11px 20px; font-size: 14px; font-weight: 600;
-      cursor: pointer; white-space: nowrap; height: 42px;
-      display: flex; align-items: center; gap: 7px;
-      transition: transform 0.15s, box-shadow 0.15s;
-      box-shadow: 0 4px 14px rgba(201,147,58,0.35);
-    }
-    .btn-search:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(201,147,58,0.45); }
+    .avail-icon-wrap { width: 56px; height: 56px; border-radius: 14px; background: linear-gradient(135deg, #163316, #2a5a2a); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 24px; flex-shrink: 0; }
+    .avail-info .number { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 700; color: #163316; line-height: 1; }
+    .avail-info .label  { font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 2px; }
+    .avail-divider { width: 1px; height: 48px; background: #e2e8f0; flex-shrink: 0; }
+    .avail-msg { font-size: 13px; color: #475569; }
+    .avail-msg strong { color: #163316; }
 
-    /* ── MAIN CONTENT ── */
-    .main { max-width: 1100px; margin: 48px auto 60px; padding: 0 16px; }
-    .section-title { font-family: 'Playfair Display', serif; font-size: 22px; color: #1a2340; margin-bottom: 6px; }
-    .section-sub   { font-size: 13px; color: #64748b; margin-bottom: 28px; }
+    /* ── RATE KEY ── */
+    .rate-key-wrap { max-width: 1100px; margin: 32px auto 0; padding: 0 16px; }
+    .rate-key-card {
+      background: #fff; border-radius: 14px; padding: 14px 24px;
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06); border: 1.5px solid #f1f5f9;
+    }
+    .rate-key-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #64748b; margin-right: 6px; }
+    .rb { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 20px; }
+    .rb.bb { background: #d1fae5; color: #065f46; }
+    .rb.hb { background: #fef3c7; color: #92400e; }
+    .rb.fb { background: #ede9fe; color: #5b21b6; }
+    .rate-note { margin-left: auto; font-size: 11px; color: #94a3b8; }
+
+    /* ── MAIN ── */
+    .main { max-width: 1100px; margin: 36px auto 64px; padding: 0 16px; }
+    .section-header { margin-bottom: 28px; }
+    .section-title { font-family: 'Playfair Display', serif; font-size: 24px; color: #163316; margin-bottom: 6px; }
+    .section-sub   { font-size: 13px; color: #64748b; }
 
     /* ── ROOM CARDS ── */
-    .rooms-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 22px; }
+    .rooms-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px; }
     .room-card {
-      background: #fff; border-radius: 18px; overflow: hidden;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.07); transition: transform 0.2s, box-shadow 0.2s;
-      border: 1.5px solid #f1f5f9;
+      background: #fff; border-radius: 20px; overflow: hidden;
+      box-shadow: 0 3px 14px rgba(0,0,0,0.08); transition: transform 0.22s, box-shadow 0.22s;
+      border: 1.5px solid #f1f5f9; display: flex; flex-direction: column;
     }
-    .room-card:hover { transform: translateY(-4px); box-shadow: 0 8px 28px rgba(0,0,0,0.12); }
-    .room-card.occupied { opacity: 0.7; }
+    .room-card:hover { transform: translateY(-5px); box-shadow: 0 14px 40px rgba(0,0,0,0.14); }
 
-    .room-banner {
-      height: 180px; position: relative; overflow: hidden;
+    /* ── CAROUSEL ── */
+    .room-banner { height: 210px; position: relative; overflow: hidden; flex-shrink: 0; }
+    .carousel { width: 100%; height: 100%; position: relative; }
+    .carousel-img {
+      position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+      opacity: 0; transition: opacity 0.5s ease;
     }
-    .room-banner img {
-      width: 100%; height: 100%; object-fit: cover; display: block;
-      transition: transform 0.4s ease;
+    .carousel-img.active { opacity: 1; }
+    .car-btn {
+      position: absolute; top: 50%; transform: translateY(-50%); z-index: 6;
+      background: rgba(0,0,0,0.42); border: none; color: #fff;
+      width: 34px; height: 34px; border-radius: 50%; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; font-size: 12px;
+      opacity: 0; transition: opacity 0.22s, background 0.2s;
     }
-    .room-card:hover .room-banner img { transform: scale(1.06); }
-    .avail-badge {
-      position: absolute; top: 12px; right: 12px;
-      padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700;
+    .room-card:hover .car-btn { opacity: 1; }
+    .car-btn:hover { background: rgba(0,0,0,0.7); }
+    .car-btn.prev { left: 10px; }
+    .car-btn.next { right: 10px; }
+    .car-dots {
+      position: absolute; bottom: 48px; left: 50%; transform: translateX(-50%);
+      display: flex; gap: 6px; z-index: 6;
     }
-    .avail-badge.available { background: #d1fae5; color: #065f46; }
-    .avail-badge.occupied  { background: #fee2e2; color: #991b1b; }
-
-    .room-body { padding: 18px 20px 20px; }
-    .room-name { font-family: 'Playfair Display', serif; font-size: 17px; color: #1a2340; margin-bottom: 4px; }
-    .room-type { font-size: 12px; color: #94a3b8; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 14px; }
-    .room-meta { display: flex; gap: 16px; font-size: 12px; color: #64748b; margin-bottom: 16px; flex-wrap: wrap; }
-    .room-meta span { display: flex; align-items: center; gap: 5px; }
-    .room-meta i { color: #c9933a; }
-    .room-rate { font-size: 20px; font-weight: 700; color: #1a2340; margin-bottom: 6px; }
-    .room-rate small { font-size: 12px; font-weight: 400; color: #94a3b8; }
-    .plan-tags { display: flex; gap: 5px; margin-bottom: 14px; flex-wrap: wrap; }
-    .plan-tag { font-size: 11px; padding: 3px 9px; border-radius: 12px; font-weight: 700; }
-    .plan-tag.bb { background: #d1fae5; color: #065f46; }
-    .plan-tag.hb { background: #fef3c7; color: #92400e; }
-    .plan-tag.fb { background: #ede9fe; color: #5b21b6; }
-
-    .btn-book {
-      width: 100%; padding: 11px; border-radius: 10px; border: none;
-      background: linear-gradient(135deg, #1a2340, #2d3f6b);
-      color: #fff; font-size: 14px; font-weight: 600; cursor: pointer;
-      display: flex; align-items: center; justify-content: center; gap: 8px;
-      transition: opacity 0.2s, transform 0.15s;
+    .car-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: rgba(255,255,255,0.5); cursor: pointer;
+      transition: background 0.2s, transform 0.2s;
     }
-    .btn-book:hover:not(:disabled) { opacity: 0.9; transform: translateY(-1px); }
-    .btn-book:disabled { background: #e2e8f0; color: #94a3b8; cursor: not-allowed; transform: none; }
+    .car-dot.active { background: #fff; transform: scale(1.25); }
+    .room-banner-overlay { position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 35%, rgba(15,25,15,0.72)); pointer-events: none; z-index: 5; }
+    .room-banner-title { position: absolute; bottom: 14px; left: 18px; right: 18px; font-family: 'Playfair Display', serif; font-size: 22px; color: #fff; font-weight: 700; z-index: 7; pointer-events: none; }
 
-    /* ── EMPTY / LOADING STATE ── */
-    .state-box { text-align: center; padding: 60px 20px; color: #94a3b8; }
-    .state-box i { font-size: 48px; margin-bottom: 16px; display: block; }
-    .state-box p { font-size: 15px; }
+    /* ── ROOM BODY ── */
+    .room-body { padding: 18px 20px 22px; flex: 1; display: flex; flex-direction: column; }
+    .room-amenities { display: flex; gap: 14px; font-size: 12px; color: #64748b; margin-bottom: 12px; flex-wrap: wrap; }
+    .room-amenities span { display: flex; align-items: center; gap: 4px; }
+    .room-amenities i { color: #c9933a; }
+    .room-desc { font-size: 13px; color: #64748b; line-height: 1.65; margin-bottom: 18px; }
 
-    /* ── MODAL OVERLAY ── */
+    /* Pricing table */
+    .price-table-wrap { margin-bottom: 18px; }
+    .price-table-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #94a3b8; margin-bottom: 8px; }
+    .price-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .price-table thead tr { background: #f8fafc; }
+    .price-table th { padding: 7px 8px; text-align: left; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; }
+    .price-table td { padding: 8px 8px; border-bottom: 1px solid #f1f5f9; }
+    .price-table tbody tr:last-child td { border-bottom: none; }
+    .price-table .config-cell { font-weight: 600; color: #163316; }
+    .price-table .price-cell { font-weight: 700; color: #163316; }
+    .price-table .usd-cell { color: #94a3b8; font-size: 11px; }
+    .pill { display: inline-block; padding: 2px 7px; border-radius: 10px; font-size: 10px; font-weight: 700; }
+    .pill.bb { background: #d1fae5; color: #065f46; }
+    .pill.hb { background: #fef3c7; color: #92400e; }
+    .pill.fb { background: #ede9fe; color: #5b21b6; }
+
+    /* ── BUTTONS ── */
+    .btn-inquire {
+      width: 100%; padding: 12px; border-radius: 12px; border: none; margin-top: auto;
+      background: linear-gradient(135deg, #163316, #2a5a2a);
+      color: #fff; font-size: 14px; font-weight: 700; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 9px;
+      transition: opacity 0.2s, transform 0.15s, box-shadow 0.15s;
+      box-shadow: 0 4px 14px rgba(22,51,22,0.35);
+    }
+    .btn-inquire:hover { opacity: 0.88; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(22,51,22,0.48); }
+
+    /* ── MODAL ── */
     .modal-overlay {
       display: none; position: fixed; inset: 0;
       background: rgba(0,0,0,0.55); z-index: 1000;
@@ -130,89 +148,123 @@
     }
     .modal-overlay.open { display: flex; }
     .modal {
-      background: #fff; border-radius: 20px; width: 100%; max-width: 580px;
+      background: #fff; border-radius: 20px; width: 100%; max-width: 560px;
       max-height: 92vh; overflow-y: auto;
       box-shadow: 0 24px 64px rgba(0,0,0,0.25);
       animation: slideUp 0.25s ease;
     }
     @keyframes slideUp { from { opacity:0; transform: translateY(24px); } to { opacity:1; transform:translateY(0); } }
-
     .modal-header {
-      padding: 20px 24px 16px;
-      border-bottom: 1px solid #f1f5f9;
+      padding: 20px 24px 16px; border-bottom: 1px solid #f1f5f9;
       display: flex; align-items: center; justify-content: space-between;
       position: sticky; top: 0; background: #fff; z-index: 2;
     }
-    .modal-header h3 { font-family: 'Playfair Display', serif; font-size: 18px; color: #1a2340; }
+    .modal-header h3 { font-family: 'Playfair Display', serif; font-size: 18px; color: #163316; }
     .modal-close { background: none; border: none; font-size: 18px; cursor: pointer; color: #94a3b8; padding: 4px; }
     .modal-close:hover { color: #1e293b; }
-    .modal-body { padding: 20px 24px 24px; }
+    .modal-body { padding: 20px 24px 26px; }
 
-    /* Room summary strip */
-    .booking-room-strip {
-      background: linear-gradient(135deg, #1a2340, #2d3f6b);
-      border-radius: 12px; padding: 14px 18px;
-      display: flex; align-items: center; gap: 14px; margin-bottom: 22px;
+    .inq-room-strip {
+      background: linear-gradient(135deg, #163316, #2a5a2a);
+      border-radius: 12px; padding: 14px 18px; display: flex; align-items: center; gap: 14px; margin-bottom: 22px;
     }
-    .booking-room-emoji { width:56px; height:56px; border-radius:10px; overflow:hidden; flex-shrink:0; }
-    .booking-room-emoji img { width:100%; height:100%; object-fit:cover; }
-    .booking-room-info .name  { color: #fff; font-weight: 700; font-size: 15px; }
-    .booking-room-info .dates { color: rgba(255,255,255,0.65); font-size: 12px; margin-top: 3px; }
-    .booking-room-rate { margin-left: auto; text-align: right; }
-    .booking-room-rate .total { color: #c9933a; font-size: 18px; font-weight: 700; }
-    .booking-room-rate .nights { color: rgba(255,255,255,0.55); font-size: 11px; }
+    .inq-room-icon { width: 46px; height: 46px; border-radius: 10px; background: rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; font-size: 20px; color: #c9933a; flex-shrink: 0; }
+    .inq-room-info .room-name { color: #fff; font-weight: 700; font-size: 15px; }
+    .inq-room-info .room-sub  { color: rgba(255,255,255,0.6); font-size: 12px; margin-top: 2px; }
 
-    /* Form */
     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
     .form-grid .full { grid-column: 1 / -1; }
     .fg { display: flex; flex-direction: column; gap: 5px; }
     .fg label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; }
-    .fg input, .fg select {
+    .fg input, .fg select, .fg textarea {
       padding: 10px 13px; border: 1.5px solid #e2e8f0; border-radius: 10px;
       font-size: 13px; font-family: 'Inter', sans-serif; color: #1e293b; outline: none;
+      transition: border-color 0.2s; background: #fff;
     }
-    .fg input:focus, .fg select:focus { border-color: #c9933a; }
-    .section-divider { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #c9933a; padding: 14px 0 6px; border-top: 1px solid #f1f5f9; margin-top: 6px; grid-column: 1/-1; }
+    .fg textarea { resize: vertical; min-height: 80px; }
+    .fg input:focus, .fg select:focus, .fg textarea:focus { border-color: #2a5a2a; }
+    .section-divider {
+      font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+      color: #2a5a2a; padding: 14px 0 6px; border-top: 1px solid #f1f5f9; margin-top: 6px;
+      grid-column: 1 / -1; display: flex; align-items: center; gap: 7px;
+    }
     .qty-row { display: flex; align-items: center; gap: 10px; }
-    .qty-btn  { width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid #e2e8f0; background: #fff; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; transition: border-color 0.2s; }
-    .qty-btn:hover { border-color: #c9933a; color: #c9933a; }
+    .qty-btn  { width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid #e2e8f0; background: #fff; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; transition: border-color 0.2s, color 0.2s; }
+    .qty-btn:hover { border-color: #2a5a2a; color: #163316; }
     .qty-val  { font-size: 15px; font-weight: 600; min-width: 24px; text-align: center; }
 
-    .btn-confirm {
+    .btn-send {
       width: 100%; padding: 14px; border-radius: 12px; border: none;
-      background: linear-gradient(135deg, #c9933a, #e0a94a);
+      background: linear-gradient(135deg, #163316, #2a5a2a);
       color: #fff; font-size: 15px; font-weight: 700; cursor: pointer;
-      margin-top: 20px; box-shadow: 0 4px 14px rgba(201,147,58,0.35);
-      transition: transform 0.15s, box-shadow 0.15s;
+      margin-top: 20px; box-shadow: 0 4px 14px rgba(22,51,22,0.35);
+      transition: transform 0.15s, box-shadow 0.15s, opacity 0.2s;
+      display: flex; align-items: center; justify-content: center; gap: 9px;
     }
-    .btn-confirm:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(201,147,58,0.45); }
-    .btn-confirm:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    .btn-send:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(22,51,22,0.48); opacity: 0.9; }
+    .btn-send:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
 
-    /* ── CONFIRMATION ── */
-    .confirm-wrap { text-align: center; padding: 32px 20px 16px; }
-    .confirm-icon { font-size: 56px; color: #10b981; margin-bottom: 16px; }
-    .confirm-wrap h3 { font-family: 'Playfair Display', serif; font-size: 22px; color: #1a2340; margin-bottom: 8px; }
-    .confirm-wrap p  { color: #64748b; font-size: 14px; line-height: 1.6; }
-    .confirm-ref { background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 10px; padding: 12px 20px; margin: 18px 0; font-size: 13px; color: #065f46; font-weight: 600; }
-    .btn-done { background: #1a2340; color: #fff; border: none; border-radius: 10px; padding: 11px 32px; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 8px; }
+    /* Success modal */
+    .success-wrap { text-align: center; padding: 36px 24px 24px; }
+    .success-icon { font-size: 60px; color: #163316; margin-bottom: 18px; }
+    .success-wrap h3 { font-family: 'Playfair Display', serif; font-size: 22px; color: #163316; margin-bottom: 10px; }
+    .success-wrap p  { color: #64748b; font-size: 14px; line-height: 1.65; }
+    .btn-done { background: linear-gradient(135deg, #163316, #2a5a2a); color: #fff; border: none; border-radius: 10px; padding: 12px 36px; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 22px; transition: opacity 0.2s; }
+    .btn-done:hover { opacity: 0.85; }
 
-    /* ── TOAST ── */
+    /* Toast */
     .toast-box { position: fixed; bottom: 24px; right: 24px; z-index: 9999; }
-    .toast { background: #1e293b; color: #fff; padding: 12px 20px; border-radius: 40px; font-size: 13px; margin-top: 8px; animation: fadeIn 0.3s ease; }
+    .toast { background: #163316; color: #fff; padding: 12px 20px; border-radius: 40px; font-size: 13px; margin-top: 8px; animation: fadeIn 0.3s ease; }
     .toast.error { background: #ef4444; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
+    /* Contact notice */
+    .contact-notice {
+      max-width: 1100px; margin: 0 auto 28px; padding: 0 16px;
+    }
+    .contact-notice-inner {
+      background: #fff8e1; border: 2px solid #c9933a; border-radius: 14px;
+      padding: 16px 22px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+    }
+    .contact-notice-icon { font-size: 26px; color: #c9933a; flex-shrink: 0; }
+    .contact-notice-text { flex: 1; }
+    .contact-notice-text p { font-size: 13px; color: #64748b; line-height: 1.55; }
+    .contact-notice-text strong { color: #163316; }
+    .contact-phone {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: linear-gradient(135deg, #163316, #2a5a2a);
+      color: #fff; font-size: 15px; font-weight: 700;
+      padding: 10px 20px; border-radius: 10px; text-decoration: none;
+      white-space: nowrap; flex-shrink: 0;
+      box-shadow: 0 4px 12px rgba(22,51,22,0.3);
+      transition: opacity 0.2s, transform 0.15s;
+    }
+    .contact-phone:hover { opacity: 0.88; transform: translateY(-1px); }
+
+    /* Notice inside modal */
+    .modal-notice {
+      background: #fff8e1; border: 1.5px solid #c9933a; border-radius: 10px;
+      padding: 12px 16px; display: flex; align-items: flex-start; gap: 10px; margin-bottom: 18px;
+    }
+    .modal-notice i { color: #c9933a; font-size: 16px; margin-top: 2px; flex-shrink: 0; }
+    .modal-notice p { font-size: 12px; color: #64748b; line-height: 1.55; }
+    .modal-notice p strong { color: #163316; }
+
+    /* Footer note */
+    .page-footer { text-align: center; font-size: 12px; color: #94a3b8; padding: 0 16px 40px; max-width: 1100px; margin: 0 auto; }
+
     /* ── RESPONSIVE ── */
     @media (max-width: 700px) {
-      .search-card { grid-template-columns: 1fr 1fr; }
-      .search-card > *:last-child { grid-column: 1 / -1; }
+      .avail-card { gap: 14px; }
+      .avail-divider { display: none; }
       .form-grid { grid-template-columns: 1fr; }
       .form-grid .full { grid-column: 1; }
       .section-divider { grid-column: 1; }
+      .rate-note { display: none; }
     }
     @media (max-width: 480px) {
-      .search-card { grid-template-columns: 1fr; padding: 18px; }
-      .hero { padding: 36px 16px 48px; }
+      .hero { padding: 36px 16px 52px; }
+      .avail-card { padding: 16px 18px; }
     }
   </style>
 </head>
@@ -227,193 +279,364 @@
       <div class="sub">Tanzania's Premier Getaway</div>
     </div>
   </div>
-  <h1>Book Your Stay</h1>
+  <h1>Make a Room Inquiry</h1>
   <div class="gold-line"></div>
-  <p>Select your dates to check availability and reserve your room</p>
+  <p>Browse our rooms and pricing, then send us your inquiry — our team will create your reservation personally and confirm within 24 hours</p>
 </div>
 
-<!-- SEARCH -->
-<div class="search-wrap">
-  <div class="search-card">
-    <div class="search-field">
-      <label><i class="fas fa-calendar-alt"></i> Check-in</label>
-      <input type="date" id="s-checkin">
+<!-- AVAILABILITY BANNER -->
+<div class="avail-wrap">
+  <div class="avail-card">
+    <div class="avail-icon-wrap"><i class="fas fa-bed"></i></div>
+    <div class="avail-info">
+      <div class="number" id="avail-number">—</div>
+      <div class="label">Rooms Available</div>
     </div>
-    <div class="search-field">
-      <label><i class="fas fa-calendar-check"></i> Check-out</label>
-      <input type="date" id="s-checkout">
-    </div>
-    <div class="search-field">
-      <label><i class="fas fa-user"></i> Adults</label>
-      <select id="s-adults">
-        <option value="1">1</option><option value="2">2</option>
-        <option value="3">3</option><option value="4">4</option>
-      </select>
-    </div>
-    <div class="search-field">
-      <label><i class="fas fa-child"></i> Children</label>
-      <select id="s-children">
-        <option value="0">0</option><option value="1">1</option>
-        <option value="2">2</option><option value="3">3</option>
-      </select>
-    </div>
-    <button class="btn-search" onclick="searchRooms()">
-      <i class="fas fa-search"></i> Search
-    </button>
+    <div class="avail-divider"></div>
+    <div class="avail-msg" id="avail-msg">Checking availability…</div>
   </div>
 </div>
 
-<!-- MAIN -->
+<!-- RATE KEY -->
+<div class="rate-key-wrap">
+  <div class="rate-key-card">
+    <span class="rate-key-label">Rate Types:</span>
+    <span class="rb bb"><i class="fas fa-coffee"></i> BB = Bed &amp; Breakfast</span>
+    <span class="rb hb"><i class="fas fa-utensils"></i> HB = Half Board (Breakfast + Dinner)</span>
+    <span class="rb fb"><i class="fas fa-concierge-bell"></i> FB = Full Board (All 3 Meals)</span>
+    <span class="rate-note">Per room / per night</span>
+  </div>
+</div>
+
+
+<!-- MAIN ROOM CARDS -->
 <div class="main">
-  <div id="rooms-header" style="margin-bottom:28px;display:none;">
-    <div class="section-title" id="rooms-title">Available Rooms</div>
-    <div class="section-sub" id="rooms-sub"></div>
+  <div class="section-header">
+    <div class="section-title">Our Room Types</div>
+    <div class="section-sub">All rooms include Wi-Fi, air conditioning, and daily housekeeping. Prices in TSh and USD.</div>
   </div>
-  <div id="rooms-container">
-    <div class="state-box">
-      <i class="fas fa-calendar-alt" style="color:#c9933a;"></i>
-      <p>Enter your check-in and check-out dates above to see available rooms</p>
+
+  <div class="rooms-grid">
+
+    <!-- ─── STANDARD ROOM ─── -->
+    <div class="room-card">
+      <div class="room-banner">
+        <div class="carousel" id="car-standard" data-current="0">
+          <img class="carousel-img active" src="/images/standard%20room.jpg"  alt="Standard Room" loading="lazy">
+          <img class="carousel-img"        src="/images/room1.jpeg"           alt="Standard Room" loading="lazy">
+          <img class="carousel-img"        src="/images/room2.jpeg"           alt="Standard Room" loading="lazy">
+          <button class="car-btn prev" onclick="moveSlide('standard',-1)"><i class="fas fa-chevron-left"></i></button>
+          <button class="car-btn next" onclick="moveSlide('standard', 1)"><i class="fas fa-chevron-right"></i></button>
+          <div class="car-dots">
+            <span class="car-dot active" onclick="goSlide('standard',0)"></span>
+            <span class="car-dot"        onclick="goSlide('standard',1)"></span>
+            <span class="car-dot"        onclick="goSlide('standard',2)"></span>
+          </div>
+        </div>
+        <div class="room-banner-overlay"></div>
+        <div class="room-banner-title">Standard Room</div>
+      </div>
+      <div class="room-body">
+        <div class="room-amenities">
+          <span><i class="fas fa-user-friends"></i> Up to 2 guests</span>
+          <span><i class="fas fa-wind"></i> Air conditioning</span>
+          <span><i class="fas fa-bath"></i> Private bathroom</span>
+        </div>
+        <p class="room-desc">Comfortable and cozy rooms available as single (1 bed) or double (2 beds). Perfect for solo travelers, business guests, and couples looking for a relaxing retreat with all essential comforts.</p>
+
+        <div class="price-table-wrap">
+          <div class="price-table-title">Rack Rates — per room / per night</div>
+          <table class="price-table">
+            <thead>
+              <tr>
+                <th>Config</th>
+                <th><span class="pill bb">BB</span></th>
+                <th><span class="pill hb">HB</span></th>
+                <th><span class="pill fb">FB</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="config-cell">Single</td>
+                <td><span class="price-cell">100,000</span> <span class="usd-cell">$40</span></td>
+                <td><span class="price-cell">130,000</span> <span class="usd-cell">$50</span></td>
+                <td><span class="price-cell">160,000</span> <span class="usd-cell">$60</span></td>
+              </tr>
+              <tr>
+                <td class="config-cell">Double</td>
+                <td><span class="price-cell">120,000</span> <span class="usd-cell">$50</span></td>
+                <td><span class="price-cell">150,000</span> <span class="usd-cell">$60</span></td>
+                <td><span class="price-cell">180,000</span> <span class="usd-cell">$70</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <button class="btn-inquire" onclick="openInquiry('Standard Room', true)">
+          <i class="fas fa-paper-plane"></i> Send Inquiry
+        </button>
+      </div>
     </div>
-  </div>
+
+    <!-- ─── DELUXE ROOM ─── -->
+    <div class="room-card">
+      <div class="room-banner">
+        <div class="carousel" id="car-deluxe" data-current="0">
+          <img class="carousel-img active" src="/images/deluxe%20room.jpeg"  alt="Deluxe Room" loading="lazy">
+          <img class="carousel-img"        src="/images/room3.jpeg"          alt="Deluxe Room" loading="lazy">
+          <img class="carousel-img"        src="/images/room4.jpg"           alt="Deluxe Room" loading="lazy">
+          <button class="car-btn prev" onclick="moveSlide('deluxe',-1)"><i class="fas fa-chevron-left"></i></button>
+          <button class="car-btn next" onclick="moveSlide('deluxe', 1)"><i class="fas fa-chevron-right"></i></button>
+          <div class="car-dots">
+            <span class="car-dot active" onclick="goSlide('deluxe',0)"></span>
+            <span class="car-dot"        onclick="goSlide('deluxe',1)"></span>
+            <span class="car-dot"        onclick="goSlide('deluxe',2)"></span>
+          </div>
+        </div>
+        <div class="room-banner-overlay"></div>
+        <div class="room-banner-title">Deluxe Room</div>
+      </div>
+      <div class="room-body">
+        <div class="room-amenities">
+          <span><i class="fas fa-user-friends"></i> Up to 2 guests</span>
+          <span><i class="fas fa-tv"></i> Flat-screen TV</span>
+          <span><i class="fas fa-star"></i> Premium furnishings</span>
+        </div>
+        <p class="room-desc">Spacious rooms with premium furnishings and stunning resort views. Features a king-size bed, flat-screen TV, minibar, and a luxurious en-suite bathroom. Perfect for guests seeking a superior experience.</p>
+
+        <div class="price-table-wrap">
+          <div class="price-table-title">Rack Rates — per room / per night</div>
+          <table class="price-table">
+            <thead>
+              <tr>
+                <th>Rate Type</th>
+                <th>TSh / Night</th>
+                <th>USD</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="pill bb">BB</span> Bed &amp; Breakfast</td>
+                <td class="price-cell">160,000</td>
+                <td class="usd-cell">$65</td>
+              </tr>
+              <tr>
+                <td><span class="pill hb">HB</span> Half Board</td>
+                <td class="price-cell">190,000</td>
+                <td class="usd-cell">$75</td>
+              </tr>
+              <tr>
+                <td><span class="pill fb">FB</span> Full Board</td>
+                <td class="price-cell">220,000</td>
+                <td class="usd-cell">$85</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <button class="btn-inquire" onclick="openInquiry('Deluxe Room', false)">
+          <i class="fas fa-paper-plane"></i> Send Inquiry
+        </button>
+      </div>
+    </div>
+
+    <!-- ─── EXECUTIVE ROOM ─── -->
+    <div class="room-card">
+      <div class="room-banner">
+        <div class="carousel" id="car-executive" data-current="0">
+          <img class="carousel-img active" src="/images/executive%20room.jpg" alt="Executive Room" loading="lazy">
+          <img class="carousel-img"        src="/images/room5.jpg"            alt="Executive Room" loading="lazy">
+          <img class="carousel-img"        src="/images/room6.jpeg"           alt="Executive Room" loading="lazy">
+          <button class="car-btn prev" onclick="moveSlide('executive',-1)"><i class="fas fa-chevron-left"></i></button>
+          <button class="car-btn next" onclick="moveSlide('executive', 1)"><i class="fas fa-chevron-right"></i></button>
+          <div class="car-dots">
+            <span class="car-dot active" onclick="goSlide('executive',0)"></span>
+            <span class="car-dot"        onclick="goSlide('executive',1)"></span>
+            <span class="car-dot"        onclick="goSlide('executive',2)"></span>
+          </div>
+        </div>
+        <div class="room-banner-overlay"></div>
+        <div class="room-banner-title">Executive Room</div>
+      </div>
+      <div class="room-body">
+        <div class="room-amenities">
+          <span><i class="fas fa-briefcase"></i> Work desk</span>
+          <span><i class="fas fa-gem"></i> Upscale furnishings</span>
+          <span><i class="fas fa-concierge-bell"></i> Exclusive privileges</span>
+        </div>
+        <p class="room-desc">Our finest accommodation featuring upscale furnishings, a private work area, walk-in wardrobe, and exclusive resort privileges. The ultimate choice for discerning guests and business executives.</p>
+
+        <div class="price-table-wrap">
+          <div class="price-table-title">Rack Rates — per room / per night</div>
+          <table class="price-table">
+            <thead>
+              <tr>
+                <th>Rate Type</th>
+                <th>TSh / Night</th>
+                <th>USD</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="pill bb">BB</span> Bed &amp; Breakfast</td>
+                <td class="price-cell">200,000</td>
+                <td class="usd-cell">$80</td>
+              </tr>
+              <tr>
+                <td><span class="pill hb">HB</span> Half Board</td>
+                <td class="price-cell">230,000</td>
+                <td class="usd-cell">$90</td>
+              </tr>
+              <tr>
+                <td><span class="pill fb">FB</span> Full Board</td>
+                <td class="price-cell">260,000</td>
+                <td class="usd-cell">$100</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <button class="btn-inquire" onclick="openInquiry('Executive Room', false)">
+          <i class="fas fa-paper-plane"></i> Send Inquiry
+        </button>
+      </div>
+    </div>
+
+  </div><!-- /.rooms-grid -->
+</div><!-- /.main -->
+
+<div class="page-footer">
+  © 2025–2026 Kitobo Serenity Resort, Tanzania · Room rates quoted in Tanzanian Shillings (TSh) · USD figures shown for convenience only · For reservations contact our team directly
 </div>
 
-<!-- BOOKING MODAL -->
-<div class="modal-overlay" id="booking-modal-overlay">
-  <div class="modal" id="booking-modal">
+<!-- ── INQUIRY MODAL ── -->
+<div class="modal-overlay" id="inquiry-modal-overlay">
+  <div class="modal">
     <div class="modal-header">
-      <h3><i class="fas fa-calendar-plus" style="color:#c9933a;margin-right:8px;"></i>Complete Your Booking</h3>
-      <button class="modal-close" onclick="closeBookingModal()"><i class="fas fa-times"></i></button>
+      <h3><i class="fas fa-paper-plane" style="color:#2a5a2a;margin-right:8px;"></i>Send Room Inquiry</h3>
+      <button class="modal-close" onclick="closeInquiryModal()"><i class="fas fa-times"></i></button>
     </div>
     <div class="modal-body">
 
-      <!-- Room summary -->
-      <div class="booking-room-strip" id="booking-strip">
-        <div class="booking-room-emoji" id="b-emoji"></div>
-        <div class="booking-room-info">
-          <div class="name" id="b-name"></div>
-          <div class="dates" id="b-dates"></div>
-        </div>
-        <div class="booking-room-rate">
-          <div class="total" id="b-total"></div>
-          <div class="nights" id="b-nights"></div>
+      <div class="inq-room-strip">
+        <div class="inq-room-icon"><i class="fas fa-bed"></i></div>
+        <div class="inq-room-info">
+          <div class="room-name" id="inq-room-display">Room Type</div>
+          <div class="room-sub">Kitobo Serenity Resort · Tanzania</div>
         </div>
       </div>
 
-      <form id="booking-form" onsubmit="submitBooking(event)">
-        <input type="hidden" id="b-apt-id">
-        <input type="hidden" id="b-rate">
+      <div class="modal-notice">
+        <i class="fas fa-info-circle"></i>
+        <p>For a <strong>faster reservation</strong>, call us directly on <strong>+255 665 500 118</strong> — our team will confirm your booking immediately.</p>
+      </div>
+
+      <form id="inquiry-form" onsubmit="submitInquiry(event)">
+        <input type="hidden" name="access_key" value="d61899ff-0d82-4f4c-823b-f5d3c6e64a37">
+        <input type="hidden" name="subject" value="Room Inquiry – Kitobo Serenity Resort">
+        <input type="hidden" name="from_name" value="Kitobo Serenity Resort Website">
+        <input type="hidden" id="inq-room-type" name="room_type">
+        <input type="hidden" id="inq-adults-hidden" name="adults" value="2">
+        <input type="hidden" id="inq-children-hidden" name="children" value="0">
 
         <div class="form-grid">
-          <div class="section-divider"><i class="fas fa-user-circle"></i> Guest Details</div>
+          <div class="section-divider"><i class="fas fa-user-circle"></i> Your Details</div>
 
           <div class="fg full">
             <label>Full Name *</label>
-            <input type="text" id="b-guest" placeholder="Enter your full name" required>
+            <input type="text" id="inq-name" name="name" placeholder="Enter your full name" required>
           </div>
           <div class="fg">
             <label>Email Address *</label>
-            <input type="email" id="b-email" placeholder="your@email.com" required>
+            <input type="email" id="inq-email" name="email" placeholder="your@email.com" required>
           </div>
           <div class="fg">
-            <label>Mobile Number *</label>
-            <input type="tel" id="b-mobile" placeholder="+255 XXX XXX XXX" required>
-          </div>
-          <div class="fg">
-            <label>National ID / Passport</label>
-            <input type="text" id="b-national-id" placeholder="ID or Passport number">
-          </div>
-          <div class="fg">
-            <label>ID Type</label>
-            <select id="b-id-type">
-              <option value="NIDA">NIDA (National ID)</option>
-              <option value="Passport">Passport</option>
-              <option value="Driving License">Driving License</option>
-            </select>
-          </div>
-          <div class="fg">
-            <label>Country</label>
-            <input type="text" id="b-country" placeholder="Tanzania">
-          </div>
-          <div class="fg">
-            <label>City</label>
-            <input type="text" id="b-city" placeholder="Dar es Salaam">
+            <label>Phone Number *</label>
+            <input type="tel" id="inq-phone" name="phone" placeholder="+255 XXX XXX XXX" required>
           </div>
 
-          <div class="section-divider"><i class="fas fa-bed"></i> Stay Details</div>
+          <div class="section-divider"><i class="fas fa-calendar-alt"></i> Stay Preferences</div>
 
+          <div class="fg">
+            <label>Preferred Check-in</label>
+            <input type="date" id="inq-checkin" name="checkin">
+          </div>
+          <div class="fg">
+            <label>Preferred Check-out</label>
+            <input type="date" id="inq-checkout" name="checkout">
+          </div>
           <div class="fg">
             <label>Adults</label>
             <div class="qty-row">
-              <button type="button" class="qty-btn" onclick="changeQty('b-adults-val',-1,1)">−</button>
-              <span class="qty-val" id="b-adults-val">2</span>
-              <button type="button" class="qty-btn" onclick="changeQty('b-adults-val',1,6)">+</button>
+              <button type="button" class="qty-btn" onclick="changeQty('inq-adults-val','inq-adults-hidden',-1,1)">−</button>
+              <span class="qty-val" id="inq-adults-val">2</span>
+              <button type="button" class="qty-btn" onclick="changeQty('inq-adults-val','inq-adults-hidden',1,8)">+</button>
             </div>
           </div>
           <div class="fg">
             <label>Children</label>
             <div class="qty-row">
-              <button type="button" class="qty-btn" onclick="changeQty('b-children-val',-1,0)">−</button>
-              <span class="qty-val" id="b-children-val">0</span>
-              <button type="button" class="qty-btn" onclick="changeQty('b-children-val',1,6)">+</button>
+              <button type="button" class="qty-btn" onclick="changeQty('inq-children-val','inq-children-hidden',-1,0)">−</button>
+              <span class="qty-val" id="inq-children-val">0</span>
+              <button type="button" class="qty-btn" onclick="changeQty('inq-children-val','inq-children-hidden',1,6)">+</button>
             </div>
           </div>
           <div class="fg">
-            <label>Rate Type</label>
-            <select id="b-rate-type" onchange="recalcTotal()">
-              <option value="Bed & Breakfast">Bed &amp; Breakfast</option>
-              <option value="Full Board">Full Board</option>
-              <option value="Half Board">Half Board</option>
-              <option value="Room Only">Room Only</option>
+            <label>Preferred Rate</label>
+            <select id="inq-rate" name="rate">
+              <option value="BB – Bed &amp; Breakfast">BB – Bed &amp; Breakfast</option>
+              <option value="HB – Half Board">HB – Half Board</option>
+              <option value="FB – Full Board">FB – Full Board</option>
+            </select>
+          </div>
+          <div class="fg" id="inq-config-field">
+            <label>Configuration</label>
+            <select id="inq-config" name="configuration">
+              <option value="Single">Single (1 Bed)</option>
+              <option value="Double">Double (2 Beds)</option>
             </select>
           </div>
 
-          <div class="section-divider"><i class="fas fa-money-bill-wave"></i> Payment</div>
+          <div class="section-divider"><i class="fas fa-comment-alt"></i> Message</div>
 
-          <div class="fg">
-            <label>Payment Method</label>
-            <select id="b-payment-method">
-              <option value="Cash">Cash</option>
-              <option value="Card">Card</option>
-              <option value="Mpesa">Mpesa</option>
-              <option value="TigoPesa">TigoPesa</option>
-              <option value="AirtelMoney">AirtelMoney</option>
-              <option value="Bank Transfer">Bank Transfer</option>
-              <option value="Pending">Pay on Arrival</option>
-            </select>
-          </div>
-          <div class="fg">
-            <label>Amount Paid Now (TSH)</label>
-            <input type="number" id="b-amount-paid" value="0" min="0" oninput="recalcBalance()">
-          </div>
-          <div class="fg">
-            <label>Total Amount (TSH)</label>
-            <input type="number" id="b-total-input" readonly style="background:#f8fafc;color:#64748b;">
-          </div>
-          <div class="fg">
-            <label>Balance Due (TSH)</label>
-            <input type="number" id="b-balance" readonly style="background:#f8fafc;color:#64748b;">
+          <div class="fg full">
+            <label>Special Requests / Message</label>
+            <textarea id="inq-message" name="message" placeholder="Any special requests, preferred arrival time, or questions for our team…"></textarea>
           </div>
         </div>
 
-        <button type="submit" class="btn-confirm" id="btn-confirm">
-          <i class="fas fa-check-circle"></i> Confirm Reservation
+        <button type="submit" class="btn-send" id="btn-send">
+          <i class="fas fa-paper-plane"></i> Send Inquiry
         </button>
       </form>
     </div>
   </div>
 </div>
 
-<!-- CONFIRMATION MODAL -->
-<div class="modal-overlay" id="confirm-modal-overlay">
+<!-- ── SUCCESS MODAL ── -->
+<div class="modal-overlay" id="success-modal-overlay">
   <div class="modal" style="max-width:460px;">
     <div class="modal-body">
-      <div class="confirm-wrap">
-        <div class="confirm-icon"><i class="fas fa-check-circle"></i></div>
-        <h3>Booking Confirmed!</h3>
-        <p>Your reservation has been successfully submitted.<br>The hotel team will contact you to confirm your stay.</p>
-        <div class="confirm-ref" id="confirm-ref"></div>
-        <p style="font-size:12px;color:#94a3b8;">Please save your booking reference number above.</p>
-        <button class="btn-done" onclick="closeConfirmModal()">Done</button>
+      <div class="success-wrap">
+        <div class="success-icon"><i class="fas fa-phone-alt"></i></div>
+        <h3>Thank You for Your Interest!</h3>
+        <p>To complete your reservation, please call us directly — our team will confirm your booking right away.</p>
+        <div style="display:flex;flex-direction:column;gap:10px;margin:20px auto 0;align-items:center;">
+          <a href="tel:+255665500118" style="
+            display:inline-flex;align-items:center;gap:10px;
+            background:linear-gradient(135deg,#163316,#2a5a2a);color:#fff;
+            font-size:16px;font-weight:700;padding:13px 26px;border-radius:12px;
+            text-decoration:none;box-shadow:0 4px 14px rgba(22,51,22,0.35);width:100%;justify-content:center;
+          "><i class="fas fa-phone-alt"></i> +255 665 500 118</a>
+          <a href="https://wa.me/255790500168" target="_blank" style="
+            display:inline-flex;align-items:center;gap:10px;
+            background:#25D366;color:#fff;
+            font-size:16px;font-weight:700;padding:13px 26px;border-radius:12px;
+            text-decoration:none;box-shadow:0 4px 14px rgba(37,211,102,0.35);width:100%;justify-content:center;
+          "><i class="fab fa-whatsapp" style="font-size:20px;"></i> +255 790 500 168</a>
+        </div>
+        <p style="margin-top:14px;font-size:12px;color:#94a3b8;">Available daily · We respond immediately</p>
+        <button class="btn-done" onclick="closeSuccessModal()" style="margin-top:14px;">Close</button>
       </div>
     </div>
   </div>
@@ -423,312 +646,152 @@
 
 <script>
   const API = '';
-  let selectedRoom = null;
-  let searchDates  = { checkin: '', checkout: '' };
-  let _roomsCache  = []; // rooms stored here so onclick only passes an index
 
-  // ── Rack Rates 2026-2027 (TSh per room per night) ────────────────
-  const RATES = {
-    standard:  { BB: 100000, HB: 130000, FB: 160000 },
-    single:    { BB: 100000, HB: 130000, FB: 160000 },
-    double:    { BB: 120000, HB: 150000, FB: 180000 },
-    twin:      { BB: 130000, HB: 160000, FB: 190000 },
-    triple:    { BB: 150000, HB: 180000, FB: 210000 },
-    deluxe:    { BB: 160000, HB: 190000, FB: 220000 },
-    executive: { BB: 180000, HB: 210000, FB: 240000 },
-    suite:     { BB: 200000, HB: 230000, FB: 260000 },
-  };
-
-  function getRoomRates(roomType) {
-    const t = (roomType || '').toLowerCase();
-    if (t.includes('suite'))     return RATES.suite;
-    if (t.includes('executive')) return RATES.executive;
-    if (t.includes('deluxe'))    return RATES.deluxe;
-    if (t.includes('triple'))    return RATES.triple;
-    if (t.includes('twin'))      return RATES.twin;
-    if (t.includes('double'))    return RATES.double;
-    if (t.includes('standard'))  return RATES.standard;
-    if (t.includes('single'))    return RATES.single;
-    return RATES.standard; // default fallback
+  // ── Image carousel ─────────────────────────────────────────────────────────
+  function moveSlide(id, dir) {
+    const car  = document.getElementById('car-' + id);
+    const imgs = car.querySelectorAll('.carousel-img');
+    const dots = car.querySelectorAll('.car-dot');
+    let cur    = parseInt(car.dataset.current);
+    imgs[cur].classList.remove('active');
+    dots[cur].classList.remove('active');
+    cur = (cur + dir + imgs.length) % imgs.length;
+    imgs[cur].classList.add('active');
+    dots[cur].classList.add('active');
+    car.dataset.current = cur;
   }
 
-  let _currentRoomRates = { ...RATES.standard };
+  function goSlide(id, idx) {
+    const car  = document.getElementById('car-' + id);
+    const imgs = car.querySelectorAll('.carousel-img');
+    const dots = car.querySelectorAll('.car-dot');
+    const cur  = parseInt(car.dataset.current);
+    imgs[cur].classList.remove('active');
+    dots[cur].classList.remove('active');
+    imgs[idx].classList.add('active');
+    dots[idx].classList.add('active');
+    car.dataset.current = idx;
+  }
 
-  // ── Default dates (today + tomorrow) ──────────────────────────────
+  // ── Availability count ─────────────────────────────────────────────────────
+  async function loadAvailability() {
+    try {
+      const res   = await fetch(`${API}/api/booking/rooms`);
+      const rooms = await res.json();
+      if (!res.ok) throw new Error();
+      const total = rooms.length;
+      const avail = rooms.filter(r => r.available && !r.under_maintenance).length;
+      document.getElementById('avail-number').textContent = avail;
+      document.getElementById('avail-msg').innerHTML = avail > 0
+        ? `<strong>${avail} of ${total}</strong> rooms currently available — send an inquiry and we will reserve one for you`
+        : 'All rooms are currently occupied. Please send an inquiry for your preferred dates.';
+    } catch {
+      document.getElementById('avail-number').textContent = '—';
+      document.getElementById('avail-msg').textContent = 'Contact us directly for availability information';
+    }
+  }
+
+  // ── Default date setup ─────────────────────────────────────────────────────
   (function setDefaultDates() {
     const today    = new Date();
     const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
     const fmt = d => d.toISOString().split('T')[0];
-    document.getElementById('s-checkin').value  = fmt(today);
-    document.getElementById('s-checkout').value = fmt(tomorrow);
-    document.getElementById('s-checkin').min    = fmt(today);
-    document.getElementById('s-checkout').min   = fmt(tomorrow);
-    document.getElementById('s-checkin').addEventListener('change', function() {
+    document.getElementById('inq-checkin').value  = fmt(today);
+    document.getElementById('inq-checkout').value = fmt(tomorrow);
+    document.getElementById('inq-checkin').min    = fmt(today);
+    document.getElementById('inq-checkin').addEventListener('change', function() {
       const next = new Date(this.value); next.setDate(next.getDate() + 1);
-      document.getElementById('s-checkout').min   = next.toISOString().split('T')[0];
-      if (document.getElementById('s-checkout').value <= this.value)
-        document.getElementById('s-checkout').value = next.toISOString().split('T')[0];
+      document.getElementById('inq-checkout').min = next.toISOString().split('T')[0];
+      if (document.getElementById('inq-checkout').value <= this.value)
+        document.getElementById('inq-checkout').value = next.toISOString().split('T')[0];
     });
   })();
 
-  // ── Helpers ───────────────────────────────────────────────────────
-  function fmtTSH(v) { return 'TSh ' + Math.round(v || 0).toLocaleString(); }
-  function fmtDate(d) { return new Date(d + 'T00:00:00').toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' }); }
-  function nightsBetween(a, b) { return Math.max(1, Math.round((new Date(b) - new Date(a)) / 86400000)); }
+  function changeQty(spanId, hiddenId, delta, min) {
+    const span   = document.getElementById(spanId);
+    const hidden = document.getElementById(hiddenId);
+    const val    = Math.max(min, parseInt(span.textContent) + delta);
+    span.textContent  = val;
+    hidden.value      = val;
+  }
+
   function showToast(msg, err) {
     const box = document.getElementById('toast-box');
-    const t = document.createElement('div');
-    t.className = 'toast' + (err ? ' error' : '');
+    const t   = document.createElement('div');
+    t.className   = 'toast' + (err ? ' error' : '');
     t.textContent = msg;
     box.appendChild(t);
     setTimeout(() => t.remove(), 4000);
   }
-  function changeQty(id, delta, min) {
-    const el = document.getElementById(id);
-    const v = Math.max(min, parseInt(el.textContent) + delta);
-    el.textContent = v;
-  }
 
-  // ── Search rooms ─────────────────────────────────────────────────
-  async function searchRooms() {
-    const checkin  = document.getElementById('s-checkin').value;
-    const checkout = document.getElementById('s-checkout').value;
-    if (!checkin || !checkout || checkin >= checkout) {
-      showToast('Please select valid check-in and check-out dates', true); return;
-    }
-    searchDates = { checkin, checkout };
-    const container = document.getElementById('rooms-container');
-    container.innerHTML = '<div class="state-box"><i class="fas fa-spinner fa-spin" style="color:#c9933a;"></i><p>Checking availability…</p></div>';
-
-    try {
-      const res  = await fetch(`${API}/api/booking/rooms?checkin=${checkin}&checkout=${checkout}`);
-      const rooms = await res.json();
-      if (!res.ok) throw new Error(rooms.error || 'Failed to load rooms');
-      renderRooms(rooms, checkin, checkout);
-    } catch(e) {
-      container.innerHTML = `<div class="state-box"><i class="fas fa-exclamation-triangle" style="color:#ef4444;"></i><p>${e.message}</p></div>`;
-    }
-  }
-
-  function renderRooms(rooms, checkin, checkout) {
-    const nights   = nightsBetween(checkin, checkout);
-    const header   = document.getElementById('rooms-header');
-    const title    = document.getElementById('rooms-title');
-    const sub      = document.getElementById('rooms-sub');
-    const container= document.getElementById('rooms-container');
-
-    const available = rooms.filter(r => r.available && !r.under_maintenance).length;
-    header.style.display = 'block';
-    title.textContent = `${available} Room${available !== 1 ? 's' : ''} Available`;
-    sub.textContent   = `${fmtDate(checkin)} → ${fmtDate(checkout)}  ·  ${nights} night${nights !== 1 ? 's' : ''}`;
-
-    if (!rooms.length) {
-      container.innerHTML = '<div class="state-box"><i class="fas fa-bed"></i><p>No rooms found.</p></div>';
-      return;
-    }
-
-    _roomsCache = rooms;
-    container.innerHTML = `<div class="rooms-grid">${rooms.map((r, i) => roomCard(r, nights, i)).join('')}</div>`;
-  }
-
-  const ROOM_IMAGES = [
-    '/images/room1.jpeg',
-    '/images/room2.jpeg',
-    '/images/room3.jpeg',
-    '/images/room4.jpg',
-    '/images/room5.jpg',
-    '/images/room6.jpeg',
-  ];
-
-  function roomCard(r, nights, idx) {
-    const avail = r.available && !r.under_maintenance;
-    const rates = getRoomRates(r.type);
-    const bbRate = rates.BB;
-    const total  = bbRate * nights;
-    const statusLabel = r.under_maintenance ? 'Maintenance' : avail ? 'Available' : 'Occupied';
-    const statusClass = avail ? 'available' : 'occupied';
-    const img = ROOM_IMAGES[idx % ROOM_IMAGES.length];
-    return `
-      <div class="room-card${avail ? '' : ' occupied'}">
-        <div class="room-banner">
-          <img src="${img}" alt="${escHtml(r.name)}" loading="lazy" onerror="this.src='/images/room1.jpeg'">
-          <span class="avail-badge ${statusClass}">${statusLabel}</span>
-        </div>
-        <div class="room-body">
-          <div class="room-name">${escHtml(r.name)}</div>
-          <div class="room-type">${escHtml(r.type || 'Standard Room')}</div>
-          <div class="room-meta">
-            <span><i class="fas fa-user-friends"></i> Up to ${r.max_adults || 2} adults</span>
-            <span><i class="fas fa-moon"></i> ${nights} night${nights !== 1 ? 's' : ''}</span>
-          </div>
-          <div class="room-rate">${fmtTSH(bbRate)}<small>/night</small></div>
-          <div class="plan-tags">
-            <span class="plan-tag bb">BB ${fmtTSH(rates.BB)}</span>
-            <span class="plan-tag hb">HB ${fmtTSH(rates.HB)}</span>
-            <span class="plan-tag fb">FB ${fmtTSH(rates.FB)}</span>
-          </div>
-          <button class="btn-book" ${avail ? `onclick="openBooking(${idx},${nights})"` : 'disabled'}>
-            ${avail ? '<i class="fas fa-calendar-plus"></i> Book Now' : '<i class="fas fa-ban"></i> Not Available'}
-          </button>
-        </div>
-      </div>`;
-  }
-
-  function escHtml(s) { return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
-
-  function roomIconHtml(emoji) {
-    if (!emoji) return '<i class="fas fa-bed" style="font-size:52px;color:#1a2340;opacity:0.6;"></i>';
-    // FA class name stored in DB e.g. "fa-home", "fa-bath", "fas fa-home"
-    if (String(emoji).includes('fa-')) {
-      const cls = /^fa[srb] /.test(emoji) ? emoji : 'fas ' + (emoji.startsWith('fa-') ? emoji : 'fa-' + emoji);
-      return `<i class="${cls}" style="font-size:52px;color:#1a2340;opacity:0.75;"></i>`;
-    }
-    // Real emoji character
-    return `<span style="font-size:52px;">${emoji}</span>`;
-  }
-
-  // ── Open booking modal ────────────────────────────────────────────
-  function openBooking(roomIdx, nights) {
-    const room = _roomsCache[roomIdx];
-    if (!room) return;
-    selectedRoom = room;
-    const { checkin, checkout } = searchDates;
-
-    // Look up rates for this specific room type
-    const roomRates = getRoomRates(room.type);
-    _currentRoomRates = roomRates;
-    const rate  = roomRates.BB; // default to BB on open
-    const total = rate * nights;
-
-    const imgSrc = ROOM_IMAGES[(roomIdx || 0) % ROOM_IMAGES.length];
-    document.getElementById('b-emoji').innerHTML = `<img src="${imgSrc}" alt="${escHtml(room.name)}" onerror="this.src='/images/room1.jpeg'">`;
-    document.getElementById('b-name').textContent  = room.name;
-    document.getElementById('b-dates').textContent = `${fmtDate(checkin)} → ${fmtDate(checkout)}`;
-    document.getElementById('b-total').textContent = fmtTSH(total);
-    document.getElementById('b-nights').textContent= `${nights} night${nights!==1?'s':''}`;
-    document.getElementById('b-adults-val').textContent   = document.getElementById('s-adults').value;
-    document.getElementById('b-children-val').textContent = document.getElementById('s-children').value;
-
-    document.getElementById('booking-form').reset();
-
-    // Re-set all fields after reset (reset() clears them)
-    document.getElementById('b-apt-id').value      = room.id;
-    document.getElementById('b-rate').value        = rate;
-    document.getElementById('b-total-input').value = total;
-    document.getElementById('b-balance').value     = total;
-    document.getElementById('b-amount-paid').value = 0;
-    document.getElementById('b-adults-val').textContent   = document.getElementById('s-adults').value;
-    document.getElementById('b-children-val').textContent = document.getElementById('s-children').value;
-
-    // Rebuild rate-type select with prices specific to this room type
-    const rtSel = document.getElementById('b-rate-type');
-    rtSel.innerHTML = '';
-    [
-      ['Bed & Breakfast', `BB – Bed & Breakfast  —  ${fmtTSH(roomRates.BB)}/night`],
-      ['Half Board',      `HB – Half Board  —  ${fmtTSH(roomRates.HB)}/night`],
-      ['Full Board',      `FB – Full Board  —  ${fmtTSH(roomRates.FB)}/night`],
-    ].forEach(([val, label]) => {
-      const opt = document.createElement('option');
-      opt.value = val;
-      opt.textContent = label;
-      rtSel.appendChild(opt);
-    });
-    rtSel.value = 'Bed & Breakfast';
-
-    document.getElementById('booking-modal-overlay').classList.add('open');
+  // ── Modal controls ─────────────────────────────────────────────────────────
+  function openInquiry(roomType, showConfig) {
+    document.getElementById('inq-room-display').textContent = roomType;
+    document.getElementById('inq-room-type').value = roomType;
+    document.getElementById('inq-config-field').style.display = showConfig ? '' : 'none';
+    document.getElementById('inquiry-modal-overlay').classList.add('open');
     document.body.style.overflow = 'hidden';
   }
 
-  function closeBookingModal() {
-    document.getElementById('booking-modal-overlay').classList.remove('open');
+  function closeInquiryModal() {
+    document.getElementById('inquiry-modal-overlay').classList.remove('open');
     document.body.style.overflow = '';
   }
 
-  function recalcTotal() {
-    const rateType = document.getElementById('b-rate-type').value;
-    const rMap = { 'Bed & Breakfast': _currentRoomRates.BB, 'Half Board': _currentRoomRates.HB, 'Full Board': _currentRoomRates.FB };
-    const rate   = rMap[rateType] || _currentRoomRates.BB;
-    const nights = nightsBetween(searchDates.checkin, searchDates.checkout);
-    const total  = rate * nights;
-    document.getElementById('b-rate').value        = rate;
-    document.getElementById('b-total-input').value = total;
-    document.getElementById('b-total').textContent = fmtTSH(total);
-    document.getElementById('b-nights').textContent = `${nights} night${nights !== 1 ? 's' : ''}`;
-    recalcBalance();
+  function closeSuccessModal() {
+    document.getElementById('success-modal-overlay').classList.remove('open');
+    document.body.style.overflow = '';
   }
 
-  function recalcBalance() {
-    const total = parseInt(document.getElementById('b-total-input').value) || 0;
-    const paid  = parseInt(document.getElementById('b-amount-paid').value)  || 0;
-    document.getElementById('b-balance').value = Math.max(0, total - paid);
-  }
-
-  // ── Submit booking ────────────────────────────────────────────────
-  async function submitBooking(e) {
+  // ── Submit inquiry via Web3Forms ───────────────────────────────────────────
+  async function submitInquiry(e) {
     e.preventDefault();
-    const btn = document.getElementById('btn-confirm');
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Confirming…';
+    const checkin  = document.getElementById('inq-checkin').value;
+    const checkout = document.getElementById('inq-checkout').value;
+    if (checkin && checkout && checkin >= checkout) {
+      showToast('Check-out must be after check-in', true);
+      return;
+    }
 
-    const payload = {
-      apt_id:         document.getElementById('b-apt-id').value,
-      checkin:        searchDates.checkin,
-      checkout:       searchDates.checkout,
-      adults:         parseInt(document.getElementById('b-adults-val').textContent),
-      children:       parseInt(document.getElementById('b-children-val').textContent),
-      guest:          document.getElementById('b-guest').value.trim(),
-      email:          document.getElementById('b-email').value.trim(),
-      mobile:         document.getElementById('b-mobile').value.trim(),
-      national_id:    document.getElementById('b-national-id').value.trim(),
-      id_type:        document.getElementById('b-id-type').value,
-      country:        document.getElementById('b-country').value.trim(),
-      city:           document.getElementById('b-city').value.trim(),
-      rate_type:      document.getElementById('b-rate-type').value,
-      total:          parseInt(document.getElementById('b-total-input').value) || 0,
-      amount_paid:    parseInt(document.getElementById('b-amount-paid').value)  || 0,
-      balance:        parseInt(document.getElementById('b-balance').value)      || 0,
-      payment_method: document.getElementById('b-payment-method').value,
-      payment_status: (parseInt(document.getElementById('b-amount-paid').value) >= parseInt(document.getElementById('b-total-input').value)) ? 'paid' : parseInt(document.getElementById('b-amount-paid').value) > 0 ? 'partial' : 'unpaid',
-    };
+    const btn = document.getElementById('btn-send');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending…';
 
     try {
-      const res  = await fetch(`${API}/api/booking/create`, {
+      const data = new FormData(document.getElementById('inquiry-form'));
+      const res  = await fetch('https://api.web3forms.com/submit', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: data
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Booking failed');
-
-      closeBookingModal();
-      document.getElementById('confirm-ref').innerHTML =
-        `<i class="fas fa-hashtag"></i> Booking Reference: <strong>KSR-${String(data.reservationId).padStart(5,'0')}</strong>`;
-      document.getElementById('confirm-modal-overlay').classList.add('open');
-      // Refresh room availability
-      searchRooms();
-    } catch(err) {
-      showToast(err.message, true);
+      const json = await res.json();
+      if (json.success) {
+        closeInquiryModal();
+        document.getElementById('inquiry-form').reset();
+        document.getElementById('inq-adults-val').textContent  = '2';
+        document.getElementById('inq-adults-hidden').value     = '2';
+        document.getElementById('inq-children-val').textContent = '0';
+        document.getElementById('inq-children-hidden').value   = '0';
+        document.getElementById('success-modal-overlay').classList.add('open');
+      } else {
+        showToast(json.message || 'Something went wrong. Please try again.', true);
+      }
+    } catch {
+      showToast('Network error — please check your connection and try again.', true);
     } finally {
       btn.disabled = false;
-      btn.innerHTML = '<i class="fas fa-check-circle"></i> Confirm Reservation';
+      btn.innerHTML = '<i class="fas fa-paper-plane"></i> Send Inquiry';
     }
   }
 
-  function closeConfirmModal() {
-    document.getElementById('confirm-modal-overlay').classList.remove('open');
-    document.body.style.overflow = '';
-  }
-
-  // Close modals on overlay click
-  document.getElementById('booking-modal-overlay').addEventListener('click', function(e) {
-    if (e.target === this) closeBookingModal();
+  // Backdrop click closes modals
+  document.getElementById('inquiry-modal-overlay').addEventListener('click', function(e) {
+    if (e.target === this) closeInquiryModal();
   });
-  document.getElementById('confirm-modal-overlay').addEventListener('click', function(e) {
-    if (e.target === this) closeConfirmModal();
+  document.getElementById('success-modal-overlay').addEventListener('click', function(e) {
+    if (e.target === this) closeSuccessModal();
   });
 
-  // Auto-search on load with default dates
-  window.addEventListener('load', searchRooms);
+  window.addEventListener('load', loadAvailability);
 </script>
 </body>
 </html>
