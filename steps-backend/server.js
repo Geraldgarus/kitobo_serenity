@@ -2529,22 +2529,17 @@ app.post('/api/grn/receive/:poId', async (req, res) => {
         const newQty = currentQty + parseFloat(item.quantity);
         const newQuantityStr = newQty + ' ' + unit;
         
-        // Calculate new average cost
-        const currentTotalValue = currentQty * stockItem.cost;
-        const newTotalValue = currentTotalValue + item.total_price;
-        const newAvgCost = newTotalValue / newQty;
-        
         await client.query(`
-          UPDATE store_items 
-          SET quantity = $1, stock_value = $2, cost = $3 
-          WHERE id = $4
-        `, [newQuantityStr, newQty, Math.round(newAvgCost), stockItem.id]);
+          UPDATE store_items
+          SET quantity = $1, stock_value = $2
+          WHERE id = $3
+        `, [newQuantityStr, newQty, stockItem.id]);
       } else {
-        // Create new item in main store
+        // Create new item in main store (cost/selling price left at 0 — set manually in store)
         await client.query(`
           INSERT INTO store_items (name, category, cost, quantity, stock_value, unit)
-          VALUES ($1, $2, $3, $4, $5, $6)
-        `, [item.item_name, item.category, item.unit_price, item.quantity + ' ' + item.unit, parseFloat(item.quantity), item.unit]);
+          VALUES ($1, $2, 0, $3, $4, $5)
+        `, [item.item_name, item.category, item.quantity + ' ' + item.unit, parseFloat(item.quantity), item.unit]);
       }
     }
     
