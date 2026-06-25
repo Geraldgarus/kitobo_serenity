@@ -68,7 +68,7 @@
     .dropdown-menu button { display: block; width: 100%; padding: 10px 16px; text-align: left; background: none; border: none; cursor: pointer; font-size: 13px; }
     .dropdown-menu button:hover { background: #f8fafc; }
 
-    .main-content { padding: 4px 24px 24px; margin-top: 0; }
+    .main-content { padding: 4px 24px 24px; }
     .filter-bar {
       background: white;
       border-radius: 20px;
@@ -121,41 +121,7 @@
       .sidebar, .navbar, .filter-bar, .btn-print, .btn-gold, .btn-outline { display: none !important; }
       .main-content { padding: 0; margin: 0; }
       .stat-card, .chart-card { break-inside: avoid; page-break-inside: avoid; }
-      .btn-delete { display: none !important; }
     }
-
-    /* ── Mobile Responsiveness ── */
-    @media (max-width: 768px) {
-      .main-content { padding: 8px 12px 20px; }
-      .filter-bar { padding: 12px 14px; gap: 10px; }
-      .filter-group { width: 100%; }
-      .filter-group input, .filter-group select { min-width: unset; width: 100%; }
-      .filter-bar > button { flex: 1; font-size: 12px; padding: 8px 10px; }
-      .stats-row { gap: 10px; }
-      .stat-card { min-width: calc(50% - 5px); flex: none; padding: 14px; }
-      .stat-card .stat-value { font-size: 20px; }
-      .charts-row { flex-direction: column; gap: 12px; }
-      .chart-card { min-width: unset; }
-      .chart-container { height: 220px; }
-      #combined-summary > div:last-child { grid-template-columns: 1fr 1fr !important; }
-      .data-table { font-size: 12px; }
-      .data-table th, .data-table td { padding: 10px 8px; }
-      .data-table th:nth-child(4),
-      .data-table td:nth-child(4) { display: none; }
-      .data-table th:nth-child(5),
-      .data-table td:nth-child(5) { display: none; }
-      .page-subtitle { display: none; }
-      .user-info { display: none; }
-      .btn-add-reservation { display: none; }
-      .navbar { padding: 10px 14px; }
-    }
-    @media (max-width: 480px) {
-      .stat-card { min-width: 100%; }
-      #combined-summary > div:last-child { grid-template-columns: 1fr !important; }
-    }
-
-    .btn-delete { background: #ef4444; color: white; border: none; padding: 5px 12px; border-radius: 20px; cursor: pointer; font-size: 11px; white-space: nowrap; }
-    .btn-delete:hover { background: #dc2626; }
 
     .toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 2000; }
   </style>
@@ -174,7 +140,7 @@
     <button class="sidebar-close-btn" id="sidebar-close-btn"><i class="fas fa-times"></i></button>
   </div>
   
-  <nav class="sidebar-nav">
+    <nav class="sidebar-nav">
     <div class="nav-section-label">Dashboard</div>
     <a href="/dashboard" class="nav-item"><i class="fas fa-tachometer-alt"></i> Overview</a>
     <div class="nav-section-label">Operations</div>
@@ -200,11 +166,10 @@
     <a href="/store-inventory-reports" class="nav-item"><i class="fas fa-boxes"></i> Store Inventory Report</a>
     <a href="/sales-report" class="nav-item active"><i class="fas fa-receipt"></i> Sales Report</a>
     <a href="/housekeeping-report" class="nav-item"><i class="fas fa-soap"></i> Housekeeping Report</a>
-    <a href="/expenses-report" class="nav-item"><i class="fas fa-file-invoice-dollar"></i> Expenses Report</a>
-    <a href="/profit-report" class="nav-item"><i class="fas fa-chart-pie"></i> Profit Report</a>
+    <a href="/financial-report" class="nav-item"><i class="fas fa-chart-pie"></i> Financial Report</a>
     <div class="nav-section-label">Finance</div>
+    <a href="/expenditures" class="nav-item"><i class="fas fa-receipt"></i> Expenditures</a>
     <a href="/expenses" class="nav-item"><i class="fas fa-wallet"></i> Expenses</a>
-
     <div class="nav-section-label">Guests</div>
     <a href="/guest-database" class="nav-item"><i class="fas fa-id-card"></i> Guest Database</a>
     <div class="nav-section-label">Admin</div>
@@ -310,8 +275,8 @@
     <div style="padding: 20px; border-bottom: 1px solid #e2e8f0;"><h3><i class="fas fa-receipt"></i> POS Sales Details (Bar &amp; Restaurant)</h3></div>
     <div style="overflow-x: auto;">
       <table class="data-table" id="sales-table">
-        <thead><tr><th>Date</th><th>Order #</th><th>POS</th><th>Payment Method</th><th>Cashier</th><th>Items</th><th>Total Amount</th><th>Action</th></tr></thead>
-        <tbody id="sales-body"><tr><td colspan="8" class="empty-state">Select a date range and click Apply Filter</td></tr></tbody>
+        <thead><tr><th>Date</th><th>Order #</th><th>POS</th><th>Payment Method</th><th>Cashier</th><th>Items</th><th>Total Amount</th></tr></thead>
+        <tbody id="sales-body"><tr><td colspan="7" class="empty-state">Select a date range and click Apply Filter</td></tr></tbody>
       </table>
     </div>
   </div>
@@ -506,31 +471,10 @@ async function loadSalesReport() {
   }
 
 
-  async function apiDelete(url) {
-    const res = _checkAuth(await fetch(API_BASE + url, { method: 'DELETE', headers: _authHeaders() }));
-    if (!res.ok) throw new Error(await res.text());
-    return res.json();
-  }
-
-  async function deleteSale(id) {
-    if (!confirm('Delete this sale record? This cannot be undone.')) return;
-    try {
-      await apiDelete('/api/sales/' + id);
-      salesData = salesData.filter(s => s.id !== id);
-      renderTable();
-      updateStats();
-      updateBestSellers();
-      updateChart();
-      showToast('Sale deleted successfully', 'success');
-    } catch (err) {
-      showToast('Failed to delete sale: ' + err.message, 'error');
-    }
-  }
-
   function renderTable() {
     const tbody = document.getElementById('sales-body');
     if (!salesData.length) {
-      tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No sales records found for selected date range</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No sales records found for selected date range</td></tr>';
       return;
     }
 
@@ -553,7 +497,6 @@ async function loadSalesReport() {
           <td>${escapeHtml(sale.cashier)}</td>
           <td>${totalItems} units</td>
           <td>${fmtTSH(sale.total)}</td>
-          <td><button class="btn-delete" onclick="deleteSale(${sale.id})"><i class="fas fa-trash-alt"></i></button></td>
         </tr>
       `;
     });
@@ -861,5 +804,4 @@ document.getElementById('cp-form').addEventListener('submit', async function(e) 
 <script src="../js/permissions.js"></script>
 </body>
 </html>
-
 
