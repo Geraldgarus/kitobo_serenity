@@ -2541,25 +2541,25 @@ app.post('/api/grn/receive/:poId', async (req, res) => {
       `, [item.item_name]);
       
       if (existingItem.rows.length > 0) {
-        // Update existing item in main store
+        // Update existing item — stock_value uses the item's selling price (cost column), not buying price
         const stockItem = existingItem.rows[0];
         const currentQtyParts = (stockItem.quantity || '0 units').split(' ');
         const currentQty = parseFloat(currentQtyParts[0]) || 0;
         const unit = currentQtyParts[1] || item.unit;
         const newQty = currentQty + parseFloat(item.quantity);
         const newQuantityStr = newQty + ' ' + unit;
-        
+        const sellingPrice = parseFloat(stockItem.cost) || 0;
+        const newStockValue = Math.round(newQty * sellingPrice);
+
         await client.query(`
-          UPDATE store_items
-          SET quantity = $1, stock_value = $2
-          WHERE id = $3
-        `, [newQuantityStr, newQty, stockItem.id]);
+          UPDATE store_items SET quantity = $1, stock_value = $2 WHERE id = $3
+        `, [newQuantityStr, newStockValue, stockItem.id]);
       } else {
-        // Create new item in main store (cost/selling price left at 0 — set manually in store)
+        // New item — selling price not yet set, stock_value starts at 0 until price is configured
         await client.query(`
           INSERT INTO store_items (name, category, cost, quantity, stock_value, unit)
-          VALUES ($1, $2, 0, $3, $4, $5)
-        `, [item.item_name, item.category, item.quantity + ' ' + item.unit, parseFloat(item.quantity), item.unit]);
+          VALUES ($1, $2, 0, $3, 0, $4)
+        `, [item.item_name, item.category, item.quantity + ' ' + item.unit, item.unit]);
       }
     }
     
