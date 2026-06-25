@@ -727,16 +727,14 @@
     <a href="/store-inventory-reports" class="nav-item"><i class="fas fa-boxes"></i> Store Inventory Report</a>
     <a href="/sales-report" class="nav-item"><i class="fas fa-receipt"></i> Sales Report</a>
     <a href="/housekeeping-report" class="nav-item"><i class="fas fa-soap"></i> Housekeeping Report</a>
-    <a href="/expenses-report" class="nav-item"><i class="fas fa-file-invoice-dollar"></i> Expenses Report</a>
-    <a href="/profit-report" class="nav-item"><i class="fas fa-chart-pie"></i> Profit Report</a>
     
     
     <!-- ============================================================ -->
     <!-- GUESTS -->
     <!-- ============================================================ -->
     <div class="nav-section-label">Finance</div>
+    <a href="/expenditures" class="nav-item"><i class="fas fa-receipt"></i> Expenditures</a>
     <a href="/expenses" class="nav-item"><i class="fas fa-wallet"></i> Expenses</a>
-
     <div class="nav-section-label">Guests</div>
     <a href="/guest-database" class="nav-item"><i class="fas fa-id-card"></i> Guest Database</a>
     
@@ -1595,11 +1593,11 @@ function escapeHtml(str) {
       html += '<div class="item-list-item" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">';
       html += '<div style="flex:1;min-width:160px;">';
       html += '<strong>' + escapeHtml(item.name) + '</strong><br>';
-      html += '<small style="color:#64748b;">Cat: ' + escapeHtml(item.category || '') + ' &nbsp;|&nbsp; Unit: ' + escapeHtml(item.unit || 'units') + ' &nbsp;|&nbsp; Cost: ' + fmtTSH(item.cost || 0) + '</small>';
+      html += '<small style="color:#64748b;">Cat: ' + escapeHtml(item.category || '') + ' &nbsp;|&nbsp; Unit: ' + escapeHtml(item.unit || 'units') + '</small>';
       html += '</div>';
       html += '<div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">';
       html += '<input type="number" id="item-qty-' + i + '" placeholder="Qty" min="0.01" step="0.01" class="form-control" style="width:75px;padding:6px 8px;border-radius:8px;">';
-      html += '<input type="number" id="item-price-' + i + '" placeholder="Price" min="0" step="1" value="' + (item.cost || 0) + '" class="form-control" style="width:100px;padding:6px 8px;border-radius:8px;">';
+      html += '<input type="number" id="item-price-' + i + '" placeholder="Buying Cost" min="0" step="1" class="form-control" style="width:100px;padding:6px 8px;border-radius:8px;">';
       html += '<button class="btn btn-gold btn-sm" onclick="addItemFromSelector(' + i + ')" style="white-space:nowrap;">Add</button>';
       html += '</div>';
       html += '</div>';
@@ -1613,7 +1611,7 @@ function escapeHtml(str) {
     var qty = parseFloat(document.getElementById('item-qty-' + index).value);
     var price = parseFloat(document.getElementById('item-price-' + index).value);
     if (isNaN(qty) || qty <= 0) { showToast('Enter a valid quantity', 'error'); return; }
-    if (isNaN(price) || price < 0) { showToast('Enter a valid price', 'error'); return; }
+    if (isNaN(price) || price <= 0) { showToast('Enter the buying cost for this item', 'error'); return; }
     if (itemSelectorMode === 'existing') {
       addItemToExistingPOFromList(item, qty, price);
     } else {
@@ -1853,4 +1851,3 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')closePOSChoo
 <script src="../js/permissions.js"></script>
 </body>
 </html>
-
