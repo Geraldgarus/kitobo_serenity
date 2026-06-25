@@ -2479,11 +2479,14 @@ app.post('/api/grn/receive/:poId', async (req, res) => {
     // Apply store-manager overrides for quantity and buying cost before processing
     if (updatedItems && updatedItems.length > 0) {
       for (const ui of updatedItems) {
+        const qty = parseFloat(ui.quantity) || 0;
+        const cost = parseFloat(ui.unit_price) || 0;
+        const total = qty * cost;
         await client.query(`
           UPDATE purchase_order_items
-          SET quantity = $1, unit_price = $2, total_price = $1 * $2
-          WHERE id = $3 AND po_id = $4
-        `, [ui.quantity, ui.unit_price || 0, ui.id, poId]);
+          SET quantity = $1, unit_price = $2, total_price = $3
+          WHERE id = $4 AND po_id = $5
+        `, [qty, cost, total, ui.id, poId]);
       }
       await client.query(`
         UPDATE purchase_orders
