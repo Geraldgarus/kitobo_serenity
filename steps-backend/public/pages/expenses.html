@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -119,8 +119,9 @@
     <a href="/purchase-orders" class="nav-item"><i class="fas fa-file-invoice"></i> Purchase Orders</a>
     <a href="/goods-receipt" class="nav-item"><i class="fas fa-clipboard-list"></i> Goods Receipt</a>
     <div class="nav-section-label">Finance</div>
+    <a href="/expenditures" class="nav-item"><i class="fas fa-receipt"></i> Expenditures</a>
     <a href="/expenses" class="nav-item active"><i class="fas fa-wallet"></i> Expenses</a>
-   
+    <a href="/financial-report" class="nav-item"><i class="fas fa-chart-pie"></i> Financial Report</a>
     <div class="nav-section-label">Reports</div>
     <a href="/reports" class="nav-item"><i class="fas fa-chart-bar"></i> Reservations Report</a>
     <a href="/maintenance-report" class="nav-item"><i class="fas fa-chart-line"></i> Maintenance Report</a>
@@ -129,8 +130,6 @@
     <a href="/store-inventory-reports" class="nav-item"><i class="fas fa-boxes"></i> Store Inventory Report</a>
     <a href="/sales-report" class="nav-item"><i class="fas fa-receipt"></i> Sales Report</a>
     <a href="/housekeeping-report" class="nav-item"><i class="fas fa-soap"></i> Housekeeping Report</a>
-    <a href="/expenses-report" class="nav-item"><i class="fas fa-file-invoice-dollar"></i> Expenses Report</a>
-    <a href="/profit-report" class="nav-item"><i class="fas fa-chart-pie"></i> Profit Report</a>
     <div class="nav-section-label">Guests</div>
     <a href="/guest-database" class="nav-item"><i class="fas fa-id-card"></i> Guest Database</a>
     <div class="nav-section-label">Admin</div>
@@ -261,21 +260,15 @@
             <label><i class="fas fa-pen"></i> Description <span style="color:#ef4444">*</span></label>
             <textarea id="expense-description" class="form-control" rows="2" placeholder="Describe this expense..." required></textarea>
           </div>
-          <div class="form-group-row">
-            <div class="form-group">
-              <label><i class="fas fa-credit-card"></i> Payment Method</label>
-              <select id="expense-payment-method" class="form-control">
-                <option value="cash">Cash</option>
-                <option value="bank">Bank Transfer</option>
-                <option value="card">Card</option>
-                <option value="cheque">Cheque</option>
-                <option value="mobile">Mobile Payment</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label><i class="fas fa-user-tie"></i> Paid To / Vendor</label>
-              <input type="text" id="expense-paid-to" class="form-control" placeholder="e.g. TANESCO, Supplier name...">
-            </div>
+          <div class="form-group">
+            <label><i class="fas fa-credit-card"></i> Payment Method</label>
+            <select id="expense-payment-method" class="form-control">
+              <option value="cash">Cash</option>
+              <option value="bank">Bank Transfer</option>
+              <option value="card">Card</option>
+              <option value="cheque">Cheque</option>
+              <option value="mobile">Mobile Payment</option>
+            </select>
           </div>
           <div class="form-group">
             <label><i class="fas fa-sticky-note"></i> Remarks</label>
@@ -368,7 +361,6 @@ function showForm() {
   document.getElementById('expense-amount').value = '';
   document.getElementById('expense-description').value = '';
   document.getElementById('expense-payment-method').value = 'cash';
-  document.getElementById('expense-paid-to').value = '';
   document.getElementById('expense-remarks').value = '';
   document.getElementById('form-section').classList.add('active');
   document.getElementById('empty-state').style.display = 'none';
@@ -391,7 +383,6 @@ document.getElementById('expense-form').addEventListener('submit', async functio
     amount: parseInt(document.getElementById('expense-amount').value) || 0,
     description: document.getElementById('expense-description').value.trim(),
     paymentMethod: document.getElementById('expense-payment-method').value,
-    paidTo: document.getElementById('expense-paid-to').value.trim(),
     remarks: document.getElementById('expense-remarks').value.trim()
   };
   if (!data.date || !data.category || !data.description || data.amount <= 0) {
@@ -401,11 +392,9 @@ document.getElementById('expense-form').addEventListener('submit', async functio
     if (currentEditId) {
       await apiPut(`/expenses/${currentEditId}`, data);
       showToast('Expense updated!', 'success');
-      addNotification('Expense Updated', `${data.category} — ${fmtTSH(data.amount)}${data.paidTo ? ' | Paid to: ' + data.paidTo : ''}`, 'edit');
     } else {
       await apiPost('/expenses', data);
       showToast('Expense saved!', 'success');
-      addNotification('Expense Recorded', `${data.category} — ${fmtTSH(data.amount)}${data.paidTo ? ' | Paid to: ' + data.paidTo : ''}`, 'new');
     }
     cancelForm();
     loadExpenses();
@@ -471,25 +460,73 @@ async function viewDetails(id) {
     const pm = { cash:'Cash', bank:'Bank Transfer', card:'Card', cheque:'Cheque', mobile:'Mobile Payment' };
 
     document.getElementById('details-content').innerHTML = `
-      <div class="form-header">
-        <h3><i class="fas fa-wallet"></i> Expense Details</h3>
-        <button class="btn btn-outline btn-sm" onclick="closeDetails()"><i class="fas fa-times"></i></button>
+      <!-- Header -->
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;">
+        <div>
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#c9933a;margin-bottom:4px;">
+            <i class="fas fa-wallet" style="margin-right:5px;"></i>Expense Details
+          </div>
+          <div style="font-size:20px;font-weight:800;color:#1e2a3e;">${escapeHtml(exp.expense_number)}</div>
+          <div style="font-size:12px;color:#94a3b8;margin-top:2px;"><i class="fas fa-calendar-alt" style="margin-right:4px;"></i>${d}</div>
+        </div>
+        <button onclick="closeDetails()" style="background:#f1f5f9;border:none;border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:14px;color:#64748b;display:flex;align-items:center;justify-content:center;">
+          <i class="fas fa-times"></i>
+        </button>
       </div>
-      <div class="detail-card">
-        <div class="detail-row"><span class="detail-label">Expense #</span><span class="detail-value">${escapeHtml(exp.expense_number)}</span></div>
-        <div class="detail-row"><span class="detail-label">Date</span><span class="detail-value">${d}</span></div>
-        <div class="detail-row"><span class="detail-label">Category</span><span class="detail-value"><i class="fas ${catIcon(exp.category)}"></i> ${escapeHtml(exp.category)}</span></div>
-        <div class="detail-row"><span class="detail-label">Amount</span><span class="detail-value" style="color:#ef4444;">${fmtTSH(exp.amount)}</span></div>
-        <div class="detail-row"><span class="detail-label">Description</span><span class="detail-value">${escapeHtml(exp.description)}</span></div>
-        <div class="detail-row"><span class="detail-label">Payment Method</span><span class="detail-value">${pm[exp.payment_method] || exp.payment_method || 'Cash'}</span></div>
-        <div class="detail-row"><span class="detail-label">Paid To / Vendor</span><span class="detail-value">${escapeHtml(exp.paid_to) || '—'}</span></div>
-        <div class="detail-row"><span class="detail-label">Remarks</span><span class="detail-value">${escapeHtml(exp.remarks) || '—'}</span></div>
-        <div class="detail-row"><span class="detail-label">Recorded</span><span class="detail-value">${exp.created_at ? new Date(exp.created_at).toLocaleString() : '—'}</span></div>
+
+      <!-- Amount hero -->
+      <div style="background:linear-gradient(135deg,#fff1f2,#ffe4e6);border:1.5px solid #fecaca;border-radius:16px;padding:20px 24px;margin-bottom:20px;text-align:center;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#ef4444;margin-bottom:6px;">Total Amount</div>
+        <div style="font-size:34px;font-weight:900;color:#dc2626;">${fmtTSH(exp.amount)}</div>
+        <div style="margin-top:8px;">
+          <span style="display:inline-block;background:#fff;border:1px solid #e2e8f0;border-radius:20px;padding:3px 12px;font-size:11px;font-weight:600;color:#374151;">
+            <i class="fas ${catIcon(exp.category)}" style="margin-right:4px;color:#c9933a;"></i>${(exp.category||'').charAt(0).toUpperCase()+(exp.category||'').slice(1)}
+          </span>
+        </div>
       </div>
-      <div style="display:flex; gap:10px; margin-top:20px;">
-        <button class="btn btn-gold"    onclick="openEdit(${exp.id})" style="flex:1"><i class="fas fa-edit"></i> Edit</button>
-        <button class="btn btn-danger"  onclick="deleteExpense(${exp.id})" style="flex:1"><i class="fas fa-trash-alt"></i> Delete</button>
-        <button class="btn btn-outline" onclick="closeDetails()" style="flex:1">Close</button>
+
+      <!-- Info grid -->
+      <div style="background:#f8fafc;border-radius:14px;padding:18px;margin-bottom:16px;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#94a3b8;margin-bottom:14px;">Transaction Info</div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+          <div>
+            <div style="font-size:11px;color:#94a3b8;font-weight:500;margin-bottom:3px;">Payment Method</div>
+            <div style="font-size:13px;font-weight:700;color:#1e2a3e;"><i class="fas fa-credit-card" style="color:#c9933a;margin-right:5px;"></i>${pm[exp.payment_method] || exp.payment_method || 'Cash'}</div>
+          </div>
+          <div>
+            <div style="font-size:11px;color:#94a3b8;font-weight:500;margin-bottom:3px;">Paid To</div>
+            <div style="font-size:13px;font-weight:700;color:#1e2a3e;"><i class="fas fa-user" style="color:#c9933a;margin-right:5px;"></i>${escapeHtml(exp.paid_to) || '—'}</div>
+          </div>
+          <div>
+            <div style="font-size:11px;color:#94a3b8;font-weight:500;margin-bottom:3px;">Recorded At</div>
+            <div style="font-size:12px;font-weight:600;color:#1e2a3e;">${exp.created_at ? new Date(exp.created_at).toLocaleString() : '—'}</div>
+          </div>
+          <div>
+            <div style="font-size:11px;color:#94a3b8;font-weight:500;margin-bottom:3px;">Recorded By</div>
+            <div style="font-size:13px;font-weight:700;color:#1e2a3e;"><i class="fas fa-user-circle" style="color:#c9933a;margin-right:5px;"></i>${escapeHtml(exp.created_by) || '—'}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Description -->
+      <div style="background:#f8fafc;border-radius:14px;padding:18px;margin-bottom:16px;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#94a3b8;margin-bottom:8px;">Description</div>
+        <div style="font-size:13px;color:#1e2a3e;font-weight:500;line-height:1.6;">${escapeHtml(exp.description) || '—'}</div>
+      </div>
+
+      ${exp.remarks ? `
+      <!-- Remarks -->
+      <div style="background:#fffbf4;border:1px solid #fde68a;border-radius:14px;padding:18px;margin-bottom:16px;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#d97706;margin-bottom:8px;"><i class="fas fa-sticky-note" style="margin-right:4px;"></i>Remarks</div>
+        <div style="font-size:13px;color:#92400e;font-weight:500;line-height:1.6;">${escapeHtml(exp.remarks)}</div>
+      </div>` : ''}
+
+      <!-- Actions -->
+      <div style="display:flex;gap:10px;margin-top:4px;">
+        <button class="btn btn-gold"   onclick="openEdit(${exp.id})" style="flex:1;"><i class="fas fa-edit"></i> Edit</button>
+        <button class="btn btn-danger" onclick="deleteExpense(${exp.id})" style="flex:1;"><i class="fas fa-trash-alt"></i> Delete</button>
+        <button class="btn btn-outline" onclick="closeDetails()" style="flex:1;">Close</button>
       </div>`;
 
     document.getElementById('form-section').classList.remove('active');
@@ -517,7 +554,6 @@ async function openEdit(id) {
     document.getElementById('expense-amount').value = exp.amount || '';
     document.getElementById('expense-description').value = exp.description || '';
     document.getElementById('expense-payment-method').value = exp.payment_method || 'cash';
-    document.getElementById('expense-paid-to').value = exp.paid_to || '';
     document.getElementById('expense-remarks').value = exp.remarks || '';
     document.getElementById('details-view').style.display = 'none';
     document.getElementById('empty-state').style.display = 'none';
@@ -530,10 +566,8 @@ async function openEdit(id) {
 async function deleteExpense(id) {
   if (!confirm('Delete this expense record?')) return;
   try {
-    const exp = expenses.find(e => e.id === id) || {};
     await apiDelete(`/expenses/${id}`);
     showToast('Expense deleted', 'success');
-    addNotification('Expense Deleted', `${exp.category || 'Record'} — ${fmtTSH(exp.amount || 0)} removed`, 'delete');
     closeDetails();
     loadExpenses();
   } catch(err) {
@@ -612,58 +646,7 @@ if (userPill) {
   document.addEventListener('click', () => { dropdownMenu.classList.remove('show'); if (userPill) userPill.classList.remove('active'); });
 }
 
-// ── Notification System (localStorage) ───────────────────────
-const NOTIF_KEY = 'pms_notifications';
-const typeIcon  = { new: '💰', edit: '✏️', delete: '🗑️', warning: '⚠️', info: 'ℹ️' };
-const typeBg    = { new: '#d1fae5', edit: '#dbeafe', delete: '#fee2e2', warning: '#fef3c7', info: '#f3f4f6' };
-
-function getNotifications() { try { return JSON.parse(localStorage.getItem(NOTIF_KEY)) || []; } catch(e) { return []; } }
-function saveNotifications(list) { localStorage.setItem(NOTIF_KEY, JSON.stringify(list.slice(0, 50))); }
-
-function addNotification(title, body, type) {
-  const list = getNotifications();
-  list.unshift({ id: Date.now(), title, body, type: type || 'info', time: new Date().toISOString(), read: false });
-  saveNotifications(list);
-  renderNotifications();
-}
-
-function renderNotifications() {
-  const list  = getNotifications();
-  const unread = list.filter(n => !n.read).length;
-  const badge  = document.getElementById('notif-badge');
-  const el     = document.getElementById('notification-list');
-  if (!badge || !el) return;
-  if (unread > 0) { badge.style.display = 'inline-block'; badge.textContent = unread > 9 ? '9+' : unread; }
-  else            { badge.style.display = 'none'; }
-  if (!list.length) { el.innerHTML = '<div class="empty-notifications"><i class="fas fa-inbox"></i> No notifications</div>'; return; }
-  el.innerHTML = list.map(n => {
-    const t = new Date(n.time).toLocaleString();
-    return `<div class="notification-item" style="background:${n.read ? '#fff' : typeBg[n.type] || '#f8fafc'};" onclick="markRead(${n.id})">
-      <div style="display:flex;gap:10px;align-items:flex-start;">
-        <span style="font-size:18px;">${typeIcon[n.type] || 'ℹ️'}</span>
-        <div style="flex:1;">
-          <div style="font-weight:${n.read ? '400' : '600'};color:#1e2a3e;">${n.title}</div>
-          <div style="font-size:12px;color:#64748b;margin-top:2px;">${n.body}</div>
-          <div style="font-size:11px;color:#94a3b8;margin-top:4px;">${t}</div>
-        </div>
-        ${!n.read ? '<span style="width:8px;height:8px;background:#c9933a;border-radius:50%;display:inline-block;flex-shrink:0;margin-top:4px;"></span>' : ''}
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function markRead(id) {
-  const list = getNotifications().map(n => n.id === id ? { ...n, read: true } : n);
-  saveNotifications(list);
-  renderNotifications();
-}
-
-function markAllRead() {
-  saveNotifications(getNotifications().map(n => ({ ...n, read: true })));
-  renderNotifications();
-  showToast('All notifications marked as read', 'success');
-}
-
+// Notifications
 const notifBtn = document.getElementById('notif-btn');
 if (notifBtn) {
   notifBtn.addEventListener('click', e => {
@@ -677,10 +660,7 @@ document.addEventListener('click', function(e) {
   if (panel && btn && !btn.contains(e.target) && !panel.contains(e.target)) panel.classList.remove('show');
 });
 document.getElementById('close-notif-panel')?.addEventListener('click', e => { e.stopPropagation(); document.getElementById('notification-panel').classList.remove('show'); });
-document.getElementById('mark-all-read-btn')?.addEventListener('click', e => { e.stopPropagation(); markAllRead(); });
-
-// Initial render
-renderNotifications();
+document.getElementById('mark-all-read-btn')?.addEventListener('click', e => { e.stopPropagation(); document.getElementById('notif-badge').style.display = 'none'; showToast('All notifications marked as read', 'success'); });
 
 // Expose globals
 window.showForm = showForm; window.cancelForm = cancelForm; window.applyFilters = applyFilters;
@@ -715,4 +695,3 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closePOSChoo
 <script src="../js/permissions.js"></script>
 </body>
 </html>
-
