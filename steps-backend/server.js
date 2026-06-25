@@ -2470,12 +2470,28 @@ app.get('/api/grn/:id', async (req, res) => {
 // POST create GRN from purchase order (Receive goods)
 app.post('/api/grn/receive/:poId', async (req, res) => {
   const { poId } = req.params;
-  const { notes, created_by } = req.body;
-  
+  const { notes, created_by, items: updatedItems } = req.body;
+
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-    
+
+    // Apply store-manager overrides for quantity and buying cost before processing
+    if (updatedItems && updatedItems.length > 0) {
+      for (const ui of updatedItems) {
+        await client.query(`
+          UPDATE purchase_order_items
+          SET quantity = $1, unit_price = $2, total_price = $1 * $2
+          WHERE id = $3 AND po_id = $4
+        `, [ui.quantity, ui.unit_price || 0, ui.id, poId]);
+      }
+      await client.query(`
+        UPDATE purchase_orders
+        SET total_amount = (SELECT COALESCE(SUM(total_price), 0) FROM purchase_order_items WHERE po_id = $1)
+        WHERE id = $1
+      `, [poId]);
+    }
+
     // Get purchase order details
     const poResult = await client.query(`
       SELECT po.*, v.name as vendor_name, v.id as vendor_id
@@ -2483,13 +2499,13 @@ app.post('/api/grn/receive/:poId', async (req, res) => {
       JOIN vendors v ON po.vendor_id = v.id
       WHERE po.id = $1 AND po.status = 'pending'
     `, [poId]);
-    
+
     if (poResult.rows.length === 0) {
       return res.status(404).json({ error: 'Purchase order not found or already processed' });
     }
     const po = poResult.rows[0];
-    
-    // Get PO items
+
+    // Get PO items (with updated quantities/costs applied above)
     const itemsResult = await client.query(`
       SELECT * FROM purchase_order_items WHERE po_id = $1
     `, [poId]);

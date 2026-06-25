@@ -1480,9 +1480,6 @@ function escapeHtml(str) {
       
       itemsHtml += '</tbody></table></div>';
       itemsHtml += '<div class="po-details-actions">';
-      if (data.status === 'pending') {
-        itemsHtml += '<button class="btn btn-success" onclick="receiveGoods(' + data.id + ')" style="background:#16a34a;"><i class="fas fa-check-circle"></i> Confirm Received</button>';
-      }
       itemsHtml += '<button class="btn btn-success" onclick="savePOChanges()"><i class="fas fa-save"></i> Save Changes</button>';
       itemsHtml += '<button class="btn btn-gold" onclick="printPurchaseOrder(' + data.id + ')"><i class="fas fa-print"></i> Print</button>';
       itemsHtml += '<button class="btn btn-outline" onclick="closeDetailsView()">Cancel</button>';
@@ -1622,7 +1619,7 @@ function escapeHtml(str) {
     var qty = parseFloat(document.getElementById('item-qty-' + index).value);
     var price = parseFloat(document.getElementById('item-price-' + index).value);
     if (isNaN(qty) || qty <= 0) { showToast('Enter a valid quantity', 'error'); return; }
-    if (isNaN(price) || price <= 0) { showToast('Enter the buying cost for this item', 'error'); return; }
+    if (isNaN(price) || price < 0) price = 0;
     if (itemSelectorMode === 'existing') {
       addItemToExistingPOFromList(item, qty, price);
     } else {

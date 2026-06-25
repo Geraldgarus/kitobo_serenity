@@ -7,6 +7,7 @@ const fs      = require('fs');
 const jwt = require('jsonwebtoken');
 const { Pool } = require('pg');
 const bcrypt  = require('bcrypt');
+const dns     = require('dns').promises;
 
 const pool    = require('./db/pool');
 
@@ -39,6 +40,9 @@ async function ensurePaymentColumns() {
     await pool.query(`
       ALTER TABLE sales_orders ADD COLUMN IF NOT EXISTS pos_type VARCHAR(50);
       ALTER TABLE sales_orders ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50) DEFAULT 'Cash';
+    `);
+    await pool.query(`
+      ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS category VARCHAR(100) DEFAULT 'other';
     `);
     await pool.query(`
       CREATE TABLE IF NOT EXISTS menu_items (
@@ -98,24 +102,17 @@ async function setupDatabase() {
     return;
   }
   
-  const dbPool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false }
-  });
-  
   try {
     const schemaPath = path.join(__dirname, 'db', 'schema.sql');
     if (fs.existsSync(schemaPath)) {
       const schema = fs.readFileSync(schemaPath, 'utf8');
-      await dbPool.query(schema);
+      await pool.query(schema);
       console.log('✅ Database tables are ready!');
     } else {
       console.log('⚠️ schema.sql not found at:', schemaPath);
     }
   } catch (err) {
     console.log('⚠️ Database setup note:', err.message);
-  } finally {
-    await dbPool.end();
   }
 }
 
@@ -157,7 +154,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-change-this';
 // Middleware to protect API routes
 function protectAPI(req, res, next) {
   // Skip authentication for login and register
-  if (req.path === '/auth/login' || req.path === '/auth/register') {
+  if (req.path === '/auth/login' || req.path === '/auth/register' || req.path === '/auth/validate-email' || req.path.startsWith('/booking/')) {
     return next();
   }
   
@@ -191,7 +188,7 @@ const pages = [
   'store-housekeeping', 'store-kitchen', 'store-public', 'users', 'users1',
   'activity-logs', 'register', 'back-office', 'index2', 'purchase-orders', 'goods-receipt',
   'purchase-orders-reports', 'goods-receipt-reports', 'store-inventory-reports', 
-  'point-of-sale', 'bar', 'restaurant', 'sales-report',  'staff-activities', 'staff-activities-report','add-reservation','guest-database','maintenance','daily-activities', 'expenditures',  'daily-activities-report','financial-report',  'maintenance-report', 'housekeeping-report', 'permissions'
+  'point-of-sale', 'bar', 'restaurant', 'sales-report',  'staff-activities', 'staff-activities-report','add-reservation','guest-database','maintenance','daily-activities', 'expenditures', 'expenses', 'expenses-report', 'profit-report', 'daily-activities-report','financial-report',  'maintenance-report', 'housekeeping-report', 'permissions', 'booking'
 
 ];
 
@@ -210,6 +207,184 @@ app.get('/login', (req, res) => {
 // Redirect root to login
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// ── Public Booking Engine ─────────────────────────────────────────────────────
+
+// GET /api/booking/rooms?checkin=YYYY-MM-DD&checkout=YYYY-MM-DD
+app.get('/api/booking/rooms', async (req, res) => {
+  const { checkin, checkout } = req.query;
+  try {
+    let query, params;
+    if (checkin && checkout) {
+      query = `
+        SELECT a.*,
+          NOT EXISTS (
+            SELECT 1 FROM reservations r
+            WHERE r.apt_id = a.id
+              AND r.checkin  < $2::date
+              AND r.checkout > $1::date
+          ) AS available
+        FROM apartments a
+        ORDER BY a.type, a.name
+      `;
+      params = [checkin, checkout];
+    } else {
+      query = `SELECT *, true AS available FROM apartments ORDER BY type, name`;
+      params = [];
+    }
+    const { rows } = await pool.query(query, params);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/booking/create  — public, inserts directly into reservations
+app.post('/api/booking/create', async (req, res) => {
+  const {
+    apt_id, checkin, checkout, adults, children,
+    guest, email, mobile, national_id, id_type, country, city,
+    rate_type, total, amount_paid, payment_method, payment_status
+  } = req.body;
+  const identification = national_id || null;
+  const balance = Math.max(0, (total || 0) - (amount_paid || 0));
+
+  if (!apt_id || !checkin || !checkout || !guest || !email || !mobile) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+
+  try {
+    // Re-check availability to prevent double-booking
+    const { rows: conflict } = await pool.query(`
+      SELECT id FROM reservations
+      WHERE apt_id = $1 AND checkin < $3::date AND checkout > $2::date
+    `, [apt_id, checkin, checkout]);
+    if (conflict.length > 0) {
+      return res.status(409).json({ error: 'Room is no longer available for the selected dates. Please choose different dates.' });
+    }
+
+    const { rows } = await pool.query(`
+      INSERT INTO reservations
+        (apt_id, checkin, checkout, adults, children,
+         guest, email, mobile, identification, id_type, country, city,
+         rate_type, total, amount_paid, balance, payment_method, payment_status, booked_by)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,'website')
+      RETURNING id
+    `, [
+      apt_id, checkin, checkout,
+      adults || 1, children || 0,
+      guest, email, mobile,
+      identification, id_type || 'NIDA',
+      country || null, city || null,
+      rate_type || 'Bed & Breakfast',
+      total || 0, amount_paid || 0, balance,
+      payment_method || 'Pending', payment_status || 'unpaid'
+    ]);
+
+    const reservationId = rows[0].id;
+    const refNo = `KSR-${String(reservationId).padStart(5, '0')}`;
+
+    // Send email notification via Formspree (non-blocking)
+    const formspreeUrl = process.env.FORMSPREE_URL;
+    if (formspreeUrl && !formspreeUrl.includes('YOUR_FORM_ID')) {
+      fetch(formspreeUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({
+          _subject: `New Booking ${refNo} – ${guest}`,
+          _replyto: email,
+          'Booking Reference': refNo,
+          'Guest Name':        guest,
+          'Email':             email,
+          'Mobile':            mobile,
+          'Room ID':           apt_id,
+          'Check-in':          checkin,
+          'Check-out':         checkout,
+          'Nights':            Math.round((new Date(checkout) - new Date(checkin)) / 86400000),
+          'Adults':            adults || 1,
+          'Children':          children || 0,
+          'Rate Type':         rate_type || 'Bed & Breakfast',
+          'Total Amount':      `TSh ${(total || 0).toLocaleString()}`,
+          'Amount Paid':       `TSh ${(amount_paid || 0).toLocaleString()}`,
+          'Balance Due':       `TSh ${balance.toLocaleString()}`,
+          'Payment Method':    payment_method || 'Pending',
+          'Payment Status':    payment_status || 'unpaid',
+          'National ID':       identification || '—',
+          'Country':           country || '—',
+          'City':              city || '—',
+          'Booked Via':        'Website Booking Engine',
+        })
+      }).catch(err => console.error('Formspree notification failed:', err.message));
+    }
+
+    res.json({ success: true, reservationId });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Room Inquiry — public, sends email notification ──────────────────────────
+app.post('/api/booking/inquiry', async (req, res) => {
+  const { name, email, phone, checkin, checkout, adults, children, room_type, rate_type, message } = req.body;
+
+  if (!name || !email || !phone) {
+    return res.status(400).json({ error: 'Name, email, and phone number are required' });
+  }
+
+  console.log('📧 New Room Inquiry:', { name, email, phone, room_type, checkin, checkout });
+
+  // Send notification via Formspree (non-blocking)
+  const formspreeUrl = process.env.FORMSPREE_URL;
+  if (formspreeUrl && !formspreeUrl.includes('YOUR_FORM_ID')) {
+    fetch(formspreeUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({
+        _subject:                     `Room Inquiry from ${name} – Kitobo Serenity Resort`,
+        _replyto:                     email,
+        'Guest Name':                 name,
+        'Email':                      email,
+        'Phone':                      phone,
+        'Preferred Check-in':         checkin  || 'Not specified',
+        'Preferred Check-out':        checkout || 'Not specified',
+        'Adults':                     adults   || 1,
+        'Children':                   children || 0,
+        'Room Type':                  room_type  || 'Not specified',
+        'Rate Type':                  rate_type  || 'Not specified',
+        'Message / Special Requests': message  || '—',
+        'Source':                     'Website Inquiry Form',
+      })
+    }).catch(err => console.error('Formspree inquiry failed:', err.message));
+  }
+
+  res.json({ success: true });
+});
+
+// ── Email domain validation (no auth required) ───────────────────────────────
+app.get('/api/auth/validate-email', async (req, res) => {
+  const { email } = req.query;
+  if (!email) return res.json({ valid: false, reason: 'No email provided' });
+
+  const fmt = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+  if (!fmt.test(email)) return res.json({ valid: false, reason: 'Invalid email format' });
+
+  const domain = email.split('@')[1].toLowerCase();
+
+  // Common typos / obviously fake domains
+  const blocklist = ['example.com', 'test.com', 'fake.com', 'invalid.com', 'noemail.com'];
+  if (blocklist.includes(domain)) return res.json({ valid: false, reason: 'Email domain is not accepted' });
+
+  try {
+    const records = await dns.resolveMx(domain);
+    if (records && records.length > 0) {
+      res.json({ valid: true });
+    } else {
+      res.json({ valid: false, reason: 'Email domain has no mail servers' });
+    }
+  } catch {
+    res.json({ valid: false, reason: 'Email domain does not exist' });
+  }
 });
 
 // ── Health check ─────────────────────────────────────────────────────────────
@@ -859,12 +1034,23 @@ app.put('/api/store/items/:id', async (req, res) => {
 // DELETE main store item
 app.delete('/api/store/items/:id', async (req, res) => {
   const { id } = req.params;
+  const client = await pool.connect();
   try {
-    const { rowCount } = await pool.query('DELETE FROM store_items WHERE id = $1', [id]);
-    if (rowCount === 0) return res.status(404).json({ error: 'Item not found' });
+    await client.query('BEGIN');
+    // Remove linked sales_items records first to satisfy the foreign key constraint
+    await client.query('DELETE FROM sales_items WHERE item_id = $1', [id]);
+    const { rowCount } = await client.query('DELETE FROM store_items WHERE id = $1', [id]);
+    if (rowCount === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Item not found' });
+    }
+    await client.query('COMMIT');
     res.json({ message: 'Item deleted' });
   } catch (err) {
+    await client.query('ROLLBACK');
     res.status(500).json({ error: err.message });
+  } finally {
+    client.release();
   }
 });
 
@@ -2025,32 +2211,32 @@ app.get('/api/purchase-orders/:id', async (req, res) => {
 
 // POST create new purchase order
 app.post('/api/purchase-orders', async (req, res) => {
-  const { vendor_id, order_date, notes, items, created_by } = req.body;
-  
+  const { vendor_id, order_date, notes, items, created_by, category } = req.body;
+
   if (!vendor_id || !items || items.length === 0) {
     return res.status(400).json({ error: 'Vendor and at least one item required' });
   }
-  
+
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-    
+
     // Generate PO number
     const dateStr = new Date().toISOString().slice(0,10).replace(/-/g, '');
     const countResult = await client.query('SELECT COUNT(*) FROM purchase_orders');
     const poNumber = `PO-${dateStr}-${(parseInt(countResult.rows[0].count) + 1).toString().padStart(4, '0')}`;
-    
+
     // Calculate total amount
     let totalAmount = 0;
     for (const item of items) {
       totalAmount += item.unit_price * item.quantity;
     }
-    
+
     // Insert purchase order
     const poResult = await client.query(`
-      INSERT INTO purchase_orders (po_number, vendor_id, order_date, status, total_amount, notes, created_by)
-      VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *
-    `, [poNumber, vendor_id, order_date || new Date().toISOString().slice(0,10), 'pending', totalAmount, notes || null, created_by || 'system']);
+      INSERT INTO purchase_orders (po_number, vendor_id, order_date, status, total_amount, notes, created_by, category)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *
+    `, [poNumber, vendor_id, order_date || new Date().toISOString().slice(0,10), 'pending', totalAmount, notes || null, created_by || 'system', category || 'other']);
     
     const poId = poResult.rows[0].id;
     
@@ -2284,12 +2470,28 @@ app.get('/api/grn/:id', async (req, res) => {
 // POST create GRN from purchase order (Receive goods)
 app.post('/api/grn/receive/:poId', async (req, res) => {
   const { poId } = req.params;
-  const { notes, created_by } = req.body;
-  
+  const { notes, created_by, items: updatedItems } = req.body;
+
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-    
+
+    // Apply store-manager overrides for quantity and buying cost before processing
+    if (updatedItems && updatedItems.length > 0) {
+      for (const ui of updatedItems) {
+        await client.query(`
+          UPDATE purchase_order_items
+          SET quantity = $1, unit_price = $2, total_price = $1 * $2
+          WHERE id = $3 AND po_id = $4
+        `, [ui.quantity, ui.unit_price || 0, ui.id, poId]);
+      }
+      await client.query(`
+        UPDATE purchase_orders
+        SET total_amount = (SELECT COALESCE(SUM(total_price), 0) FROM purchase_order_items WHERE po_id = $1)
+        WHERE id = $1
+      `, [poId]);
+    }
+
     // Get purchase order details
     const poResult = await client.query(`
       SELECT po.*, v.name as vendor_name, v.id as vendor_id
@@ -2297,13 +2499,13 @@ app.post('/api/grn/receive/:poId', async (req, res) => {
       JOIN vendors v ON po.vendor_id = v.id
       WHERE po.id = $1 AND po.status = 'pending'
     `, [poId]);
-    
+
     if (poResult.rows.length === 0) {
       return res.status(404).json({ error: 'Purchase order not found or already processed' });
     }
     const po = poResult.rows[0];
-    
-    // Get PO items
+
+    // Get PO items (with updated quantities/costs applied above)
     const itemsResult = await client.query(`
       SELECT * FROM purchase_order_items WHERE po_id = $1
     `, [poId]);
@@ -2346,22 +2548,17 @@ app.post('/api/grn/receive/:poId', async (req, res) => {
         const newQty = currentQty + parseFloat(item.quantity);
         const newQuantityStr = newQty + ' ' + unit;
         
-        // Calculate new average cost
-        const currentTotalValue = currentQty * stockItem.cost;
-        const newTotalValue = currentTotalValue + item.total_price;
-        const newAvgCost = newTotalValue / newQty;
-        
         await client.query(`
-          UPDATE store_items 
-          SET quantity = $1, stock_value = $2, cost = $3 
-          WHERE id = $4
-        `, [newQuantityStr, newQty, Math.round(newAvgCost), stockItem.id]);
+          UPDATE store_items
+          SET quantity = $1, stock_value = $2
+          WHERE id = $3
+        `, [newQuantityStr, newQty, stockItem.id]);
       } else {
-        // Create new item in main store
+        // Create new item in main store (cost/selling price left at 0 — set manually in store)
         await client.query(`
           INSERT INTO store_items (name, category, cost, quantity, stock_value, unit)
-          VALUES ($1, $2, $3, $4, $5, $6)
-        `, [item.item_name, item.category, item.unit_price, item.quantity + ' ' + item.unit, parseFloat(item.quantity), item.unit]);
+          VALUES ($1, $2, 0, $3, $4, $5)
+        `, [item.item_name, item.category, item.quantity + ' ' + item.unit, parseFloat(item.quantity), item.unit]);
       }
     }
     
@@ -2369,7 +2566,24 @@ app.post('/api/grn/receive/:poId', async (req, res) => {
     await client.query(`
       UPDATE purchase_orders SET status = 'received', received_status = 'received', grn_id = $1 WHERE id = $2
     `, [grn.id, poId]);
-    
+
+    // Auto-create expense entry for this purchase
+    const expCount = await client.query('SELECT COUNT(*) FROM expenses');
+    const expDateStr = new Date().toISOString().slice(0,10).replace(/-/g, '');
+    const expNumber = `EXP-${expDateStr}-${(parseInt(expCount.rows[0].count) + 1).toString().padStart(4, '0')}`;
+    await client.query(`
+      INSERT INTO expenses (expense_number, category, description, amount, expense_date, payment_method, paid_to, remarks, created_by)
+      VALUES ($1, $2, $3, $4, CURRENT_DATE, 'cash', $5, $6, $7)
+    `, [
+      expNumber,
+      po.category || 'other',
+      `Purchase Order ${po.po_number} received`,
+      Math.round(po.total_amount),
+      po.vendor_name,
+      `Auto-created from PO ${po.po_number}`,
+      created_by || 'system'
+    ]);
+
     await client.query('COMMIT');
     
     res.status(201).json({ 
@@ -2709,6 +2923,26 @@ app.get('/api/sales/top-products', async (req, res) => {
 
 
 
+// DELETE /api/sales/:id - Delete a sales order and its items
+app.delete('/api/sales/:id', async (req, res) => {
+  const { id } = req.params;
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    await client.query('DELETE FROM sales_items WHERE sale_id = $1', [id]);
+    const { rowCount } = await client.query('DELETE FROM sales_orders WHERE id = $1', [id]);
+    if (rowCount === 0) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'Sale not found' }); }
+    await client.query('COMMIT');
+    res.json({ message: 'Sale deleted successfully' });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('Delete sale error:', err);
+    res.status(500).json({ error: err.message });
+  } finally {
+    client.release();
+  }
+});
+
 // ============================================================
 // LAUNDRY SERVICES API
 // ============================================================
@@ -3006,16 +3240,20 @@ app.post('/api/permissions', async (req, res) => {
   }
 });
 
-// Run database setup, then start server
-// Run database setup, then ensure payment columns, then start server
-setupDatabase().then(async () => {
-  await ensurePaymentColumns();
-  app.listen(PORT, () => {
-    console.log(`✅ Kitobo Serenity Resort API running on http://localhost:${PORT}`);
-    console.log(`📄 Clean URLs enabled - access pages without .html`);
-    console.log(`   Example: http://localhost:${PORT}/dashboard`);
-  });
-}).catch(err => {
+// Run all migrations sequentially (one connection at a time) then start server
+setupDatabase()
+  .then(() => ensurePaymentColumns())
+  .then(() => createMaintenanceTable())
+  .then(() => createStaffActivitiesTable())
+  .then(() => createExpendituresTable())
+  .then(() => createExpensesTable())
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`✅ Kitobo Serenity Resort API running on http://localhost:${PORT}`);
+      console.log(`📄 Clean URLs enabled - access pages without .html`);
+      console.log(`   Example: http://localhost:${PORT}/dashboard`);
+    });
+  }).catch(err => {
   console.error('Failed to setup database:', err);
   process.exit(1);
 });
@@ -3100,9 +3338,6 @@ async function createMaintenanceTable() {
     console.log('Maintenance records table note:', err.message);
   }
 }
-
-// Call this after database connection
-createMaintenanceTable();
 
 // GET all maintenance records (with filters)
 app.get('/api/maintenance', async (req, res) => {
@@ -3312,8 +3547,6 @@ async function createStaffActivitiesTable() {
   }
 }
 
-createStaffActivitiesTable();
-
 // GET all staff activities (with filters)
 app.get('/api/staff-activities', async (req, res) => {
   const { from, to, preparedBy } = req.query;
@@ -3456,8 +3689,6 @@ async function createExpendituresTable() {
   }
 }
 
-createExpendituresTable();
-
 // GET all expenditures
 app.get('/api/expenditures', async (req, res) => {
   const { from, to, category } = req.query;
@@ -3559,6 +3790,153 @@ app.delete('/api/expenditures/:id', async (req, res) => {
     if (rowCount === 0) return res.status(404).json({ error: 'Expenditure not found' });
     res.json({ message: 'Expenditure deleted successfully' });
   } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ============================================================
+// EXPENSES
+// ============================================================
+
+async function createExpensesTable() {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS expenses (
+        id SERIAL PRIMARY KEY,
+        expense_number VARCHAR(50) NOT NULL UNIQUE,
+        category VARCHAR(100) NOT NULL,
+        description TEXT NOT NULL,
+        amount INT NOT NULL,
+        expense_date DATE NOT NULL,
+        payment_method VARCHAR(50) DEFAULT 'cash',
+        paid_to VARCHAR(200),
+        remarks TEXT,
+        created_by VARCHAR(100),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    // Safe migration: add paid_to to existing databases that predate this column
+    await pool.query(`ALTER TABLE expenses ADD COLUMN IF NOT EXISTS paid_to VARCHAR(200)`);
+    console.log('✅ Expenses table ready');
+  } catch (err) {
+    console.log('Expenses table note:', err.message);
+  }
+}
+
+// GET all expenses
+app.get('/api/expenses', async (req, res) => {
+  const { from, to, category } = req.query;
+  let query = 'SELECT * FROM expenses WHERE 1=1';
+  const params = [];
+  let paramCount = 1;
+  if (from) { query += ` AND expense_date >= $${paramCount++}::date`; params.push(from); }
+  if (to)   { query += ` AND expense_date <= $${paramCount++}::date`; params.push(to); }
+  if (category && category !== '') { query += ` AND category = $${paramCount++}`; params.push(category); }
+  query += ' ORDER BY expense_date DESC, id DESC';
+  try {
+    const { rows } = await pool.query(query, params);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET single expense
+app.get('/api/expenses/:id', async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM expenses WHERE id = $1', [req.params.id]);
+    if (rows.length === 0) return res.status(404).json({ error: 'Expense not found' });
+    res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST create expense
+app.post('/api/expenses', async (req, res) => {
+  const { date, expenseNumber, category, description, amount, paymentMethod, paidTo, remarks } = req.body;
+  if (!date || !category || !description || !amount) {
+    return res.status(400).json({ error: 'Date, category, description, and amount are required' });
+  }
+  try {
+    const { rows } = await pool.query(`
+      INSERT INTO expenses (expense_number, category, description, amount, expense_date, payment_method, paid_to, remarks, created_by)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *
+    `, [expenseNumber, category, description, parseInt(amount), date, paymentMethod || 'cash', paidTo || null, remarks || null, req.body.created_by || 'system']);
+    res.status(201).json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT update expense
+app.put('/api/expenses/:id', async (req, res) => {
+  const { id } = req.params;
+  const { date, category, description, amount, paymentMethod, paidTo, remarks } = req.body;
+  try {
+    const { rows } = await pool.query(`
+      UPDATE expenses SET
+        category = COALESCE($1, category),
+        description = COALESCE($2, description),
+        amount = COALESCE($3, amount),
+        expense_date = COALESCE($4, expense_date),
+        payment_method = COALESCE($5, payment_method),
+        paid_to = $6,
+        remarks = COALESCE($7, remarks),
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = $8 RETURNING *
+    `, [category, description, amount ? parseInt(amount) : null, date, paymentMethod, paidTo || null, remarks, id]);
+    if (rows.length === 0) return res.status(404).json({ error: 'Expense not found' });
+    res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE expense
+app.delete('/api/expenses/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const { rowCount } = await pool.query('DELETE FROM expenses WHERE id = $1', [id]);
+    if (rowCount === 0) return res.status(404).json({ error: 'Expense not found' });
+    res.json({ message: 'Expense deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/reports/profit-summary — all-time totals for profit report
+app.get('/api/reports/profit-summary', async (req, res) => {
+  try {
+    const [reservations, bar, restaurant, expenses] = await Promise.all([
+      pool.query(`SELECT COALESCE(SUM(total), 0)::int AS total, COUNT(*)::int AS count FROM reservations`),
+      pool.query(`SELECT COALESCE(SUM(total_amount), 0)::int AS total, COUNT(*)::int AS count FROM sales_orders WHERE LOWER(pos_type) = 'bar'`),
+      pool.query(`SELECT COALESCE(SUM(total_amount), 0)::int AS total, COUNT(*)::int AS count FROM sales_orders WHERE LOWER(pos_type) = 'restaurant'`),
+      pool.query(`SELECT COALESCE(SUM(amount), 0)::int AS total, COUNT(*)::int AS count FROM expenses`),
+    ]);
+
+    const reservationRevenue  = reservations.rows[0].total;
+    const barRevenue          = bar.rows[0].total;
+    const restaurantRevenue   = restaurant.rows[0].total;
+    const totalExpenses       = expenses.rows[0].total;
+    const totalSales          = reservationRevenue + barRevenue + restaurantRevenue;
+    const profit              = totalSales - totalExpenses;
+
+    res.json({
+      reservationRevenue,
+      reservationCount: reservations.rows[0].count,
+      barRevenue,
+      barCount: bar.rows[0].count,
+      restaurantRevenue,
+      restaurantCount: restaurant.rows[0].count,
+      totalSales,
+      totalExpenses,
+      expenseCount: expenses.rows[0].count,
+      profit,
+    });
+  } catch (err) {
+    console.error('Profit summary error:', err);
     res.status(500).json({ error: err.message });
   }
 });

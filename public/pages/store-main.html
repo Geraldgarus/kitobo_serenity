@@ -553,6 +553,7 @@
       <button class="tab-btn active" data-tab="inventory"><i class="fas fa-box"></i> Inventory</button>
       <button class="tab-btn" data-tab="requests"><i class="fas fa-clipboard-list"></i> Pending Requests</button>
       <button class="tab-btn" data-tab="menu"><i class="fas fa-utensils"></i> Restaurant Menu</button>
+      <button class="tab-btn" data-tab="purchase-orders"><i class="fas fa-file-invoice"></i> Purchase Orders</button>
     </div>
     
     <div id="tab-inventory" class="tab-content active">
@@ -625,6 +626,23 @@
             </thead>
             <tbody id="menu-items-tbody"></tbody>
           </table>
+        </div>
+      </div>
+    </div>
+
+    <div id="tab-purchase-orders" class="tab-content">
+      <div style="display:flex;gap:20px;padding:20px;flex-wrap:wrap;min-height:300px;">
+        <!-- PO list sidebar -->
+        <div style="width:300px;flex-shrink:0;">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:#94a3b8;letter-spacing:1px;margin-bottom:12px;">Pending Purchase Orders</div>
+          <div id="store-po-list"><div style="text-align:center;padding:30px;color:#94a3b8;"><i class="fas fa-spinner fa-spin"></i> Loading…</div></div>
+        </div>
+        <!-- PO detail panel -->
+        <div style="flex:1;min-width:280px;" id="store-po-detail">
+          <div style="text-align:center;padding:50px 20px;color:#94a3b8;">
+            <i class="fas fa-file-invoice" style="font-size:40px;margin-bottom:14px;display:block;opacity:0.4;"></i>
+            <div style="font-size:14px;">Select a purchase order to review and confirm</div>
+          </div>
         </div>
       </div>
     </div>
@@ -1325,7 +1343,8 @@ document.getElementById('excel-file-input')?.addEventListener('change', previewE
       for (var k = 0; k < allTabs.length; k++) allTabs[k].classList.remove('active');
       document.getElementById('tab-' + tabId).classList.add('active');
       if (tabId === 'requests') loadRequests();
-      else if (tabId === 'inventory') renderStoreItemsWithFilter(); // ensure render after filter reset?
+      else if (tabId === 'inventory') renderStoreItemsWithFilter();
+      else if (tabId === 'purchase-orders') loadStorePOs();
     });
   }
 
@@ -1601,6 +1620,98 @@ for (var i = 0; i < filtered.length; i++) {
 }
   async function approveRequest(id) { var authorized = prompt('Enter authorized quantity to transfer (e.g., "5 kg"):'); if (!authorized) return; if (!confirm('Approve request with quantity ' + authorized + '?')) return; try { await apiPut('/store/requests/' + id + '/approve', { authorizedQuantity: authorized }); showToast('Request approved, stock deducted', '<i class="fas fa-check-circle"></i>'); await loadRequests(); await loadStoreItems(); } catch (err) { showToast('Approve failed: ' + err.message, '<i class="fas fa-times-circle"></i>'); } }
   async function rejectRequest(id) { if (!confirm('Reject this request?')) return; try { await apiPut('/store/requests/' + id + '/reject', {}); showToast('Request rejected', '<i class="fas fa-times-circle"></i>'); await loadRequests(); } catch (err) { showToast('Reject failed: ' + err.message, '<i class="fas fa-times-circle"></i>'); } }
+
+  // ── Purchase Orders tab (store manager confirms received) ──
+  var storePOs = [];
+
+  async function loadStorePOs() {
+    var listEl = document.getElementById('store-po-list');
+    listEl.innerHTML = '<div style="text-align:center;padding:30px;color:#94a3b8;"><i class="fas fa-spinner fa-spin"></i> Loading…</div>';
+    try {
+      var pos = await apiGet('/purchase-orders');
+      storePOs = pos.filter(function(p) { return p.status === 'pending'; });
+      renderStorePOs();
+    } catch(e) {
+      listEl.innerHTML = '<div style="text-align:center;padding:30px;color:#ef4444;">Failed to load POs</div>';
+    }
+  }
+
+  function renderStorePOs() {
+    var el = document.getElementById('store-po-list');
+    if (!storePOs.length) {
+      el.innerHTML = '<div style="text-align:center;padding:40px;color:#94a3b8;"><i class="fas fa-inbox" style="font-size:28px;display:block;margin-bottom:10px;opacity:0.4;"></i>No pending purchase orders</div>';
+      return;
+    }
+    var html = '';
+    storePOs.forEach(function(po) {
+      html += '<div onclick="viewStorePODetail(' + po.id + ')" style="background:white;border:1.5px solid #e2e8f0;border-radius:12px;padding:14px 16px;margin-bottom:10px;cursor:pointer;transition:border-color 0.2s;" onmouseover="this.style.borderColor=\'#c9933a\'" onmouseout="this.style.borderColor=\'#e2e8f0\'">'
+        + '<div style="font-weight:700;font-size:13px;color:#c9933a;">' + escapeHtml(po.po_number) + '</div>'
+        + '<div style="font-size:12px;color:#1e2a3e;margin-top:3px;">' + escapeHtml(po.vendor_name) + '</div>'
+        + '<div style="display:flex;justify-content:space-between;margin-top:8px;align-items:center;">'
+        + '<span style="font-size:11px;color:#64748b;">' + new Date(po.order_date).toLocaleDateString() + '</span>'
+        + '<span style="font-size:12px;font-weight:700;color:#1e2a3e;">' + fmtTSH(po.total_amount) + '</span>'
+        + '</div></div>';
+    });
+    el.innerHTML = html;
+  }
+
+  async function viewStorePODetail(poId) {
+    var detailEl = document.getElementById('store-po-detail');
+    detailEl.innerHTML = '<div style="text-align:center;padding:40px;color:#94a3b8;"><i class="fas fa-spinner fa-spin"></i> Loading…</div>';
+    try {
+      var po = await apiGet('/purchase-orders/' + poId);
+      var html = '<div style="background:linear-gradient(135deg,#1a2340,#2d3f6b);border-radius:14px;padding:18px 22px;margin-bottom:18px;">'
+        + '<div style="font-size:10px;color:rgba(255,255,255,0.5);font-weight:700;text-transform:uppercase;letter-spacing:1px;">Purchase Order</div>'
+        + '<div style="font-size:20px;font-weight:800;color:#fff;margin-top:4px;">' + escapeHtml(po.po_number) + '</div>'
+        + '<div style="font-size:12px;color:rgba(255,255,255,0.6);margin-top:4px;">Vendor: ' + escapeHtml(po.vendor_name) + '&nbsp;|&nbsp;Date: ' + new Date(po.order_date).toLocaleDateString() + '</div>'
+        + '<div style="font-size:12px;color:#e8c07a;margin-top:4px;font-weight:600;">Category: ' + escapeHtml((po.category || 'other').charAt(0).toUpperCase() + (po.category || 'other').slice(1)) + '</div>'
+        + '</div>';
+
+      html += '<div style="overflow-x:auto;"><table class="store-table" style="margin-bottom:18px;">'
+        + '<thead><tr><th>Item</th><th>Unit</th><th>Ordered Qty</th><th>Receive Qty</th><th>Buying Cost (TSH)</th></tr></thead>'
+        + '<tbody id="store-po-items">';
+      (po.items || []).forEach(function(item) {
+        html += '<tr>'
+          + '<td><strong>' + escapeHtml(item.item_name) + '</strong></td>'
+          + '<td>' + escapeHtml(item.unit || 'units') + '</td>'
+          + '<td style="text-align:center;">' + item.quantity + '</td>'
+          + '<td><input type="number" id="store-qty-' + item.id + '" value="' + item.quantity + '" min="0.01" step="0.01" class="form-control" style="width:90px;padding:5px 8px;border-radius:8px;text-align:center;"></td>'
+          + '<td><input type="number" id="store-cost-' + item.id + '" value="' + (item.unit_price > 0 ? item.unit_price : '') + '" placeholder="Optional" min="0" step="1" class="form-control" style="width:120px;padding:5px 8px;border-radius:8px;text-align:center;"></td>'
+          + '</tr>';
+      });
+      html += '</tbody></table></div>';
+      html += '<button onclick="confirmReceivedFromStore(' + po.id + ')" style="background:#16a34a;color:white;border:none;padding:13px 0;border-radius:40px;font-weight:700;font-size:14px;cursor:pointer;width:100%;letter-spacing:0.3px;"><i class="fas fa-check-circle"></i> Confirm Received</button>';
+
+      detailEl.innerHTML = html;
+    } catch(e) {
+      detailEl.innerHTML = '<div style="text-align:center;padding:40px;color:#ef4444;">Failed to load PO details: ' + escapeHtml(e.message) + '</div>';
+    }
+  }
+
+  async function confirmReceivedFromStore(poId) {
+    if (!confirm('Confirm receiving this purchase order?\nThis will update Main Store inventory.')) return;
+    var rows = document.querySelectorAll('#store-po-items tr');
+    var items = [];
+    rows.forEach(function(row) {
+      var qtyEl = row.querySelector('input[id^="store-qty-"]');
+      var costEl = row.querySelector('input[id^="store-cost-"]');
+      if (!qtyEl) return;
+      var itemId = parseInt(qtyEl.id.replace('store-qty-', ''));
+      var qty = parseFloat(qtyEl.value) || 0;
+      var cost = parseFloat(costEl ? costEl.value : 0) || 0;
+      if (qty > 0) items.push({ id: itemId, quantity: qty, unit_price: cost });
+    });
+    var user = getCurrentUser();
+    try {
+      await apiPost('/grn/receive/' + poId, { created_by: user ? user.username : 'system', items: items });
+      showToast('Goods received! Main Store inventory updated.', '<i class="fas fa-check-circle"></i>');
+      document.getElementById('store-po-detail').innerHTML = '<div style="text-align:center;padding:50px 20px;"><i class="fas fa-check-circle" style="font-size:42px;color:#10b981;display:block;margin-bottom:14px;"></i><div style="font-size:15px;font-weight:600;color:#1e2a3e;">Received successfully!</div></div>';
+      await loadStorePOs();
+    } catch(e) {
+      showToast('Failed to confirm: ' + escapeHtml(e.message), '<i class="fas fa-times-circle"></i>');
+    }
+  }
+
   function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, function(m) { if (m === '&') return '&amp;'; if (m === '<') return '&lt;'; if (m === '>') return '&gt;'; return m; }); }
 
   document.addEventListener('DOMContentLoaded', function() {
