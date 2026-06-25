@@ -1309,6 +1309,21 @@ app.put('/api/store/requests/:id/approve', async (req, res) => {
     client.release();
   }
 });
+app.put('/api/store/requests/:id/reject', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const { rowCount } = await pool.query(
+      `UPDATE store_requests SET status='rejected', approved_at=NOW() WHERE id=$1 AND status='pending'`,
+      [id]
+    );
+    if (rowCount === 0) return res.status(404).json({ error: 'Request not found or already processed' });
+    res.json({ message: 'Request rejected' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ============================================================
 // OUTLET INVENTORY API
 // ============================================================
