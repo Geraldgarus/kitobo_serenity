@@ -1663,20 +1663,22 @@ for (var i = 0; i < filtered.length; i++) {
       var html = '<div style="background:linear-gradient(135deg,#1a2340,#2d3f6b);border-radius:14px;padding:18px 22px;margin-bottom:18px;">'
         + '<div style="font-size:10px;color:rgba(255,255,255,0.5);font-weight:700;text-transform:uppercase;letter-spacing:1px;">Purchase Order</div>'
         + '<div style="font-size:20px;font-weight:800;color:#fff;margin-top:4px;">' + escapeHtml(po.po_number) + '</div>'
-        + '<div style="font-size:12px;color:rgba(255,255,255,0.6);margin-top:4px;">Vendor: ' + escapeHtml(po.vendor_name) + '&nbsp;|&nbsp;Date: ' + new Date(po.order_date).toLocaleDateString() + '</div>'
-        + '<div style="font-size:12px;color:#e8c07a;margin-top:4px;font-weight:600;">Category: ' + escapeHtml((po.category || 'other').charAt(0).toUpperCase() + (po.category || 'other').slice(1)) + '</div>'
-        + '</div>';
+        + '<div style="font-size:12px;color:rgba(255,255,255,0.6);margin-top:4px;">Vendor: ' + escapeHtml(po.vendor_name) + '&nbsp;&nbsp;|&nbsp;&nbsp;Date: ' + new Date(po.order_date).toLocaleDateString() + '</div>'
+        + '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">'
+        + '<span style="font-size:12px;color:#e8c07a;font-weight:600;">Category: ' + escapeHtml((po.category || 'other').charAt(0).toUpperCase() + (po.category || 'other').slice(1)) + '</span>'
+        + '<span style="font-size:14px;font-weight:800;color:#fff;">Total: ' + fmtTSH(po.total_amount) + '</span>'
+        + '</div></div>';
 
       html += '<div style="overflow-x:auto;"><table class="store-table" style="margin-bottom:18px;">'
-        + '<thead><tr><th>Item</th><th>Unit</th><th>Ordered Qty</th><th>Receive Qty</th><th>Buying Cost (TSH)</th></tr></thead>'
-        + '<tbody id="store-po-items">';
+        + '<thead><tr><th>Item</th><th>Category</th><th>Unit</th><th style="text-align:center;">Qty</th><th style="text-align:right;">Buying Cost</th></tr></thead>'
+        + '<tbody>';
       (po.items || []).forEach(function(item) {
         html += '<tr>'
           + '<td><strong>' + escapeHtml(item.item_name) + '</strong></td>'
+          + '<td>' + escapeHtml(item.category || '—') + '</td>'
           + '<td>' + escapeHtml(item.unit || 'units') + '</td>'
           + '<td style="text-align:center;">' + item.quantity + '</td>'
-          + '<td><input type="number" id="store-qty-' + item.id + '" value="' + item.quantity + '" min="0.01" step="0.01" class="form-control" style="width:90px;padding:5px 8px;border-radius:8px;text-align:center;"></td>'
-          + '<td><input type="number" id="store-cost-' + item.id + '" value="' + (item.unit_price > 0 ? item.unit_price : '') + '" placeholder="Optional" min="0" step="1" class="form-control" style="width:120px;padding:5px 8px;border-radius:8px;text-align:center;"></td>'
+          + '<td style="text-align:right;">' + (item.unit_price > 0 ? fmtTSH(item.unit_price) : '<span style="color:#94a3b8;">—</span>') + '</td>'
           + '</tr>';
       });
       html += '</tbody></table></div>';
@@ -1689,22 +1691,11 @@ for (var i = 0; i < filtered.length; i++) {
   }
 
   async function confirmReceivedFromStore(poId) {
-    if (!confirm('Confirm receiving this purchase order?\nThis will update Main Store inventory.')) return;
-    var rows = document.querySelectorAll('#store-po-items tr');
-    var items = [];
-    rows.forEach(function(row) {
-      var qtyEl = row.querySelector('input[id^="store-qty-"]');
-      var costEl = row.querySelector('input[id^="store-cost-"]');
-      if (!qtyEl) return;
-      var itemId = parseInt(qtyEl.id.replace('store-qty-', ''));
-      var qty = parseFloat(qtyEl.value) || 0;
-      var cost = parseFloat(costEl ? costEl.value : 0) || 0;
-      if (qty > 0) items.push({ id: itemId, quantity: qty, unit_price: cost });
-    });
+    if (!confirm('Confirm receiving this purchase order?\nThis will update Main Store inventory and create an expense entry.')) return;
     var user = getCurrentUser();
     try {
-      await apiPost('/grn/receive/' + poId, { created_by: user ? user.username : 'system', items: items });
-      showToast('Goods received! Main Store inventory updated.', '<i class="fas fa-check-circle"></i>');
+      await apiPost('/grn/receive/' + poId, { created_by: user ? user.username : 'system' });
+      showToast('Goods received! Stock updated and expense recorded.', '<i class="fas fa-check-circle"></i>');
       document.getElementById('store-po-detail').innerHTML = '<div style="text-align:center;padding:50px 20px;"><i class="fas fa-check-circle" style="font-size:42px;color:#10b981;display:block;margin-bottom:14px;"></i><div style="font-size:15px;font-weight:600;color:#1e2a3e;">Received successfully!</div></div>';
       await loadStorePOs();
     } catch(e) {
