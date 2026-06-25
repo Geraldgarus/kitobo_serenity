@@ -700,42 +700,9 @@
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Booking failed');
 
-      const refNo = `KSR-${String(data.reservationId).padStart(5,'0')}`;
-
-      // Send email notification via Web3Forms (fire-and-forget)
-      fetch('https://api.web3forms.com/submit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          access_key: 'd61899ff-0d82-4f4c-823b-f5d3c6e64a37',
-          subject: `New Booking ${refNo} – ${payload.guest} (${selectedRoom ? selectedRoom.name : ''})`,
-          from_name: 'Kitobo Serenity Booking Engine',
-          'Booking Reference': refNo,
-          'Guest Name':        payload.guest,
-          'Email':             payload.email,
-          'Mobile':            payload.mobile,
-          'National ID':       payload.national_id || '—',
-          'ID Type':           payload.id_type,
-          'Country':           payload.country || '—',
-          'City':              payload.city    || '—',
-          'Room':              selectedRoom ? selectedRoom.name : '—',
-          'Room Type':         selectedRoom ? (selectedRoom.type || '—') : '—',
-          'Check-in':          payload.checkin,
-          'Check-out':         payload.checkout,
-          'Adults':            payload.adults,
-          'Children':          payload.children,
-          'Rate Type':         payload.rate_type,
-          'Total (TSH)':       payload.total.toLocaleString(),
-          'Amount Paid (TSH)': payload.amount_paid.toLocaleString(),
-          'Balance Due (TSH)': payload.balance.toLocaleString(),
-          'Payment Method':    payload.payment_method,
-          'Payment Status':    payload.payment_status,
-        })
-      }).catch(() => {}); // silent — never block the guest
-
       closeBookingModal();
       document.getElementById('confirm-ref').innerHTML =
-        `<i class="fas fa-hashtag"></i> Booking Reference: <strong>${refNo}</strong>`;
+        `<i class="fas fa-hashtag"></i> Booking Reference: <strong>KSR-${String(data.reservationId).padStart(5,'0')}</strong>`;
       document.getElementById('confirm-modal-overlay').classList.add('open');
       // Refresh room availability
       searchRooms();
