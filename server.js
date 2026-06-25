@@ -2470,11 +2470,28 @@ app.get('/api/grn/:id', async (req, res) => {
 // POST create GRN from purchase order (Receive goods)
 app.post('/api/grn/receive/:poId', async (req, res) => {
   const { poId } = req.params;
-  const { notes, created_by } = req.body;
+  const { notes, created_by, items: updatedItems } = req.body;
 
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
+
+    // Apply store-manager quantity and buying cost overrides before processing
+    if (updatedItems && updatedItems.length > 0) {
+      for (const ui of updatedItems) {
+        const qty = parseFloat(ui.quantity) || 0;
+        const cost = parseFloat(ui.unit_price) || 0;
+        const total = qty * cost;
+        await client.query(
+          'UPDATE purchase_order_items SET quantity=$1, unit_price=$2, total_price=$3 WHERE id=$4 AND po_id=$5',
+          [qty, cost, total, ui.id, poId]
+        );
+      }
+      await client.query(
+        'UPDATE purchase_orders SET total_amount=(SELECT COALESCE(SUM(total_price),0) FROM purchase_order_items WHERE po_id=$1) WHERE id=$1',
+        [poId]
+      );
+    }
 
     // Get purchase order details
     const poResult = await client.query(`

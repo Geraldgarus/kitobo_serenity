@@ -1514,9 +1514,9 @@ function escapeHtml(str) {
     newValue = parseFloat(document.getElementById('qty-' + itemId).value);
   }
   
-  if (isNaN(newValue) || newValue <= 0) {
-    showToast('Please enter a valid positive value', 'error');
-    // Reset to previous valid value - you may want to store previous values
+  var minVal = (type === 'price') ? 0 : 0.01;
+  if (isNaN(newValue) || newValue < minVal) {
+    showToast(type === 'price' ? 'Enter a valid buying cost (0 is allowed)' : 'Enter a valid quantity', 'error');
     return;
   }
   
@@ -1772,10 +1772,10 @@ function escapeHtml(str) {
     }
   }
   
-  // Validate items have valid values
+  // Validate quantities only; buying cost is optional (0 allowed)
   for (var i = 0; i < items.length; i++) {
-    if (items[i].unit_price <= 0 || items[i].quantity <= 0) {
-      showToast('Please ensure all unit prices and quantities are greater than zero', 'error');
+    if (items[i].quantity <= 0) {
+      showToast('Please ensure all quantities are greater than zero', 'error');
       return;
     }
   }

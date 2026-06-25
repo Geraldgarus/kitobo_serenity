@@ -33,6 +33,11 @@
     .tab-content { display: none; }
     .tab-content.active { display: block; }
     .request-badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+    .po-status { font-size: 10px; padding: 2px 6px; border-radius: 20px; display: inline-block; margin-top: 4px; }
+    .status-pending { background: #fef3c7; color: #d97706; }
+    .status-received { background: #d1fae5; color: #065f46; }
+    .status-completed { background: #dbeafe; color: #1e40af; }
+    .status-cancelled { background: #fee2e2; color: #dc2626; }
     .status-pending { background: #fef3c7; color: #d97706; }
     .form-group { margin-bottom: 1rem; }
     .form-group label { display: block; margin-bottom: 0.3rem; font-weight: 500; font-size: 0.85rem; color: #2c3e4e; }
@@ -631,17 +636,24 @@
     </div>
 
     <div id="tab-purchase-orders" class="tab-content">
-      <div style="display:flex;gap:20px;padding:20px;flex-wrap:wrap;min-height:300px;">
+      <div style="display:flex;gap:20px;padding:20px;flex-wrap:wrap;min-height:400px;">
         <!-- PO list sidebar -->
         <div style="width:300px;flex-shrink:0;">
-          <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:#94a3b8;letter-spacing:1px;margin-bottom:12px;">Pending Purchase Orders</div>
+          <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px;margin-bottom:14px;">
+            <label style="display:block;margin-bottom:6px;font-weight:600;font-size:12px;"><i class="fas fa-calendar-alt"></i> Select Date</label>
+            <input type="date" id="store-po-filter-date" style="width:100%;padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;" onchange="loadStorePOs()">
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <strong style="font-size:13px;">Purchase Orders</strong>
+            <button onclick="loadStorePOs()" style="background:none;border:1px solid #e2e8f0;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;"><i class="fas fa-sync-alt"></i> Refresh</button>
+          </div>
           <div id="store-po-list"><div style="text-align:center;padding:30px;color:#94a3b8;"><i class="fas fa-spinner fa-spin"></i> Loading…</div></div>
         </div>
         <!-- PO detail panel -->
         <div style="flex:1;min-width:280px;" id="store-po-detail">
           <div style="text-align:center;padding:50px 20px;color:#94a3b8;">
             <i class="fas fa-file-invoice" style="font-size:40px;margin-bottom:14px;display:block;opacity:0.4;"></i>
-            <div style="font-size:14px;">Select a purchase order to review and confirm</div>
+            <div style="font-size:14px;">Select a purchase order to review</div>
           </div>
         </div>
       </div>
@@ -1344,7 +1356,11 @@ document.getElementById('excel-file-input')?.addEventListener('change', previewE
       document.getElementById('tab-' + tabId).classList.add('active');
       if (tabId === 'requests') loadRequests();
       else if (tabId === 'inventory') renderStoreItemsWithFilter();
-      else if (tabId === 'purchase-orders') loadStorePOs();
+      else if (tabId === 'purchase-orders') {
+        var df = document.getElementById('store-po-filter-date');
+        if (df && !df.value) df.value = new Date().toISOString().slice(0, 10);
+        loadStorePOs();
+      }
     });
   }
 
@@ -1621,15 +1637,25 @@ for (var i = 0; i < filtered.length; i++) {
   async function approveRequest(id) { var authorized = prompt('Enter authorized quantity to transfer (e.g., "5 kg"):'); if (!authorized) return; if (!confirm('Approve request with quantity ' + authorized + '?')) return; try { await apiPut('/store/requests/' + id + '/approve', { authorizedQuantity: authorized }); showToast('Request approved, stock deducted', '<i class="fas fa-check-circle"></i>'); await loadRequests(); await loadStoreItems(); } catch (err) { showToast('Approve failed: ' + err.message, '<i class="fas fa-times-circle"></i>'); } }
   async function rejectRequest(id) { if (!confirm('Reject this request?')) return; try { await apiPut('/store/requests/' + id + '/reject', {}); showToast('Request rejected', '<i class="fas fa-times-circle"></i>'); await loadRequests(); } catch (err) { showToast('Reject failed: ' + err.message, '<i class="fas fa-times-circle"></i>'); } }
 
-  // ── Purchase Orders tab (store manager confirms received) ──
+  // ── Purchase Orders tab (store manager) ──
   var storePOs = [];
+
+  function storePOStatusClass(status) {
+    if (status === 'pending') return 'status-pending';
+    if (status === 'received') return 'status-received';
+    if (status === 'completed') return 'status-completed';
+    if (status === 'cancelled') return 'status-cancelled';
+    return 'status-pending';
+  }
 
   async function loadStorePOs() {
     var listEl = document.getElementById('store-po-list');
     listEl.innerHTML = '<div style="text-align:center;padding:30px;color:#94a3b8;"><i class="fas fa-spinner fa-spin"></i> Loading…</div>';
+    var dateEl = document.getElementById('store-po-filter-date');
+    var date = dateEl ? dateEl.value : '';
     try {
-      var pos = await apiGet('/purchase-orders');
-      storePOs = pos.filter(function(p) { return p.status === 'pending'; });
+      var url = '/purchase-orders' + (date ? '?date=' + date : '');
+      storePOs = await apiGet(url);
       renderStorePOs();
     } catch(e) {
       listEl.innerHTML = '<div style="text-align:center;padding:30px;color:#ef4444;">Failed to load POs</div>';
@@ -1639,18 +1665,18 @@ for (var i = 0; i < filtered.length; i++) {
   function renderStorePOs() {
     var el = document.getElementById('store-po-list');
     if (!storePOs.length) {
-      el.innerHTML = '<div style="text-align:center;padding:40px;color:#94a3b8;"><i class="fas fa-inbox" style="font-size:28px;display:block;margin-bottom:10px;opacity:0.4;"></i>No pending purchase orders</div>';
+      el.innerHTML = '<div style="text-align:center;padding:40px;color:#94a3b8;"><i class="fas fa-inbox" style="font-size:28px;display:block;margin-bottom:10px;opacity:0.4;"></i>No purchase orders for this date</div>';
       return;
     }
     var html = '';
     storePOs.forEach(function(po) {
-      html += '<div onclick="viewStorePODetail(' + po.id + ')" style="background:white;border:1.5px solid #e2e8f0;border-radius:12px;padding:14px 16px;margin-bottom:10px;cursor:pointer;transition:border-color 0.2s;" onmouseover="this.style.borderColor=\'#c9933a\'" onmouseout="this.style.borderColor=\'#e2e8f0\'">'
-        + '<div style="font-weight:700;font-size:13px;color:#c9933a;">' + escapeHtml(po.po_number) + '</div>'
-        + '<div style="font-size:12px;color:#1e2a3e;margin-top:3px;">' + escapeHtml(po.vendor_name) + '</div>'
-        + '<div style="display:flex;justify-content:space-between;margin-top:8px;align-items:center;">'
-        + '<span style="font-size:11px;color:#64748b;">' + new Date(po.order_date).toLocaleDateString() + '</span>'
-        + '<span style="font-size:12px;font-weight:700;color:#1e2a3e;">' + fmtTSH(po.total_amount) + '</span>'
-        + '</div></div>';
+      var statusCls = storePOStatusClass(po.status);
+      html += '<div onclick="viewStorePODetail(' + po.id + ')" style="background:white;border:1.5px solid #e2e8f0;border-radius:10px;padding:12px 14px;margin-bottom:8px;cursor:pointer;position:relative;transition:border-color 0.2s;" onmouseover="this.style.borderColor=\'#c9933a\'" onmouseout="this.style.borderColor=\'#e2e8f0\'">'
+        + '<div style="font-size:12px;font-weight:600;color:#1e2a3e;"><i class="fas fa-store-alt"></i> ' + escapeHtml(po.vendor_name) + '</div>'
+        + '<div style="font-size:11px;color:#64748b;margin-top:3px;"><i class="fas fa-calendar-alt"></i> ' + po.order_date + ' | PO: ' + escapeHtml(po.po_number) + '</div>'
+        + '<div style="font-size:12px;font-weight:600;color:#c9933a;margin-top:4px;"><i class="fas fa-money-bill-wave"></i> ' + fmtTSH(po.total_amount) + '</div>'
+        + '<span class="po-status ' + statusCls + '">' + po.status.toUpperCase() + '</span>'
+        + '</div>';
     });
     el.innerHTML = html;
   }
@@ -1660,29 +1686,50 @@ for (var i = 0; i < filtered.length; i++) {
     detailEl.innerHTML = '<div style="text-align:center;padding:40px;color:#94a3b8;"><i class="fas fa-spinner fa-spin"></i> Loading…</div>';
     try {
       var po = await apiGet('/purchase-orders/' + poId);
+      var isPending = po.status === 'pending';
+      var statusCls = storePOStatusClass(po.status);
+
       var html = '<div style="background:linear-gradient(135deg,#1a2340,#2d3f6b);border-radius:14px;padding:18px 22px;margin-bottom:18px;">'
         + '<div style="font-size:10px;color:rgba(255,255,255,0.5);font-weight:700;text-transform:uppercase;letter-spacing:1px;">Purchase Order</div>'
-        + '<div style="font-size:20px;font-weight:800;color:#fff;margin-top:4px;">' + escapeHtml(po.po_number) + '</div>'
-        + '<div style="font-size:12px;color:rgba(255,255,255,0.6);margin-top:4px;">Vendor: ' + escapeHtml(po.vendor_name) + '&nbsp;&nbsp;|&nbsp;&nbsp;Date: ' + new Date(po.order_date).toLocaleDateString() + '</div>'
+        + '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-top:4px;">'
+        + '<div style="font-size:18px;font-weight:800;color:#fff;">' + escapeHtml(po.po_number) + '</div>'
+        + '<span class="po-status ' + statusCls + '" style="font-size:11px;">' + po.status.toUpperCase() + '</span>'
+        + '</div>'
+        + '<div style="font-size:12px;color:rgba(255,255,255,0.6);margin-top:4px;"><i class="fas fa-store-alt"></i> ' + escapeHtml(po.vendor_name) + '&nbsp;&nbsp;|&nbsp;&nbsp;<i class="fas fa-calendar-alt"></i> ' + po.order_date + '</div>'
         + '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">'
         + '<span style="font-size:12px;color:#e8c07a;font-weight:600;">Category: ' + escapeHtml((po.category || 'other').charAt(0).toUpperCase() + (po.category || 'other').slice(1)) + '</span>'
         + '<span style="font-size:14px;font-weight:800;color:#fff;">Total: ' + fmtTSH(po.total_amount) + '</span>'
         + '</div></div>';
 
       html += '<div style="overflow-x:auto;"><table class="store-table" style="margin-bottom:18px;">'
-        + '<thead><tr><th>Item</th><th>Category</th><th>Unit</th><th style="text-align:center;">Qty</th><th style="text-align:right;">Buying Cost</th></tr></thead>'
-        + '<tbody>';
+        + '<thead><tr><th>Item</th><th>Unit</th><th>Qty Ordered</th>';
+      if (isPending) {
+        html += '<th>Receive Qty *</th><th>Buying Cost (TSH) *</th>';
+      } else {
+        html += '<th style="text-align:center;">Qty</th><th style="text-align:right;">Buying Cost</th>';
+      }
+      html += '</tr></thead><tbody id="store-po-items">';
+
       (po.items || []).forEach(function(item) {
         html += '<tr>'
-          + '<td><strong>' + escapeHtml(item.item_name) + '</strong></td>'
-          + '<td>' + escapeHtml(item.category || '—') + '</td>'
+          + '<td><strong>' + escapeHtml(item.item_name) + '</strong><br><small style="color:#64748b;">' + escapeHtml(item.category || '') + '</small></td>'
           + '<td>' + escapeHtml(item.unit || 'units') + '</td>'
-          + '<td style="text-align:center;">' + item.quantity + '</td>'
-          + '<td style="text-align:right;">' + (item.unit_price > 0 ? fmtTSH(item.unit_price) : '<span style="color:#94a3b8;">—</span>') + '</td>'
-          + '</tr>';
+          + '<td style="text-align:center;">' + item.quantity + '</td>';
+        if (isPending) {
+          html += '<td><input type="number" id="store-qty-' + item.id + '" value="' + item.quantity + '" min="0.01" step="0.01" class="form-control" style="width:90px;padding:5px 8px;border-radius:8px;text-align:center;" required></td>'
+            + '<td><input type="number" id="store-cost-' + item.id + '" value="' + (item.unit_price > 0 ? item.unit_price : '') + '" placeholder="Required" min="1" step="1" class="form-control" style="width:120px;padding:5px 8px;border-radius:8px;text-align:center;" required></td>';
+        } else {
+          html += '<td style="text-align:center;">' + item.quantity + '</td>'
+            + '<td style="text-align:right;">' + (item.unit_price > 0 ? fmtTSH(item.unit_price) : '<span style="color:#94a3b8;">—</span>') + '</td>';
+        }
+        html += '</tr>';
       });
       html += '</tbody></table></div>';
-      html += '<button onclick="confirmReceivedFromStore(' + po.id + ')" style="background:#16a34a;color:white;border:none;padding:13px 0;border-radius:40px;font-weight:700;font-size:14px;cursor:pointer;width:100%;letter-spacing:0.3px;"><i class="fas fa-check-circle"></i> Confirm Received</button>';
+
+      if (isPending) {
+        html += '<p style="font-size:11px;color:#64748b;margin-bottom:12px;">* Edit quantities and enter buying cost for each item before confirming.</p>';
+        html += '<button onclick="confirmReceivedFromStore(' + po.id + ')" style="background:#16a34a;color:white;border:none;padding:13px 0;border-radius:40px;font-weight:700;font-size:14px;cursor:pointer;width:100%;letter-spacing:0.3px;"><i class="fas fa-check-circle"></i> Confirm Received</button>';
+      }
 
       detailEl.innerHTML = html;
     } catch(e) {
@@ -1692,9 +1739,24 @@ for (var i = 0; i < filtered.length; i++) {
 
   async function confirmReceivedFromStore(poId) {
     if (!confirm('Confirm receiving this purchase order?\nThis will update Main Store inventory and create an expense entry.')) return;
+    var rows = document.querySelectorAll('#store-po-items tr');
+    var items = [];
+    var hasError = false;
+    rows.forEach(function(row) {
+      var qtyEl = row.querySelector('input[id^="store-qty-"]');
+      var costEl = row.querySelector('input[id^="store-cost-"]');
+      if (!qtyEl) return;
+      var itemId = parseInt(qtyEl.id.replace('store-qty-', ''));
+      var qty = parseFloat(qtyEl.value) || 0;
+      var cost = parseFloat(costEl ? costEl.value : 0) || 0;
+      if (qty <= 0) { showToast('Enter a valid quantity for all items', '<i class="fas fa-times-circle"></i>'); hasError = true; return; }
+      if (cost <= 0) { showToast('Buying cost is required for all items in the store', '<i class="fas fa-times-circle"></i>'); hasError = true; return; }
+      items.push({ id: itemId, quantity: qty, unit_price: cost });
+    });
+    if (hasError || !items.length) return;
     var user = getCurrentUser();
     try {
-      await apiPost('/grn/receive/' + poId, { created_by: user ? user.username : 'system' });
+      await apiPost('/grn/receive/' + poId, { created_by: user ? user.username : 'system', items: items });
       showToast('Goods received! Stock updated and expense recorded.', '<i class="fas fa-check-circle"></i>');
       document.getElementById('store-po-detail').innerHTML = '<div style="text-align:center;padding:50px 20px;"><i class="fas fa-check-circle" style="font-size:42px;color:#10b981;display:block;margin-bottom:14px;"></i><div style="font-size:15px;font-weight:600;color:#1e2a3e;">Received successfully!</div></div>';
       await loadStorePOs();
