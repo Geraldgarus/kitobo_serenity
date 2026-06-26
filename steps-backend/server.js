@@ -2359,9 +2359,21 @@ app.delete('/api/purchase-orders/:id', async (req, res) => {
     
     const po = poCheck.rows[0];
     
-    // Delete items first (due to foreign key constraint)
+    // Delete goods_receipt_items referencing this PO's items first
+    await client.query(
+      `DELETE FROM goods_receipt_items WHERE po_item_id IN (SELECT id FROM purchase_order_items WHERE po_id = $1)`,
+      [id]
+    );
+
+    // Delete goods receipt notes linked to this PO
+    await client.query(
+      `DELETE FROM goods_receipt_notes WHERE po_id = $1`,
+      [id]
+    );
+
+    // Delete purchase order items
     await client.query('DELETE FROM purchase_order_items WHERE po_id = $1', [id]);
-    
+
     // Delete the purchase order
     await client.query('DELETE FROM purchase_orders WHERE id = $1', [id]);
     
