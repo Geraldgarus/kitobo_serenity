@@ -1102,7 +1102,7 @@ app.delete('/api/menu-items/:id', async (req, res) => {
 
 // GET all requests
 app.get('/api/store/requests', async (req, res) => {
-  const { status, outlet } = req.query;
+  const { status, outlet, from, to } = req.query;
   let query = 'SELECT * FROM store_requests WHERE 1=1';
   const params = [];
   if (status) {
@@ -1112,6 +1112,14 @@ app.get('/api/store/requests', async (req, res) => {
   if (outlet) {
     params.push(outlet);
     query += ` AND requested_by = $${params.length}`;
+  }
+  if (from) {
+    params.push(from);
+    query += ` AND DATE(COALESCE(approved_at, created_at)) >= $${params.length}`;
+  }
+  if (to) {
+    params.push(to);
+    query += ` AND DATE(COALESCE(approved_at, created_at)) <= $${params.length}`;
   }
   query += ' ORDER BY created_at DESC';
   try {
