@@ -2359,13 +2359,6 @@ app.delete('/api/purchase-orders/:id', async (req, res) => {
     
     const po = poCheck.rows[0];
     
-    // Check if already received (can't delete received orders)
-    if (po.status === 'received') {
-      return res.status(400).json({ 
-        error: 'Cannot delete a received purchase order. It has already been added to inventory.' 
-      });
-    }
-    
     // Delete items first (due to foreign key constraint)
     await client.query('DELETE FROM purchase_order_items WHERE po_id = $1', [id]);
     
