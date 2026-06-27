@@ -694,7 +694,7 @@ app.post('/api/reservations', async (req, res) => {
     `, [aptId, checkin, checkout, finalCheckoutTime]);
 
     if (conflict.rows.length) {
-      return res.status(409).json({ error: 'Apartment is already booked for those dates' });
+      return res.status(409).json({ error: 'Room is already booked for those dates' });
     }
 
     const bookedByName = username || req.body.username || req.body.created_by || 'system';
@@ -762,7 +762,7 @@ app.put('/api/reservations/:id', async (req, res) => {
       `, [aptId, checkin, checkout, req.params.id]);
 
       if (conflict.rows.length) {
-        return res.status(409).json({ error: 'Apartment is already booked for those dates' });
+        return res.status(409).json({ error: 'Room is already booked for those dates' });
       }
     }
 
