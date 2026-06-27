@@ -2887,6 +2887,20 @@ app.get('/api/sales', async (req, res) => {
   }
 });
 
+// DELETE /api/sales/:id - Delete a POS sale order
+app.delete('/api/sales/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    await pool.query('DELETE FROM sales_items WHERE sale_id = $1', [id]);
+    const { rowCount } = await pool.query('DELETE FROM sales_orders WHERE id = $1', [id]);
+    if (!rowCount) return res.status(404).json({ error: 'Sale not found' });
+    res.json({ success: true });
+  } catch (err) {
+    console.error('DELETE /api/sales/:id error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET /api/sales/:id/items - Get items for a specific sale
 app.get('/api/sales/:id/items', async (req, res) => {
   const { id } = req.params;

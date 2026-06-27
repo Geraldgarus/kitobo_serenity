@@ -275,8 +275,8 @@
     <div style="padding: 20px; border-bottom: 1px solid #e2e8f0;"><h3><i class="fas fa-receipt"></i> POS Sales Details (Bar &amp; Restaurant)</h3></div>
     <div style="overflow-x: auto;">
       <table class="data-table" id="sales-table">
-        <thead><tr><th>Date</th><th>Order #</th><th>POS</th><th>Payment Method</th><th>Cashier</th><th>Items</th><th>Total Amount</th></tr></thead>
-        <tbody id="sales-body"><tr><td colspan="7" class="empty-state">Select a date range and click Apply Filter</td></tr></tbody>
+        <thead><tr><th>Date</th><th>Order #</th><th>POS</th><th>Payment Method</th><th>Cashier</th><th>Items</th><th>Total Amount</th><th>Action</th></tr></thead>
+        <tbody id="sales-body"><tr><td colspan="8" class="empty-state">Select a date range and click Apply Filter</td></tr></tbody>
       </table>
     </div>
   </div>
@@ -497,12 +497,27 @@ async function loadSalesReport() {
           <td>${escapeHtml(sale.cashier)}</td>
           <td>${totalItems} units</td>
           <td>${fmtTSH(sale.total)}</td>
+          <td><button onclick="deleteSale(${sale.id}, '${escapeHtml(sale.order_number)}')" style="background:#ef4444;color:white;border:none;padding:5px 12px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;"><i class="fas fa-trash"></i> Delete</button></td>
         </tr>
       `;
     });
     tbody.innerHTML = html;
   }
   
+  async function deleteSale(id, orderNumber) {
+    if (!confirm(`Delete Order #${orderNumber}? This cannot be undone.`)) return;
+    try {
+      const res = await fetch(API_BASE + `/sales/${id}`, { method: 'DELETE', headers: _authHeaders() });
+      if (!res.ok) throw new Error(await res.text());
+      showToast('Sale deleted successfully', '<i class="fas fa-check-circle"></i>');
+      salesData = salesData.filter(s => s.id !== id);
+      renderSalesTable();
+      updateStats();
+    } catch (err) {
+      showToast('Delete failed: ' + err.message, '<i class="fas fa-times-circle"></i>');
+    }
+  }
+
   function updateStats() {
     const totalOrders = salesData.length;
     const totalItems = salesData.reduce((sum, sale) => sum + sale.items.reduce((s, i) => s + i.quantity, 0), 0);
