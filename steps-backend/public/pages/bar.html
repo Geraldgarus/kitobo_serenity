@@ -636,7 +636,7 @@
     });
     printWindow.document.write(`</tbody></table><div class="total">Total: ${fmtTSH(data.total)}</div>
       <div style="text-align:center;margin-top:20px;">Thank you!</div>
-      <script>window.print(); window.close();<\/script>
+      <script>window.onload = function() { setTimeout(function() { window.print(); window.close(); }, 300); };<\/script>
       </body></html>`);
     printWindow.document.close();
   }
