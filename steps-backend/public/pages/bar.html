@@ -626,7 +626,10 @@
           <h2>Kitobo Serenity Resort</h2>
         </div>
         <p>Bar POS Receipt</p>
-        <p>Order #${data.orderNumber}</p>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin:4px 0;">
+          <span>Order #${data.orderNumber}</span>
+          <span>To: ..........................</span>
+        </div>
         <p>${data.date}</p>
         <p>Cashier: ${data.cashier}</p>
       </div>
