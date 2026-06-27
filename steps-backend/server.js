@@ -242,7 +242,17 @@ app.get('/api/booking/rooms', async (req, res) => {
       `;
       params = [checkin, checkout];
     } else {
-      query = `SELECT *, true AS available FROM apartments ORDER BY type, name`;
+      query = `
+        SELECT a.*,
+          NOT EXISTS (
+            SELECT 1 FROM reservations r
+            WHERE r.apt_id = a.id
+              AND r.checkin  <= CURRENT_DATE
+              AND r.checkout >  CURRENT_DATE
+          ) AS available
+        FROM apartments a
+        ORDER BY a.type, a.name
+      `;
       params = [];
     }
     const { rows } = await pool.query(query, params);
