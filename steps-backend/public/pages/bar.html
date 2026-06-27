@@ -608,17 +608,22 @@
     const printWindow = window.open('', '_blank');
     printWindow.document.write(`<html><head><title>Receipt - Order #${data.orderNumber}</title>
       <style>
-        @page { size: 80mm auto; margin: 4mm; }
-        body { font-family: monospace; padding: 4px; width: 72mm; margin: 0 auto; font-size: 12px; }
-        .header { text-align: center; border-bottom: 1px dashed #000; margin-bottom: 15px; padding-bottom: 10px; }
-        .header-top { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 6px; }
-        .header-top h2 { font-family: 'Baskerville BT Roman', 'Baskerville', 'Baskerville Old Face', 'Times New Roman', serif; font-size: 18px; margin: 0; }
-        .items th, .items td { text-align: left; padding: 6px 8px; }
+        @page { size: 80mm auto; margin: 3mm; }
+        body { font-family: monospace; padding: 2px; width: 74mm; margin: 0 auto; font-size: 11px; }
+        .header { text-align: center; border-bottom: 1px dashed #000; margin-bottom: 10px; padding-bottom: 8px; }
+        .header-top { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 4px; }
+        .header-top h2 { font-family: 'Baskerville BT Roman', 'Baskerville', 'Baskerville Old Face', 'Times New Roman', serif; font-size: 15px; margin: 0; }
+        .items { table-layout: fixed; width: 100%; }
+        .items th, .items td { text-align: left; padding: 3px 2px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
         .items th { border-bottom: 1px dashed #000; }
-        .items td:nth-child(2), .items th:nth-child(2) { text-align: center; min-width: 40px; }
-        .items td:nth-child(3), .items th:nth-child(3) { text-align: right; min-width: 80px; }
-        .items td:nth-child(4), .items th:nth-child(4) { text-align: right; min-width: 80px; }
-        .total { font-weight: bold; border-top: 1px solid #000; margin-top: 10px; padding-top: 10px; text-align: right; }
+        .items col.c-item { width: 38%; }
+        .items col.c-qty  { width: 12%; }
+        .items col.c-price{ width: 25%; }
+        .items col.c-total{ width: 25%; }
+        .items td:nth-child(2), .items th:nth-child(2) { text-align: center; }
+        .items td:nth-child(3), .items th:nth-child(3) { text-align: right; }
+        .items td:nth-child(4), .items th:nth-child(4) { text-align: right; }
+        .total { font-weight: bold; border-top: 1px solid #000; margin-top: 8px; padding-top: 8px; text-align: right; font-size: 12px; }
       </style>
       </head><body>
       <div class="header">
@@ -634,7 +639,7 @@
           <span>To: ...........</span>
         </div>
       </div>
-      <table class="items" width="100%"><thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead><tbody>`);
+      <table class="items"><colgroup><col class="c-item"><col class="c-qty"><col class="c-price"><col class="c-total"></colgroup><thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead><tbody>`);
     data.items.forEach(item => {
       printWindow.document.write(`<tr><td>${escapeHtml(item.name)}</td><td style="text-align:center">${item.quantity}</td><td style="text-align:right">${fmtTSH(item.price)}</td><td style="text-align:right">${fmtTSH(item.total)}</td></tr>`);
     });
