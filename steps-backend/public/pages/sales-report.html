@@ -511,7 +511,7 @@ async function loadSalesReport() {
       if (!res.ok) throw new Error(await res.text());
       showToast('Sale deleted successfully', '<i class="fas fa-check-circle"></i>');
       salesData = salesData.filter(s => s.id !== id);
-      renderSalesTable();
+      renderTable();
       updateStats();
     } catch (err) {
       showToast('Delete failed: ' + err.message, '<i class="fas fa-times-circle"></i>');
