@@ -626,12 +626,12 @@
           <h2>Kitobo Serenity Resort</h2>
         </div>
         <p>Bar POS Receipt</p>
-        <div style="display:flex;justify-content:space-between;align-items:center;margin:4px 0;">
+        <p>${data.date}</p>
+        <p>Cashier: ${data.cashier}</p>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin:4px 0;font-size:13px;">
           <span>Order #${data.orderNumber}</span>
           <span>To: ..........................</span>
         </div>
-        <p>${data.date}</p>
-        <p>Cashier: ${data.cashier}</p>
       </div>
       <table class="items" width="100%"><thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead><tbody>`);
     data.items.forEach(item => {
