@@ -613,13 +613,13 @@
         .header { text-align: center; border-bottom: 1px dashed #000; margin-bottom: 10px; padding-bottom: 8px; }
         .header-top { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 4px; }
         .header-top h2 { font-family: 'Baskerville BT Roman', 'Baskerville', 'Baskerville Old Face', 'Times New Roman', serif; font-size: 15px; margin: 0; }
-        .items { table-layout: fixed; width: 100%; }
-        .items th, .items td { text-align: left; padding: 3px 2px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+        .items { table-layout: fixed; width: 100%; border-collapse: collapse; }
+        .items th, .items td { text-align: left; padding: 3px 1px; word-break: break-word; }
         .items th { border-bottom: 1px dashed #000; }
-        .items col.c-item { width: 38%; }
-        .items col.c-qty  { width: 12%; }
-        .items col.c-price{ width: 25%; }
-        .items col.c-total{ width: 25%; }
+        .items col.c-item { width: 34%; }
+        .items col.c-qty  { width: 10%; }
+        .items col.c-price{ width: 26%; }
+        .items col.c-total{ width: 30%; }
         .items td:nth-child(2), .items th:nth-child(2) { text-align: center; }
         .items td:nth-child(3), .items th:nth-child(3) { text-align: right; }
         .items td:nth-child(4), .items th:nth-child(4) { text-align: right; }
