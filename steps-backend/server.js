@@ -272,7 +272,7 @@ app.post('/api/booking/create', async (req, res) => {
   const identification = national_id || null;
   const balance = Math.max(0, (total || 0) - (amount_paid || 0));
 
-  if (!apt_id || !checkin || !checkout || !guest || !email || !mobile) {
+  if (!apt_id || !checkin || !checkout || !guest || !mobile) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
@@ -677,8 +677,8 @@ app.post('/api/reservations', async (req, res) => {
   console.log('📅 Creating reservation:', { checkin, checkout, total, paymentStatus: finalPaymentStatus, balance });
 
   // Basic validation
-  if (!aptId || !guest || !email || !checkin || !checkout) {
-    return res.status(400).json({ error: 'aptId, guest, email, checkin, checkout are required' });
+  if (!aptId || !guest || !checkin || !checkout) {
+    return res.status(400).json({ error: 'aptId, guest, checkin, checkout are required' });
   }
   if (checkin >= checkout) {
     return res.status(400).json({ error: 'checkout must be after checkin' });
