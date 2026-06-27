@@ -608,7 +608,8 @@
     const printWindow = window.open('', '_blank');
     printWindow.document.write(`<html><head><title>Receipt - Order #${data.orderNumber}</title>
       <style>
-        body { font-family: monospace; padding: 20px; max-width: 320px; margin: 0 auto; }
+        @page { size: 80mm auto; margin: 4mm; }
+        body { font-family: monospace; padding: 4px; width: 72mm; margin: 0 auto; font-size: 12px; }
         .header { text-align: center; border-bottom: 1px dashed #000; margin-bottom: 15px; padding-bottom: 10px; }
         .header-top { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 6px; }
         .header-top h2 { font-family: 'Baskerville BT Roman', 'Baskerville', 'Baskerville Old Face', 'Times New Roman', serif; font-size: 18px; margin: 0; }
