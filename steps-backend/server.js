@@ -2845,41 +2845,36 @@ app.post('/api/sales', async (req, res) => {
   }
 });
 
-// GET /api/sales - Get sales with date filter (FIXED - includes full end date)
+// GET /api/sales - Get sales with items in a single query
 app.get('/api/sales', async (req, res) => {
   const { from, to, pos_type } = req.query;
-  let query = `
-    SELECT
-      so.id, so.order_number, so.cashier_name, so.total_amount,
-      so.order_date, so.status, so.pos_type, so.payment_method,
-      COALESCE((
-        SELECT SUM(si.quantity)::INTEGER
-        FROM sales_items si
-        WHERE si.sale_id = so.id
-      ), 0) as total_items
-    FROM sales_orders so
-    WHERE 1=1
-  `;
+  let where = 'WHERE 1=1';
   const params = [];
   let paramCount = 1;
 
-  if (from) {
-    query += ` AND so.order_date >= $${paramCount++}::date`;
-    params.push(from);
-  }
-  if (to) {
-    query += ` AND so.order_date < ($${paramCount++}::date + INTERVAL '1 day')`;
-    params.push(to);
-  }
-  if (pos_type) {
-    query += ` AND so.pos_type = $${paramCount++}`;
-    params.push(pos_type);
-  }
+  if (from) { where += ` AND so.order_date >= $${paramCount++}::date`; params.push(from); }
+  if (to)   { where += ` AND so.order_date < ($${paramCount++}::date + INTERVAL '1 day')`; params.push(to); }
+  if (pos_type) { where += ` AND so.pos_type = $${paramCount++}`; params.push(pos_type); }
 
-  query += ` ORDER BY so.order_date DESC`;
-  
   try {
-    const { rows } = await pool.query(query, params);
+    const { rows } = await pool.query(`
+      SELECT
+        so.id, so.order_number, so.cashier_name, so.total_amount,
+        so.order_date, so.status, so.pos_type, so.payment_method,
+        COALESCE(json_agg(
+          json_build_object(
+            'item_name', si.item_name,
+            'quantity',  si.quantity,
+            'unit_price',si.unit_price,
+            'total_price',si.total_price
+          ) ORDER BY si.id
+        ) FILTER (WHERE si.id IS NOT NULL), '[]') AS items
+      FROM sales_orders so
+      LEFT JOIN sales_items si ON si.sale_id = so.id
+      ${where}
+      GROUP BY so.id
+      ORDER BY so.order_date DESC
+    `, params);
     res.json(rows);
   } catch (err) {
     console.error('Error fetching sales:', err);

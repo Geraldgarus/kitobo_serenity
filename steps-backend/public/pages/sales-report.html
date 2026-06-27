@@ -407,27 +407,21 @@ async function loadSalesReport() {
         apiGet(`/api/reports/reservations?${resParams.toString()}`).catch(() => [])
       ]);
 
-      // Load items for each order
-      salesData = [];
-      for (const order of orders) {
-        const items = await apiGet(`/api/sales/${order.id}/items`);
-
-        salesData.push({
-          id: order.id,
-          order_number: order.order_number,
-          cashier: order.cashier_name,
-          date: order.order_date,
-          total: order.total_amount,
-          pos_type: order.pos_type || '',
-          payment_method: order.payment_method || 'Cash',
-          items: items.map(item => ({
-            name: item.item_name,
-            quantity: parseFloat(item.quantity),
-            price: item.unit_price,
-            total: item.total_price
-          }))
-        });
-      }
+      salesData = orders.map(order => ({
+        id: order.id,
+        order_number: order.order_number,
+        cashier: order.cashier_name,
+        date: order.order_date,
+        total: order.total_amount,
+        pos_type: order.pos_type || '',
+        payment_method: order.payment_method || 'Cash',
+        items: (order.items || []).map(item => ({
+          name: item.item_name,
+          quantity: parseFloat(item.quantity),
+          price: item.unit_price,
+          total: item.total_price
+        }))
+      }));
 
       renderTable();
       updateStats();
