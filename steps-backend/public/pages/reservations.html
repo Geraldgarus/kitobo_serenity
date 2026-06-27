@@ -804,8 +804,8 @@
           <input type="text" id="modal-f-guest" class="form-control" placeholder="Full name" required />
         </div>
         <div class="form-group">
-          <label><i class="fas fa-envelope"></i> Email</label>
-          <input type="email" id="modal-f-email" class="form-control" placeholder="Email address" required />
+          <label><i class="fas fa-envelope"></i> Email <small style="color:#94a3b8;font-weight:400;">(optional)</small></label>
+          <input type="email" id="modal-f-email" class="form-control" placeholder="Email address" />
         </div>
         <div class="form-group">
           <label><i class="fas fa-mobile-alt"></i> Mobile</label>
@@ -1153,6 +1153,11 @@ function printReservation() {
         .total-section { background: #fef3c7; border-radius: 12px; padding: 15px 20px; }
         .total-row { display: flex; justify-content: space-between; align-items: center; }
         .total-amount { font-size: 22px; font-weight: 800; color: #c9933a; }
+        .payment-section { border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; margin-bottom: 20px; }
+        .payment-row { display: flex; justify-content: space-between; padding: 10px 20px; border-bottom: 1px solid #f1f5f9; }
+        .badge-paid { background: #d1fae5; color: #065f46; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 700; }
+        .badge-partial { background: #fef3c7; color: #d97706; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 700; }
+        .badge-unpaid { background: #fee2e2; color: #dc2626; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 700; }
         .footer { background: #f8fafc; padding: 20px; text-align: center; border-top: 1px solid #e2e8f0; }
         @media print { body { background: white; padding: 0; } .header, .total-section { print-color-adjust: exact; } }
       </style>
@@ -1160,8 +1165,13 @@ function printReservation() {
     <body>
       <div class="print-container">
         <div class="header">
-          <h1><i class="fas fa-hotel"></i> Kitobo Serenity Resort</h1>
-          <p>Reservation Confirmation</p>
+          <div style="display:flex;align-items:center;justify-content:center;gap:16px;">
+            <img src="/images/logo3.png" alt="Kitobo Serenity Resort" style="height:60px;width:auto;object-fit:contain;">
+            <div>
+              <h1>Kitobo Serenity Resort</h1>
+              <p>Reservation Confirmation</p>
+            </div>
+          </div>
         </div>
         <div class="content">
           <div class="info-grid">
@@ -1189,6 +1199,17 @@ function printReservation() {
               <div class="stay-row"><span class="stay-label">Guests</span><span class="stay-value">${res.adults || 1} Adult(s), ${res.children || 0} Child(ren)</span></div>
             </div>
             <div class="total-section"><div class="total-row"><span class="total-label">Total Amount</span><span class="total-amount">TSh ${(res.total || 0).toLocaleString()}</span></div></div>
+          </div>
+
+          <div class="payment-section">
+            <div class="section-header"><div class="section-title">&#128179; Payment Summary</div></div>
+            <div class="payment-row"><span>Payment Status</span><span>${
+              res.paymentStatus === 'paid' ? '<span class="badge-paid">Paid in Full</span>' :
+              res.paymentStatus === 'partial' ? '<span class="badge-partial">Partial Payment</span>' :
+              '<span class="badge-unpaid">Not Yet Paid</span>'
+            }</span></div>
+            <div class="payment-row"><span>Amount Paid</span><span style="font-weight:700;color:#065f46;">TSh ${(res.amountPaid || 0).toLocaleString()}</span></div>
+            <div class="payment-row"><span>Balance Due</span><span style="font-weight:700;color:#dc2626;">TSh ${Math.max(0, (res.total || 0) - (res.amountPaid || 0)).toLocaleString()}</span></div>
           </div>
         </div>
         <div class="footer">
