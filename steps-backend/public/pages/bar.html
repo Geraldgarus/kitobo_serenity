@@ -607,12 +607,32 @@
   function printReceipt(data) {
     const printWindow = window.open('', '_blank');
     printWindow.document.write(`<html><head><title>Receipt - Order #${data.orderNumber}</title>
-      <style>body{font-family:monospace;padding:20px;max-width:300px;margin:0 auto}.header{text-align:center;border-bottom:1px dashed #000;margin-bottom:15px}.items th,.items td{text-align:left;padding:4px 0}.total{font-weight:bold;border-top:1px solid #000;margin-top:10px;padding-top:10px}</style>
+      <style>
+        body { font-family: monospace; padding: 20px; max-width: 320px; margin: 0 auto; }
+        .header { text-align: center; border-bottom: 1px dashed #000; margin-bottom: 15px; padding-bottom: 10px; }
+        .header-top { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 6px; }
+        .header-top h2 { font-family: 'Baskerville BT Roman', 'Baskerville', 'Baskerville Old Face', 'Times New Roman', serif; font-size: 18px; margin: 0; }
+        .items th, .items td { text-align: left; padding: 6px 8px; }
+        .items th { border-bottom: 1px dashed #000; }
+        .items td:nth-child(2), .items th:nth-child(2) { text-align: center; min-width: 40px; }
+        .items td:nth-child(3), .items th:nth-child(3) { text-align: right; min-width: 80px; }
+        .items td:nth-child(4), .items th:nth-child(4) { text-align: right; min-width: 80px; }
+        .total { font-weight: bold; border-top: 1px solid #000; margin-top: 10px; padding-top: 10px; text-align: right; }
+      </style>
       </head><body>
-      <div class="header"><h2>Kitobo Serenity Resort</h2><p>Bar POS Receipt</p><p>Order #${data.orderNumber}</p><p>${data.date}</p><p>Cashier: ${data.cashier}</p></div>
+      <div class="header">
+        <div class="header-top">
+          <img src="${window.location.origin}/images/logo3.png" alt="Logo" style="height:50px;width:auto;">
+          <h2>Kitobo Serenity Resort</h2>
+        </div>
+        <p>Bar POS Receipt</p>
+        <p>Order #${data.orderNumber}</p>
+        <p>${data.date}</p>
+        <p>Cashier: ${data.cashier}</p>
+      </div>
       <table class="items" width="100%"><thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead><tbody>`);
     data.items.forEach(item => {
-      printWindow.document.write(`<tr><td>${escapeHtml(item.name)}</td><td style="text-align:center">${item.quantity}</td><td>${fmtTSH(item.price)}</td><td style="text-align:right">${fmtTSH(item.total)}</td></tr>`);
+      printWindow.document.write(`<tr><td>${escapeHtml(item.name)}</td><td style="text-align:center">${item.quantity}</td><td style="text-align:right">${fmtTSH(item.price)}</td><td style="text-align:right">${fmtTSH(item.total)}</td></tr>`);
     });
     printWindow.document.write(`</tbody></table><div class="total">Total: ${fmtTSH(data.total)}</div>
       <div style="text-align:center;margin-top:20px;">Thank you!</div>
