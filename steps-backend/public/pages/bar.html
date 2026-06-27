@@ -608,22 +608,22 @@
     const printWindow = window.open('', '_blank');
     printWindow.document.write(`<html><head><title>Receipt - Order #${data.orderNumber}</title>
       <style>
-        @page { size: 80mm auto; margin: 3mm; }
-        body { font-family: monospace; padding: 2px; width: 74mm; margin: 0 auto; font-size: 11px; }
-        .header { text-align: center; border-bottom: 1px dashed #000; margin-bottom: 10px; padding-bottom: 8px; }
+        @page { size: 80mm auto; margin: 2mm; }
+        body { font-family: monospace; padding: 2px; width: 76mm; margin: 0 auto; font-size: 10px; }
+        .header { text-align: center; border-bottom: 1px dashed #000; margin-bottom: 8px; padding-bottom: 6px; }
         .header-top { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 4px; }
-        .header-top h2 { font-family: 'Baskerville BT Roman', 'Baskerville', 'Baskerville Old Face', 'Times New Roman', serif; font-size: 15px; margin: 0; }
+        .header-top h2 { font-family: 'Baskerville BT Roman', 'Baskerville', 'Baskerville Old Face', 'Times New Roman', serif; font-size: 14px; margin: 0; }
         .items { table-layout: fixed; width: 100%; border-collapse: collapse; }
         .items th, .items td { text-align: left; padding: 3px 1px; word-break: break-word; }
         .items th { border-bottom: 1px dashed #000; }
-        .items col.c-item { width: 34%; }
-        .items col.c-qty  { width: 10%; }
-        .items col.c-price{ width: 26%; }
+        .items col.c-item { width: 32%; }
+        .items col.c-qty  { width: 8%; }
+        .items col.c-price{ width: 30%; }
         .items col.c-total{ width: 30%; }
         .items td:nth-child(2), .items th:nth-child(2) { text-align: center; }
         .items td:nth-child(3), .items th:nth-child(3) { text-align: right; }
         .items td:nth-child(4), .items th:nth-child(4) { text-align: right; }
-        .total { font-weight: bold; border-top: 1px solid #000; margin-top: 8px; padding-top: 8px; text-align: right; font-size: 12px; }
+        .total { font-weight: bold; border-top: 1px solid #000; margin-top: 8px; padding-top: 8px; text-align: right; font-size: 11px; }
       </style>
       </head><body>
       <div class="header">
@@ -634,10 +634,7 @@
         <p>Bar POS Receipt</p>
         <p>${data.date}</p>
         <p>Cashier: ${data.cashier}</p>
-        <div style="display:flex;justify-content:space-between;align-items:center;margin:4px 0;font-size:13px;gap:16px;">
-          <span>Order #${data.orderNumber}</span>
-          <span>To: ...........</span>
-        </div>
+        <p style="margin:4px 0;">Order #${data.orderNumber} &nbsp;&nbsp; To: ...........</p>
       </div>
       <table class="items"><colgroup><col class="c-item"><col class="c-qty"><col class="c-price"><col class="c-total"></colgroup><thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead><tbody>`);
     data.items.forEach(item => {
