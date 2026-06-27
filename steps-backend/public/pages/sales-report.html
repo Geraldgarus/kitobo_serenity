@@ -271,6 +271,13 @@
     </div>
   </div>
 
+  <div class="chart-card" style="padding: 20px; overflow: hidden; margin-bottom: 20px;">
+    <h3 style="margin-bottom:16px;"><i class="fas fa-credit-card"></i> Payment Method Summary</h3>
+    <div id="payment-method-summary" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;">
+      <div class="empty-state">Load sales to see summary</div>
+    </div>
+  </div>
+
   <div class="chart-card" style="padding: 0; overflow: hidden;">
     <div style="padding: 20px; border-bottom: 1px solid #e2e8f0;"><h3><i class="fas fa-receipt"></i> POS Sales Details (Bar &amp; Restaurant)</h3></div>
     <div style="overflow-x: auto;">
@@ -517,11 +524,62 @@ async function loadSalesReport() {
     const totalItems = salesData.reduce((sum, sale) => sum + sale.items.reduce((s, i) => s + i.quantity, 0), 0);
     const totalRevenue = salesData.reduce((sum, sale) => sum + sale.total, 0);
     const avgOrder = totalOrders > 0 ? totalRevenue / totalOrders : 0;
-    
+
     document.getElementById('stat-orders').innerText = totalOrders;
     document.getElementById('stat-items').innerText = totalItems;
     document.getElementById('stat-revenue').innerHTML = fmtTSH(totalRevenue);
     document.getElementById('stat-avg').innerHTML = fmtTSH(Math.round(avgOrder));
+    updatePaymentSummary();
+  }
+
+  function updatePaymentSummary() {
+    const methodIcons = {
+      'Cash':        'money-bill-wave',
+      'Card':        'credit-card',
+      'Mpesa':       'mobile-alt',
+      'TigoPesa':    'mobile-alt',
+      'AirtelMoney': 'mobile-alt',
+      'NMB':         'university',
+      'NBC':         'university',
+    };
+    const methodColors = {
+      'Cash':        '#16a34a',
+      'Card':        '#2563eb',
+      'Mpesa':       '#dc2626',
+      'TigoPesa':    '#0891b2',
+      'AirtelMoney': '#ea580c',
+      'NMB':         '#7c3aed',
+      'NBC':         '#c9933a',
+    };
+
+    const summary = {};
+    salesData.forEach(sale => {
+      const method = sale.payment_method || 'Cash';
+      if (!summary[method]) summary[method] = { count: 0, total: 0 };
+      summary[method].count++;
+      summary[method].total += sale.total || 0;
+    });
+
+    const container = document.getElementById('payment-method-summary');
+    if (Object.keys(summary).length === 0) {
+      container.innerHTML = '<div class="empty-state">No sales data</div>';
+      return;
+    }
+
+    container.innerHTML = Object.entries(summary)
+      .sort((a, b) => b[1].total - a[1].total)
+      .map(([method, data]) => {
+        const icon = methodIcons[method] || 'money-bill-wave';
+        const color = methodColors[method] || '#64748b';
+        return `
+          <div style="background:#f8fafc;border-radius:14px;padding:16px;border-left:4px solid ${color};display:flex;flex-direction:column;gap:6px;">
+            <div style="display:flex;align-items:center;gap:8px;font-weight:700;color:${color};font-size:13px;">
+              <i class="fas fa-${icon}"></i> ${method}
+            </div>
+            <div style="font-size:18px;font-weight:800;color:#1e293b;">${fmtTSH(data.total)}</div>
+            <div style="font-size:11px;color:#64748b;">${data.count} order${data.count !== 1 ? 's' : ''}</div>
+          </div>`;
+      }).join('');
   }
   
   function updateBestSellers() {
