@@ -507,7 +507,7 @@ async function loadSalesReport() {
   async function deleteSale(id, orderNumber) {
     if (!confirm(`Delete Order #${orderNumber}? This cannot be undone.`)) return;
     try {
-      const res = await fetch(API_BASE + `/sales/${id}`, { method: 'DELETE', headers: _authHeaders() });
+      const res = await fetch(API_BASE + `/api/sales/${id}`, { method: 'DELETE', headers: _authHeaders() });
       if (!res.ok) throw new Error(await res.text());
       showToast('Sale deleted successfully', '<i class="fas fa-check-circle"></i>');
       salesData = salesData.filter(s => s.id !== id);
