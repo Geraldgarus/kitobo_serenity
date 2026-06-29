@@ -708,7 +708,7 @@
 <option value="Kitchen">Kitchen</option>
 <option value="Housekeeping">Housekeeping</option>
 </select></div>
-      <div class="form-group"><label>Unit Price (TSH per unit)</label><input type="number" id="item-unit-price" class="form-control" placeholder="Price per kg/litre/unit (optional)"></div>
+      <div class="form-group"><label>Unit Price (TSH per unit)</label><input type="number" id="item-unit-price" class="form-control" placeholder="Price per kg/litre/unit"></div>
       <div class="form-group"><label>Unit of Measurement</label><select id="item-unit" class="form-control" required><option value="kg">kg</option>
 <option value="g">g</option>
 <option value="litres">litres</option>
@@ -765,7 +765,7 @@
   <option value="Kitchen">Kitchen</option>
   <option value="Housekeeping">Housekeeping</option>
 </select></div>
-      <div class="form-group"><label>Unit Price (TSH per unit)</label><input type="number" id="edit-item-unit-price" class="form-control" placeholder="Optional"></div>
+      <div class="form-group"><label>Unit Price (TSH per unit)</label><input type="number" id="edit-item-unit-price" class="form-control" placeholder="Price per kg/litre/unit"></div>
       <div class="form-group"><label>Unit of Measurement</label><select id="edit-item-unit" class="form-control" required><option value="kg">kg</option>
 <option value="g">g</option>
 <option value="litres">litres</option>
@@ -1471,10 +1471,10 @@ for (var i = 0; i < filtered.length; i++) {
     e.preventDefault();
     var name = document.getElementById('item-name').value.trim();
     var category = document.getElementById('item-category').value;
-    var unitPrice = parseInt(document.getElementById('item-unit-price').value);
+    var unitPrice = parseInt(document.getElementById('item-unit-price').value) || 0;
     var unit = document.getElementById('item-unit').value;
     var item_type = document.getElementById('item-pos').value;
-    if (!name || !category || !unitPrice) { showToast('Please fill all fields', '<i class="fas fa-exclamation-triangle"></i>'); return; }
+    if (!name || !category) { showToast('Please fill all required fields', '<i class="fas fa-exclamation-triangle"></i>'); return; }
     var existing = storeItems.find(function(item) { return item.name.toLowerCase() === name.toLowerCase() && item.category === category; });
     if (existing) { showToast('Item "' + name + '" already exists in ' + category + ' category!', '<i class="fas fa-exclamation-triangle"></i>'); return; }
     try {
