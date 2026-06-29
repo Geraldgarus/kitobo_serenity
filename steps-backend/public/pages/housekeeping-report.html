@@ -156,21 +156,11 @@
     .charts-row { display: none !important; }
     body { background: white !important; }
 
-    .print-header {
-      display: flex !important;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 24px;
-      border-bottom: 3px solid #1a2340;
-      padding-bottom: 18px;
-    }
-    .print-header .ph-logo { width: 70px; height: 70px; object-fit: contain; flex-shrink: 0; }
-    .print-header .ph-center { flex: 1; text-align: center; padding: 0 20px; }
+    .print-header { display: flex !important; align-items: center; justify-content: center; gap: 14px; margin-bottom: 24px; border-bottom: 3px solid #1a2340; padding-bottom: 18px; }
+    .print-header .ph-logo { height: 60px; width: auto; object-fit: contain; }
+    .print-header .ph-center { text-align: center; }
     .print-header .ph-center h1 { font-size: 22px; font-weight: 700; color: #1a2340; font-family: Georgia, serif; margin: 0; }
-    .print-header .ph-center p { font-size: 12px; color: #64748b; margin-top: 4px; }
-    .print-header .ph-meta { text-align: right; flex-shrink: 0; }
-    .print-header .ph-meta .ph-period { font-size: 13px; font-weight: 700; color: #c9933a; }
-    .print-header .ph-meta .ph-generated { font-size: 11px; color: #94a3b8; margin-top: 4px; }
+    .print-header .ph-center p { font-size: 12px; color: #64748b; margin: 4px 0 0; }
 
     .stat-card { box-shadow: none; border: 1px solid #e2e8f0; break-inside: avoid; }
     .stats-row { gap: 10px; margin-bottom: 16px; }
@@ -270,11 +260,8 @@
     <img src="/images/logo3.png" class="ph-logo" alt="Logo">
     <div class="ph-center">
       <h1>Kitobo Serenity Resort</h1>
-      <p>Housekeeping Report &middot; Dar es Salaam, Tanzania</p>
-    </div>
-    <div class="ph-meta">
-      <div class="ph-period" id="print-period">Housekeeping Report</div>
-      <div class="ph-generated">Generated: <span id="print-date"></span></div>
+      <p><span id="print-period">Housekeeping Report</span> &middot; Dar es Salaam, Tanzania</p>
+      <p style="font-size:11px;color:#94a3b8;">Generated: <span id="print-date"></span></p>
     </div>
   </div>
 
