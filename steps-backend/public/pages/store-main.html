@@ -625,7 +625,8 @@
             <button class="btn btn-danger" id="bar-delete-selected-btn" onclick="deleteSelectedBarItems()" style="display:none;"><i class="fas fa-trash"></i> Delete Selected (<span id="bar-selected-count">0</span>)</button>
             <button class="btn btn-danger" onclick="deleteAllBarItems()" style="background:#991b1b;"><i class="fas fa-trash-alt"></i> Delete All</button>
           </div>
-          <div style="display:flex;gap:8px;">
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input type="text" id="bar-menu-search" placeholder="Search bar items..." oninput="renderBarMenuItems()" style="padding:7px 14px;border:1px solid #e2e8f0;border-radius:20px;font-size:13px;width:200px;outline:none;">
             <button class="btn btn-outline" onclick="openBarMenuImportModal()"><i class="fas fa-file-excel"></i> Import Excel</button>
             <button class="btn btn-gold" onclick="openAddBarMenuModal()"><i class="fas fa-plus"></i> Add Bar Item</button>
           </div>
@@ -2363,16 +2364,21 @@ async function loadBarMenuItems() {
 function renderBarMenuItems() {
   const tbody = document.getElementById('bar-menu-items-tbody');
   if (!tbody) return;
-  // Reset select-all checkbox
   const selectAll = document.getElementById('bar-select-all');
   if (selectAll) selectAll.checked = false;
   updateBarDeleteSelectedBtn();
 
-  if (!barMenuItemsList.length) {
-    tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><i class="fas fa-wine-glass-alt"></i> No bar items yet. Click "Add Bar Item" to create one.</td></tr>';
+  const searchEl = document.getElementById('bar-menu-search');
+  const term = searchEl ? searchEl.value.toLowerCase().trim() : '';
+  const list = term
+    ? barMenuItemsList.filter(i => i.name.toLowerCase().includes(term) || (i.category||'').toLowerCase().includes(term))
+    : barMenuItemsList;
+
+  if (!list.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><i class="fas fa-wine-glass-alt"></i>' + (term ? ' No items match your search.' : ' No bar items yet. Click "Add Bar Item" to create one.') + '</td></tr>';
     return;
   }
-  tbody.innerHTML = barMenuItemsList.map((item, idx) => `
+  tbody.innerHTML = list.map((item, idx) => `
     <tr>
       <td style="text-align:center;"><input type="checkbox" class="bar-item-cb" data-id="${item.id}" onchange="updateBarDeleteSelectedBtn()" style="width:15px;height:15px;cursor:pointer;"></td>
       <td>${idx + 1}</td>
