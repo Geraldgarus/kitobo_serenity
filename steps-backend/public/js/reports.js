@@ -148,7 +148,7 @@ async function generatePrintReport() {
   try {
     const [summary, filtered] = await Promise.all([
       apiGet(`/reports/summary?${params}`),
-      apiGet(`/reservations?${params}`),
+      apiGet(`/reports/reservations?${params}`),
     ]);
     const s = summary.summary;
     const byApt = summary.byApartment;
@@ -156,8 +156,7 @@ async function generatePrintReport() {
     const aptRows = byApt.map(a => `<tr><td>${a.name}</td><td>${a.bookings}</td><td>${a.nights}</td><td><strong>${a.revenue > 0 ? fmtTSH(a.revenue) : '—'}</strong></td></tr>`).join('');
 
     const resRows = filtered.map(r => {
-      const apt = byApt.find(a => a.id === r.aptId);
-      return `<tr><td>${r.guest}</td><td>${apt?.name || '—'}</td><td>${fmtDate(r.checkin)}</td><td>${fmtDate(r.checkout)}</td><td>${daysBetween(r.checkin, r.checkout)}n</td><td>${r.adults}A ${r.children}C</td><td>${r.rateType || 'Bed and Breakfast'}</td><td><strong>${fmtTSH(r.total)}</strong></td></tr>`;
+      return `<tr><td>${r.guest}</td><td>${r.room || '—'}</td><td>${fmtDate(r.checkin)}</td><td>${fmtDate(r.checkout)}</td><td>${r.nights}n</td><td>${r.adults || 0}A ${r.children || 0}C</td><td>${r.rateType || 'Bed and Breakfast'}</td><td><strong>${fmtTSH(r.total)}</strong></td></tr>`;
     }).join('');
 
     const periodLabel = fromVal && toVal ? `${fmtDate(fromVal)} to ${fmtDate(toVal)}` : 'All Time';
