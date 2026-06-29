@@ -153,7 +153,7 @@ async function generatePrintReport() {
     const s = summary.summary;
     const byApt = summary.byApartment;
 
-    const aptRows = byApt.map(a => `<tr><td>${a.emoji} ${a.name}</td><td>${a.bookings}</td><td>${a.nights}</td><td><strong>${a.revenue > 0 ? fmtTSH(a.revenue) : '—'}</strong></td></tr>`).join('');
+    const aptRows = byApt.map(a => `<tr><td>${a.name}</td><td>${a.bookings}</td><td>${a.nights}</td><td><strong>${a.revenue > 0 ? fmtTSH(a.revenue) : '—'}</strong></td></tr>`).join('');
 
     const resRows = filtered.map(r => {
       const apt = byApt.find(a => a.id === r.aptId);
@@ -161,17 +161,21 @@ async function generatePrintReport() {
     }).join('');
 
     const periodLabel = fromVal && toVal ? `${fmtDate(fromVal)} to ${fmtDate(toVal)}` : 'All Time';
+    const logoSrc = window.location.origin + '/images/logo3.png';
 
     const win = window.open('', '_blank');
     win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Kitobo Serenity Resort Report – ${periodLabel}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
       *{box-sizing:border-box;margin:0;padding:0}
       body{font-family:Georgia,serif;color:#1a2340;background:#fff;padding:40px;font-size:13px}
-      .header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:32px;border-bottom:3px solid #1a2340;padding-bottom:20px}
-      .logo-area h1{font-size:26px;font-weight:700;color:#1a2340}
-      .logo-area p{font-size:12px;color:#9ca3af;margin-top:4px}
-      .report-meta{text-align:right}
-      .report-meta .period{font-size:16px;font-weight:700;color:#c9933a}
+      .header{display:flex;align-items:center;justify-content:space-between;margin-bottom:32px;border-bottom:3px solid #1a2340;padding-bottom:20px}
+      .header-logo{width:70px;height:70px;object-fit:contain;flex-shrink:0}
+      .header-center{flex:1;text-align:center;padding:0 20px}
+      .header-center h1{font-size:24px;font-weight:700;color:#1a2340;font-family:Georgia,serif}
+      .header-center p{font-size:12px;color:#9ca3af;margin-top:4px}
+      .report-meta{text-align:right;flex-shrink:0}
+      .report-meta .period{font-size:14px;font-weight:700;color:#c9933a}
       .report-meta .generated{font-size:11px;color:#9ca3af;margin-top:4px}
       .summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:32px}
       .summary-box{background:#f8f9fa;border:1px solid #e5e7eb;border-radius:10px;padding:16px}
@@ -185,12 +189,16 @@ async function generatePrintReport() {
       .footer{margin-top:40px;border-top:1px solid #e5e7eb;padding-top:16px;font-size:11px;color:#9ca3af;display:flex;justify-content:space-between}
       @media print{body{padding:20px}}
     </style></head><body>
-    <div class="header"><div class="logo-area"><h1><i class="fas fa-hotel"></i> Kitobo Serenity Resort</h1><p>Property Management System · Dar es Salaam, Tanzania</p></div><div class="report-meta"><div class="period">Period: ${periodLabel}</div><div class="generated">Generated: ${new Date().toLocaleString('en-GB')}</div></div></div>
+    <div class="header">
+      <img src="${logoSrc}" class="header-logo" alt="Logo">
+      <div class="header-center"><h1>Kitobo Serenity Resort</h1><p>Reservations Report &middot; Dar es Salaam, Tanzania</p></div>
+      <div class="report-meta"><div class="period">Period: ${periodLabel}</div><div class="generated">Generated: ${new Date().toLocaleString('en-GB')}</div></div>
+    </div>
     <div class="summary-grid"><div class="summary-box"><div class="label">Total Reservations</div><div class="value">${s.totalReservations}</div></div><div class="summary-box"><div class="label">Total Revenue</div><div class="value" style="font-size:15px">${fmtTSH(s.totalRevenue)}</div></div><div class="summary-box"><div class="label">Total Nights Sold</div><div class="value">${s.totalNights}</div></div><div class="summary-box"><div class="label">Avg. Stay</div><div class="value">${s.avgStayNights ? s.avgStayNights.toFixed(1) : '—'} nts</div></div></div>
-    <h2>Revenue by Apartment</h2><table><thead><tr><th>Apartment</th><th>Bookings</th><th>Nights</th><th>Revenue</th></tr></thead><tbody>${aptRows}</tbody></table>
-    <h2>Reservation Detail (${filtered.length} records)</h2><table><thead><tr><th>Guest</th><th>Apartment</th><th>Check-in</th><th>Check-out</th><th>Nights</th><th>Guests</th><th>Rate</th><th>Total</th></tr></thead><tbody>${resRows || '<tr><td colspan="8" style="text-align:center;color:#9ca3af;padding:20px">No reservations in this period</td></tr>'}</tbody></table>
-    <div class="footer"><span>Kitobo Serenity Resort · Confidential</span><span>Page 1</span></div>
-    <script>window.onload=()=>window.print();<\/script>
+    <h2>Revenue by Room</h2><table><thead><tr><th>Room</th><th>Bookings</th><th>Nights</th><th>Revenue</th></tr></thead><tbody>${aptRows}</tbody></table>
+    <h2>Reservation Detail (${filtered.length} records)</h2><table><thead><tr><th>Guest</th><th>Room</th><th>Check-in</th><th>Check-out</th><th>Nights</th><th>Guests</th><th>Rate</th><th>Total</th></tr></thead><tbody>${resRows || '<tr><td colspan="8" style="text-align:center;color:#9ca3af;padding:20px">No reservations in this period</td></tr>'}</tbody></table>
+    <div class="footer"><span>Kitobo Serenity Resort &middot; Confidential</span><span>Page 1</span></div>
+    <script>window.onload=function(){setTimeout(function(){window.print();},400);};<\/script>
     </body></html>`);
     win.document.close();
   } catch (err) {
