@@ -2640,25 +2640,27 @@ app.post('/api/grn/receive/:poId', async (req, res) => {
       `, [item.item_name]);
       
       if (existingItem.rows.length > 0) {
-        // Update existing item — stock_value uses the item's selling price (cost column), not buying price
         const stockItem = existingItem.rows[0];
         const currentQtyParts = (stockItem.quantity || '0 units').split(' ');
         const currentQty = parseFloat(currentQtyParts[0]) || 0;
         const unit = currentQtyParts[1] || item.unit;
         const newQty = currentQty + parseFloat(item.quantity);
         const newQuantityStr = newQty + ' ' + unit;
-        const sellingPrice = parseFloat(stockItem.cost) || 0;
-        const newStockValue = Math.round(newQty * sellingPrice);
+        // Use the PO unit_price (possibly edited before receiving) as the new cost
+        const newCost = parseFloat(item.unit_price) || parseFloat(stockItem.cost) || 0;
+        const newStockValue = Math.round(newQty * newCost);
 
         await client.query(`
-          UPDATE store_items SET quantity = $1, stock_value = $2 WHERE id = $3
-        `, [newQuantityStr, newStockValue, stockItem.id]);
+          UPDATE store_items SET quantity = $1, stock_value = $2, cost = $3 WHERE id = $4
+        `, [newQuantityStr, newStockValue, newCost, stockItem.id]);
       } else {
-        // New item — selling price not yet set, stock_value starts at 0 until price is configured
+        // New item — use PO unit_price as the starting cost
+        const newCost = parseFloat(item.unit_price) || 0;
+        const newStockValue = Math.round(parseFloat(item.quantity) * newCost);
         await client.query(`
           INSERT INTO store_items (name, category, cost, quantity, stock_value, unit)
-          VALUES ($1, $2, 0, $3, 0, $4)
-        `, [item.item_name, item.category, item.quantity + ' ' + item.unit, item.unit]);
+          VALUES ($1, $2, $3, $4, $5, $6)
+        `, [item.item_name, item.category, newCost, item.quantity + ' ' + item.unit, newStockValue, item.unit]);
       }
     }
     
