@@ -2510,28 +2510,45 @@ document.getElementById('bar-menu-excel-input').addEventListener('change', funct
 
 function parseBarMenuImportRows(rows) {
   if (!rows || rows.length < 2) { showToast('File is empty or invalid', 'error'); return; }
-  var dataStart = 1;
-  for (var i = 1; i < rows.length; i++) {
-    var price = parseFloat(String(rows[i][2]).replace(/,/g,''));
-    if (!isNaN(price) && price > 0) { dataStart = i; break; }
+
+  // Detect header row and column positions by name (handles any column order)
+  var nameIdx = 0, catIdx = 1, priceIdx = 2, dataStart = 1;
+  for (var h = 0; h < Math.min(rows.length, 5); h++) {
+    var found = false;
+    for (var c = 0; c < rows[h].length; c++) {
+      var hdr = String(rows[h][c]||'').toLowerCase().trim();
+      if (hdr.includes('name') || hdr.includes('item')) { nameIdx = c; found = true; }
+      else if (hdr.includes('cat')) catIdx = c;
+      else if (hdr.includes('price') || hdr.includes('tsh') || hdr.includes('amount') || hdr.includes('cost')) priceIdx = c;
+    }
+    if (found) { dataStart = h + 1; break; }
   }
+
+  // Skip notes/description rows (rows where price column is not a number)
+  while (dataStart < rows.length) {
+    var test = parseFloat(String(rows[dataStart][priceIdx]||'').replace(/[^0-9.]/g,''));
+    if (!isNaN(test) && test > 0) break;
+    dataStart++;
+  }
+
   var existingNames = barMenuItemsList.map(function(m){ return m.name.toLowerCase().trim(); });
   barMenuImportRows = [];
   for (var j = dataStart; j < rows.length; j++) {
     var r    = rows[j];
-    var name = String(r[0]||'').trim();
-    var cat  = String(r[1]||'').trim();
-    var pr   = parseFloat(String(r[2]||'').replace(/,/g,''));
+    var name = String(r[nameIdx]||'').trim();
+    var cat  = String(r[catIdx]||'').trim();
+    // Strip all non-numeric chars except decimal point (handles TSH, commas, spaces, /=, etc.)
+    var pr   = parseFloat(String(r[priceIdx]||'').replace(/[^0-9.]/g,''));
     if (!name) continue;
     if (isNaN(pr) || pr <= 0) { barMenuImportRows.push({ name:name, cat:cat, price:null, status:'error', msg:'Invalid price' }); continue; }
-    var existIdx = existingNames.indexOf(name.toLowerCase());
+    var existIdx = existingNames.indexOf(name.toLowerCase().trim());
     if (existIdx >= 0) {
       barMenuImportRows.push({ name:name, cat:cat, price:pr, status:'update', existItem: barMenuItemsList[existIdx] });
     } else {
       barMenuImportRows.push({ name:name, cat:cat, price:pr, status:'new' });
     }
   }
-  if (!barMenuImportRows.length) { showToast('No valid rows found', 'error'); return; }
+  if (!barMenuImportRows.length) { showToast('No data rows found in file', 'error'); return; }
   var tbody = document.getElementById('bar-menu-import-preview-body');
   tbody.innerHTML = barMenuImportRows.map(function(row, idx) {
     var badge = row.status === 'new'
@@ -2543,6 +2560,10 @@ function parseBarMenuImportRows(rows) {
     return '<tr><td>'+(idx+1)+'</td><td><strong>'+escapeHtml(row.name)+'</strong></td><td>'+escapeHtml(row.cat)+'</td><td>'+priceStr+'</td><td>'+badge+'</td></tr>';
   }).join('');
   document.getElementById('bar-menu-import-preview').style.display = 'block';
+  var newCount = barMenuImportRows.filter(function(r){ return r.status==='new'; }).length;
+  var updCount = barMenuImportRows.filter(function(r){ return r.status==='update'; }).length;
+  var errCount = barMenuImportRows.filter(function(r){ return r.status==='error'; }).length;
+  showToast(newCount+' new, '+updCount+' update'+(errCount?' ('+errCount+' errors)':''), '<i class="fas fa-check-circle"></i>');
 }
 
 async function confirmBarMenuImport() {
