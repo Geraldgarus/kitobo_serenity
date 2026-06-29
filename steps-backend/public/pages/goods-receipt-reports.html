@@ -109,9 +109,14 @@
   .btn-print, .btn-outline, .btn-gold { display: none !important; }
   .main-content { margin: 0 !important; padding: 20px !important; }
   body { background: white !important; }
-  .print-header { display: block !important; text-align: center; margin-bottom: 24px; border-bottom: 2px solid #c9933a; padding-bottom: 16px; }
-  .print-header h1 { font-size: 22px; color: #1a2340; font-family: 'Playfair Display', serif; }
-  .print-header p { font-size: 13px; color: #64748b; margin-top: 4px; }
+  .print-header { display: flex !important; align-items: center; justify-content: space-between; margin-bottom: 24px; border-bottom: 3px solid #1a2340; padding-bottom: 18px; }
+  .print-header .ph-logo { width: 70px; height: 70px; object-fit: contain; flex-shrink: 0; }
+  .print-header .ph-center { flex: 1; text-align: center; padding: 0 20px; }
+  .print-header .ph-center h1 { font-size: 22px; font-weight: 700; color: #1a2340; font-family: 'Playfair Display', Georgia, serif; margin: 0; }
+  .print-header .ph-center p { font-size: 12px; color: #64748b; margin-top: 4px; }
+  .print-header .ph-meta { text-align: right; flex-shrink: 0; }
+  .print-header .ph-meta .ph-period { font-size: 13px; font-weight: 700; color: #c9933a; }
+  .print-header .ph-meta .ph-generated { font-size: 11px; color: #94a3b8; margin-top: 4px; }
   .stat-card { box-shadow: none; border: 1px solid #e2e8f0; }
   .card { box-shadow: none; border: 1px solid #e2e8f0; }
   td:last-child, th:last-child { display: none; }
@@ -987,8 +992,15 @@
 
 <main class="main-content">
   <div class="print-header">
-    <h1><i class="fas fa-stamp"></i> Goods Receipt Report</h1>
-    <p>Kitobo Serenity Resort &mdash; Generated: <span id="print-date"></span></p>
+    <img src="/images/logo3.png" class="ph-logo" alt="Logo">
+    <div class="ph-center">
+      <h1>Kitobo Serenity Resort</h1>
+      <p>Goods Receipt Report &middot; Dar es Salaam, Tanzania</p>
+    </div>
+    <div class="ph-meta">
+      <div class="ph-period" id="print-period">Goods Receipt Report</div>
+      <div class="ph-generated">Generated: <span id="print-date"></span></div>
+    </div>
   </div>
   <div class="filter-bar">
     <div class="filter-group"><label>From Date</label><input type="date" id="filter-from"></div>
@@ -1621,8 +1633,12 @@ async function apiPost(url, data) {
   
   // Make functions global
   function printReport() {
-    var pd = document.getElementById('print-date');
-    if (pd) pd.textContent = new Date().toLocaleString();
+    const f = document.getElementById('filter-from')?.value;
+    const t = document.getElementById('filter-to')?.value;
+    const pp = document.getElementById('print-period');
+    if (pp) pp.textContent = f && t ? 'Period: ' + f + ' to ' + t : 'All Records';
+    const pd = document.getElementById('print-date');
+    if (pd) pd.textContent = new Date().toLocaleString('en-GB');
     window.print();
   }
 
