@@ -1573,10 +1573,10 @@ for (var i = 0; i < filtered.length; i++) {
     var id = document.getElementById('edit-item-id').value;
     var name = document.getElementById('edit-item-name').value.trim();
     var category = document.getElementById('edit-item-category').value;
-    var unitPrice = parseInt(document.getElementById('edit-item-unit-price').value);
+    var unitPrice = parseInt(document.getElementById('edit-item-unit-price').value) || 0;
     var unit = document.getElementById('edit-item-unit').value;
     var item_type = document.getElementById('edit-item-pos').value;
-    if (!name || !category || !unitPrice) { showToast('Please fill all fields', '<i class="fas fa-exclamation-triangle"></i>'); return; }
+    if (!name || !category) { showToast('Please fill all required fields', '<i class="fas fa-exclamation-triangle"></i>'); return; }
     var item = storeItems.find(function(i) { return i.id === parseInt(id); });
     if (!item) return;
     var currentQty = parseFloat(item.quantity) || 0;
