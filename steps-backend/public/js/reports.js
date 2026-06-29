@@ -181,7 +181,7 @@ async function generatePrintReport() {
       .summary-box .value{font-size:22px;font-weight:700;color:#1a2340}
       h2{font-size:14px;font-weight:700;color:#1a2340;margin:24px 0 10px;border-left:4px solid #c9933a;padding-left:10px}
       table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:24px}
-      th{background:#1a2340;color:#fff;padding:9px 12px;text-align:left;font-size:11px;font-weight:600}
+      th{background:#1a2340;color:#fff;padding:10px 12px;text-align:left;font-size:13px;font-weight:700;letter-spacing:0.3px}
       td{padding:8px 12px;border-bottom:1px solid #f0f0f0}
       tr:nth-child(even) td{background:#fafafa}
       .footer{margin-top:40px;border-top:1px solid #e5e7eb;padding-top:16px;font-size:11px;color:#9ca3af;display:flex;justify-content:space-between}
