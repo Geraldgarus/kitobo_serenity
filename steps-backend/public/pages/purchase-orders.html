@@ -1443,7 +1443,7 @@ function escapeHtml(str) {
         itemsHtml += '<tr id="item-row-' + item.id + '">';
         itemsHtml += '<td><strong>' + escapeHtml(item.item_name) + '</strong><br><small>' + escapeHtml(item.category) + '</small></td>';
         itemsHtml += '<td>' + escapeHtml(item.unit) + '</td>';
-        itemsHtml += '<td><input type="number" id="price-' + item.id + '" value="' + item.unit_price + '" onchange="updateItemInPO(' + item.id + ', \'price\')" class="form-control" style="width: 100px;"></td>';
+        itemsHtml += '<td><input type="number" id="price-' + item.id + '" value="' + item.unit_price + '" class="form-control" style="width:100px;background:#f1f5f9;cursor:not-allowed;" readonly></td>';
         itemsHtml += '<td><input type="number" id="qty-' + item.id + '" value="' + item.quantity + '" onchange="updateItemInPO(' + item.id + ', \'qty\')" class="form-control" style="width: 80px;" step="0.01"></td>';
         itemsHtml += '<td><span id="total-' + item.id + '">' + fmtTSH(item.total_price) + '</span></td>';
         itemsHtml += '<td><button class="btn btn-danger btn-sm" onclick="removeItemFromPO(' + item.id + ')"><i class="fas fa-trash-alt"></i></button></td>';
@@ -1577,7 +1577,7 @@ function escapeHtml(str) {
       html += '</div>';
       html += '<div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">';
       html += '<input type="number" id="item-qty-' + i + '" placeholder="Qty" min="0.01" step="0.01" class="form-control" style="width:75px;padding:6px 8px;border-radius:8px;">';
-      html += '<input type="number" id="item-price-' + i + '" placeholder="Price" min="0" step="1" value="' + (parseFloat(item.cost) || 0) + '" class="form-control" style="width:120px;padding:6px 8px;border-radius:8px;">';
+      html += '<input type="number" id="item-price-' + i + '" value="' + (parseFloat(item.cost) || 0) + '" class="form-control" style="width:120px;padding:6px 8px;border-radius:8px;background:#f1f5f9;cursor:not-allowed;" readonly>';
       html += '<button class="btn btn-gold btn-sm" onclick="addItemFromSelector(' + i + ')" style="white-space:nowrap;">Add</button>';
       html += '</div>';
       html += '</div>';
