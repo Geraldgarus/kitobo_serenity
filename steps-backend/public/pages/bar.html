@@ -310,6 +310,7 @@
   }
 
   let posItems = [];
+  let inventoryItems = []; // store_items where item_type='Bar' — used for stock deduction
   let orders = [];
   let currentOrderId = null;
   let nextOrderNumber = 1;
@@ -334,21 +335,31 @@
 
   async function loadItems() {
     try {
-      const items = await apiGet('/api/store/items');
-      posItems = items
-        .filter(item => {
-          const type = (item.item_type || item.pos || '').toLowerCase().trim();
-          return type === 'bar';
-        })
-        .map(item => ({
-          id:       item.id,
+      const [menuItems, allStoreItems] = await Promise.all([
+        apiGet('/api/bar-menu-items'),
+        apiGet('/api/store/items')
+      ]);
+      // Build inventory lookup by name (item_type = bar)
+      inventoryItems = allStoreItems.filter(item => {
+        const type = (item.item_type || item.pos || '').toLowerCase().trim();
+        return type === 'bar';
+      });
+      const invByName = {};
+      inventoryItems.forEach(item => { invByName[item.name.toLowerCase()] = item; });
+
+      posItems = menuItems.map(item => {
+        const inv = invByName[item.name.toLowerCase()];
+        return {
+          id:       item.id,           // bar_menu_items id (display only)
+          invId:    inv ? inv.id : null, // store_items id (for stock deduction)
           name:     item.name,
-          category: item.category || 'General',
-          price:    item.cost,
-          quantity: parseFloat(item.quantity) || 0,
-          unit:     item.unit || 'units',
-          pos:      item.item_type || item.pos
-        }));
+          category: item.category || 'Other',
+          price:    item.price,
+          quantity: inv ? parseFloat(inv.quantity) || 0 : 9999,
+          unit:     inv ? inv.unit || 'units' : 'units',
+          tracked:  !!inv
+        };
+      });
       buildCategoryTabs();
       applyFilters();
     } catch(err) {
@@ -390,8 +401,8 @@
     }
     let html = '';
     items.forEach(item => {
-      const outOfStock = item.quantity <= 0;
-      const stockText = outOfStock ? 'Out of stock' : `${item.quantity} ${item.unit.substring(0,4)}`;
+      const outOfStock = item.tracked && item.quantity <= 0;
+      const stockText = outOfStock ? 'Out of stock' : (item.tracked ? `${item.quantity} ${item.unit.substring(0,4)}` : '');
       html += `
         <div class="item-card ${outOfStock ? 'out-of-stock' : ''}" onclick="${outOfStock ? '' : `addToCurrentOrder(${item.id})`}">
           <div class="item-name">${escapeHtml(item.name)}</div>
@@ -550,13 +561,21 @@
     if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...'; }
     try {
       for (const cartItem of order.items) {
-        const storeItem = posItems.find(i => i.id === cartItem.id);
-        const newQty = storeItem.quantity - cartItem.quantity;
-        await apiPut(`/api/store/items/${cartItem.id}`, {
-          name: storeItem.name, category: storeItem.category, cost: storeItem.price,
-          quantity: `${newQty} ${storeItem.unit}`, unit: storeItem.unit, item_type: storeItem.pos
-        });
-        storeItem.quantity = newQty;
+        const posItem = posItems.find(i => i.id === cartItem.id);
+        if (posItem && posItem.tracked && posItem.invId) {
+          const invItem = inventoryItems.find(i => i.id === posItem.invId);
+          if (invItem) {
+            const currentQty = parseFloat(invItem.quantity) || 0;
+            const newQty = Math.max(0, currentQty - cartItem.quantity);
+            await apiPut(`/api/store/items/${posItem.invId}`, {
+              name: invItem.name, category: invItem.category, cost: invItem.cost,
+              quantity: `${newQty} ${invItem.unit || 'units'}`, unit: invItem.unit || 'units',
+              item_type: invItem.item_type || invItem.pos
+            });
+            invItem.quantity = newQty;
+            posItem.quantity = newQty;
+          }
+        }
       }
       const saleData = {
         items: order.items.map(item => ({
