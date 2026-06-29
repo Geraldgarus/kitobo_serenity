@@ -1644,7 +1644,7 @@ function escapeHtml(str) {
       html += '<tr>';
       html += '<td><strong>' + escapeHtml(si.name) + '</strong><br><small>' + escapeHtml(si.category) + '</small></td>';
       html += '<td>' + escapeHtml(si.unit) + '</td>';
-      html += '<td><input type="number" id="new-price-' + i + '" value="' + si.unit_price + '" class="form-control" style="width:100px;" onchange="updateNewItemTotal(' + i + ')"></td>';
+      html += '<td><input type="number" id="new-price-' + i + '" value="' + si.unit_price + '" class="form-control" style="width:100px;background:#f1f5f9;cursor:not-allowed;" readonly></td>';
       html += '<td><input type="number" id="new-qty-' + i + '" value="' + si.quantity + '" step="0.01" class="form-control" style="width:80px;" onchange="updateNewItemTotal(' + i + ')"></td>';
       html += '<td id="new-total-' + i + '">' + fmtTSH(si.total) + '</td>';
       html += '<td><button class="btn btn-danger btn-sm" onclick="removeNewItem(' + i + ')"><i class="fas fa-trash-alt"></i></button></td>';
