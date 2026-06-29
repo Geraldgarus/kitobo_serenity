@@ -2,7 +2,7 @@
 async function loadAndRenderReports() {
   const fromEl = document.getElementById('rpt-from');
   const toEl = document.getElementById('rpt-to');
-  if (fromEl && !fromEl.value) { const n = new Date(); fromEl.value = n.getFullYear() + '-' + String(n.getMonth()+1).padStart(2,'0') + '-01'; }
+  if (fromEl && !fromEl.value) fromEl.value = isoDate(new Date());
   if (toEl && !toEl.value) toEl.value = isoDate(new Date());
   await applyReportFilter();
 }
