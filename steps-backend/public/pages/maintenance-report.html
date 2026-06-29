@@ -322,9 +322,51 @@
       body { background: white !important; }
       .summary-card { break-inside: avoid; box-shadow: none; border: 1px solid #e2e8f0; }
       .report-table { box-shadow: none; }
-      .print-maint-header { display: block !important; text-align: center; margin-bottom: 20px; border-bottom: 2px solid #c9933a; padding-bottom: 14px; }
-      .print-maint-header h1 { font-size: 20px; color: #1a2340; font-family: 'Playfair Display', serif; }
-      .print-maint-header p { font-size: 12px; color: #64748b; margin-top: 4px; }
+
+      .print-maint-header {
+        display: flex !important;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 24px;
+        border-bottom: 3px solid #1a2340;
+        padding-bottom: 18px;
+      }
+      .print-maint-header .ph-logo {
+        width: 70px; height: 70px;
+        object-fit: contain;
+        flex-shrink: 0;
+      }
+      .print-maint-header .ph-center {
+        flex: 1;
+        text-align: center;
+        padding: 0 20px;
+      }
+      .print-maint-header .ph-center h1 {
+        font-size: 22px;
+        font-weight: 700;
+        color: #1a2340;
+        font-family: 'Playfair Display', Georgia, serif;
+        margin: 0;
+      }
+      .print-maint-header .ph-center p {
+        font-size: 12px;
+        color: #64748b;
+        margin-top: 4px;
+      }
+      .print-maint-header .ph-meta {
+        text-align: right;
+        flex-shrink: 0;
+      }
+      .print-maint-header .ph-meta .ph-period {
+        font-size: 13px;
+        font-weight: 700;
+        color: #c9933a;
+      }
+      .print-maint-header .ph-meta .ph-generated {
+        font-size: 11px;
+        color: #94a3b8;
+        margin-top: 4px;
+      }
     }
     .print-maint-header { display: none; }
   </style>
@@ -411,8 +453,15 @@
 <main class="main-content">
   <div class="report-container">
     <div class="print-maint-header">
-      <h1><i class="fas fa-tools"></i> Maintenance Report</h1>
-      <p>Kitobo Serenity Resort &mdash; Generated: <span id="print-date"></span></p>
+      <img src="/images/logo3.png" class="ph-logo" alt="Logo">
+      <div class="ph-center">
+        <h1>Kitobo Serenity Resort</h1>
+        <p>Maintenance Report &mdash; Dar es Salaam, Tanzania</p>
+      </div>
+      <div class="ph-meta">
+        <div class="ph-period" id="print-period">Maintenance Report</div>
+        <div class="ph-generated">Generated: <span id="print-date"></span></div>
+      </div>
     </div>
     <!-- Filter Bar -->
     <div class="filter-bar">
@@ -462,7 +511,13 @@
       </div>
       <div class="filter-group">
         <label>&nbsp;</label>
-        <button class="btn-print" onclick="var pd=document.getElementById('print-date');if(pd)pd.textContent=new Date().toLocaleString();window.print()" style="width: 100%;"><i class="fas fa-print"></i> Print Report</button>
+        <button class="btn-print" onclick="
+          var f=document.getElementById('filter-from').value,t=document.getElementById('filter-to').value;
+          var pp=document.getElementById('print-period');
+          if(pp)pp.textContent=f&&t?'Period: '+f+' to '+t:'All Records';
+          var pd=document.getElementById('print-date');
+          if(pd)pd.textContent=new Date().toLocaleString('en-GB');
+          window.print();" style="width: 100%;"><i class="fas fa-print"></i> Print Report</button>
       </div>
     </div>
 
@@ -522,7 +577,13 @@
     </div>
 
     <div class="action-buttons">
-      <button class="btn-print" onclick="var pd=document.getElementById('print-date');if(pd)pd.textContent=new Date().toLocaleString();window.print()"><i class="fas fa-print"></i> Print Maintenance Report</button>
+      <button class="btn-print" onclick="
+        var f=document.getElementById('filter-from').value,t=document.getElementById('filter-to').value;
+        var pp=document.getElementById('print-period');
+        if(pp)pp.textContent=f&&t?'Period: '+f+' to '+t:'All Records';
+        var pd=document.getElementById('print-date');
+        if(pd)pd.textContent=new Date().toLocaleString('en-GB');
+        window.print();"><i class="fas fa-print"></i> Print Maintenance Report</button>
     </div>
   </div>
   
