@@ -1015,8 +1015,8 @@ app.get('/api/store/items', async (req, res) => {
 // POST add item to main store
 app.post('/api/store/items', async (req, res) => {
   const { name, category, cost, quantity, item_type } = req.body;
-  if (!name || !category || !cost || !quantity) {
-    return res.status(400).json({ error: 'All fields required' });
+  if (!name || !category) {
+    return res.status(400).json({ error: 'Name and category are required' });
   }
   const parts = quantity.trim().split(' ');
   const stock_value = parseFloat(parts[0]);
