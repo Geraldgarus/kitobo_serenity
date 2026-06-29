@@ -538,6 +538,7 @@
       <button class="tab-btn active" data-tab="inventory"><i class="fas fa-box"></i> Inventory</button>
       <button class="tab-btn" data-tab="requests"><i class="fas fa-clipboard-list"></i> Pending Requests</button>
       <button class="tab-btn" data-tab="menu"><i class="fas fa-utensils"></i> Restaurant Menu</button>
+      <button class="tab-btn" data-tab="bar-menu"><i class="fas fa-wine-glass-alt"></i> Bar Menu</button>
       <button class="tab-btn" data-tab="purchase-orders"><i class="fas fa-file-invoice"></i> Purchase Orders</button>
     </div>
     
@@ -610,6 +611,29 @@
               </tr>
             </thead>
             <tbody id="menu-items-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div id="tab-bar-menu" class="tab-content">
+      <div style="padding: 20px;">
+        <div style="display:flex;justify-content:flex-end;gap:10px;margin-bottom:16px;">
+          <button class="btn btn-outline" onclick="openBarMenuImportModal()"><i class="fas fa-file-excel"></i> Import Excel</button>
+          <button class="btn btn-gold" onclick="openAddBarMenuModal()"><i class="fas fa-plus"></i> Add Bar Item</button>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="store-table" id="bar-menu-items-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Item Name</th>
+                <th>Category</th>
+                <th>Price (TSH)</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="bar-menu-items-tbody"></tbody>
           </table>
         </div>
       </div>
@@ -1336,6 +1360,7 @@ document.getElementById('excel-file-input')?.addEventListener('change', previewE
       document.getElementById('tab-' + tabId).classList.add('active');
       if (tabId === 'requests') loadRequests();
       else if (tabId === 'inventory') renderStoreItemsWithFilter();
+      else if (tabId === 'bar-menu') { if (!barMenuItemsList.length) loadBarMenuItems(); }
       else if (tabId === 'purchase-orders') {
         var df = document.getElementById('store-po-filter-date');
         if (df && !df.value) df.value = new Date().toISOString().slice(0, 10);
@@ -2226,5 +2251,332 @@ document.querySelectorAll('.tab-btn[data-tab="menu"]').forEach(btn => {
 });
 </script>
 <script src="../js/permissions.js"></script>
+
+<!-- Bar Menu Add/Edit Modal -->
+<div class="reservation-modal-overlay" id="bar-menu-modal-overlay" onclick="closeBarMenuModal()"></div>
+<div class="reservation-modal" id="bar-menu-modal">
+  <div class="reservation-modal-header">
+    <h3 id="bar-menu-modal-title"><i class="fas fa-plus"></i> Add Bar Item</h3>
+    <button class="reservation-modal-close" onclick="closeBarMenuModal()"><i class="fas fa-times"></i></button>
+  </div>
+  <div class="reservation-modal-body">
+    <form id="bar-menu-item-form">
+      <input type="hidden" id="bar-menu-item-id">
+      <div class="form-group">
+        <label>Item Name *</label>
+        <input type="text" id="bar-menu-item-name" class="form-control" placeholder="e.g. Heineken Beer" required>
+      </div>
+      <div class="form-group">
+        <label>Category *</label>
+        <select id="bar-menu-item-category" class="form-control" required>
+          <option value="">-- Select Category --</option>
+          <option value="Beer">Beer</option>
+          <option value="Gins">Gins</option>
+          <option value="Wine">Wine</option>
+          <option value="Whisky">Whisky</option>
+          <option value="Spirits">Spirits</option>
+          <option value="Cocktails">Cocktails</option>
+          <option value="Mocktails">Mocktails</option>
+          <option value="Soft Drinks">Soft Drinks</option>
+          <option value="Fresh Juice">Fresh Juice</option>
+          <option value="Water">Water</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Price (TSH) *</label>
+        <input type="number" id="bar-menu-item-price" class="form-control" placeholder="Enter price" min="0" step="500" required>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:20px;">
+        <button type="submit" class="btn btn-gold" style="flex:1;"><i class="fas fa-check-circle"></i> Save Item</button>
+        <button type="button" class="btn btn-outline" onclick="closeBarMenuModal()">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Bar Menu Import Excel Modal -->
+<div class="reservation-modal-overlay" id="bar-menu-import-overlay" onclick="closeBarMenuImportModal()"></div>
+<div class="reservation-modal" id="bar-menu-import-modal" style="max-width:620px;">
+  <div class="reservation-modal-header">
+    <h3><i class="fas fa-file-excel"></i> Import Bar Menu from Excel</h3>
+    <button class="reservation-modal-close" onclick="closeBarMenuImportModal()"><i class="fas fa-times"></i></button>
+  </div>
+  <div class="reservation-modal-body">
+    <div class="form-group">
+      <label>Download Template</label>
+      <button class="btn btn-outline" onclick="downloadBarMenuTemplate()" style="width:auto;padding:8px 16px;"><i class="fas fa-download"></i> Download Bar Menu Template</button>
+      <small style="display:block;margin-top:5px;color:#64748b;">Template columns: Item Name, Category, Price (TSH)</small>
+    </div>
+    <hr class="divider" />
+    <div class="form-group">
+      <label>Upload Excel / CSV File</label>
+      <input type="file" id="bar-menu-excel-input" accept=".xlsx,.xls,.csv" class="form-control" style="padding:8px;">
+    </div>
+    <div id="bar-menu-import-preview" style="display:none;margin-top:16px;">
+      <h4>Preview</h4>
+      <div style="max-height:300px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:12px;">
+        <table class="store-table" style="font-size:12px;">
+          <thead><tr><th>#</th><th>Item Name</th><th>Category</th><th>Price (TSH)</th><th>Status</th></tr></thead>
+          <tbody id="bar-menu-import-preview-body"></tbody>
+        </table>
+      </div>
+      <div style="margin-top:14px;display:flex;gap:10px;">
+        <button class="btn btn-success" onclick="confirmBarMenuImport()" style="flex:1;"><i class="fas fa-check-circle"></i> Import Items</button>
+        <button class="btn btn-outline" onclick="closeBarMenuImportModal()" style="flex:1;">Cancel</button>
+      </div>
+    </div>
+    <div id="bar-menu-import-progress" style="display:none;text-align:center;padding:20px;">
+      <i class="fas fa-spinner fa-spin" style="font-size:24px;margin-bottom:10px;"></i>
+      <div>Importing bar menu items...</div>
+      <div style="width:100%;background:#e2e8f0;border-radius:10px;margin-top:10px;overflow:hidden;">
+        <div id="bar-menu-import-bar" style="width:0%;height:8px;background:#10b981;transition:width 0.3s;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// BAR MENU ITEMS – CRUD
+// ============================================================
+let barMenuItemsList = [];
+
+async function loadBarMenuItems() {
+  try {
+    barMenuItemsList = await apiGet('/bar-menu-items');
+    renderBarMenuItems();
+  } catch(err) {
+    showToast('Failed to load bar menu: ' + err.message, '<i class="fas fa-times-circle"></i>');
+  }
+}
+
+function renderBarMenuItems() {
+  const tbody = document.getElementById('bar-menu-items-tbody');
+  if (!tbody) return;
+  if (!barMenuItemsList.length) {
+    tbody.innerHTML = '<tr><td colspan="5" class="empty-state"><i class="fas fa-wine-glass-alt"></i> No bar items yet. Click "Add Bar Item" to create one.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = barMenuItemsList.map((item, idx) => `
+    <tr>
+      <td>${idx + 1}</td>
+      <td><strong>${escapeHtml(item.name)}</strong></td>
+      <td><span style="background:#ede9fe;color:#5b21b6;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600;">${escapeHtml(item.category || 'Other')}</span></td>
+      <td>${fmtMenuTSH(item.price)}</td>
+      <td>
+        <button class="btn-sm btn-warning" onclick="openEditBarMenuModal(${item.id})"><i class="fas fa-edit"></i> Edit</button>
+        <button class="btn-sm btn-danger" onclick="deleteBarMenuItem(${item.id})"><i class="fas fa-trash"></i> Delete</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function openAddBarMenuModal() {
+  document.getElementById('bar-menu-item-id').value = '';
+  document.getElementById('bar-menu-item-name').value = '';
+  document.getElementById('bar-menu-item-category').value = '';
+  document.getElementById('bar-menu-item-price').value = '';
+  document.getElementById('bar-menu-modal-title').innerHTML = '<i class="fas fa-plus"></i> Add Bar Item';
+  document.getElementById('bar-menu-modal').classList.add('open');
+  document.getElementById('bar-menu-modal-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function openEditBarMenuModal(id) {
+  const item = barMenuItemsList.find(m => m.id === id);
+  if (!item) return;
+  document.getElementById('bar-menu-item-id').value = item.id;
+  document.getElementById('bar-menu-item-name').value = item.name;
+  document.getElementById('bar-menu-item-category').value = item.category || '';
+  document.getElementById('bar-menu-item-price').value = item.price;
+  document.getElementById('bar-menu-modal-title').innerHTML = '<i class="fas fa-edit"></i> Edit Bar Item';
+  document.getElementById('bar-menu-modal').classList.add('open');
+  document.getElementById('bar-menu-modal-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeBarMenuModal() {
+  document.getElementById('bar-menu-modal').classList.remove('open');
+  document.getElementById('bar-menu-modal-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+  document.getElementById('bar-menu-item-form').reset();
+}
+
+document.getElementById('bar-menu-item-form').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const id       = document.getElementById('bar-menu-item-id').value;
+  const name     = document.getElementById('bar-menu-item-name').value.trim();
+  const category = document.getElementById('bar-menu-item-category').value.trim();
+  const price    = parseInt(document.getElementById('bar-menu-item-price').value) || 0;
+  const btn      = e.target.querySelector('button[type="submit"]');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+  try {
+    if (id) {
+      await apiPut(`/bar-menu-items/${id}`, { name, category, price });
+      showToast('Bar item updated!', '<i class="fas fa-check-circle"></i>');
+    } else {
+      await apiPost('/bar-menu-items', { name, category, price });
+      showToast('Bar item added!', '<i class="fas fa-check-circle"></i>');
+    }
+    closeBarMenuModal();
+    await loadBarMenuItems();
+  } catch(err) {
+    showToast('Error: ' + err.message, '<i class="fas fa-times-circle"></i>');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-check-circle"></i> Save Item';
+  }
+});
+
+async function deleteBarMenuItem(id) {
+  const item = barMenuItemsList.find(m => m.id === id);
+  if (!item) return;
+  if (!confirm(`Delete "${item.name}" from the bar menu?`)) return;
+  try {
+    await apiDelete(`/bar-menu-items/${id}`);
+    showToast('Bar item deleted', '<i class="fas fa-check-circle"></i>');
+    await loadBarMenuItems();
+  } catch(err) {
+    showToast('Error: ' + err.message, '<i class="fas fa-times-circle"></i>');
+  }
+}
+
+// ── Bar Menu Import Excel ──────────────────────────────────────
+var barMenuImportRows = [];
+
+function openBarMenuImportModal() {
+  barMenuImportRows = [];
+  document.getElementById('bar-menu-excel-input').value = '';
+  document.getElementById('bar-menu-import-preview').style.display = 'none';
+  document.getElementById('bar-menu-import-progress').style.display = 'none';
+  document.getElementById('bar-menu-import-preview-body').innerHTML = '';
+  document.getElementById('bar-menu-import-modal').classList.add('open');
+  document.getElementById('bar-menu-import-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeBarMenuImportModal() {
+  document.getElementById('bar-menu-import-modal').classList.remove('open');
+  document.getElementById('bar-menu-import-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+  barMenuImportRows = [];
+}
+
+function downloadBarMenuTemplate() {
+  var headers = ['Item Name', 'Category', 'Price (TSH)'];
+  var notes   = ['(required)', '(Beer/Gins/Wine/Whisky/Spirits/Cocktails/Mocktails/Soft Drinks/Fresh Juice/Water/Other)', '(numeric)'];
+  var samples = [
+    ['Heineken Beer', 'Beer', '5000'],
+    ['Gordon Gin', 'Gins', '8000'],
+    ['Red Wine', 'Wine', '12000'],
+    ['Johnnie Walker', 'Whisky', '15000'],
+    ['Mojito', 'Cocktails', '10000'],
+  ];
+  var rows = [headers, notes].concat(samples);
+  var csv = rows.map(function(r){ return r.map(function(c){ return '"'+String(c).replace(/"/g,'""')+'"'; }).join(','); }).join('\r\n');
+  var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  var url  = URL.createObjectURL(blob);
+  var a    = document.createElement('a');
+  a.href = url; a.download = 'bar_menu_template.csv'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+document.getElementById('bar-menu-excel-input').addEventListener('change', function(e) {
+  var file = e.target.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    try {
+      var rows;
+      if (file.name.endsWith('.csv')) {
+        var text = ev.target.result;
+        rows = text.split(/\r?\n/).map(function(l){ return l.split(',').map(function(c){ return c.replace(/^"|"$/g,'').replace(/""/g,'"').trim(); }); });
+      } else {
+        var data = new Uint8Array(ev.target.result);
+        var wb   = XLSX.read(data, { type: 'array' });
+        var ws   = wb.Sheets[wb.SheetNames[0]];
+        rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+      }
+      parseBarMenuImportRows(rows);
+    } catch(err) {
+      showToast('Could not read file: ' + err.message, 'error');
+    }
+  };
+  if (file.name.endsWith('.csv')) reader.readAsText(file);
+  else reader.readAsArrayBuffer(file);
+});
+
+function parseBarMenuImportRows(rows) {
+  if (!rows || rows.length < 2) { showToast('File is empty or invalid', 'error'); return; }
+  var dataStart = 1;
+  for (var i = 1; i < rows.length; i++) {
+    var price = parseFloat(String(rows[i][2]).replace(/,/g,''));
+    if (!isNaN(price) && price > 0) { dataStart = i; break; }
+  }
+  var existingNames = barMenuItemsList.map(function(m){ return m.name.toLowerCase().trim(); });
+  barMenuImportRows = [];
+  for (var j = dataStart; j < rows.length; j++) {
+    var r    = rows[j];
+    var name = String(r[0]||'').trim();
+    var cat  = String(r[1]||'').trim();
+    var pr   = parseFloat(String(r[2]||'').replace(/,/g,''));
+    if (!name) continue;
+    if (isNaN(pr) || pr <= 0) { barMenuImportRows.push({ name:name, cat:cat, price:null, status:'error', msg:'Invalid price' }); continue; }
+    var existIdx = existingNames.indexOf(name.toLowerCase());
+    if (existIdx >= 0) {
+      barMenuImportRows.push({ name:name, cat:cat, price:pr, status:'update', existItem: barMenuItemsList[existIdx] });
+    } else {
+      barMenuImportRows.push({ name:name, cat:cat, price:pr, status:'new' });
+    }
+  }
+  if (!barMenuImportRows.length) { showToast('No valid rows found', 'error'); return; }
+  var tbody = document.getElementById('bar-menu-import-preview-body');
+  tbody.innerHTML = barMenuImportRows.map(function(row, idx) {
+    var badge = row.status === 'new'
+      ? '<span style="background:#dcfce7;color:#166534;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;">New</span>'
+      : row.status === 'update'
+        ? '<span style="background:#dbeafe;color:#1d4ed8;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;">Will Update</span>'
+        : '<span style="background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;">Error: '+(row.msg||'')+'</span>';
+    var priceStr = row.price != null ? 'TSH '+Number(row.price).toLocaleString() : '—';
+    return '<tr><td>'+(idx+1)+'</td><td><strong>'+escapeHtml(row.name)+'</strong></td><td>'+escapeHtml(row.cat)+'</td><td>'+priceStr+'</td><td>'+badge+'</td></tr>';
+  }).join('');
+  document.getElementById('bar-menu-import-preview').style.display = 'block';
+}
+
+async function confirmBarMenuImport() {
+  var validRows = barMenuImportRows.filter(function(r){ return r.status !== 'error'; });
+  if (!validRows.length) { showToast('No valid rows to import', 'error'); return; }
+  document.getElementById('bar-menu-import-preview').style.display = 'none';
+  document.getElementById('bar-menu-import-progress').style.display = 'block';
+  var done = 0;
+  var bar  = document.getElementById('bar-menu-import-bar');
+  for (var k = 0; k < validRows.length; k++) {
+    var row = validRows[k];
+    try {
+      if (row.status === 'update' && row.existItem) {
+        await apiPut('/bar-menu-items/' + row.existItem.id, { name: row.name, category: row.cat || row.existItem.category, price: row.price });
+      } else {
+        await apiPost('/bar-menu-items', { name: row.name, category: row.cat || 'Other', price: row.price });
+      }
+    } catch(e) { /* skip */ }
+    done++;
+    bar.style.width = Math.round((done / validRows.length) * 100) + '%';
+  }
+  closeBarMenuImportModal();
+  showToast('Imported ' + done + ' bar item(s) successfully!', 'success');
+  loadBarMenuItems();
+}
+
+window.openAddBarMenuModal = openAddBarMenuModal;
+window.openEditBarMenuModal = openEditBarMenuModal;
+window.closeBarMenuModal = closeBarMenuModal;
+window.deleteBarMenuItem = deleteBarMenuItem;
+window.openBarMenuImportModal = openBarMenuImportModal;
+window.closeBarMenuImportModal = closeBarMenuImportModal;
+window.downloadBarMenuTemplate = downloadBarMenuTemplate;
+window.confirmBarMenuImport = confirmBarMenuImport;
+</script>
 </body>
 </html>
