@@ -40,14 +40,14 @@
     }
     
     /* Set fixed column widths */
-    .data-table th:nth-child(1) { width: 15%; }  /* Guest Name */
-    .data-table th:nth-child(2) { width: 20%; }  /* Email */
+    .data-table th:nth-child(1) { width: 16%; }  /* Guest Name */
+    .data-table th:nth-child(2) { width: 18%; }  /* Email */
     .data-table th:nth-child(3) { width: 12%; }  /* Mobile */
-    .data-table th:nth-child(4) { width: 10%; }  /* Country */
-    .data-table th:nth-child(5) { width: 10%; }  /* City */
-    .data-table th:nth-child(6) { width: 8%; }   /* Total Stays */
-    .data-table th:nth-child(7) { width: 12%; }  /* Total Spent */
-    .data-table th:nth-child(8) { width: 13%; }  /* Last Stay */
+    .data-table th:nth-child(4) { width: 9%; }   /* Country */
+    .data-table th:nth-child(5) { width: 9%; }   /* City */
+    .data-table th:nth-child(6) { width: 11%; }  /* Check-in */
+    .data-table th:nth-child(7) { width: 11%; }  /* Check-out */
+    .data-table th:nth-child(8) { width: 14%; }  /* Amount */
     
     /* Guest cell with stacked content */
     .guest-cell {
@@ -66,7 +66,7 @@
       word-break: break-all;
     }
     
-    /* Prevent wrapping in specific columns */
+    /* Prevent wrapping in date/amount columns */
     .data-table td:nth-child(6),
     .data-table td:nth-child(7),
     .data-table td:nth-child(8) {
@@ -491,19 +491,11 @@
       <button class="btn btn-gold" onclick="exportToCSV()"><i class="fas fa-file-export"></i> Export to CSV</button>
     </div>
     
-    <!-- Stats Badges (like reservations page) -->
+    <!-- Stats Badges -->
     <div class="guest-stats">
       <div class="stat-badge">
         <span class="stat-dot total"></span>
         <span>Total Guests: <strong id="total-guests">0</strong></span>
-      </div>
-      <div class="stat-badge">
-        <span class="stat-dot unique"></span>
-        <span>Unique Guests: <strong id="unique-guests">0</strong></span>
-      </div>
-      <div class="stat-badge">
-        <span class="stat-dot stays"></span>
-        <span>Total Stays: <strong id="total-stays">0</strong></span>
       </div>
       <div class="stat-badge">
         <span class="stat-dot spent"></span>
@@ -526,9 +518,9 @@
             <th>Mobile</th>
             <th>Country</th>
             <th>City</th>
-            <th>Total Stays</th>
-            <th>Total Spent (TSH)</th>
-            <th>Last Stay</th>
+            <th>Check-in</th>
+            <th>Check-out</th>
+            <th>Amount (TSH)</th>
           </tr>
         </thead>
         <tbody id="guests-tbody">
@@ -926,96 +918,70 @@ document.getElementById('userAvatar').innerText = ((currentUser.fullName || curr
   async function loadGuests() {
     try {
       const reservations = await apiGet('/reservations');
-      
-      // Group by email to get unique guests
-      const guestMap = new Map();
-      
-      reservations.forEach(res => {
-        const email = res.email;
-        if (!guestMap.has(email)) {
-          guestMap.set(email, {
-            guest: res.guest,
-            email: res.email,
-            mobile: res.mobile || '—',
-            country: res.country || '—',
-            city: res.city || '—',
-            stays: 1,
-            totalSpent: res.total || 0,
-            lastStay: res.checkout || res.checkin,
-            allReservations: [res]
-          });
-        } else {
-          const existing = guestMap.get(email);
-          existing.stays++;
-          existing.totalSpent += (res.total || 0);
-          if (res.checkout > existing.lastStay) {
-            existing.lastStay = res.checkout;
-          }
-          existing.allReservations.push(res);
-        }
-      });
-      
-      guestsData = Array.from(guestMap.values());
-      allGuests = [...guestsData];
+
+      allGuests = reservations.map(res => ({
+        guest:   res.guest || '—',
+        email:   res.email  || '—',
+        mobile:  res.mobile  || '—',
+        country: res.country || '—',
+        city:    res.city    || '—',
+        checkin:  res.checkin,
+        checkout: res.checkout,
+        total:   res.total   || 0,
+      }));
+
+      guestsData = [...allGuests];
       updateStats();
       renderGuests();
     } catch (err) {
       console.error('Error loading guests:', err);
-      document.getElementById('guests-tbody').innerHTML = `<tr><td colspan="8" class="empty-state">Error loading guests: ${err.message} </div>  </tr>`;
+      document.getElementById('guests-tbody').innerHTML = `<tr><td colspan="8" class="empty-state">Error loading guests: ${err.message}</td></tr>`;
       showToast('Failed to load guests: ' + err.message, 'error');
     }
   }
-  
+
   function updateStats() {
-    const totalGuests = guestsData.reduce((sum, g) => sum + g.stays, 0);
-    const uniqueGuests = guestsData.length;
-    const totalSpent = guestsData.reduce((sum, g) => sum + g.totalSpent, 0);
-    
-    document.getElementById('total-guests').innerText = totalGuests;
-    document.getElementById('unique-guests').innerText = uniqueGuests;
-    document.getElementById('total-stays').innerText = totalGuests;
+    const totalSpent = guestsData.reduce((sum, g) => sum + g.total, 0);
+    document.getElementById('total-guests').innerText = guestsData.length;
     document.getElementById('total-spent').innerHTML = fmtTSH(totalSpent);
   }
-function renderGuests() {
-  const tbody = document.getElementById('guests-tbody');
-  if (!tbody) return;
-  
-  if (guestsData.length === 0) {
-    tbody.innerHTML = `<td><td colspan="8" class="empty-state"><i class="fas fa-users"></i> No guests found.</td></tr>`;
-    return;
+
+  function renderGuests() {
+    const tbody = document.getElementById('guests-tbody');
+    if (!tbody) return;
+
+    if (guestsData.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="8" class="empty-state"><i class="fas fa-users"></i> No guests found.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = guestsData.map(guest => `
+      <tr>
+        <td><strong>${escapeHtml(guest.guest)}</strong></td>
+        <td style="word-break:break-all;">${escapeHtml(guest.email)}</td>
+        <td>${escapeHtml(guest.mobile)}</td>
+        <td>${escapeHtml(guest.country)}</td>
+        <td>${escapeHtml(guest.city)}</td>
+        <td>${guest.checkin  ? fmtDate(guest.checkin)  : '—'}</td>
+        <td>${guest.checkout ? fmtDate(guest.checkout) : '—'}</td>
+        <td style="text-align:right;"><strong>${fmtTSH(guest.total)}</strong></td>
+      </tr>
+    `).join('');
   }
-  
-  tbody.innerHTML = guestsData.map(guest => `
-    <tr>
-      <td style="word-break: break-word;">
-        <div class="guest-cell">
-          <span class="guest-name">${escapeHtml(guest.guest)}</span>
-        </div>
-      </td>
-      <td style="word-break: break-all;">${escapeHtml(guest.email)}</td>
-      <td>${escapeHtml(guest.mobile)}</td>
-      <td>${escapeHtml(guest.country)}</td>
-      <td>${escapeHtml(guest.city)}</td>
-      <td style="text-align: center;">${guest.stays}</td>
-      <td style="text-align: right;">${fmtTSH(guest.totalSpent)}</td>
-      <td>${guest.lastStay ? fmtDate(guest.lastStay) : '—'}</td>
-    </tr>
-  `).join('');
-}
   
   function filterGuests() {
     const searchTerm = document.getElementById('search-input').value.toLowerCase().trim();
-    
+
     if (!searchTerm) {
       guestsData = [...allGuests];
     } else {
-      guestsData = allGuests.filter(guest => 
+      guestsData = allGuests.filter(guest =>
         guest.guest.toLowerCase().includes(searchTerm) ||
         guest.email.toLowerCase().includes(searchTerm) ||
         (guest.mobile && guest.mobile.toLowerCase().includes(searchTerm))
       );
     }
-    
+
     renderGuests();
     updateStats();
   }
@@ -1028,10 +994,10 @@ function renderGuests() {
   }
   
   function exportToCSV() {
-    let csv = 'Guest Name,Email,Mobile,Country,City,Total Stays,Total Spent (TSH),Last Stay\n';
-    
+    let csv = 'Guest Name,Email,Mobile,Country,City,Check-in,Check-out,Amount (TSH)\n';
+
     guestsData.forEach(guest => {
-      csv += `"${guest.guest}","${guest.email}","${guest.mobile}","${guest.country}","${guest.city}",${guest.stays},"${fmtTSH(guest.totalSpent)}","${guest.lastStay || ''}"\n`;
+      csv += `"${guest.guest}","${guest.email}","${guest.mobile}","${guest.country}","${guest.city}","${guest.checkin || ''}","${guest.checkout || ''}","${fmtTSH(guest.total)}"\n`;
     });
     
     const blob = new Blob([csv], { type: 'text/csv' });
