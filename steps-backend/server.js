@@ -1119,6 +1119,55 @@ app.delete('/api/menu-items/:id', async (req, res) => {
 });
 
 // ============================================================
+// BAR MENU ITEMS API
+// ============================================================
+app.get('/api/bar-menu-items', async (req, res) => {
+  try {
+    await pool.query(`CREATE TABLE IF NOT EXISTS bar_menu_items (
+      id SERIAL PRIMARY KEY,
+      name TEXT NOT NULL,
+      category TEXT DEFAULT 'Other',
+      price INTEGER DEFAULT 0,
+      created_at TIMESTAMP DEFAULT NOW()
+    )`);
+    const { rows } = await pool.query('SELECT * FROM bar_menu_items ORDER BY category, name');
+    res.json(rows);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.post('/api/bar-menu-items', async (req, res) => {
+  const { name, price, category } = req.body;
+  if (!name || price == null) return res.status(400).json({ error: 'name and price are required' });
+  try {
+    const { rows } = await pool.query(
+      'INSERT INTO bar_menu_items (name, category, price) VALUES ($1, $2, $3) RETURNING *',
+      [name.trim(), category || 'Other', parseInt(price) || 0]
+    );
+    res.status(201).json(rows[0]);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.put('/api/bar-menu-items/:id', async (req, res) => {
+  const { name, price, category } = req.body;
+  try {
+    const { rows } = await pool.query(
+      'UPDATE bar_menu_items SET name=$1, category=$2, price=$3 WHERE id=$4 RETURNING *',
+      [name.trim(), category || 'Other', parseInt(price) || 0, req.params.id]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Bar menu item not found' });
+    res.json(rows[0]);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.delete('/api/bar-menu-items/:id', async (req, res) => {
+  try {
+    const { rowCount } = await pool.query('DELETE FROM bar_menu_items WHERE id = $1', [req.params.id]);
+    if (rowCount === 0) return res.status(404).json({ error: 'Bar menu item not found' });
+    res.json({ message: 'Bar menu item deleted' });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// ============================================================
 // REQUESTS API (outlets request from main store)
 // ============================================================
 
