@@ -181,14 +181,11 @@ async function generatePrintReport() {
     <style>
       *{box-sizing:border-box;margin:0;padding:0}
       body{font-family:Georgia,serif;color:#1a2340;background:#fff;padding:40px;font-size:13px}
-      .header{display:flex;align-items:center;justify-content:space-between;margin-bottom:32px;border-bottom:3px solid #1a2340;padding-bottom:20px}
-      .header-logo{width:70px;height:70px;object-fit:contain;flex-shrink:0}
-      .header-center{flex:1;text-align:center;padding:0 20px}
-      .header-center h1{font-size:24px;font-weight:700;color:#1a2340;font-family:Georgia,serif}
-      .header-center p{font-size:12px;color:#9ca3af;margin-top:4px}
-      .report-meta{text-align:right;flex-shrink:0}
-      .report-meta .period{font-size:14px;font-weight:700;color:#c9933a}
-      .report-meta .generated{font-size:11px;color:#9ca3af;margin-top:4px}
+      .header{display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:32px;border-bottom:3px solid #1a2340;padding-bottom:20px}
+      .header-logo{height:60px;width:auto;object-fit:contain}
+      .header-center{text-align:center}
+      .header-center h1{font-size:24px;font-weight:700;color:#1a2340;font-family:Georgia,serif;margin:0}
+      .header-center p{font-size:12px;color:#9ca3af;margin:4px 0 0}
       .summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:32px}
       .summary-box{background:#f8f9fa;border:1px solid #e5e7eb;border-radius:10px;padding:16px}
       .summary-box .label{font-size:10px;color:#9ca3af;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
@@ -206,8 +203,7 @@ async function generatePrintReport() {
     </style></head><body>
     <div class="header">
       <img src="${logoSrc}" class="header-logo" alt="Logo">
-      <div class="header-center"><h1>Kitobo Serenity Resort</h1><p>Reservations Report &middot; Dar es Salaam, Tanzania</p></div>
-      <div class="report-meta"><div class="period">Period: ${periodLabel}</div><div class="generated">Generated: ${new Date().toLocaleString('en-GB')}</div></div>
+      <div class="header-center"><h1>Kitobo Serenity Resort</h1><p>Reservations Report &middot; Dar es Salaam, Tanzania</p><p style="font-size:11px;color:#9ca3af;margin-top:2px;">Period: ${periodLabel} &nbsp;&middot;&nbsp; Generated: ${new Date().toLocaleString('en-GB')}</p></div>
     </div>
     <div class="summary-grid"><div class="summary-box"><div class="label">Total Reservations</div><div class="value">${s.totalReservations}</div></div><div class="summary-box"><div class="label">Total Revenue</div><div class="value" style="font-size:15px">${fmtTSH(s.totalRevenue)}</div></div><div class="summary-box"><div class="label">Total Nights Sold</div><div class="value">${s.totalNights}</div></div><div class="summary-box"><div class="label">Avg. Stay</div><div class="value">${s.avgStayNights ? s.avgStayNights.toFixed(1) : '—'} nts</div></div></div>
     <h2>Revenue by Room</h2><table><thead><tr><th>Room</th><th>Bookings</th><th>Nights</th><th>Revenue</th></tr></thead><tbody>${aptRows}</tbody></table>
