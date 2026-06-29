@@ -823,12 +823,12 @@
         
         <hr class="divider" />
         
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
           <strong>Order Items</strong>
-          <input type="text" id="po-item-search" class="form-control" placeholder="Filter items..." style="width:190px;border-radius:20px;" oninput="filterPOItemsTable()">
+          <button class="btn btn-gold btn-sm" onclick="openItemSelector()"><i class="fas fa-plus"></i> Add Item</button>
         </div>
 
-        <div id="selected-items-list" style="max-height:350px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:8px;"></div>
+        <div id="selected-items-list"></div>
         
         <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e5e5;">
           <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
@@ -1264,9 +1264,6 @@ function escapeHtml(str) {
     document.getElementById('po-details-view').classList.remove('active');
     showingForm = true;
     showingDetails = false;
-    var searchEl = document.getElementById('po-item-search');
-    if (searchEl) searchEl.value = '';
-    renderInventoryItemsTable('');
   }
   
   function showDetailsView() {
@@ -1278,18 +1275,14 @@ function escapeHtml(str) {
   
   function cancelCreatePO() {
     selectedItems = [];
-    var container = document.getElementById('selected-items-list');
-    if (container) container.innerHTML = '';
+    renderSelectedItems();
     document.getElementById('po-notes').value = '';
     document.getElementById('po-category').value = 'bar';
     document.getElementById('po-vendor-type').value = '';
     document.getElementById('po-vendor').innerHTML = '<option value="">— Select type first —</option>';
     var nvg = document.getElementById('new-vendor-group');
     if (nvg) nvg.style.display = 'none';
-    var searchEl = document.getElementById('po-item-search');
-    if (searchEl) searchEl.value = '';
-    var el = document.getElementById('order-total');
-    if (el) el.textContent = fmtTSH(0);
+    updateOrderTotal();
     document.getElementById('po-form').classList.remove('active');
     showingForm = false;
     if (!currentEditPOId) {
@@ -1584,7 +1577,7 @@ function escapeHtml(str) {
       html += '</div>';
       html += '<div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">';
       html += '<input type="number" id="item-qty-' + i + '" placeholder="Qty" min="0.01" step="0.01" class="form-control" style="width:75px;padding:6px 8px;border-radius:8px;">';
-      html += '<input type="number" id="item-price-' + i + '" placeholder="Buying Cost" min="0" step="1" class="form-control" style="width:130px;padding:6px 8px;border-radius:8px;">';
+      html += '<input type="number" id="item-price-' + i + '" placeholder="Price" min="0" step="1" value="' + (parseFloat(item.cost) || 0) + '" class="form-control" style="width:120px;padding:6px 8px;border-radius:8px;">';
       html += '<button class="btn btn-gold btn-sm" onclick="addItemFromSelector(' + i + ')" style="white-space:nowrap;">Add</button>';
       html += '</div>';
       html += '</div>';
@@ -1740,25 +1733,14 @@ function escapeHtml(str) {
   async function savePurchaseOrder() {
     var vendor_id = await getOrCreateVendor();
     if (!vendor_id) return null;
-    // Collect only rows where quantity > 0
-    var items = [];
-    document.querySelectorAll('#selected-items-list tbody tr').forEach(function(row) {
-      var qty = parseFloat(row.querySelector('.po-item-qty').value) || 0;
-      if (qty <= 0) return;
-      var price = parseFloat(row.querySelector('.po-item-price').value) || 0;
-      items.push({
-        item_name: row.getAttribute('data-item-name'),
-        category:  row.getAttribute('data-item-cat'),
-        unit:      row.getAttribute('data-item-unit'),
-        unit_price: price,
-        quantity:  qty
-      });
-    });
-    if (items.length === 0) { showToast('Please enter quantity for at least one item', 'error'); return null; }
+    if (selectedItems.length === 0) { showToast('Please add at least one item', 'error'); return null; }
     var order_date = document.getElementById('po-date').value;
     var notes = document.getElementById('po-notes').value;
     var category = document.getElementById('po-category').value;
     var user = getCurrentUser();
+    var items = selectedItems.map(function(si) {
+      return { item_name: si.name, category: si.category, unit: si.unit, unit_price: si.unit_price, quantity: si.quantity };
+    });
     try {
       var result = await apiPost('/purchase-orders', { vendor_id: vendor_id, order_date: order_date, notes: notes, category: category, items: items, created_by: user ? user.username : 'system' });
       showToast('Purchase order created!', 'success');
