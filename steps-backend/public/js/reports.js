@@ -155,8 +155,22 @@ async function generatePrintReport() {
 
     const aptRows = byApt.map(a => `<tr><td>${a.name}</td><td>${a.bookings}</td><td>${a.nights}</td><td><strong>${a.revenue > 0 ? fmtTSH(a.revenue) : '—'}</strong></td></tr>`).join('');
 
-    const resRows = filtered.map(r => {
-      return `<tr><td>${r.guest}</td><td>${r.room || '—'}</td><td>${fmtDate(r.checkin)}</td><td>${fmtDate(r.checkout)}</td><td>${r.nights}n</td><td>${r.adults || 0}A ${r.children || 0}C</td><td>${r.rateType || 'Bed and Breakfast'}</td><td><strong>${fmtTSH(r.total)}</strong></td></tr>`;
+    const resRows = filtered.map((r, i) => {
+      const statusColor = r.paymentStatus === 'paid' ? '#166534' : r.paymentStatus === 'partial' ? '#92400e' : '#991b1b';
+      const statusBg    = r.paymentStatus === 'paid' ? '#dcfce7'  : r.paymentStatus === 'partial' ? '#fef3c7'  : '#fee2e2';
+      const statusLabel = r.paymentStatus === 'paid' ? 'Paid'     : r.paymentStatus === 'partial' ? 'Partial'  : 'Unpaid';
+      return `<tr>
+        <td style="text-align:center;color:#9ca3af;font-size:11px;">${i + 1}</td>
+        <td><strong>${r.guest || '—'}</strong></td>
+        <td>${r.room || '—'}</td>
+        <td style="white-space:nowrap;">${fmtDate(r.checkin)}</td>
+        <td style="white-space:nowrap;">${fmtDate(r.checkout)}</td>
+        <td style="text-align:center;"><strong>${r.nights}</strong></td>
+        <td style="text-align:right;">${fmtTSH(r.total)}</td>
+        <td style="text-align:right;color:#10b981;">${fmtTSH(r.amountPaid || 0)}</td>
+        <td style="text-align:right;color:${(r.balance||0) > 0 ? '#ef4444' : '#64748b'};">${fmtTSH(r.balance || 0)}</td>
+        <td style="text-align:center;"><span style="background:${statusBg};color:${statusColor};padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;">${statusLabel}</span></td>
+      </tr>`;
     }).join('');
 
     const periodLabel = fromVal && toVal ? `${fmtDate(fromVal)} to ${fmtDate(toVal)}` : 'All Time';
@@ -181,9 +195,12 @@ async function generatePrintReport() {
       .summary-box .value{font-size:22px;font-weight:700;color:#1a2340}
       h2{font-size:14px;font-weight:700;color:#1a2340;margin:24px 0 10px;border-left:4px solid #c9933a;padding-left:10px}
       table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:24px}
-      th{background:#1a2340;color:#fff;padding:10px 12px;text-align:left;font-size:13px;font-weight:700;letter-spacing:0.3px}
-      td{padding:8px 12px;border-bottom:1px solid #f0f0f0}
-      tr:nth-child(even) td{background:#fafafa}
+      th{background:#1a2340;color:#fff;padding:11px 12px;text-align:left;font-size:12px;font-weight:700;letter-spacing:0.4px;white-space:nowrap}
+      th.right{text-align:right}
+      th.center{text-align:center}
+      td{padding:9px 12px;border-bottom:1px solid #eef0f2;vertical-align:middle;font-size:12px}
+      tr:nth-child(even) td{background:#f8fafc}
+      tr:hover td{background:#f1f5f9}
       .footer{margin-top:40px;border-top:1px solid #e5e7eb;padding-top:16px;font-size:11px;color:#9ca3af;display:flex;justify-content:space-between}
       @media print{body{padding:20px}}
     </style></head><body>
@@ -194,7 +211,24 @@ async function generatePrintReport() {
     </div>
     <div class="summary-grid"><div class="summary-box"><div class="label">Total Reservations</div><div class="value">${s.totalReservations}</div></div><div class="summary-box"><div class="label">Total Revenue</div><div class="value" style="font-size:15px">${fmtTSH(s.totalRevenue)}</div></div><div class="summary-box"><div class="label">Total Nights Sold</div><div class="value">${s.totalNights}</div></div><div class="summary-box"><div class="label">Avg. Stay</div><div class="value">${s.avgStayNights ? s.avgStayNights.toFixed(1) : '—'} nts</div></div></div>
     <h2>Revenue by Room</h2><table><thead><tr><th>Room</th><th>Bookings</th><th>Nights</th><th>Revenue</th></tr></thead><tbody>${aptRows}</tbody></table>
-    <h2>Reservation Detail (${filtered.length} records)</h2><table><thead><tr><th>Guest</th><th>Room</th><th>Check-in</th><th>Check-out</th><th>Nights</th><th>Guests</th><th>Rate</th><th>Total</th></tr></thead><tbody>${resRows || '<tr><td colspan="8" style="text-align:center;color:#9ca3af;padding:20px">No reservations in this period</td></tr>'}</tbody></table>
+    <h2>Reservation Detail (${filtered.length} records)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th class="center" style="width:36px;">#</th>
+          <th style="width:18%;">Guest Name</th>
+          <th style="width:12%;">Room</th>
+          <th class="center" style="width:10%;">Check-in</th>
+          <th class="center" style="width:10%;">Check-out</th>
+          <th class="center" style="width:6%;">Nights</th>
+          <th class="right" style="width:13%;">Total (TSH)</th>
+          <th class="right" style="width:13%;">Paid (TSH)</th>
+          <th class="right" style="width:13%;">Balance (TSH)</th>
+          <th class="center" style="width:9%;">Status</th>
+        </tr>
+      </thead>
+      <tbody>${resRows || '<tr><td colspan="10" style="text-align:center;color:#9ca3af;padding:20px">No reservations in this period</td></tr>'}</tbody>
+    </table>
     <div class="footer"><span>Kitobo Serenity Resort &middot; Confidential</span><span>Page 1</span></div>
     <script>window.onload=function(){setTimeout(function(){window.print();},400);};<\/script>
     </body></html>`);
