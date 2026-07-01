@@ -495,6 +495,10 @@
   }
 }
 
+/* Allow icon-select dropdowns to overflow the modal scroll container */
+.reservation-modal-body { overflow: visible !important; }
+.reservation-modal { overflow-y: auto !important; }
+
 /* Ensure custom rate edit section fits properly */
 .custom-rate-edit {
   display: flex;
@@ -1894,47 +1898,43 @@ document.getElementById('cp-form').addEventListener('submit', async function(e) 
 </script>
 <script src="../js/permissions.js"></script>
 <script>
-/* ── Icon Select Dropdown (same as dashboard.html) ──────────────── */
-const FA = 'font-family:"Font Awesome 6 Free";font-weight:900;font-style:normal;font-size:14px;display:inline-block;width:16px;text-align:center;';
 const PAYMENT_STATUS_OPTS_R = [
-  { value: 'unpaid',  icon: `<span style="${FA}color:#ef4444">&#xf057;</span>`,  label: 'Unpaid' },
-  { value: 'partial', icon: `<span style="${FA}color:#f59e0b">&#xf042;</span>`,  label: 'Partial Payment' },
-  { value: 'paid',    icon: `<span style="${FA}color:#10b981">&#xf058;</span>`,  label: 'Paid in Full' },
+  { value: 'unpaid',  icon: '<i class="fas fa-times-circle" style="color:#ef4444"></i>',  label: 'Unpaid' },
+  { value: 'partial', icon: '<i class="fas fa-adjust"       style="color:#f59e0b"></i>',  label: 'Partial Payment' },
+  { value: 'paid',    icon: '<i class="fas fa-check-circle" style="color:#10b981"></i>',  label: 'Paid in Full' },
 ];
 const PAYMENT_METHOD_OPTS_R = [
-  { value: '',              icon: `<span style="${FA}color:#94a3b8">&#xf09d;</span>`, label: 'Select Payment Method' },
-  { value: 'cash',          icon: `<span style="${FA}color:#10b981">&#xf53a;</span>`, label: 'Cash' },
-  { value: 'card',          icon: `<span style="${FA}color:#3b82f6">&#xf09d;</span>`, label: 'Card (Visa/Mastercard)' },
-  { value: 'bank_transfer', icon: `<span style="${FA}color:#6366f1">&#xf19c;</span>`, label: 'Bank Transfer' },
-  { value: 'mpesa',         icon: `<span style="${FA}color:#10b981">&#xf3cd;</span>`, label: 'M-Pesa' },
-  { value: 'tigo_pesa',     icon: `<span style="${FA}color:#ef4444">&#xf3cd;</span>`, label: 'Tigo Pesa' },
-  { value: 'airtel_money',  icon: `<span style="${FA}color:#ef4444">&#xf3cd;</span>`, label: 'Airtel Money' },
-  { value: 'halopesa',      icon: `<span style="${FA}color:#f59e0b">&#xf3cd;</span>`, label: 'HaloPesa' },
-  { value: 'cheque',        icon: `<span style="${FA}color:#6366f1">&#xf304;</span>`, label: 'Cheque' },
-  { value: 'other',         icon: `<span style="${FA}color:#94a3b8">&#xf141;</span>`, label: 'Other' },
+  { value: '',              icon: '<i class="fas fa-credit-card"      style="color:#94a3b8"></i>', label: 'Select Payment Method' },
+  { value: 'cash',          icon: '<i class="fas fa-money-bill-wave"  style="color:#10b981"></i>', label: 'Cash' },
+  { value: 'card',          icon: '<i class="fas fa-credit-card"      style="color:#3b82f6"></i>', label: 'Card (Visa/Mastercard)' },
+  { value: 'bank_transfer', icon: '<i class="fas fa-university"       style="color:#6366f1"></i>', label: 'Bank Transfer' },
+  { value: 'mpesa',         icon: '<i class="fas fa-mobile-alt"       style="color:#10b981"></i>', label: 'M-Pesa' },
+  { value: 'tigo_pesa',     icon: '<i class="fas fa-mobile-alt"       style="color:#ef4444"></i>', label: 'Tigo Pesa' },
+  { value: 'airtel_money',  icon: '<i class="fas fa-mobile-alt"       style="color:#ef4444"></i>', label: 'Airtel Money' },
+  { value: 'halopesa',      icon: '<i class="fas fa-mobile-alt"       style="color:#f59e0b"></i>', label: 'HaloPesa' },
+  { value: 'cheque',        icon: '<i class="fas fa-pen"              style="color:#6366f1"></i>', label: 'Cheque' },
+  { value: 'other',         icon: '<i class="fas fa-ellipsis-h"       style="color:#94a3b8"></i>', label: 'Other' },
 ];
 
 function initIconSelectR(selectId, optionDefs) {
   const select = document.getElementById(selectId);
   if (!select) return;
-  if (select.dataset.iselDone) return; /* already wrapped */
+  if (select.dataset.iselDone) return;
   select.dataset.iselDone = '1';
 
   const wrapper = document.createElement('div');
   wrapper.style.cssText = 'position:relative;';
   select.parentNode.insertBefore(wrapper, select);
   wrapper.appendChild(select);
-  select.style.display = 'none';
+  select.style.cssText = 'display:none!important';
 
   const trigger = document.createElement('div');
   trigger.className = 'form-control';
   trigger.style.cssText = 'display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;';
   trigger.innerHTML = '<span class="isel-icon"></span><span class="isel-text" style="flex:1;color:#1e2a3e;font-size:0.9rem"></span><i class="fas fa-chevron-down" style="color:#94a3b8;font-size:11px;transition:transform 0.2s"></i>';
 
-  /* Fixed-position dropdown appended to body — avoids modal overflow:hidden clipping */
   const dropdown = document.createElement('div');
-  dropdown.style.cssText = 'display:none;position:fixed;background:white;border:1px solid #c9933a;border-radius:12px;z-index:99999;box-shadow:0 6px 20px rgba(0,0,0,0.12);overflow:hidden;min-width:200px;';
-  document.body.appendChild(dropdown);
+  dropdown.style.cssText = 'display:none;position:absolute;top:calc(100% + 2px);left:0;right:0;background:white;border:1px solid #c9933a;border-radius:12px;z-index:9999;box-shadow:0 6px 20px rgba(0,0,0,0.12);overflow:hidden;';
 
   optionDefs.forEach(opt => {
     const div = document.createElement('div');
@@ -1947,13 +1947,7 @@ function initIconSelectR(selectId, optionDefs) {
   });
 
   wrapper.appendChild(trigger);
-
-  function positionDropdown() {
-    const rect = trigger.getBoundingClientRect();
-    dropdown.style.top  = (rect.bottom + 2) + 'px';
-    dropdown.style.left = rect.left + 'px';
-    dropdown.style.width = rect.width + 'px';
-  }
+  wrapper.appendChild(dropdown);
 
   function updateDisplay(value) {
     const opt = optionDefs.find(o => o.value === value) || optionDefs[0];
@@ -1970,30 +1964,30 @@ function initIconSelectR(selectId, optionDefs) {
 
   updateDisplay(select.value);
 
-  function closeDropdown() {
-    dropdown.style.display = 'none';
-    delete dropdown.dataset.iselOpen;
-    const ch = trigger.querySelector('.fa-chevron-down');
-    if (ch) ch.style.transform = '';
-  }
-
   trigger.addEventListener('click', e => {
     e.stopPropagation();
     const isOpen = dropdown.style.display === 'block';
     document.querySelectorAll('[data-isel-open]').forEach(d => {
       d.style.display = 'none';
       delete d.dataset.iselOpen;
+      const t = d.previousElementSibling;
+      if (t) { const ch = t.querySelector('.fa-chevron-down'); if (ch) ch.style.transform = ''; }
     });
     if (!isOpen) {
-      positionDropdown();
       dropdown.style.display = 'block';
       dropdown.dataset.iselOpen = '1';
       trigger.querySelector('.fa-chevron-down').style.transform = 'rotate(180deg)';
     }
   });
 
-  document.addEventListener('click', () => { if (dropdown.style.display === 'block') closeDropdown(); });
-  window.addEventListener('scroll', () => { if (dropdown.style.display === 'block') positionDropdown(); }, true);
+  document.addEventListener('click', () => {
+    if (dropdown.style.display === 'block') {
+      dropdown.style.display = 'none';
+      delete dropdown.dataset.iselOpen;
+      const ch = trigger.querySelector('.fa-chevron-down');
+      if (ch) ch.style.transform = '';
+    }
+  });
 
   const nativeDesc = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value');
   const nativeSet = nativeDesc.set;
@@ -2006,7 +2000,10 @@ function initIconSelectR(selectId, optionDefs) {
     nativeSet.call(select, val);
     select.dispatchEvent(new Event('change', { bubbles: true }));
     updateDisplay(val);
-    closeDropdown();
+    dropdown.style.display = 'none';
+    delete dropdown.dataset.iselOpen;
+    const ch = trigger.querySelector('.fa-chevron-down');
+    if (ch) ch.style.transform = '';
   });
 
   Object.defineProperty(select, 'value', {
