@@ -517,16 +517,18 @@
               <th>Tools Cost</th>
               <th>Total Cost</th>
               <th>Status</th>
+              <th>Payment Method</th>
             </tr>
           </thead>
           <tbody id="tasks-body">
-            <tr><td colspan="11" style="text-align: center;">Loading...</td</tr>
+            <tr><td colspan="12" style="text-align: center;">Loading...</td</tr>
           </tbody>
           <tfoot id="tasks-footer" style="display: none;">
             <tr class="total-row">
               <td colspan="8"><strong>GRAND TOTAL</strong></td>
               <td id="footer-tools-cost">TSh 0</td>
               <td id="footer-total-cost">TSh 0</td>
+              <td></td>
               <td></td>
             </tr>
           </tfoot>
@@ -618,7 +620,7 @@ async function loadReport() {
     loadNotifications();
   } catch(err) {
     console.error('Failed to load report:', err);
-    document.getElementById('tasks-body').innerHTML = '<tr><td colspan="11" style="text-align: center; color: #ef4444;">Error loading records</td></tr>';
+    document.getElementById('tasks-body').innerHTML = '<tr><td colspan="12" style="text-align: center; color: #ef4444;">Error loading records</td></tr>';
     showToast('Failed to load report: ' + err.message, 'error');
   }
 }
@@ -628,7 +630,7 @@ function renderReport() {
   const footer = document.getElementById('tasks-footer');
   
   if (!tasks.length) {
-    tbody.innerHTML = '<tr><td colspan="11" style="text-align: center;">No maintenance records found</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="12" style="text-align: center;">No maintenance records found</td></tr>';
     footer.style.display = 'none';
     return;
   }
@@ -669,6 +671,7 @@ function renderReport() {
         <td>${fmtTSH(toolsCost)}</td>
         <td style="font-weight:600;color:#c9933a;">${fmtTSH(totalCost)}</td>
         <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+        <td>${pmLabel(task.payment_method || task.paymentMethod)}</td>
       </tr>
     `;
   }
@@ -829,6 +832,10 @@ if (userPill) { userPill.addEventListener('click', (e) => { e.stopPropagation();
 
 function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, function(m) { if (m === '&') return '&amp;'; if (m === '<') return '&lt;'; if (m === '>') return '&gt;'; return m; }); }
 function fmtTSH(v) { return 'TSh ' + (v || 0).toLocaleString(); }
+function pmLabel(v) {
+  const map = { cash:'Cash', card:'Card (Visa/Mastercard)', bank_transfer:'Bank Transfer', mpesa:'M-Pesa', tigo_pesa:'Tigo Pesa', airtel_money:'Airtel Money', halopesa:'HaloPesa', cheque:'Cheque', other:'Other' };
+  return v ? (map[v] || escapeHtml(v)) : 'N/A';
+}
 function showToast(msg, type) { let toast = document.getElementById('toast-container'); let bg = type === 'error' ? '#ef4444' : '#10b981'; toast.innerHTML = '<div style="background:' + bg + ';color:white;padding:12px 20px;border-radius:40px;">' + msg + '</div>'; setTimeout(() => toast.innerHTML = '', 3000); }
 function isoDate(date) { return date.toISOString().split('T')[0]; }
 
