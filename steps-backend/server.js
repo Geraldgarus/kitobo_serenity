@@ -69,8 +69,12 @@ async function ensurePaymentColumns() {
         payment_status   VARCHAR(20)  DEFAULT 'pending',
         amount_paid      DECIMAL(10,2) DEFAULT 0,
         notes            TEXT,
-        created_at       TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
+        created_at       TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+        updated_at       TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
       )
+    `);
+    await pool.query(`
+      ALTER TABLE laundry_services ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
     `);
     await pool.query(`
       CREATE TABLE IF NOT EXISTS role_permissions (
