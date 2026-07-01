@@ -2475,7 +2475,7 @@ app.get('/api/grn/:id', async (req, res) => {
 // POST create GRN from purchase order (Receive goods)
 app.post('/api/grn/receive/:poId', async (req, res) => {
   const { poId } = req.params;
-  const { notes, created_by, items: updatedItems } = req.body;
+  const { notes, created_by, items: updatedItems, payment_method } = req.body;
 
   const client = await pool.connect();
   try {
@@ -2579,12 +2579,13 @@ app.post('/api/grn/receive/:poId', async (req, res) => {
     const expNumber = `EXP-${expDateStr}-${(parseInt(expCount.rows[0].count) + 1).toString().padStart(4, '0')}`;
     await client.query(`
       INSERT INTO expenses (expense_number, category, description, amount, expense_date, payment_method, paid_to, remarks, created_by)
-      VALUES ($1, $2, $3, $4, CURRENT_DATE, 'cash', $5, $6, $7)
+      VALUES ($1, $2, $3, $4, CURRENT_DATE, $5, $6, $7, $8)
     `, [
       expNumber,
       po.category || 'other',
       `Purchase Order ${po.po_number} received`,
       Math.round(po.total_amount),
+      payment_method || 'cash',
       po.vendor_name,
       `Auto-created from PO ${po.po_number}`,
       created_by || 'system'

@@ -1717,6 +1717,20 @@ for (var i = 0; i < filtered.length; i++) {
 
       if (isPending) {
         html += '<p style="font-size:11px;color:#64748b;margin-bottom:12px;">* Edit quantities and enter buying cost for each item before confirming.</p>';
+        html += '<div class="form-group" style="margin-bottom:14px;">'
+          + '<label style="font-size:12px;font-weight:600;color:#64748b;display:block;margin-bottom:4px;"><i class="fas fa-credit-card"></i> Payment Method</label>'
+          + '<select id="store-po-payment-method" class="form-control">'
+          + '<option value="cash">Cash</option>'
+          + '<option value="card">Card (Visa/Mastercard)</option>'
+          + '<option value="bank_transfer">Bank Transfer</option>'
+          + '<option value="mpesa">M-Pesa</option>'
+          + '<option value="tigo_pesa">Tigo Pesa</option>'
+          + '<option value="airtel_money">Airtel Money</option>'
+          + '<option value="halopesa">HaloPesa</option>'
+          + '<option value="cheque">Cheque</option>'
+          + '<option value="other">Other</option>'
+          + '</select>'
+          + '</div>';
         html += '<button onclick="confirmReceivedFromStore(' + po.id + ')" style="background:#16a34a;color:white;border:none;padding:13px 0;border-radius:40px;font-weight:700;font-size:14px;cursor:pointer;width:100%;letter-spacing:0.3px;"><i class="fas fa-check-circle"></i> Confirm Received</button>';
       }
 
@@ -1743,9 +1757,11 @@ for (var i = 0; i < filtered.length; i++) {
       items.push({ id: itemId, quantity: qty, unit_price: cost });
     });
     if (hasError || !items.length) return;
+    var paymentMethodEl = document.getElementById('store-po-payment-method');
+    var paymentMethod = paymentMethodEl ? paymentMethodEl.value : 'cash';
     var user = getCurrentUser();
     try {
-      await apiPost('/grn/receive/' + poId, { created_by: user ? user.username : 'system', items: items });
+      await apiPost('/grn/receive/' + poId, { created_by: user ? user.username : 'system', items: items, payment_method: paymentMethod });
       showToast('Goods received! Stock updated and expense recorded.', '<i class="fas fa-check-circle"></i>');
       document.getElementById('store-po-detail').innerHTML = '<div style="text-align:center;padding:50px 20px;"><i class="fas fa-check-circle" style="font-size:42px;color:#10b981;display:block;margin-bottom:14px;"></i><div style="font-size:15px;font-weight:600;color:#1e2a3e;">Received successfully!</div></div>';
       await Promise.all([loadStorePOs(), loadStoreItems()]);
