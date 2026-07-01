@@ -730,17 +730,16 @@ document.getElementById('cp-form').addEventListener('submit', async function(e) 
 </script>
 <script src="../js/permissions.js"></script>
 <script>
-function _icR(c,p){return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="'+c+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;vertical-align:middle;">'+p+'</svg>';}
 const PAYMENT_METHOD_OPTS_RST = [
-  { value: 'cash',          icon: _icR('#10b981','<rect x="1" y="4" width="22" height="16" rx="2"/><circle cx="12" cy="12" r="3"/>'),                         label: 'Cash' },
-  { value: 'card',          icon: _icR('#3b82f6','<rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/>'),                  label: 'Card (Visa/Mastercard)' },
-  { value: 'bank_transfer', icon: _icR('#6366f1','<line x1="3" y1="22" x2="21" y2="22"/><rect x="9" y="14" width="6" height="8"/><rect x="2" y="8" width="6" height="14"/><rect x="16" y="11" width="6" height="11"/><path d="M12 2L2 7h20z"/>'), label: 'Bank Transfer' },
-  { value: 'mpesa',         icon: _icR('#10b981','<rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12" y2="18"/>'),                 label: 'M-Pesa' },
-  { value: 'tigo_pesa',     icon: _icR('#ef4444','<rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12" y2="18"/>'),                 label: 'Tigo Pesa' },
-  { value: 'airtel_money',  icon: _icR('#ef4444','<rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12" y2="18"/>'),                 label: 'Airtel Money' },
-  { value: 'halopesa',      icon: _icR('#f59e0b','<rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12" y2="18"/>'),                 label: 'HaloPesa' },
-  { value: 'cheque',        icon: _icR('#6366f1','<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>'), label: 'Cheque' },
-  { value: 'other',         icon: _icR('#94a3b8','<circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>'),             label: 'Other' },
+  { value: 'cash',          icon: '<i class="fas fa-money-bill-wave"  style="color:#10b981"></i>', label: 'Cash' },
+  { value: 'card',          icon: '<i class="fas fa-credit-card"      style="color:#3b82f6"></i>', label: 'Card (Visa/Mastercard)' },
+  { value: 'bank_transfer', icon: '<i class="fas fa-university"       style="color:#6366f1"></i>', label: 'Bank Transfer' },
+  { value: 'mpesa',         icon: '<i class="fas fa-mobile-alt"       style="color:#10b981"></i>', label: 'M-Pesa' },
+  { value: 'tigo_pesa',     icon: '<i class="fas fa-mobile-alt"       style="color:#ef4444"></i>', label: 'Tigo Pesa' },
+  { value: 'airtel_money',  icon: '<i class="fas fa-mobile-alt"       style="color:#ef4444"></i>', label: 'Airtel Money' },
+  { value: 'halopesa',      icon: '<i class="fas fa-mobile-alt"       style="color:#f59e0b"></i>', label: 'HaloPesa' },
+  { value: 'cheque',        icon: '<i class="fas fa-pen"              style="color:#6366f1"></i>', label: 'Cheque' },
+  { value: 'other',         icon: '<i class="fas fa-ellipsis-h"       style="color:#94a3b8"></i>', label: 'Other' },
 ];
 function initPayIconSelectRST(selectId, opts) {
   const select = document.getElementById(selectId);
@@ -753,7 +752,7 @@ function initPayIconSelectRST(selectId, opts) {
   const trigger = document.createElement('div');
   trigger.className = 'form-control';
   trigger.style.cssText = 'display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;';
-  trigger.innerHTML = '<span class="isel-icon"></span><span class="isel-text" style="flex:1;color:#1e2a3e;font-size:0.9rem"></span><svg class="isel-chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform 0.2s;flex-shrink:0"><polyline points="6 9 12 15 18 9"/></svg>';
+  trigger.innerHTML = '<span class="isel-icon"></span><span class="isel-text" style="flex:1;color:#1e2a3e;font-size:0.9rem"></span><i class="fas fa-chevron-down" style="color:#94a3b8;font-size:11px;transition:transform 0.2s"></i>';
   const dropdown = document.createElement('div');
   dropdown.style.cssText = 'display:none;position:absolute;top:calc(100% + 2px);left:0;right:0;background:white;border:1px solid #c9933a;border-radius:12px;z-index:9999;box-shadow:0 6px 20px rgba(0,0,0,0.12);overflow:hidden;';
   opts.forEach(opt => {
@@ -784,18 +783,18 @@ function initPayIconSelectRST(selectId, opts) {
     e.stopPropagation();
     const isOpen = dropdown.style.display === 'block';
     document.querySelectorAll('[data-isel-open]').forEach(d => { d.style.display = 'none'; delete d.dataset.iselOpen; });
-    if (!isOpen) { dropdown.style.display = 'block'; dropdown.dataset.iselOpen = '1'; const ch = trigger.querySelector('.isel-chev'); if (ch) ch.style.transform = 'rotate(180deg)'; }
-    else { const ch = trigger.querySelector('.isel-chev'); if (ch) ch.style.transform = ''; }
+    if (!isOpen) { dropdown.style.display = 'block'; dropdown.dataset.iselOpen = '1'; trigger.querySelector('.fa-chevron-down').style.transform = 'rotate(180deg)'; }
+    else { trigger.querySelector('.fa-chevron-down').style.transform = ''; }
   });
   document.addEventListener('click', () => {
-    if (dropdown.style.display === 'block') { dropdown.style.display = 'none'; delete dropdown.dataset.iselOpen; const ch = trigger.querySelector('.isel-chev'); if (ch) ch.style.transform = ''; }
+    if (dropdown.style.display === 'block') { dropdown.style.display = 'none'; delete dropdown.dataset.iselOpen; const ch = trigger.querySelector('.fa-chevron-down'); if (ch) ch.style.transform = ''; }
   });
   const nativeDesc = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value');
   const nativeSet = nativeDesc.set;
   dropdown.addEventListener('click', e => {
     const optEl = e.target.closest('[data-value]'); if (!optEl) return; e.stopPropagation();
     const val = optEl.dataset.value; nativeSet.call(select, val); select.dispatchEvent(new Event('change', { bubbles: true })); updateDisplay(val);
-    dropdown.style.display = 'none'; delete dropdown.dataset.iselOpen; const ch = trigger.querySelector('.isel-chev'); if (ch) ch.style.transform = '';
+    dropdown.style.display = 'none'; delete dropdown.dataset.iselOpen; const ch = trigger.querySelector('.fa-chevron-down'); if (ch) ch.style.transform = '';
   });
   Object.defineProperty(select, 'value', { get: () => nativeDesc.get.call(select), set: v => { nativeSet.call(select, v); updateDisplay(v); }, configurable: true });
 }
