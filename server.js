@@ -44,6 +44,7 @@ async function ensurePaymentColumns() {
     `);
     await pool.query(`
       ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS category VARCHAR(100) DEFAULT 'other';
+      ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50);
     `);
     await pool.query(`
       CREATE TABLE IF NOT EXISTS menu_items (
@@ -2570,8 +2571,8 @@ app.post('/api/grn/receive/:poId', async (req, res) => {
     
     // Update purchase order status to 'received'
     await client.query(`
-      UPDATE purchase_orders SET status = 'received', received_status = 'received', grn_id = $1 WHERE id = $2
-    `, [grn.id, poId]);
+      UPDATE purchase_orders SET status = 'received', received_status = 'received', grn_id = $1, payment_method = $2 WHERE id = $3
+    `, [grn.id, payment_method || 'cash', poId]);
 
     // Auto-create expense entry for this purchase
     const expCount = await client.query('SELECT COUNT(*) FROM expenses');
