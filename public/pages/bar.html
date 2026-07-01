@@ -231,6 +231,10 @@
             <option value="other">Other</option>
           </select>
         </div>
+        <div style="padding: 8px 0 4px 0;">
+          <label style="font-size:12px;font-weight:600;color:#64748b;display:block;margin-bottom:4px;"><i class="fas fa-user-tie"></i> Waiter</label>
+          <input type="text" id="bar-waiter-name" class="form-control" placeholder="Enter waiter's name" autocomplete="off">
+        </div>
         <div class="action-buttons">
           <button class="btn-save" onclick="saveCurrentOrder()"><i class="fas fa-check-circle"></i> Confirm Payment</button>
           <button class="btn-print" onclick="printCurrentOrder()"><i class="fas fa-print"></i> Print Receipt</button>
@@ -547,6 +551,8 @@
     const order = getCurrentOrder();
     if (!order || order.items.length === 0) { showToast('No items in order', '<i class="fas fa-exclamation-triangle"></i>'); return; }
     const paymentMethod = document.getElementById('bar-payment-method').value;
+    const waiterName = document.getElementById('bar-waiter-name').value.trim();
+    if (!waiterName) { showToast('Please enter the waiter\'s name', '<i class="fas fa-exclamation-triangle"></i>'); return; }
     const btn = document.querySelector('.btn-save');
     if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...'; }
     try {
@@ -567,13 +573,14 @@
         total_amount: order.total,
         cashier_id: currentUser.id,
         cashier_name: currentUser.fullName || currentUser.username,
+        waiter_name: waiterName,
         pos_type: 'bar',
         payment_method: paymentMethod
       };
       const result = await apiPost('/api/sales', saleData);
       const receiptData = {
         orderNumber: order.orderNumber, date: new Date().toLocaleString(),
-        cashier: currentUser.fullName || currentUser.username,
+        waiter: waiterName,
         items: order.items.map(i => ({ name: i.name, quantity: i.quantity, price: i.price, total: i.price * i.quantity })),
         total: order.total, db_order_number: result.order_number, pos_type: 'Bar',
         payment_method: paymentMethod
@@ -583,6 +590,7 @@
       localStorage.setItem('pos_receipts', JSON.stringify(receipts));
       orders = orders.filter(o => o.id !== order.id);
       currentOrderId = orders.length > 0 ? orders[0].id : null;
+      document.getElementById('bar-waiter-name').value = '';
       await loadItems();
       renderOrderTabs(); renderCurrentOrder();
       showToast(`Payment confirmed! Order #${order.orderNumber} — ${fmtTSH(receiptData.total)} via ${paymentMethod}.`, '<i class="fas fa-check-circle"></i>');
@@ -600,7 +608,7 @@
     if (!order || order.items.length === 0) { showToast('No items to print', 'error'); return; }
     const receiptData = {
       orderNumber: order.orderNumber, date: new Date().toLocaleString(),
-      cashier: currentUser.fullName || currentUser.username,
+      waiter: document.getElementById('bar-waiter-name').value.trim(),
       items: order.items.map(i => ({ name: i.name, quantity: i.quantity, price: i.price, total: i.price * i.quantity })),
       total: order.total, pos_type: 'Bar'
     };
@@ -612,7 +620,7 @@
     printWindow.document.write(`<html><head><title>Receipt - Order #${data.orderNumber}</title>
       <style>body{font-family:monospace;padding:20px;max-width:300px;margin:0 auto}.header{text-align:center;border-bottom:1px dashed #000;margin-bottom:15px}.items th,.items td{text-align:left;padding:4px 0}.total{font-weight:bold;border-top:1px solid #000;margin-top:10px;padding-top:10px}</style>
       </head><body>
-      <div class="header"><h2>Kitobo Serenity Resort</h2><p>Bar POS Receipt</p><p>Order #${data.orderNumber}</p><p>${data.date}</p><p>Cashier: ${data.cashier}</p></div>
+      <div class="header"><h2>Kitobo Serenity Resort</h2><p>Bar POS Receipt</p><p>Order #${data.orderNumber}</p><p>${data.date}</p><p>Waiter: ${data.waiter || '-'}</p></div>
       <table class="items" width="100%"><thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead><tbody>`);
     data.items.forEach(item => {
       printWindow.document.write(`<tr><td>${escapeHtml(item.name)}</td><td style="text-align:center">${item.quantity}</td><td>${fmtTSH(item.price)}</td><td style="text-align:right">${fmtTSH(item.total)}</td></tr>`);

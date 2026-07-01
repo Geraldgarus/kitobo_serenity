@@ -40,6 +40,7 @@ async function ensurePaymentColumns() {
     await pool.query(`
       ALTER TABLE sales_orders ADD COLUMN IF NOT EXISTS pos_type VARCHAR(50);
       ALTER TABLE sales_orders ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50) DEFAULT 'Cash';
+      ALTER TABLE sales_orders ADD COLUMN IF NOT EXISTS waiter_name VARCHAR(200);
     `);
     await pool.query(`
       ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS category VARCHAR(100) DEFAULT 'other';
@@ -2757,7 +2758,7 @@ app.get('/api/purchase-orders/:id/items', async (req, res) => {
 
 // POST /api/sales - Save a completed sale
 app.post('/api/sales', async (req, res) => {
-  const { items, total_amount, cashier_id, cashier_name, pos_type, payment_method } = req.body;
+  const { items, total_amount, cashier_id, cashier_name, pos_type, payment_method, waiter_name } = req.body;
 
   if (!items || items.length === 0) {
     return res.status(400).json({ error: 'No items in sale' });
@@ -2768,10 +2769,10 @@ app.post('/api/sales', async (req, res) => {
     await client.query('BEGIN');
 
     const orderResult = await client.query(`
-      INSERT INTO sales_orders (cashier_id, cashier_name, total_amount, status, order_date, pos_type, payment_method)
-      VALUES ($1, $2, $3, 'completed', CURRENT_TIMESTAMP, $4, $5)
+      INSERT INTO sales_orders (cashier_id, cashier_name, total_amount, status, order_date, pos_type, payment_method, waiter_name)
+      VALUES ($1, $2, $3, 'completed', CURRENT_TIMESTAMP, $4, $5, $6)
       RETURNING id, order_number
-    `, [cashier_id || null, cashier_name, total_amount, pos_type || null, payment_method || 'Cash']);
+    `, [cashier_id || null, cashier_name, total_amount, pos_type || null, payment_method || 'Cash', waiter_name || null]);
     
     const saleId = orderResult.rows[0].id;
     const orderNumber = orderResult.rows[0].order_number;
@@ -2804,7 +2805,7 @@ app.get('/api/sales', async (req, res) => {
   const { from, to, pos_type } = req.query;
   let query = `
     SELECT
-      so.id, so.order_number, so.cashier_name, so.total_amount,
+      so.id, so.order_number, so.cashier_name, so.waiter_name, so.total_amount,
       so.order_date, so.status, so.pos_type, so.payment_method,
       COALESCE((
         SELECT SUM(si.quantity)::INTEGER

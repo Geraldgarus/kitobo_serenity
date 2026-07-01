@@ -1061,3 +1061,7 @@ SELECT '✅ laundry_services table created!' as status;
 ALTER TABLE apartments ADD COLUMN IF NOT EXISTS under_maintenance BOOLEAN DEFAULT FALSE;
 CREATE INDEX IF NOT EXISTS idx_apartments_maintenance ON apartments(under_maintenance);
 SELECT '✅ apartments.under_maintenance column added!' as status;
+
+-- ─── Waiter name on sales_orders (Bar/Restaurant POS) ──────────────────────
+ALTER TABLE sales_orders ADD COLUMN IF NOT EXISTS waiter_name VARCHAR(200);
+SELECT '✅ sales_orders.waiter_name column added!' as status;
