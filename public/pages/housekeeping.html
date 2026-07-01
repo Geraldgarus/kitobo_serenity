@@ -779,12 +779,17 @@
       </div>
       <div class="form-group">
         <label>Payment Method</label>
-        <select id="l-payment-method">
-          <option value="">— Select —</option>
-          <option value="Cash">Cash</option>
-          <option value="Card">Card</option>
-          <option value="Mobile Money">Mobile Money</option>
-          <option value="Bank Transfer">Bank Transfer</option>
+        <select id="l-payment-method" class="form-control">
+          <option value="">Select Payment Method</option>
+          <option value="cash">Cash</option>
+          <option value="card">Card (Visa/Mastercard)</option>
+          <option value="bank_transfer">Bank Transfer</option>
+          <option value="mpesa">M-Pesa</option>
+          <option value="tigo_pesa">Tigo Pesa</option>
+          <option value="airtel_money">Airtel Money</option>
+          <option value="halopesa">HaloPesa</option>
+          <option value="cheque">Cheque</option>
+          <option value="other">Other</option>
         </select>
       </div>
       <div class="form-group">
@@ -1021,6 +1026,7 @@
 <div class="toast-container" id="toast-container"></div>
 
 <script src="../js/api.js"></script>
+<script src="../js/payment-icons.js"></script>
 <script src="../js/utils.js"></script>
 <script>
 
@@ -1747,5 +1753,10 @@ function closePOSChooser(){var o=document.getElementById('pos-chooser-overlay');
 document.addEventListener('keydown',function(e){if(e.key==='Escape')closePOSChooser();});
 </script>
 <script src="../js/permissions.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  initIconSelect('l-payment-method', PAYMENT_METHOD_OPTS);
+});
+</script>
 </body>
 </html>

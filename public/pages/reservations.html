@@ -775,13 +775,14 @@
           <select id="modal-f-payment-method" class="form-control">
             <option value="">Select Payment Method</option>
             <option value="cash">Cash</option>
-            <option value="card">Card</option>
+            <option value="card">Card (Visa/Mastercard)</option>
             <option value="bank_transfer">Bank Transfer</option>
-             <option value="mpesa">M-Pesa</option>
-    <option value="tigo_pesa">Tigo Pesa</option>
-    <option value="airtel_money">Airtel Money</option>
-    <option value="halopesa">HaloPesa</option>
+            <option value="mpesa">M-Pesa</option>
+            <option value="tigo_pesa">Tigo Pesa</option>
+            <option value="airtel_money">Airtel Money</option>
+            <option value="halopesa">HaloPesa</option>
             <option value="cheque">Cheque</option>
+            <option value="other">Other</option>
           </select>
         </div>
       </div>
@@ -951,13 +952,14 @@
           <select id="edit-f-payment-method" class="form-control">
             <option value="">Select Payment Method</option>
             <option value="cash">Cash</option>
-            <option value="card">Card</option>
+            <option value="card">Card (Visa/Mastercard)</option>
             <option value="bank_transfer">Bank Transfer</option>
-             <option value="mpesa">M-Pesa</option>
-    <option value="tigo_pesa">Tigo Pesa</option>
-    <option value="airtel_money">Airtel Money</option>
-    <option value="halopesa">HaloPesa</option>
+            <option value="mpesa">M-Pesa</option>
+            <option value="tigo_pesa">Tigo Pesa</option>
+            <option value="airtel_money">Airtel Money</option>
+            <option value="halopesa">HaloPesa</option>
             <option value="cheque">Cheque</option>
+            <option value="other">Other</option>
           </select>
         </div>
       </div>
@@ -1058,6 +1060,7 @@
 
 <script src="../js/api.js"></script>
 <script src="../js/utils.js"></script>
+<script src="../js/payment-icons.js"></script>
 <script src="../js/reservations.js"></script>
 
 <script>
@@ -1887,5 +1890,11 @@ document.getElementById('cp-form').addEventListener('submit', async function(e) 
 });
 </script>
 <script src="../js/permissions.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  initIconSelect('modal-f-payment-method', PAYMENT_METHOD_OPTS);
+  initIconSelect('edit-f-payment-method',  PAYMENT_METHOD_OPTS);
+});
+</script>
 </body>
 </html>

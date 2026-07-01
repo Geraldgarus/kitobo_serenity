@@ -264,10 +264,14 @@
             <label><i class="fas fa-credit-card"></i> Payment Method</label>
             <select id="expense-payment-method" class="form-control">
               <option value="cash">Cash</option>
-              <option value="bank">Bank Transfer</option>
-              <option value="card">Card</option>
+              <option value="card">Card (Visa/Mastercard)</option>
+              <option value="bank_transfer">Bank Transfer</option>
+              <option value="mpesa">M-Pesa</option>
+              <option value="tigo_pesa">Tigo Pesa</option>
+              <option value="airtel_money">Airtel Money</option>
+              <option value="halopesa">HaloPesa</option>
               <option value="cheque">Cheque</option>
-              <option value="mobile">Mobile Payment</option>
+              <option value="other">Other</option>
             </select>
           </div>
           <div class="form-group">
@@ -327,6 +331,7 @@
 </div>
 
 <script src="../js/api.js"></script>
+<script src="../js/payment-icons.js"></script>
 <script src="../js/utils.js"></script>
 <script>
 // ── State ────────────────────────────────────────────────────
@@ -457,7 +462,7 @@ async function viewDetails(id) {
     if (el) el.classList.add('selected');
 
     const d = exp.expense_date ? new Date(exp.expense_date).toLocaleDateString() : '—';
-    const pm = { cash:'Cash', bank:'Bank Transfer', card:'Card', cheque:'Cheque', mobile:'Mobile Payment' };
+    const pm = { cash:'Cash', card:'Card', bank_transfer:'Bank Transfer', bank:'Bank Transfer', mpesa:'M-Pesa', tigo_pesa:'Tigo Pesa', airtel_money:'Airtel Money', halopesa:'HaloPesa', cheque:'Cheque', mobile:'Mobile Payment', other:'Other' };
 
     document.getElementById('details-content').innerHTML = `
       <!-- Top bar -->
@@ -719,5 +724,10 @@ function closePOSChooser() { document.getElementById('pos-chooser-overlay').styl
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closePOSChooser(); });
 </script>
 <script src="../js/permissions.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  initIconSelect('expense-payment-method', PAYMENT_METHOD_OPTS);
+});
+</script>
 </body>
 </html>
