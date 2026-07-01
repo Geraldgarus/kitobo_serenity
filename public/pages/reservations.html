@@ -1895,22 +1895,23 @@ document.getElementById('cp-form').addEventListener('submit', async function(e) 
 <script src="../js/permissions.js"></script>
 <script>
 /* ── Icon Select Dropdown (same as dashboard.html) ──────────────── */
+const FA = 'font-family:"Font Awesome 6 Free";font-weight:900;font-style:normal;font-size:14px;display:inline-block;width:16px;text-align:center;';
 const PAYMENT_STATUS_OPTS_R = [
-  { value: 'unpaid',  icon: '<i class="fas fa-times-circle" style="color:#ef4444"></i>',  label: 'Unpaid' },
-  { value: 'partial', icon: '<i class="fas fa-adjust"       style="color:#f59e0b"></i>',  label: 'Partial Payment' },
-  { value: 'paid',    icon: '<i class="fas fa-check-circle" style="color:#10b981"></i>',  label: 'Paid in Full' },
+  { value: 'unpaid',  icon: `<span style="${FA}color:#ef4444">&#xf057;</span>`,  label: 'Unpaid' },
+  { value: 'partial', icon: `<span style="${FA}color:#f59e0b">&#xf042;</span>`,  label: 'Partial Payment' },
+  { value: 'paid',    icon: `<span style="${FA}color:#10b981">&#xf058;</span>`,  label: 'Paid in Full' },
 ];
 const PAYMENT_METHOD_OPTS_R = [
-  { value: '',              icon: '<i class="fas fa-credit-card"      style="color:#94a3b8"></i>', label: 'Select Payment Method' },
-  { value: 'cash',          icon: '<i class="fas fa-money-bill-wave"  style="color:#10b981"></i>', label: 'Cash' },
-  { value: 'card',          icon: '<i class="fas fa-credit-card"      style="color:#3b82f6"></i>', label: 'Card (Visa/Mastercard)' },
-  { value: 'bank_transfer', icon: '<i class="fas fa-university"       style="color:#6366f1"></i>', label: 'Bank Transfer' },
-  { value: 'mpesa',         icon: '<i class="fas fa-mobile-alt"       style="color:#10b981"></i>', label: 'M-Pesa' },
-  { value: 'tigo_pesa',     icon: '<i class="fas fa-mobile-alt"       style="color:#ef4444"></i>', label: 'Tigo Pesa' },
-  { value: 'airtel_money',  icon: '<i class="fas fa-mobile-alt"       style="color:#ef4444"></i>', label: 'Airtel Money' },
-  { value: 'halopesa',      icon: '<i class="fas fa-mobile-alt"       style="color:#f59e0b"></i>', label: 'HaloPesa' },
-  { value: 'cheque',        icon: '<i class="fas fa-pen"              style="color:#6366f1"></i>', label: 'Cheque' },
-  { value: 'other',         icon: '<i class="fas fa-ellipsis-h"       style="color:#94a3b8"></i>', label: 'Other' },
+  { value: '',              icon: `<span style="${FA}color:#94a3b8">&#xf09d;</span>`, label: 'Select Payment Method' },
+  { value: 'cash',          icon: `<span style="${FA}color:#10b981">&#xf53a;</span>`, label: 'Cash' },
+  { value: 'card',          icon: `<span style="${FA}color:#3b82f6">&#xf09d;</span>`, label: 'Card (Visa/Mastercard)' },
+  { value: 'bank_transfer', icon: `<span style="${FA}color:#6366f1">&#xf19c;</span>`, label: 'Bank Transfer' },
+  { value: 'mpesa',         icon: `<span style="${FA}color:#10b981">&#xf3cd;</span>`, label: 'M-Pesa' },
+  { value: 'tigo_pesa',     icon: `<span style="${FA}color:#ef4444">&#xf3cd;</span>`, label: 'Tigo Pesa' },
+  { value: 'airtel_money',  icon: `<span style="${FA}color:#ef4444">&#xf3cd;</span>`, label: 'Airtel Money' },
+  { value: 'halopesa',      icon: `<span style="${FA}color:#f59e0b">&#xf3cd;</span>`, label: 'HaloPesa' },
+  { value: 'cheque',        icon: `<span style="${FA}color:#6366f1">&#xf304;</span>`, label: 'Cheque' },
+  { value: 'other',         icon: `<span style="${FA}color:#94a3b8">&#xf141;</span>`, label: 'Other' },
 ];
 
 function initIconSelectR(selectId, optionDefs) {
