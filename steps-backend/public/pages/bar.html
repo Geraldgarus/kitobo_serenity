@@ -579,10 +579,13 @@
         }
       }
       const saleData = {
-        items: order.items.map(item => ({
-          item_id: item.id, item_name: item.name, category: item.category,
-          unit: item.unit, quantity: item.quantity, unit_price: item.price, total_price: item.price * item.quantity
-        })),
+        items: order.items.map(item => {
+          const posItem = posItems.find(i => i.id === item.id);
+          return {
+            item_id: (posItem && posItem.invId) || null, item_name: item.name, category: item.category,
+            unit: item.unit, quantity: item.quantity, unit_price: item.price, total_price: item.price * item.quantity
+          };
+        }),
         total_amount: order.total,
         cashier_id: currentUser.id,
         cashier_name: currentUser.fullName || currentUser.username,
