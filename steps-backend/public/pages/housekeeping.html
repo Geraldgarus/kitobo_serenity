@@ -771,11 +771,11 @@
       </div>
       <div class="form-group">
         <label>Price (TSh)</label>
-        <input type="number" id="l-price" placeholder="0" min="0">
+        <input type="number" id="l-price" placeholder="0" min="0" oninput="updateLaundryPaymentStatus()">
       </div>
       <div class="form-group">
         <label>Amount Paid (TSh)</label>
-        <input type="number" id="l-amount-paid" placeholder="0" min="0">
+        <input type="number" id="l-amount-paid" placeholder="0" min="0" oninput="updateLaundryPaymentStatus()">
       </div>
       <div class="form-group">
         <label>Payment Method</label>
@@ -1661,10 +1661,21 @@ async function clearMaintenance(apartmentId, aptName) {
       cb.checked = selectedServices.includes(cb.value);
     });
     document.getElementById('laundry-modal').classList.add('open');
+    updateLaundryPaymentStatus();
   }
 
   function closeLaundryModal() {
     document.getElementById('laundry-modal').classList.remove('open');
+  }
+
+  function updateLaundryPaymentStatus() {
+    const price = parseFloat(document.getElementById('l-price').value) || 0;
+    const paid = parseFloat(document.getElementById('l-amount-paid').value) || 0;
+    const statusSel = document.getElementById('l-status');
+    if (!statusSel) return;
+    if (paid <= 0) statusSel.value = 'pending';
+    else if (paid >= price) statusSel.value = 'paid';
+    else statusSel.value = 'partial';
   }
 
   async function saveLaundryService() {
@@ -1719,6 +1730,7 @@ async function clearMaintenance(apartmentId, aptName) {
 
   window.openLaundryModal = openLaundryModal;
   window.closeLaundryModal = closeLaundryModal;
+  window.updateLaundryPaymentStatus = updateLaundryPaymentStatus;
   window.saveLaundryService = saveLaundryService;
   window.editLaundryService = editLaundryService;
   window.deleteLaundryService = deleteLaundryService;
