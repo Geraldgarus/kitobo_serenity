@@ -1060,7 +1060,6 @@
 
 <script src="../js/api.js"></script>
 <script src="../js/utils.js"></script>
-<script src="../js/payment-icons.js"></script>
 <script src="../js/reservations.js"></script>
 
 <script>
@@ -1257,6 +1256,8 @@ function openReservationModal() {
   document.getElementById('reservation-modal').classList.add('open');
   document.getElementById('reservation-modal-overlay').classList.add('open');
   document.body.style.overflow = 'hidden';
+  initIconSelectR('modal-f-payment-status', PAYMENT_STATUS_OPTS_R);
+  initIconSelectR('modal-f-payment-method', PAYMENT_METHOD_OPTS_R);
   initModalForm();
   setTimeout(() => checkCountryDropdown(), 500);
 }
@@ -1744,6 +1745,8 @@ async function openEditModal(reservationId) {
   document.getElementById('edit-modal').classList.add('open');
   document.getElementById('edit-modal-overlay').classList.add('open');
   document.body.style.overflow = 'hidden';
+  initIconSelectR('edit-f-payment-status', PAYMENT_STATUS_OPTS_R);
+  initIconSelectR('edit-f-payment-method', PAYMENT_METHOD_OPTS_R);
   await initEditForm(reservationId);
 }
 
@@ -1913,6 +1916,8 @@ const PAYMENT_METHOD_OPTS_R = [
 function initIconSelectR(selectId, optionDefs) {
   const select = document.getElementById(selectId);
   if (!select) return;
+  if (select.dataset.iselDone) return; /* already wrapped */
+  select.dataset.iselDone = '1';
 
   const wrapper = document.createElement('div');
   wrapper.style.cssText = 'position:relative;';
