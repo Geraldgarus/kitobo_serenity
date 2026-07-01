@@ -231,6 +231,10 @@
             <option value="other">Other</option>
           </select>
         </div>
+        <div style="padding: 8px 0 4px 0;">
+          <label style="font-size:12px;font-weight:600;color:#64748b;display:block;margin-bottom:4px;"><i class="fas fa-user-tie"></i> Waiter</label>
+          <input type="text" id="restaurant-waiter-name" class="form-control" placeholder="Enter waiter's name" autocomplete="off">
+        </div>
         <div class="action-buttons">
           <button class="btn-save" onclick="saveCurrentOrder()"><i class="fas fa-check-circle"></i> Confirm Payment</button>
           <button class="btn-print" onclick="printCurrentOrder()"><i class="fas fa-print"></i> Print Receipt</button>
@@ -564,6 +568,8 @@
     const order = getCurrentOrder();
     if (!order || order.items.length === 0) { showToast('No items in order', '<i class="fas fa-exclamation-triangle"></i>'); return; }
     const paymentMethod = document.getElementById('restaurant-payment-method').value;
+    const waiterName = document.getElementById('restaurant-waiter-name').value.trim();
+    if (!waiterName) { showToast('Please enter the waiter\'s name', '<i class="fas fa-exclamation-triangle"></i>'); return; }
     const btn = document.querySelector('.btn-save');
     if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...'; }
     try {
@@ -576,13 +582,14 @@
         total_amount: order.total,
         cashier_id: currentUser.id,
         cashier_name: currentUser.fullName || currentUser.username,
+        waiter_name: waiterName,
         pos_type: 'restaurant',
         payment_method: paymentMethod
       };
       const result = await apiPost('/api/sales', saleData);
       const receiptData = {
         orderNumber: order.orderNumber, date: new Date().toLocaleString(),
-        cashier: currentUser.fullName || currentUser.username,
+        waiter: waiterName,
         items: order.items.map(i => ({ name: i.name, quantity: i.quantity, price: i.price, total: i.price * i.quantity })),
         total: order.total, db_order_number: result.order_number, pos_type: 'Restaurant',
         payment_method: paymentMethod
@@ -592,6 +599,7 @@
       localStorage.setItem('pos_receipts', JSON.stringify(receipts));
       orders = orders.filter(o => o.id !== order.id);
       currentOrderId = orders.length > 0 ? orders[0].id : null;
+      document.getElementById('restaurant-waiter-name').value = '';
       await loadItems();
       renderOrderTabs(); renderCurrentOrder();
       showToast(`Payment confirmed! Order #${order.orderNumber} — ${fmtTSH(receiptData.total)} via ${paymentMethod}.`, '<i class="fas fa-check-circle"></i>');
@@ -609,7 +617,7 @@
     if (!order || order.items.length === 0) { showToast('No items to print', 'error'); return; }
     const receiptData = {
       orderNumber: order.orderNumber, date: new Date().toLocaleString(),
-      cashier: currentUser.fullName || currentUser.username,
+      waiter: document.getElementById('restaurant-waiter-name').value.trim(),
       items: order.items.map(i => ({ name: i.name, quantity: i.quantity, price: i.price, total: i.price * i.quantity })),
       total: order.total, pos_type: 'Restaurant'
     };
@@ -648,7 +656,7 @@
         </div>
         <p>Restaurant POS Receipt</p>
         <p>${data.date}</p>
-        <p>Cashier: ${data.cashier}</p>
+        <p>Waiter: ${data.waiter || '-'}</p>
         <div style="display:flex;justify-content:space-between;align-items:center;margin:4px 0;">
           <span>Order #${data.orderNumber}</span>
           <span>To: ..............</span>
