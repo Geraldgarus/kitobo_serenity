@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/style.css" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Inter', sans-serif; background: #f1f5f9; color: #1e293b; }
@@ -731,15 +731,15 @@ document.getElementById('cp-form').addEventListener('submit', async function(e) 
 <script src="../js/permissions.js"></script>
 <script>
 const PAYMENT_METHOD_OPTS_RST = [
-  { value: 'cash',          icon: '<i class="fas fa-money-bill-wave"  style="color:#10b981;width:16px;text-align:center"></i>', label: 'Cash' },
-  { value: 'card',          icon: '<i class="fas fa-credit-card"      style="color:#3b82f6;width:16px;text-align:center"></i>', label: 'Card (Visa/Mastercard)' },
-  { value: 'bank_transfer', icon: '<i class="fas fa-landmark"         style="color:#6366f1;width:16px;text-align:center"></i>', label: 'Bank Transfer' },
-  { value: 'mpesa',         icon: '<i class="fas fa-mobile"           style="color:#10b981;width:16px;text-align:center"></i>', label: 'M-Pesa' },
-  { value: 'tigo_pesa',     icon: '<i class="fas fa-mobile"           style="color:#ef4444;width:16px;text-align:center"></i>', label: 'Tigo Pesa' },
-  { value: 'airtel_money',  icon: '<i class="fas fa-mobile"           style="color:#ef4444;width:16px;text-align:center"></i>', label: 'Airtel Money' },
-  { value: 'halopesa',      icon: '<i class="fas fa-mobile"           style="color:#f59e0b;width:16px;text-align:center"></i>', label: 'HaloPesa' },
-  { value: 'cheque',        icon: '<i class="fas fa-pen"              style="color:#6366f1;width:16px;text-align:center"></i>', label: 'Cheque' },
-  { value: 'other',         icon: '<i class="fas fa-ellipsis"         style="color:#94a3b8;width:16px;text-align:center"></i>', label: 'Other' },
+  { value: 'cash',          icon: '<i class="fas fa-money-bill-wave"  style="color:#10b981;font-size:14px;width:16px;text-align:center"></i>', label: 'Cash' },
+  { value: 'card',          icon: '<i class="fas fa-credit-card"      style="color:#3b82f6;font-size:14px;width:16px;text-align:center"></i>', label: 'Card (Visa/Mastercard)' },
+  { value: 'bank_transfer', icon: '<i class="fas fa-university"       style="color:#6366f1;font-size:14px;width:16px;text-align:center"></i>', label: 'Bank Transfer' },
+  { value: 'mpesa',         icon: '<i class="fas fa-mobile-alt"       style="color:#10b981;font-size:14px;width:16px;text-align:center"></i>', label: 'M-Pesa' },
+  { value: 'tigo_pesa',     icon: '<i class="fas fa-mobile-alt"       style="color:#ef4444;font-size:14px;width:16px;text-align:center"></i>', label: 'Tigo Pesa' },
+  { value: 'airtel_money',  icon: '<i class="fas fa-mobile-alt"       style="color:#ef4444;font-size:14px;width:16px;text-align:center"></i>', label: 'Airtel Money' },
+  { value: 'halopesa',      icon: '<i class="fas fa-mobile-alt"       style="color:#f59e0b;font-size:14px;width:16px;text-align:center"></i>', label: 'HaloPesa' },
+  { value: 'cheque',        icon: '<i class="fas fa-pen"              style="color:#6366f1;font-size:14px;width:16px;text-align:center"></i>', label: 'Cheque' },
+  { value: 'other',         icon: '<i class="fas fa-ellipsis-h"       style="color:#94a3b8;font-size:14px;width:16px;text-align:center"></i>', label: 'Other' },
 ];
 function initPayIconSelectRST(selectId, opts) {
   const select = document.getElementById(selectId);
