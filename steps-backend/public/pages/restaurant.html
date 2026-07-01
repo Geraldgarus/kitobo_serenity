@@ -800,10 +800,20 @@ function initPayIconSelectRST(selectId, opts) {
   document.body.appendChild(dropdown);
   wrapper.appendChild(trigger);
   function positionDropdown() {
+    dropdown.style.visibility = 'hidden';
+    dropdown.style.display = 'block';
     const r = trigger.getBoundingClientRect();
-    dropdown.style.top  = (r.bottom + 4) + 'px';
+    const dropdownHeight = dropdown.offsetHeight;
+    const spaceBelow = window.innerHeight - r.bottom;
+    const spaceAbove = r.top;
+    if (spaceBelow < dropdownHeight + 8 && spaceAbove > spaceBelow) {
+      dropdown.style.top = (r.top - dropdownHeight - 4) + 'px';
+    } else {
+      dropdown.style.top = (r.bottom + 4) + 'px';
+    }
     dropdown.style.left = r.left + 'px';
     dropdown.style.width = r.width + 'px';
+    dropdown.style.visibility = '';
   }
   function updateDisplay(value) {
     const opt = opts.find(o => o.value === value) || opts[0];
