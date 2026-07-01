@@ -1069,3 +1069,7 @@ SELECT '✅ sales_orders.waiter_name column added!' as status;
 -- ─── Payment method on maintenance_records ─────────────────────────────────
 ALTER TABLE maintenance_records ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50);
 SELECT '✅ maintenance_records.payment_method column added!' as status;
+
+-- ─── Link maintenance_records to their auto-recorded expense ──────────────
+ALTER TABLE maintenance_records ADD COLUMN IF NOT EXISTS expense_id INT;
+SELECT '✅ maintenance_records.expense_id column added!' as status;

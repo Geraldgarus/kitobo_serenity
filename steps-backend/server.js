@@ -3452,10 +3452,40 @@ async function createMaintenanceTable() {
     `);
     await pool.query(`
       ALTER TABLE maintenance_records ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50);
+      ALTER TABLE maintenance_records ADD COLUMN IF NOT EXISTS expense_id INT;
     `);
     console.log('✅ Maintenance records table ready');
   } catch (err) {
     console.log('Maintenance records table note:', err.message);
+  }
+}
+
+// Auto-record a maintenance record's cost as an expense (create the linked
+// expense the first time, then keep it in sync on later edits)
+async function syncMaintenanceExpense(task) {
+  const description = `Maintenance: ${task.repair_type}${task.item_name ? ' - ' + task.item_name : ''} (Tech: ${task.technician_name})`;
+  const amount = task.total_cost || 0;
+  const paymentMethod = task.payment_method || 'cash';
+  try {
+    if (task.expense_id) {
+      await pool.query(`
+        UPDATE expenses SET description = $1, amount = $2, expense_date = $3, payment_method = $4, paid_to = $5, updated_at = CURRENT_TIMESTAMP
+        WHERE id = $6
+      `, [description, amount, task.task_date, paymentMethod, task.technician_name, task.expense_id]);
+    } else {
+      const { rows } = await pool.query(`
+        INSERT INTO expenses (expense_number, category, description, amount, expense_date, payment_method, paid_to, remarks, created_by)
+        VALUES ($1, 'Maintenance', $2, $3, $4, $5, $6, $7, $8)
+        RETURNING id
+      `, [
+        `EXP-${task.task_number}`, description, amount, task.task_date, paymentMethod, task.technician_name,
+        `Auto-recorded from Maintenance Record #${task.task_number}`, task.created_by || 'system'
+      ]);
+      await pool.query('UPDATE maintenance_records SET expense_id = $1 WHERE id = $2', [rows[0].id, task.id]);
+      task.expense_id = rows[0].id;
+    }
+  } catch (err) {
+    console.error('Failed to sync maintenance expense for record', task.id, ':', err.message);
   }
 }
 
@@ -3550,7 +3580,8 @@ app.post('/api/maintenance', async (req, res) => {
     
     const newTask = rows[0];
     newTask.tools = typeof newTask.tools === 'string' ? JSON.parse(newTask.tools) : (newTask.tools || []);
-    
+    await syncMaintenanceExpense(newTask);
+
     console.log('✅ Record created:', newTask.id);
     res.status(201).json(newTask);
   } catch (err) {
@@ -3599,7 +3630,8 @@ app.put('/api/maintenance/:id', async (req, res) => {
     
     const updatedTask = rows[0];
     updatedTask.tools = typeof updatedTask.tools === 'string' ? JSON.parse(updatedTask.tools) : (updatedTask.tools || []);
-    
+    await syncMaintenanceExpense(updatedTask);
+
     res.json(updatedTask);
   } catch (err) {
     console.error('Update record error:', err);
