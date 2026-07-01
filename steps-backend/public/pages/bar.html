@@ -213,27 +213,29 @@
       </div>
 
       <div class="cart-footer">
-        <div class="total-row">
-          <span>Total Amount:</span>
-          <span id="cart-total">TSh 0</span>
-        </div>
-        <div style="padding: 8px 0 4px 0;">
-          <label style="font-size:12px;font-weight:600;color:#64748b;display:block;margin-bottom:4px;"><i class="fas fa-credit-card"></i> Payment Method</label>
-          <select id="bar-payment-method" class="form-control">
-            <option value="cash">Cash</option>
-            <option value="card">Card (Visa/Mastercard)</option>
-            <option value="bank_transfer">Bank Transfer</option>
-            <option value="mpesa">M-Pesa</option>
-            <option value="tigo_pesa">Tigo Pesa</option>
-            <option value="airtel_money">Airtel Money</option>
-            <option value="halopesa">HaloPesa</option>
-            <option value="cheque">Cheque</option>
-            <option value="other">Other</option>
-          </select>
-        </div>
-        <div style="padding: 8px 0 4px 0;">
-          <label style="font-size:12px;font-weight:600;color:#64748b;display:block;margin-bottom:4px;"><i class="fas fa-user-tie"></i> Waiter</label>
-          <input type="text" id="bar-waiter-name" class="form-control" placeholder="Enter waiter's name" autocomplete="off">
+        <div style="display:flex; gap:12px; padding:8px 0 12px 0; align-items:flex-end;">
+          <div style="flex:1.2; min-width:0;">
+            <label style="font-size:12px;font-weight:600;color:#64748b;display:block;margin-bottom:4px;"><i class="fas fa-credit-card"></i> Payment Method</label>
+            <select id="bar-payment-method" class="form-control">
+              <option value="cash">Cash</option>
+              <option value="card">Card (Visa/Mastercard)</option>
+              <option value="bank_transfer">Bank Transfer</option>
+              <option value="mpesa">M-Pesa</option>
+              <option value="tigo_pesa">Tigo Pesa</option>
+              <option value="airtel_money">Airtel Money</option>
+              <option value="halopesa">HaloPesa</option>
+              <option value="cheque">Cheque</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div style="flex:1; min-width:0;">
+            <label style="font-size:12px;font-weight:600;color:#64748b;display:block;margin-bottom:4px;"><i class="fas fa-user-tie"></i> Waiter</label>
+            <input type="text" id="bar-waiter-name" class="form-control" placeholder="Waiter's name" autocomplete="off">
+          </div>
+          <div style="flex:1; min-width:0; text-align:right;">
+            <label style="font-size:12px;font-weight:600;color:#64748b;display:block;margin-bottom:4px;">Total Amount</label>
+            <div style="font-size:18px;font-weight:700;color:#1a2340;padding:10px 0;" id="cart-total">TSh 0</div>
+          </div>
         </div>
         <div class="action-buttons">
           <button class="btn-save" onclick="saveCurrentOrder()"><i class="fas fa-check-circle"></i> Confirm Payment</button>
