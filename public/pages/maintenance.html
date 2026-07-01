@@ -239,6 +239,20 @@
             <div class="total-cost-box"><span><i class="fas fa-money-bill-wave"></i> Total Tools Cost:</span><span id="total-tools-cost">TSh 0</span></div>
           </div>
           <div class="grand-total-box"><span><i class="fas fa-dollar-sign"></i> GRAND TOTAL (Labour + Tools):</span><span id="grand-total">TSh 0</span></div>
+          <div class="form-group"><label><i class="fas fa-credit-card"></i> Payment Method</label>
+            <select id="payment-method" class="form-control">
+              <option value="">Select Payment Method</option>
+              <option value="cash">Cash</option>
+              <option value="card">Card (Visa/Mastercard)</option>
+              <option value="bank_transfer">Bank Transfer</option>
+              <option value="mpesa">M-Pesa</option>
+              <option value="tigo_pesa">Tigo Pesa</option>
+              <option value="airtel_money">Airtel Money</option>
+              <option value="halopesa">HaloPesa</option>
+              <option value="cheque">Cheque</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
           <div class="form-group"><label><i class="fas fa-pen"></i> Remarks / Notes</label><textarea id="remarks" class="form-control" rows="2"></textarea></div>
           <hr class="divider">
           <div style="display: flex; gap: 10px;"><button type="submit" class="btn btn-success" style="flex:1"><i class="fas fa-save"></i> Save Record</button><button type="button" class="btn btn-outline" onclick="cancelForm()" style="flex:1">Cancel</button></div>
@@ -309,6 +323,7 @@ function showForm() {
   document.getElementById('item-name').value = '';
   document.getElementById('description').value = '';
   document.getElementById('labour-cost').value = '0';
+  document.getElementById('payment-method').value = '';
   document.getElementById('remarks').value = '';
   updateGrandTotal();
   document.querySelector('#form-section .form-header h3').innerHTML = '<i class="fas fa-plus"></i> New Maintenance Record';
@@ -336,6 +351,7 @@ document.getElementById('maintenance-form')?.addEventListener('submit', async fu
     tools: toolsList,
     totalToolsCost: toolsTotal,
     totalCost: totalCost,
+    paymentMethod: document.getElementById('payment-method').value,
     date: document.getElementById('task-date').value,
     remarks: document.getElementById('remarks').value,
     status: 'pending'
@@ -407,6 +423,7 @@ async function viewTaskDetails(id) {
         <p><strong>Description:</strong><br>${escapeHtml(task.description)}</p>
         <p><strong>Labour Cost:</strong> ${fmtTSH(labour)}</p>
         ${toolsHtml}
+        <p><strong>Payment Method:</strong> ${pmLabel(task.payment_method || task.paymentMethod)}</p>
         <p><strong>Remarks:</strong> ${escapeHtml(task.remarks) || 'No remarks'}</p>
         <div class="grand-total-box"><span><strong>GRAND TOTAL:</strong></span><span><strong>${fmtTSH(grand)}</strong></span></div>
       </div>
@@ -429,6 +446,7 @@ async function openEditTask(id) {
     document.getElementById('item-name').value = task.item_name || task.itemName || '';
     document.getElementById('description').value = task.description || '';
     document.getElementById('labour-cost').value = task.labour_cost || 0;
+    document.getElementById('payment-method').value = task.payment_method || task.paymentMethod || '';
     document.getElementById('task-date').value = task.task_date || new Date().toISOString().split('T')[0];
     document.getElementById('remarks').value = task.remarks || '';
     toolsList = (task.tools && Array.isArray(task.tools)) ? task.tools : [];
@@ -486,6 +504,10 @@ if (userPill) { userPill.addEventListener('click', (e) => { e.stopPropagation();
 
 function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, function(m) { if (m === '&') return '&amp;'; if (m === '<') return '&lt;'; if (m === '>') return '&gt;'; return m; }); }
 function fmtTSH(v) { return 'TSh ' + (v || 0).toLocaleString(); }
+function pmLabel(v) {
+  const map = { cash:'Cash', card:'Card (Visa/Mastercard)', bank_transfer:'Bank Transfer', mpesa:'M-Pesa', tigo_pesa:'Tigo Pesa', airtel_money:'Airtel Money', halopesa:'HaloPesa', cheque:'Cheque', other:'Other' };
+  return v ? (map[v] || escapeHtml(v)) : 'N/A';
+}
 function showToast(msg, type) { let toast = document.getElementById('toast-container'); let bg = type === 'error' ? '#ef4444' : '#10b981'; toast.innerHTML = '<div style="background:' + bg + ';color:white;padding:12px 20px;border-radius:40px;">' + msg + '</div>'; setTimeout(() => toast.innerHTML = '', 3000); }
 
 window.showForm = showForm; window.cancelForm = cancelForm; window.loadTasks = loadTasks; window.applyFilters = applyFilters; window.resetFilters = resetFilters;
@@ -521,5 +543,96 @@ function closePOSChooser(){var o=document.getElementById('pos-chooser-overlay');
 document.addEventListener('keydown',function(e){if(e.key==='Escape')closePOSChooser();});
 </script>
 <script src="../js/permissions.js"></script>
+<script>
+const PAYMENT_METHOD_OPTS_MT = [
+  { value: '',              icon: '<i class="fas fa-credit-card"      style="color:#94a3b8"></i>', label: 'Select Payment Method' },
+  { value: 'cash',          icon: '<i class="fas fa-money-bill-wave"  style="color:#10b981"></i>', label: 'Cash' },
+  { value: 'card',          icon: '<i class="fas fa-credit-card"      style="color:#3b82f6"></i>', label: 'Card (Visa/Mastercard)' },
+  { value: 'bank_transfer', icon: '<i class="fas fa-university"       style="color:#6366f1"></i>', label: 'Bank Transfer' },
+  { value: 'mpesa',         icon: '<i class="fas fa-mobile-alt"       style="color:#10b981"></i>', label: 'M-Pesa' },
+  { value: 'tigo_pesa',     icon: '<i class="fas fa-mobile-alt"       style="color:#ef4444"></i>', label: 'Tigo Pesa' },
+  { value: 'airtel_money',  icon: '<i class="fas fa-mobile-alt"       style="color:#ef4444"></i>', label: 'Airtel Money' },
+  { value: 'halopesa',      icon: '<i class="fas fa-mobile-alt"       style="color:#f59e0b"></i>', label: 'HaloPesa' },
+  { value: 'cheque',        icon: '<i class="fas fa-pen"              style="color:#6366f1"></i>', label: 'Cheque' },
+  { value: 'other',         icon: '<i class="fas fa-ellipsis-h"       style="color:#94a3b8"></i>', label: 'Other' },
+];
+function initPayIconSelectMT(selectId, opts) {
+  const select = document.getElementById(selectId);
+  if (!select || select.dataset.iselDone) return;
+  select.dataset.iselDone = '1';
+  const wrapper = document.createElement('div');
+  wrapper.style.cssText = 'position:relative;';
+  select.parentNode.insertBefore(wrapper, select);
+  wrapper.appendChild(select);
+  select.style.setProperty('display', 'none', 'important');
+  const trigger = document.createElement('div');
+  trigger.className = 'form-control';
+  trigger.style.cssText = 'display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;';
+  trigger.innerHTML = '<span class="isel-icon" style="width:16px;text-align:center;flex-shrink:0"></span><span class="isel-text" style="flex:1;color:#1e2a3e;font-size:0.9rem"></span><i class="fas fa-chevron-down" style="color:#94a3b8;font-size:11px;transition:transform 0.2s;flex-shrink:0"></i>';
+  const dropdown = document.createElement('div');
+  dropdown.style.cssText = 'display:none;position:fixed;background:white;border:1px solid #c9933a;border-radius:12px;z-index:99999;box-shadow:0 6px 20px rgba(0,0,0,0.15);overflow:hidden;min-width:220px;';
+  opts.forEach(opt => {
+    const div = document.createElement('div');
+    div.dataset.value = opt.value;
+    div.style.cssText = 'display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;font-size:0.88rem;';
+    div.innerHTML = opt.icon + '<span>' + opt.label + '</span>';
+    div.addEventListener('mouseenter', () => { div.style.background = '#f5f3ef'; });
+    div.addEventListener('mouseleave', () => { div.style.background = div._sel ? '#fef9f0' : ''; });
+    dropdown.appendChild(div);
+  });
+  document.body.appendChild(dropdown);
+  wrapper.appendChild(trigger);
+  function positionDropdown() {
+    dropdown.style.visibility = 'hidden';
+    dropdown.style.display = 'block';
+    const r = trigger.getBoundingClientRect();
+    const dropdownHeight = dropdown.offsetHeight;
+    const spaceBelow = window.innerHeight - r.bottom;
+    const spaceAbove = r.top;
+    if (spaceBelow < dropdownHeight + 8 && spaceAbove > spaceBelow) {
+      dropdown.style.top = (r.top - dropdownHeight - 4) + 'px';
+    } else {
+      dropdown.style.top = (r.bottom + 4) + 'px';
+    }
+    dropdown.style.left = r.left + 'px';
+    dropdown.style.width = r.width + 'px';
+    dropdown.style.visibility = '';
+  }
+  function updateDisplay(value) {
+    const opt = opts.find(o => o.value === value) || opts[0];
+    if (!opt) return;
+    trigger.querySelector('.isel-icon').innerHTML = opt.icon;
+    trigger.querySelector('.isel-text').textContent = opt.label;
+    dropdown.querySelectorAll('[data-value]').forEach(el => {
+      const sel = el.dataset.value === value;
+      el._sel = sel;
+      el.style.background = sel ? '#fef9f0' : '';
+      el.style.fontWeight = sel ? '600' : '';
+    });
+  }
+  updateDisplay(select.value);
+  trigger.addEventListener('click', e => {
+    e.stopPropagation();
+    const isOpen = dropdown.style.display === 'block';
+    document.querySelectorAll('[data-isel-open]').forEach(d => { d.style.display = 'none'; delete d.dataset.iselOpen; });
+    if (!isOpen) { positionDropdown(); dropdown.style.display = 'block'; dropdown.dataset.iselOpen = '1'; const ch = trigger.querySelector('.fa-chevron-down'); if (ch) ch.style.transform = 'rotate(180deg)'; }
+    else { const ch = trigger.querySelector('.fa-chevron-down'); if (ch) ch.style.transform = ''; }
+  });
+  document.addEventListener('click', () => {
+    if (dropdown.style.display === 'block') { dropdown.style.display = 'none'; delete dropdown.dataset.iselOpen; const ch = trigger.querySelector('.fa-chevron-down'); if (ch) ch.style.transform = ''; }
+  });
+  const nativeDesc = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value');
+  const nativeSet = nativeDesc.set;
+  dropdown.addEventListener('click', e => {
+    const optEl = e.target.closest('[data-value]'); if (!optEl) return; e.stopPropagation();
+    const val = optEl.dataset.value; nativeSet.call(select, val); select.dispatchEvent(new Event('change', { bubbles: true })); updateDisplay(val);
+    dropdown.style.display = 'none'; delete dropdown.dataset.iselOpen; const ch = trigger.querySelector('.fa-chevron-down'); if (ch) ch.style.transform = '';
+  });
+  Object.defineProperty(select, 'value', { get: () => nativeDesc.get.call(select), set: v => { nativeSet.call(select, v); updateDisplay(v); }, configurable: true });
+}
+document.addEventListener('DOMContentLoaded', function() {
+  initPayIconSelectMT('payment-method', PAYMENT_METHOD_OPTS_MT);
+});
+</script>
 </body>
 </html>

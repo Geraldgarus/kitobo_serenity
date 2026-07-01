@@ -3441,6 +3441,7 @@ async function createMaintenanceTable() {
         tools JSONB DEFAULT '[]',
         total_tools_cost INT DEFAULT 0,
         total_cost INT DEFAULT 0,
+        payment_method VARCHAR(50),
         task_date DATE NOT NULL,
         remarks TEXT,
         status VARCHAR(20) DEFAULT 'pending',
@@ -3448,6 +3449,9 @@ async function createMaintenanceTable() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
+    `);
+    await pool.query(`
+      ALTER TABLE maintenance_records ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50);
     `);
     console.log('✅ Maintenance records table ready');
   } catch (err) {
@@ -3514,9 +3518,9 @@ app.get('/api/maintenance/:id', async (req, res) => {
 
 // POST create maintenance record
 app.post('/api/maintenance', async (req, res) => {
-  const { 
-    taskNumber, technicianName, contactNumber, repairType, itemName, description, 
-    labourCost, tools, totalToolsCost, date, remarks, status 
+  const {
+    taskNumber, technicianName, contactNumber, repairType, itemName, description,
+    labourCost, tools, totalToolsCost, date, remarks, status, paymentMethod
   } = req.body;
   
   console.log('📝 Creating maintenance record:', { technicianName, contactNumber, repairType, itemName, labourCost });
@@ -3532,15 +3536,15 @@ app.post('/api/maintenance', async (req, res) => {
   try {
     const { rows } = await pool.query(`
       INSERT INTO maintenance_records (
-        task_number, technician_name, contact_number, repair_type, item_name, description, 
-        labour_cost, tools, total_tools_cost, total_cost, 
+        task_number, technician_name, contact_number, repair_type, item_name, description,
+        labour_cost, tools, total_tools_cost, total_cost, payment_method,
         task_date, remarks, status, created_by
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
       RETURNING *
     `, [
       taskNum, technicianName, contactNumber || null, repairType, itemName || null, description,
-      labourCost || 0, toolsJson, totalToolsCost || 0, totalCost,
+      labourCost || 0, toolsJson, totalToolsCost || 0, totalCost, paymentMethod || null,
       date, remarks || null, status || 'pending', req.body.created_by || 'system'
     ]);
     
@@ -3558,14 +3562,14 @@ app.post('/api/maintenance', async (req, res) => {
 // PUT update maintenance record
 app.put('/api/maintenance/:id', async (req, res) => {
   const { id } = req.params;
-  const { 
-    technicianName, contactNumber, repairType, itemName, description, 
-    labourCost, tools, totalToolsCost, date, remarks, status 
+  const {
+    technicianName, contactNumber, repairType, itemName, description,
+    labourCost, tools, totalToolsCost, date, remarks, status, paymentMethod
   } = req.body;
-  
+
   const totalCost = (labourCost || 0) + (totalToolsCost || 0);
   const toolsJson = JSON.stringify(tools || []);
-  
+
   try {
     const { rows } = await pool.query(`
       UPDATE maintenance_records SET
@@ -3581,13 +3585,14 @@ app.put('/api/maintenance/:id', async (req, res) => {
         task_date = COALESCE($10, task_date),
         remarks = COALESCE($11, remarks),
         status = COALESCE($12, status),
+        payment_method = COALESCE($13, payment_method),
         updated_at = CURRENT_TIMESTAMP
-      WHERE id = $13
+      WHERE id = $14
       RETURNING *
     `, [
-      technicianName, contactNumber, repairType, itemName, description, 
-      labourCost, toolsJson, totalToolsCost, totalCost, 
-      date, remarks, status, id
+      technicianName, contactNumber, repairType, itemName, description,
+      labourCost, toolsJson, totalToolsCost, totalCost,
+      date, remarks, status, paymentMethod, id
     ]);
     
     if (rows.length === 0) return res.status(404).json({ error: 'Task not found' });
