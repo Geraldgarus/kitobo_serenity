@@ -329,6 +329,27 @@
     </div>
   </div>
 
+  <!-- Payments by Method -->
+  <div class="card" style="margin-top:20px;padding:0;overflow:hidden;">
+    <div style="padding:20px;border-bottom:1px solid #e2e8f0;">
+      <h3 style="font-size:15px;font-weight:700;color:#1a2340;"><i class="fas fa-credit-card" style="color:#c9933a;margin-right:8px;"></i>Payments by Method</h3>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Payment Method</th>
+            <th style="text-align:center;">Bookings</th>
+            <th>Total Collected (TSH)</th>
+          </tr>
+        </thead>
+        <tbody id="rpt-pm-body">
+          <tr><td colspan="3" style="text-align:center;padding:30px;color:#94a3b8;">Select a date range and click Apply Filter</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
   <div class="reports-grid" style="margin-top:20px;">
     <div class="card"><div class="card-header"><span class="card-title">Revenue by Room (TSH)</span></div><div class="card-body"><div class="mini-bar-chart" id="revenue-chart"></div></div></div>
     <div class="card"><div class="card-header"><span class="card-title">Overall Occupancy Rate</span></div><div class="card-body"><div style="text-align:center;margin-bottom:20px"><div style="font-size:56px;font-weight:800;color:var(--navy);font-family:'Playfair Display',serif" id="occ-rate">—</div><div style="color:var(--gray-400);font-size:13px">occupancy for selected period</div></div><div style="height:12px;background:var(--gray-100);border-radius:8px;overflow:hidden"><div id="occ-bar" style="height:100%;background:var(--green);border-radius:8px;width:0%;transition:width 0.8s ease"></div></div><div style="display:flex;justify-content:space-between;margin-top:6px;font-size:11px;color:var(--gray-300)"><span>0%</span><span>50%</span><span>100%</span></div></div></div>

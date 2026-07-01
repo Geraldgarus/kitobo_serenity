@@ -86,12 +86,57 @@ function renderReportData(summary, filteredRes, fromVal, toVal) {
   }
 }
 
+function pmInfo(raw) {
+  const key = (raw || '').toString().trim().toLowerCase().replace(/[\s-]+/g, '_');
+  const map = {
+    cash:          { label: 'Cash',                   icon: 'money-bill-wave' },
+    card:          { label: 'Card (Visa/Mastercard)', icon: 'credit-card' },
+    bank_transfer: { label: 'Bank Transfer',           icon: 'university' },
+    mpesa:         { label: 'M-Pesa',                  icon: 'mobile-alt' },
+    tigo_pesa:     { label: 'Tigo Pesa',                icon: 'mobile-alt' },
+    tigopesa:      { label: 'Tigo Pesa',                icon: 'mobile-alt' },
+    airtel_money:  { label: 'Airtel Money',             icon: 'mobile-alt' },
+    airtelmoney:   { label: 'Airtel Money',             icon: 'mobile-alt' },
+    halopesa:      { label: 'HaloPesa',                 icon: 'mobile-alt' },
+    cheque:        { label: 'Cheque',                   icon: 'pen' },
+    other:         { label: 'Other',                    icon: 'ellipsis-h' },
+  };
+  return map[key] || { label: raw ? String(raw) : 'Not specified', icon: 'question-circle' };
+}
+
+function renderPaymentsByMethod(data) {
+  const tbody = document.getElementById('rpt-pm-body');
+  if (!tbody) return;
+  if (!data || !data.length) {
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:30px;color:#94a3b8;">No reservation bookings for selected date range</td></tr>';
+    return;
+  }
+  const totals = {};
+  data.forEach(r => {
+    const key = (r.paymentMethod || '').toString().trim().toLowerCase().replace(/[\s-]+/g, '_') || '_none';
+    if (!totals[key]) totals[key] = { raw: r.paymentMethod, count: 0, amount: 0 };
+    totals[key].count += 1;
+    totals[key].amount += (r.amountPaid || 0);
+  });
+  const rows = Object.values(totals).sort((a, b) => b.amount - a.amount);
+  tbody.innerHTML = rows.map(row => {
+    const info = pmInfo(row.raw);
+    return `<tr>
+      <td><i class="fas fa-${info.icon}" style="color:#c9933a;margin-right:6px;"></i>${info.label}</td>
+      <td style="text-align:center;">${row.count}</td>
+      <td style="font-weight:600;color:#10b981;">${fmtTSH(row.amount)}</td>
+    </tr>`;
+  }).join('');
+}
+
 function renderReservationRevenue(data) {
   const tbody   = document.getElementById('rpt-res-body');
   const elCount = document.getElementById('rpt-res-count');
   const elTotal = document.getElementById('rpt-res-total');
   const elPaid  = document.getElementById('rpt-res-paid');
   const elBal   = document.getElementById('rpt-res-balance');
+
+  renderPaymentsByMethod(data);
 
   if (!data || !data.length) {
     if (tbody) tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:30px;color:#94a3b8;">No reservation bookings for selected date range</td></tr>';
@@ -117,10 +162,7 @@ function renderReservationRevenue(data) {
       : r.paymentStatus === 'partial'
         ? '<span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;">Partial</span>'
         : '<span style="background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;">Unpaid</span>';
-    const pmIcon = r.paymentMethod === 'Cash' ? 'money-bill-wave'
-      : r.paymentMethod === 'Card' ? 'credit-card'
-      : ['Mpesa','TigoPesa','AirtelMoney','HaloPesa'].includes(r.paymentMethod) ? 'mobile-alt'
-      : 'university';
+    const pm = pmInfo(r.paymentMethod);
     const esc = s => s ? String(s).replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])) : '—';
     return `<tr>
       <td style="white-space:nowrap;">${esc(r.bookedAt)}</td>
@@ -129,7 +171,7 @@ function renderReservationRevenue(data) {
       <td style="white-space:nowrap;">${esc(r.checkin)}</td>
       <td style="white-space:nowrap;">${esc(r.checkout)}</td>
       <td style="text-align:center;">${r.nights}</td>
-      <td><i class="fas fa-${pmIcon}" style="margin-right:4px;"></i>${esc(r.paymentMethod)}</td>
+      <td><i class="fas fa-${pm.icon}" style="margin-right:4px;"></i>${esc(pm.label)}</td>
       <td>${statusBadge}</td>
       <td style="font-weight:600;">${fmtTSH(r.total)}</td>
       <td style="color:#10b981;font-weight:600;">${fmtTSH(r.amountPaid)}</td>
