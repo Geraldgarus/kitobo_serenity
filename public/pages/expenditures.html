@@ -261,10 +261,14 @@
               <label><i class="fas fa-credit-card"></i> Payment Method</label>
               <select id="payment-method" class="form-control">
                 <option value="cash">Cash</option>
-                <option value="bank">Bank Transfer</option>
-                <option value="card">Card</option>
+                <option value="card">Card (Visa/Mastercard)</option>
+                <option value="bank_transfer">Bank Transfer</option>
+                <option value="mpesa">M-Pesa</option>
+                <option value="tigo_pesa">Tigo Pesa</option>
+                <option value="airtel_money">Airtel Money</option>
+                <option value="halopesa">HaloPesa</option>
                 <option value="cheque">Cheque</option>
-                <option value="mobile">Mobile Payment</option>
+                <option value="other">Other</option>
               </select>
             </div>
           </div>
@@ -329,6 +333,7 @@
 </div>
 
 <script src="../js/api.js"></script>
+<script src="../js/payment-icons.js"></script>
 <script src="../js/utils.js"></script>
 <script>
 let expenditures = [], currentEditId = null, currentViewExpenditure = null, notifications = [];
@@ -876,5 +881,10 @@ function closePOSChooser(){var o=document.getElementById('pos-chooser-overlay');
 document.addEventListener('keydown',function(e){if(e.key==='Escape')closePOSChooser();});
 </script>
 <script src="../js/permissions.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  initIconSelect('payment-method', PAYMENT_METHOD_OPTS);
+});
+</script>
 </body>
 </html>

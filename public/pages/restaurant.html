@@ -219,13 +219,16 @@
         </div>
         <div style="padding: 8px 0 4px 0;">
           <label style="font-size:12px;font-weight:600;color:#64748b;display:block;margin-bottom:4px;"><i class="fas fa-credit-card"></i> Payment Method</label>
-          <select id="restaurant-payment-method" style="width:100%;padding:8px 10px;border-radius:8px;border:1.5px solid #e2e8f0;font-size:13px;font-weight:600;color:#1a2340;background:#f8fafc;">
-            <option value="Cash">Cash</option>
-            <option value="Card">Card</option>
-            <option value="Mpesa">Mpesa</option>
-            <option value="TigoPesa">TigoPesa</option>
-            <option value="AirtelMoney">AirtelMoney</option>
-            <option value="HaloPesa">HaloPesa</option>
+          <select id="restaurant-payment-method" class="form-control">
+            <option value="cash">Cash</option>
+            <option value="card">Card (Visa/Mastercard)</option>
+            <option value="bank_transfer">Bank Transfer</option>
+            <option value="mpesa">M-Pesa</option>
+            <option value="tigo_pesa">Tigo Pesa</option>
+            <option value="airtel_money">Airtel Money</option>
+            <option value="halopesa">HaloPesa</option>
+            <option value="cheque">Cheque</option>
+            <option value="other">Other</option>
           </select>
         </div>
         <div class="action-buttons">
@@ -725,7 +728,13 @@ document.getElementById('cp-form').addEventListener('submit', async function(e) 
   } catch(err) { showToast('Failed: ' + err.message, '<i class="fas fa-times-circle"></i>'); }
 });
 </script>
+<script src="../js/payment-icons.js"></script>
 <script src="../js/permissions.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  initIconSelect('restaurant-payment-method', PAYMENT_METHOD_OPTS);
+});
+</script>
 </body>
 </html>
 
