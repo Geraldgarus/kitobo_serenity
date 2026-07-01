@@ -775,13 +775,14 @@
           <select id="modal-f-payment-method" class="form-control">
             <option value="">Select Payment Method</option>
             <option value="cash">Cash</option>
-            <option value="card">Card</option>
+            <option value="card">Card (Visa/Mastercard)</option>
             <option value="bank_transfer">Bank Transfer</option>
-             <option value="mpesa">M-Pesa</option>
-    <option value="tigo_pesa">Tigo Pesa</option>
-    <option value="airtel_money">Airtel Money</option>
-    <option value="halopesa">HaloPesa</option>
+            <option value="mpesa">M-Pesa</option>
+            <option value="tigo_pesa">Tigo Pesa</option>
+            <option value="airtel_money">Airtel Money</option>
+            <option value="halopesa">HaloPesa</option>
             <option value="cheque">Cheque</option>
+            <option value="other">Other</option>
           </select>
         </div>
       </div>
@@ -951,13 +952,14 @@
           <select id="edit-f-payment-method" class="form-control">
             <option value="">Select Payment Method</option>
             <option value="cash">Cash</option>
-            <option value="card">Card</option>
+            <option value="card">Card (Visa/Mastercard)</option>
             <option value="bank_transfer">Bank Transfer</option>
-             <option value="mpesa">M-Pesa</option>
-    <option value="tigo_pesa">Tigo Pesa</option>
-    <option value="airtel_money">Airtel Money</option>
-    <option value="halopesa">HaloPesa</option>
+            <option value="mpesa">M-Pesa</option>
+            <option value="tigo_pesa">Tigo Pesa</option>
+            <option value="airtel_money">Airtel Money</option>
+            <option value="halopesa">HaloPesa</option>
             <option value="cheque">Cheque</option>
+            <option value="other">Other</option>
           </select>
         </div>
       </div>
@@ -1908,5 +1910,147 @@ document.getElementById('cp-form').addEventListener('submit', async function(e) 
 });
 </script>
 <script src="../js/permissions.js"></script>
+<script>
+function _ic(color, path) { return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="'+color+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;vertical-align:middle;">'+path+'</svg>'; }
+const PAYMENT_STATUS_OPTS_R = [
+  { value: 'unpaid',  icon: _ic('#ef4444','<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>'), label: 'Unpaid' },
+  { value: 'partial', icon: _ic('#f59e0b','<circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/>'),                                                       label: 'Partial Payment' },
+  { value: 'paid',    icon: _ic('#10b981','<circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/>'),                                          label: 'Paid in Full' },
+];
+const PAYMENT_METHOD_OPTS_R = [
+  { value: '',              icon: '<i class="fas fa-credit-card"      style="color:#94a3b8;font-size:14px;width:16px;text-align:center"></i>', label: 'Select Payment Method' },
+  { value: 'cash',          icon: '<i class="fas fa-money-bill-wave"  style="color:#10b981;font-size:14px;width:16px;text-align:center"></i>', label: 'Cash' },
+  { value: 'card',          icon: '<i class="fas fa-credit-card"      style="color:#3b82f6;font-size:14px;width:16px;text-align:center"></i>', label: 'Card (Visa/Mastercard)' },
+  { value: 'bank_transfer', icon: '<i class="fas fa-university"       style="color:#6366f1;font-size:14px;width:16px;text-align:center"></i>', label: 'Bank Transfer' },
+  { value: 'mpesa',         icon: '<i class="fas fa-mobile-alt"       style="color:#10b981;font-size:14px;width:16px;text-align:center"></i>', label: 'M-Pesa' },
+  { value: 'tigo_pesa',     icon: '<i class="fas fa-mobile-alt"       style="color:#ef4444;font-size:14px;width:16px;text-align:center"></i>', label: 'Tigo Pesa' },
+  { value: 'airtel_money',  icon: '<i class="fas fa-mobile-alt"       style="color:#ef4444;font-size:14px;width:16px;text-align:center"></i>', label: 'Airtel Money' },
+  { value: 'halopesa',      icon: '<i class="fas fa-mobile-alt"       style="color:#f59e0b;font-size:14px;width:16px;text-align:center"></i>', label: 'HaloPesa' },
+  { value: 'cheque',        icon: '<i class="fas fa-pen"              style="color:#6366f1;font-size:14px;width:16px;text-align:center"></i>', label: 'Cheque' },
+  { value: 'other',         icon: '<i class="fas fa-ellipsis-h"       style="color:#94a3b8;font-size:14px;width:16px;text-align:center"></i>', label: 'Other' },
+];
+
+function initIconSelectR(selectId, optionDefs) {
+  const select = document.getElementById(selectId);
+  if (!select) return;
+  if (select.dataset.iselDone) return;
+  select.dataset.iselDone = '1';
+
+  const wrapper = document.createElement('div');
+  wrapper.style.cssText = 'position:relative;';
+  select.parentNode.insertBefore(wrapper, select);
+  wrapper.appendChild(select);
+  select.style.cssText = 'display:none!important';
+
+  const trigger = document.createElement('div');
+  trigger.className = 'form-control';
+  trigger.style.cssText = 'display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;';
+  trigger.innerHTML = '<span class="isel-icon" style="width:16px;text-align:center;flex-shrink:0"></span><span class="isel-text" style="flex:1;color:#1e2a3e;font-size:0.9rem"></span><i class="fas fa-chevron-down" style="color:#94a3b8;font-size:11px;transition:transform 0.2s;flex-shrink:0"></i>';
+
+  const dropdown = document.createElement('div');
+  dropdown.style.cssText = 'display:none;position:fixed;background:white;border:1px solid #c9933a;border-radius:12px;z-index:99999;box-shadow:0 6px 20px rgba(0,0,0,0.15);overflow:hidden;min-width:220px;';
+
+  optionDefs.forEach(opt => {
+    const div = document.createElement('div');
+    div.dataset.value = opt.value;
+    div.style.cssText = 'display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;font-size:0.88rem;transition:background 0.15s;';
+    div.innerHTML = opt.icon + '<span>' + opt.label + '</span>';
+    div.addEventListener('mouseenter', () => { div.style.background = '#f5f3ef'; });
+    div.addEventListener('mouseleave', () => { div.style.background = div._sel ? '#fef9f0' : ''; });
+    dropdown.appendChild(div);
+  });
+
+  document.body.appendChild(dropdown);
+  wrapper.appendChild(trigger);
+
+  function positionDropdown() {
+    dropdown.style.visibility = 'hidden';
+    dropdown.style.display = 'block';
+    const r = trigger.getBoundingClientRect();
+    const dropdownHeight = dropdown.offsetHeight;
+    const spaceBelow = window.innerHeight - r.bottom;
+    const spaceAbove = r.top;
+    if (spaceBelow < dropdownHeight + 8 && spaceAbove > spaceBelow) {
+      dropdown.style.top = (r.top - dropdownHeight - 4) + 'px';
+    } else {
+      dropdown.style.top = (r.bottom + 4) + 'px';
+    }
+    dropdown.style.left = r.left + 'px';
+    dropdown.style.width = r.width + 'px';
+    dropdown.style.visibility = '';
+  }
+
+  function updateDisplay(value) {
+    const opt = optionDefs.find(o => o.value === value) || optionDefs[0];
+    if (!opt) return;
+    trigger.querySelector('.isel-icon').innerHTML = opt.icon;
+    trigger.querySelector('.isel-text').textContent = opt.label;
+    dropdown.querySelectorAll('[data-value]').forEach(el => {
+      const sel = el.dataset.value === value;
+      el._sel = sel;
+      el.style.background = sel ? '#fef9f0' : '';
+      el.style.fontWeight = sel ? '600' : '';
+    });
+  }
+
+  updateDisplay(select.value);
+
+  trigger.addEventListener('click', e => {
+    e.stopPropagation();
+    const isOpen = dropdown.style.display === 'block';
+    document.querySelectorAll('[data-isel-open]').forEach(d => {
+      d.style.display = 'none';
+      delete d.dataset.iselOpen;
+    });
+    if (!isOpen) {
+      positionDropdown();
+      dropdown.style.display = 'block';
+      dropdown.dataset.iselOpen = '1';
+      trigger.querySelector('.fa-chevron-down').style.transform = 'rotate(180deg)';
+    } else {
+      trigger.querySelector('.fa-chevron-down').style.transform = '';
+    }
+  });
+
+  document.addEventListener('click', () => {
+    if (dropdown.style.display === 'block') {
+      dropdown.style.display = 'none';
+      delete dropdown.dataset.iselOpen;
+      const ch = trigger.querySelector('.fa-chevron-down');
+      if (ch) ch.style.transform = '';
+    }
+  });
+
+  const nativeDesc = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value');
+  const nativeSet = nativeDesc.set;
+
+  dropdown.addEventListener('click', e => {
+    const optEl = e.target.closest('[data-value]');
+    if (!optEl) return;
+    e.stopPropagation();
+    const val = optEl.dataset.value;
+    nativeSet.call(select, val);
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+    updateDisplay(val);
+    dropdown.style.display = 'none';
+    delete dropdown.dataset.iselOpen;
+    const ch = trigger.querySelector('.fa-chevron-down');
+    if (ch) ch.style.transform = '';
+  });
+
+  Object.defineProperty(select, 'value', {
+    get: () => nativeDesc.get.call(select),
+    set: v => { nativeSet.call(select, v); updateDisplay(v); },
+    configurable: true
+  });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  initIconSelectR('modal-f-payment-status', PAYMENT_STATUS_OPTS_R);
+  initIconSelectR('modal-f-payment-method', PAYMENT_METHOD_OPTS_R);
+  initIconSelectR('edit-f-payment-status',  PAYMENT_STATUS_OPTS_R);
+  initIconSelectR('edit-f-payment-method',  PAYMENT_METHOD_OPTS_R);
+});
+</script>
 </body>
 </html>
