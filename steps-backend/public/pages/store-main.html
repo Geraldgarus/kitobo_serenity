@@ -1979,24 +1979,26 @@ window.closeChangePasswordModal = closeChangePasswordModal;
       </div>
       <div class="form-group">
         <label>Category *</label>
-        <select id="menu-item-category" class="form-control" required onchange="handleCategorySelectChange(this)">
-          <option value="">-- Select Category --</option>
-          <option value="Soup">Soup</option>
-          <option value="Salad">Salad</option>
-          <option value="Stew">Stew</option>
-          <option value="Vegetables">Vegetables</option>
-          <option value="Burger and Sandwiches">Burger and Sandwiches</option>
-          <option value="Side Dishes">Side Dishes</option>
-          <option value="Dessert">Dessert</option>
-          <option value="Pasta">Pasta</option>
-          <option value="Snacks and Bites">Snacks and Bites</option>
-          <option value="Fresh Drinks">Fresh Drinks</option>
-          <option value="__add_new__">+ Add New Category</option>
-        </select>
-        <div class="new-category-row" style="display:none;gap:8px;margin-top:8px;">
-          <input type="text" class="form-control new-category-input" placeholder="Enter new category name" style="flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmNewCategory(this);}">
-          <button type="button" class="btn btn-gold btn-sm" onclick="confirmNewCategory(this)">Add</button>
-          <button type="button" class="btn btn-outline btn-sm" onclick="cancelNewCategory(this)"><i class="fas fa-times"></i></button>
+        <div style="display:flex;gap:8px;align-items:stretch;">
+          <select id="menu-item-category" class="form-control" required style="flex:1;">
+            <option value="">-- Select Category --</option>
+            <option value="Soup">Soup</option>
+            <option value="Salad">Salad</option>
+            <option value="Stew">Stew</option>
+            <option value="Vegetables">Vegetables</option>
+            <option value="Burger and Sandwiches">Burger and Sandwiches</option>
+            <option value="Side Dishes">Side Dishes</option>
+            <option value="Dessert">Dessert</option>
+            <option value="Pasta">Pasta</option>
+            <option value="Snacks and Bites">Snacks and Bites</option>
+            <option value="Fresh Drinks">Fresh Drinks</option>
+          </select>
+          <button type="button" class="btn btn-gold" onclick="showNewCategoryInput('menu-item-category')" title="Add new category" style="padding:10px 16px !important;font-size:14px !important;min-height:auto !important;white-space:nowrap;border-radius:8px !important;"><i class="fas fa-plus"></i></button>
+        </div>
+        <div class="new-category-row" style="display:none;gap:8px;margin-top:10px;">
+          <input type="text" class="form-control new-category-input" placeholder="Enter new category name" style="flex:1;font-size:14px;padding:10px 12px;" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmNewCategory(this);}">
+          <button type="button" class="btn btn-gold" onclick="confirmNewCategory(this)" style="padding:10px 18px !important;font-size:14px !important;min-height:auto !important;white-space:nowrap;border-radius:8px !important;">Add</button>
+          <button type="button" class="btn btn-outline" onclick="cancelNewCategory(this)" style="padding:10px 14px !important;font-size:14px !important;min-height:auto !important;border-radius:8px !important;"><i class="fas fa-times"></i></button>
         </div>
       </div>
       <div class="form-group">
@@ -2055,22 +2057,19 @@ function renderMenuItems() {
   `).join('');
 }
 
-function handleCategorySelectChange(selectEl) {
-  const wrapper = selectEl.parentElement.querySelector('.new-category-row');
+function showNewCategoryInput(selectId) {
+  const select = document.getElementById(selectId);
+  const wrapper = select.closest('.form-group').querySelector('.new-category-row');
   if (!wrapper) return;
-  if (selectEl.value === '__add_new__') {
-    wrapper.style.display = 'flex';
-    const input = wrapper.querySelector('.new-category-input');
-    input.value = '';
-    input.focus();
-  } else {
-    wrapper.style.display = 'none';
-  }
+  wrapper.style.display = 'flex';
+  const input = wrapper.querySelector('.new-category-input');
+  input.value = '';
+  input.focus();
 }
 
 function confirmNewCategory(el) {
   const wrapper = el.closest('.new-category-row');
-  const select = wrapper.previousElementSibling;
+  const select = wrapper.closest('.form-group').querySelector('select');
   const input = wrapper.querySelector('.new-category-input');
   const name = input.value.trim();
   if (!name) { input.focus(); return; }
@@ -2079,7 +2078,7 @@ function confirmNewCategory(el) {
     opt = document.createElement('option');
     opt.value = name;
     opt.textContent = name;
-    select.insertBefore(opt, select.querySelector('option[value="__add_new__"]'));
+    select.appendChild(opt);
   }
   select.value = opt.value;
   wrapper.style.display = 'none';
@@ -2087,8 +2086,6 @@ function confirmNewCategory(el) {
 
 function cancelNewCategory(el) {
   const wrapper = el.closest('.new-category-row');
-  const select = wrapper.previousElementSibling;
-  select.value = '';
   wrapper.style.display = 'none';
 }
 
@@ -2097,7 +2094,7 @@ function openAddMenuModal() {
   document.getElementById('menu-item-name').value = '';
   document.getElementById('menu-item-category').value = '';
   document.getElementById('menu-item-price').value = '';
-  document.getElementById('menu-item-category').parentElement.querySelector('.new-category-row').style.display = 'none';
+  document.getElementById('menu-item-category').closest('.form-group').querySelector('.new-category-row').style.display = 'none';
   document.getElementById('menu-modal-title').innerHTML = '<i class="fas fa-plus"></i> Add Menu Item';
   document.getElementById('menu-modal').classList.add('open');
   document.getElementById('menu-modal-overlay').classList.add('open');
@@ -2114,10 +2111,10 @@ function openEditMenuModal(id) {
     const opt = document.createElement('option');
     opt.value = item.category;
     opt.textContent = item.category;
-    catSelect.insertBefore(opt, catSelect.querySelector('option[value="__add_new__"]'));
+    catSelect.appendChild(opt);
   }
   catSelect.value = item.category || '';
-  catSelect.parentElement.querySelector('.new-category-row').style.display = 'none';
+  catSelect.closest('.form-group').querySelector('.new-category-row').style.display = 'none';
   document.getElementById('menu-item-price').value = item.price;
   document.getElementById('menu-modal-title').innerHTML = '<i class="fas fa-edit"></i> Edit Menu Item';
   document.getElementById('menu-modal').classList.add('open');
@@ -2263,7 +2260,6 @@ document.getElementById('menu-item-form').addEventListener('submit', async funct
   const id       = document.getElementById('menu-item-id').value;
   const name     = document.getElementById('menu-item-name').value.trim();
   const category = document.getElementById('menu-item-category').value.trim();
-  if (category === '__add_new__') { showToast('Enter and add the new category first', '<i class="fas fa-exclamation-triangle"></i>'); return; }
   const price    = parseInt(document.getElementById('menu-item-price').value) || 0;
   const btn      = e.target.querySelector('button[type="submit"]');
   btn.disabled = true;
@@ -2322,25 +2318,27 @@ document.querySelectorAll('.tab-btn[data-tab="menu"]').forEach(btn => {
       </div>
       <div class="form-group">
         <label>Category *</label>
-        <select id="bar-menu-item-category" class="form-control" required onchange="handleCategorySelectChange(this)">
-          <option value="">-- Select Category --</option>
-          <option value="Beer">Beer</option>
-          <option value="Gins">Gins</option>
-          <option value="Wine">Wine</option>
-          <option value="Whisky">Whisky</option>
-          <option value="Spirits">Spirits</option>
-          <option value="Cocktails">Cocktails</option>
-          <option value="Mocktails">Mocktails</option>
-          <option value="Soft Drinks">Soft Drinks</option>
-          <option value="Fresh Juice">Fresh Juice</option>
-          <option value="Water">Water</option>
-          <option value="Other">Other</option>
-          <option value="__add_new__">+ Add New Category</option>
-        </select>
-        <div class="new-category-row" style="display:none;gap:8px;margin-top:8px;">
-          <input type="text" class="form-control new-category-input" placeholder="Enter new category name" style="flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmNewCategory(this);}">
-          <button type="button" class="btn btn-gold btn-sm" onclick="confirmNewCategory(this)">Add</button>
-          <button type="button" class="btn btn-outline btn-sm" onclick="cancelNewCategory(this)"><i class="fas fa-times"></i></button>
+        <div style="display:flex;gap:8px;align-items:stretch;">
+          <select id="bar-menu-item-category" class="form-control" required style="flex:1;">
+            <option value="">-- Select Category --</option>
+            <option value="Beer">Beer</option>
+            <option value="Gins">Gins</option>
+            <option value="Wine">Wine</option>
+            <option value="Whisky">Whisky</option>
+            <option value="Spirits">Spirits</option>
+            <option value="Cocktails">Cocktails</option>
+            <option value="Mocktails">Mocktails</option>
+            <option value="Soft Drinks">Soft Drinks</option>
+            <option value="Fresh Juice">Fresh Juice</option>
+            <option value="Water">Water</option>
+            <option value="Other">Other</option>
+          </select>
+          <button type="button" class="btn btn-gold" onclick="showNewCategoryInput('bar-menu-item-category')" title="Add new category" style="padding:10px 16px !important;font-size:14px !important;min-height:auto !important;white-space:nowrap;border-radius:8px !important;"><i class="fas fa-plus"></i></button>
+        </div>
+        <div class="new-category-row" style="display:none;gap:8px;margin-top:10px;">
+          <input type="text" class="form-control new-category-input" placeholder="Enter new category name" style="flex:1;font-size:14px;padding:10px 12px;" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmNewCategory(this);}">
+          <button type="button" class="btn btn-gold" onclick="confirmNewCategory(this)" style="padding:10px 18px !important;font-size:14px !important;min-height:auto !important;white-space:nowrap;border-radius:8px !important;">Add</button>
+          <button type="button" class="btn btn-outline" onclick="cancelNewCategory(this)" style="padding:10px 14px !important;font-size:14px !important;min-height:auto !important;border-radius:8px !important;"><i class="fas fa-times"></i></button>
         </div>
       </div>
       <div class="form-group">
@@ -2486,7 +2484,7 @@ function openAddBarMenuModal() {
   document.getElementById('bar-menu-item-name').value = '';
   document.getElementById('bar-menu-item-category').value = '';
   document.getElementById('bar-menu-item-price').value = '';
-  document.getElementById('bar-menu-item-category').parentElement.querySelector('.new-category-row').style.display = 'none';
+  document.getElementById('bar-menu-item-category').closest('.form-group').querySelector('.new-category-row').style.display = 'none';
   document.getElementById('bar-menu-modal-title').innerHTML = '<i class="fas fa-plus"></i> Add Bar Item';
   document.getElementById('bar-menu-modal').classList.add('open');
   document.getElementById('bar-menu-modal-overlay').classList.add('open');
@@ -2503,10 +2501,10 @@ function openEditBarMenuModal(id) {
     const opt = document.createElement('option');
     opt.value = item.category;
     opt.textContent = item.category;
-    catSelect.insertBefore(opt, catSelect.querySelector('option[value="__add_new__"]'));
+    catSelect.appendChild(opt);
   }
   catSelect.value = item.category || '';
-  catSelect.parentElement.querySelector('.new-category-row').style.display = 'none';
+  catSelect.closest('.form-group').querySelector('.new-category-row').style.display = 'none';
   document.getElementById('bar-menu-item-price').value = item.price;
   document.getElementById('bar-menu-modal-title').innerHTML = '<i class="fas fa-edit"></i> Edit Bar Item';
   document.getElementById('bar-menu-modal').classList.add('open');
@@ -2526,7 +2524,6 @@ document.getElementById('bar-menu-item-form').addEventListener('submit', async f
   const id       = document.getElementById('bar-menu-item-id').value;
   const name     = document.getElementById('bar-menu-item-name').value.trim();
   const category = document.getElementById('bar-menu-item-category').value.trim();
-  if (category === '__add_new__') { showToast('Enter and add the new category first', '<i class="fas fa-exclamation-triangle"></i>'); return; }
   const price    = parseInt(document.getElementById('bar-menu-item-price').value) || 0;
   const btn      = e.target.querySelector('button[type="submit"]');
   btn.disabled = true;
