@@ -782,8 +782,10 @@
         <select id="l-payment-method" class="form-control">
           <option value="">Select Payment Method</option>
           <option value="cash">Cash</option>
-          <option value="card">Card (Visa/Mastercard)</option>
           <option value="bank_transfer">Bank Transfer</option>
+          <option value="nbc">NBC</option>
+          <option value="nmb">NMB</option>
+          <option value="crdb">CRDB</option>
           <option value="mpesa">M-Pesa</option>
           <option value="tigo_pesa">Tigo Pesa</option>
           <option value="airtel_money">Airtel Money</option>
@@ -1768,8 +1770,10 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')closePOSChoo
 const PAYMENT_METHOD_OPTS_HK = [
   { value: '',              icon: '<i class="fas fa-credit-card"      style="color:#94a3b8"></i>', label: 'Select Payment Method' },
   { value: 'cash',          icon: '<i class="fas fa-money-bill-wave"  style="color:#10b981"></i>', label: 'Cash' },
-  { value: 'card',          icon: '<i class="fas fa-credit-card"      style="color:#3b82f6"></i>', label: 'Card (Visa/Mastercard)' },
   { value: 'bank_transfer', icon: '<i class="fas fa-university"       style="color:#6366f1"></i>', label: 'Bank Transfer' },
+  { value: 'nbc',           icon: '<i class="fas fa-university"       style="color:#1d4ed8"></i>', label: 'NBC' },
+  { value: 'nmb',           icon: '<i class="fas fa-university"       style="color:#f59e0b"></i>', label: 'NMB' },
+  { value: 'crdb',          icon: '<i class="fas fa-university"       style="color:#059669"></i>', label: 'CRDB' },
   { value: 'mpesa',         icon: '<i class="fas fa-mobile-alt"       style="color:#10b981"></i>', label: 'M-Pesa' },
   { value: 'tigo_pesa',     icon: '<i class="fas fa-mobile-alt"       style="color:#ef4444"></i>', label: 'Tigo Pesa' },
   { value: 'airtel_money',  icon: '<i class="fas fa-mobile-alt"       style="color:#ef4444"></i>', label: 'Airtel Money' },
