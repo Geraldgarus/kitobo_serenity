@@ -264,8 +264,10 @@
             <label><i class="fas fa-credit-card"></i> Payment Method</label>
             <select id="expense-payment-method" class="form-control">
               <option value="cash">Cash</option>
-              <option value="card">Card (Visa/Mastercard)</option>
               <option value="bank_transfer">Bank Transfer</option>
+              <option value="nbc">NBC</option>
+              <option value="nmb">NMB</option>
+              <option value="crdb">CRDB</option>
               <option value="mpesa">M-Pesa</option>
               <option value="tigo_pesa">Tigo Pesa</option>
               <option value="airtel_money">Airtel Money</option>
@@ -461,7 +463,7 @@ async function viewDetails(id) {
     if (el) el.classList.add('selected');
 
     const d = exp.expense_date ? new Date(exp.expense_date).toLocaleDateString() : '—';
-    const pm = { cash:'Cash', card:'Card', bank_transfer:'Bank Transfer', bank:'Bank Transfer', mpesa:'M-Pesa', tigo_pesa:'Tigo Pesa', airtel_money:'Airtel Money', halopesa:'HaloPesa', cheque:'Cheque', mobile:'Mobile Payment', other:'Other' };
+    const pm = { cash:'Cash', card:'Card', bank_transfer:'Bank Transfer', bank:'Bank Transfer', nbc:'NBC', nmb:'NMB', crdb:'CRDB', mpesa:'M-Pesa', tigo_pesa:'Tigo Pesa', airtel_money:'Airtel Money', halopesa:'HaloPesa', cheque:'Cheque', mobile:'Mobile Payment', other:'Other' };
 
     document.getElementById('details-content').innerHTML = `
       <!-- Top bar -->
@@ -727,8 +729,10 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closePOSChoo
 const PAYMENT_METHOD_OPTS_EXP = [
   { value: '',              icon: '<i class="fas fa-credit-card"      style="color:#94a3b8"></i>', label: 'Select Payment Method' },
   { value: 'cash',          icon: '<i class="fas fa-money-bill-wave"  style="color:#10b981"></i>', label: 'Cash' },
-  { value: 'card',          icon: '<i class="fas fa-credit-card"      style="color:#3b82f6"></i>', label: 'Card (Visa/Mastercard)' },
   { value: 'bank_transfer', icon: '<i class="fas fa-university"       style="color:#6366f1"></i>', label: 'Bank Transfer' },
+  { value: 'nbc',           icon: '<i class="fas fa-university"       style="color:#1d4ed8"></i>', label: 'NBC' },
+  { value: 'nmb',           icon: '<i class="fas fa-university"       style="color:#f59e0b"></i>', label: 'NMB' },
+  { value: 'crdb',          icon: '<i class="fas fa-university"       style="color:#059669"></i>', label: 'CRDB' },
   { value: 'mpesa',         icon: '<i class="fas fa-mobile-alt"       style="color:#10b981"></i>', label: 'M-Pesa' },
   { value: 'tigo_pesa',     icon: '<i class="fas fa-mobile-alt"       style="color:#ef4444"></i>', label: 'Tigo Pesa' },
   { value: 'airtel_money',  icon: '<i class="fas fa-mobile-alt"       style="color:#ef4444"></i>', label: 'Airtel Money' },

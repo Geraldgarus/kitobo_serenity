@@ -243,8 +243,10 @@
             <select id="payment-method" class="form-control">
               <option value="">Select Payment Method</option>
               <option value="cash">Cash</option>
-              <option value="card">Card (Visa/Mastercard)</option>
               <option value="bank_transfer">Bank Transfer</option>
+              <option value="nbc">NBC</option>
+              <option value="nmb">NMB</option>
+              <option value="crdb">CRDB</option>
               <option value="mpesa">M-Pesa</option>
               <option value="tigo_pesa">Tigo Pesa</option>
               <option value="airtel_money">Airtel Money</option>
@@ -505,7 +507,7 @@ if (userPill) { userPill.addEventListener('click', (e) => { e.stopPropagation();
 function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, function(m) { if (m === '&') return '&amp;'; if (m === '<') return '&lt;'; if (m === '>') return '&gt;'; return m; }); }
 function fmtTSH(v) { return 'TSh ' + (v || 0).toLocaleString(); }
 function pmLabel(v) {
-  const map = { cash:'Cash', card:'Card (Visa/Mastercard)', bank_transfer:'Bank Transfer', mpesa:'M-Pesa', tigo_pesa:'Tigo Pesa', airtel_money:'Airtel Money', halopesa:'HaloPesa', cheque:'Cheque', other:'Other' };
+  const map = { cash:'Cash', card:'Card (Visa/Mastercard)', bank_transfer:'Bank Transfer', nbc:'NBC', nmb:'NMB', crdb:'CRDB', mpesa:'M-Pesa', tigo_pesa:'Tigo Pesa', airtel_money:'Airtel Money', halopesa:'HaloPesa', cheque:'Cheque', other:'Other' };
   return v ? (map[v] || escapeHtml(v)) : 'N/A';
 }
 function showToast(msg, type) { let toast = document.getElementById('toast-container'); let bg = type === 'error' ? '#ef4444' : '#10b981'; toast.innerHTML = '<div style="background:' + bg + ';color:white;padding:12px 20px;border-radius:40px;">' + msg + '</div>'; setTimeout(() => toast.innerHTML = '', 3000); }
@@ -547,8 +549,10 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')closePOSChoo
 const PAYMENT_METHOD_OPTS_MT = [
   { value: '',              icon: '<i class="fas fa-credit-card"      style="color:#94a3b8"></i>', label: 'Select Payment Method' },
   { value: 'cash',          icon: '<i class="fas fa-money-bill-wave"  style="color:#10b981"></i>', label: 'Cash' },
-  { value: 'card',          icon: '<i class="fas fa-credit-card"      style="color:#3b82f6"></i>', label: 'Card (Visa/Mastercard)' },
   { value: 'bank_transfer', icon: '<i class="fas fa-university"       style="color:#6366f1"></i>', label: 'Bank Transfer' },
+  { value: 'nbc',           icon: '<i class="fas fa-university"       style="color:#1d4ed8"></i>', label: 'NBC' },
+  { value: 'nmb',           icon: '<i class="fas fa-university"       style="color:#f59e0b"></i>', label: 'NMB' },
+  { value: 'crdb',          icon: '<i class="fas fa-university"       style="color:#059669"></i>', label: 'CRDB' },
   { value: 'mpesa',         icon: '<i class="fas fa-mobile-alt"       style="color:#10b981"></i>', label: 'M-Pesa' },
   { value: 'tigo_pesa',     icon: '<i class="fas fa-mobile-alt"       style="color:#ef4444"></i>', label: 'Tigo Pesa' },
   { value: 'airtel_money',  icon: '<i class="fas fa-mobile-alt"       style="color:#ef4444"></i>', label: 'Airtel Money' },

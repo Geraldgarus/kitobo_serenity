@@ -833,7 +833,7 @@ if (userPill) { userPill.addEventListener('click', (e) => { e.stopPropagation();
 function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, function(m) { if (m === '&') return '&amp;'; if (m === '<') return '&lt;'; if (m === '>') return '&gt;'; return m; }); }
 function fmtTSH(v) { return 'TSh ' + (v || 0).toLocaleString(); }
 function pmLabel(v) {
-  const map = { cash:'Cash', card:'Card (Visa/Mastercard)', bank_transfer:'Bank Transfer', mpesa:'M-Pesa', tigo_pesa:'Tigo Pesa', airtel_money:'Airtel Money', halopesa:'HaloPesa', cheque:'Cheque', other:'Other' };
+  const map = { cash:'Cash', card:'Card (Visa/Mastercard)', bank_transfer:'Bank Transfer', nbc:'NBC', nmb:'NMB', crdb:'CRDB', mpesa:'M-Pesa', tigo_pesa:'Tigo Pesa', airtel_money:'Airtel Money', halopesa:'HaloPesa', cheque:'Cheque', other:'Other' };
   return v ? (map[v] || escapeHtml(v)) : 'N/A';
 }
 function showToast(msg, type) { let toast = document.getElementById('toast-container'); let bg = type === 'error' ? '#ef4444' : '#10b981'; toast.innerHTML = '<div style="background:' + bg + ';color:white;padding:12px 20px;border-radius:40px;">' + msg + '</div>'; setTimeout(() => toast.innerHTML = '', 3000); }
