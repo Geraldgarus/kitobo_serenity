@@ -218,8 +218,10 @@
             <label style="font-size:12px;font-weight:600;color:#64748b;display:block;margin-bottom:4px;"><i class="fas fa-credit-card"></i> Payment Method</label>
             <select id="bar-payment-method" class="form-control">
               <option value="cash">Cash</option>
-              <option value="card">Card (Visa/Mastercard)</option>
               <option value="bank_transfer">Bank Transfer</option>
+              <option value="nbc">NBC</option>
+              <option value="nmb">NMB</option>
+              <option value="crdb">CRDB</option>
               <option value="mpesa">M-Pesa</option>
               <option value="tigo_pesa">Tigo Pesa</option>
               <option value="airtel_money">Airtel Money</option>
@@ -787,8 +789,10 @@ document.getElementById('cp-form').addEventListener('submit', async function(e) 
 <script>
 const PAYMENT_METHOD_OPTS_BAR = [
   { value: 'cash',          icon: '<i class="fas fa-money-bill-wave"  style="color:#10b981;font-size:14px;width:16px;text-align:center"></i>', label: 'Cash' },
-  { value: 'card',          icon: '<i class="fas fa-credit-card"      style="color:#3b82f6;font-size:14px;width:16px;text-align:center"></i>', label: 'Card (Visa/Mastercard)' },
   { value: 'bank_transfer', icon: '<i class="fas fa-university"       style="color:#6366f1;font-size:14px;width:16px;text-align:center"></i>', label: 'Bank Transfer' },
+  { value: 'nbc',           icon: '<i class="fas fa-university"       style="color:#1d4ed8;font-size:14px;width:16px;text-align:center"></i>', label: 'NBC' },
+  { value: 'nmb',           icon: '<i class="fas fa-university"       style="color:#f59e0b;font-size:14px;width:16px;text-align:center"></i>', label: 'NMB' },
+  { value: 'crdb',          icon: '<i class="fas fa-university"       style="color:#059669;font-size:14px;width:16px;text-align:center"></i>', label: 'CRDB' },
   { value: 'mpesa',         icon: '<i class="fas fa-mobile-alt"       style="color:#10b981;font-size:14px;width:16px;text-align:center"></i>', label: 'M-Pesa' },
   { value: 'tigo_pesa',     icon: '<i class="fas fa-mobile-alt"       style="color:#ef4444;font-size:14px;width:16px;text-align:center"></i>', label: 'Tigo Pesa' },
   { value: 'airtel_money',  icon: '<i class="fas fa-mobile-alt"       style="color:#ef4444;font-size:14px;width:16px;text-align:center"></i>', label: 'Airtel Money' },
