@@ -1092,7 +1092,7 @@ function escapeHtml(str) {
   function escapeHtml(s) { if(!s) return ''; return s.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
   function fmtTSH(v) { return 'TSh ' + (v||0).toLocaleString(); }
   function pmLabel(v) {
-    const map = { cash:'Cash', card:'Card (Visa/Mastercard)', bank_transfer:'Bank Transfer', mpesa:'M-Pesa', tigo_pesa:'Tigo Pesa', airtel_money:'Airtel Money', halopesa:'HaloPesa', cheque:'Cheque', other:'Other' };
+    const map = { cash:'Cash', card:'Card (Visa/Mastercard)', bank_transfer:'Bank Transfer', nbc:'NBC', nmb:'NMB', crdb:'CRDB', mpesa:'M-Pesa', tigo_pesa:'Tigo Pesa', airtel_money:'Airtel Money', halopesa:'HaloPesa', cheque:'Cheque', other:'Other' };
     return v ? (map[v] || escapeHtml(v)) : 'N/A';
   }
   function showToast(msg, type) { 
