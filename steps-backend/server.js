@@ -950,8 +950,10 @@ app.get('/api/reports/reservations', async (req, res) => {
   `;
   const params = [];
   let p = 1;
-  if (from) { query += ` AND r.created_at::date >= $${p++}::date`; params.push(from); }
-  if (to)   { query += ` AND r.created_at::date <= $${p++}::date`; params.push(to); }
+  // Stay-date overlap: a reservation counts if its checkin..checkout range
+  // overlaps the filter range, so e.g. a 2-4 Jul stay is included when filtering 3-4 Jul.
+  if (from) { query += ` AND r.checkout >= $${p++}::date`; params.push(from); }
+  if (to)   { query += ` AND r.checkin <= $${p++}::date`; params.push(to); }
   query += ` ORDER BY r.created_at DESC`;
 
   try {
