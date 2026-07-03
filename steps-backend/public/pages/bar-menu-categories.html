@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Bar Menu Categories - Kitobo Serenity Resort</title>
+  <style>body { opacity: 0; transition: opacity 0.2s; } body.loaded { opacity: 1; }</style>
+  <script>document.addEventListener('DOMContentLoaded', function() { document.body.classList.add('loaded'); });</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css?v=20260518" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    .card { background: white; border-radius: 24px; margin-bottom: 24px; }
+    .card-header { padding: 20px 24px; border-bottom: 1px solid #e2e8f0; font-weight: 700; font-size: 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+    .card-body { padding: 20px 24px; overflow-x: auto; }
+    .data-table { width: 100%; border-collapse: collapse; background: white; }
+    .data-table th, .data-table td { padding: 14px 16px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+    .data-table th { background: #f8fafc; font-weight: 600; font-size: 12px; color: #64748b; text-transform: uppercase; }
+    .empty-state { text-align: center; padding: 48px; color: #94a3b8; }
+    .btn { padding: 8px 20px; border: none; border-radius: 40px; cursor: pointer; font-weight: 600; font-size: 13px; }
+    .btn-gold { background: #c9933a; color: white; }
+    .btn-gold:hover { background: #a87a2c; }
+    .btn-outline { background: transparent; border: 1px solid #e2e8f0; }
+    .btn-outline:hover { background: #f8fafc; }
+    .btn-sm { padding: 5px 12px; font-size: 12px; margin-right: 6px; }
+    .btn-danger { background: #ef4444; color: white; }
+    .btn-danger:hover { background: #dc2626; }
+    .items-badge { display: inline-block; background: #e2e8f0; color: #334155; padding: 2px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+    .form-group { margin-bottom: 18px; }
+    .form-group label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 13px; color: #334155; }
+    .form-control { width: 100%; padding: 12px 16px; border: 1px solid #e2e8f0; border-radius: 12px; font-size: 14px; }
+    .form-control:focus { outline: none; border-color: #c9933a; }
+    .btn-success { background: #10b981; color: white; border: none; padding: 12px; border-radius: 40px; width: 100%; cursor: pointer; font-weight: 700; }
+    .divider { margin: 20px 0; border-top: 1px solid #e2e8f0; }
+    .toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 1100; }
+
+    .reservation-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1002; visibility: hidden; opacity: 0; transition: opacity 0.2s; }
+    .reservation-modal-overlay.open { visibility: visible; opacity: 1; }
+    .reservation-modal { position: fixed; top: 0; right: 0; width: 460px; max-width: 92%; height: 100vh; background: white; z-index: 1003; transform: translateX(100%); transition: transform 0.3s ease-in-out; display: flex; flex-direction: column; box-shadow: -2px 0 20px rgba(0,0,0,0.15); }
+    .reservation-modal.open { transform: translateX(0); }
+    .reservation-modal-header { padding: 24px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: linear-gradient(135deg, #1a2340 0%, #2a3a5c 100%); color: white; }
+    .reservation-modal-header h3 { font-size: 18px; margin: 0; font-family: 'Playfair Display', serif; }
+    .reservation-modal-close { background: none; border: none; font-size: 24px; cursor: pointer; color: white; opacity: 0.85; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+    .reservation-modal-close:hover { opacity: 1; background: rgba(255,255,255,0.15); }
+    .reservation-modal-body { flex: 1; overflow-y: auto; padding: 24px; }
+
+    .notif-btn { position: relative; background: #f1f5f9; border: none; border-radius: 40px; padding: 8px 12px; cursor: pointer; font-size: 18px; }
+    .notif-btn:hover { background: #e2e8f0; }
+    .notif-btn .badge { position: absolute; top: -5px; right: -5px; background: #ef4444; color: white; border-radius: 50%; font-size: 10px; font-weight: 600; padding: 2px 6px; min-width: 18px; text-align: center; display: none; }
+    .notification-panel { position: absolute; top: 60px; right: 20px; width: 340px; max-width: calc(100vw - 40px); background: white; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); z-index: 1000; display: none; overflow: hidden; border: 1px solid #e2e8f0; }
+    .notification-panel.show { display: block; }
+    .notification-header { padding: 14px 16px; border-bottom: 1px solid #e2e8f0; font-weight: 700; font-size: 14px; display: flex; justify-content: space-between; align-items: center; background: #f8fafc; }
+    .notification-header button { background: none; border: none; font-size: 16px; cursor: pointer; color: #64748b; }
+    .empty-notifications { padding: 36px 20px; text-align: center; color: #94a3b8; font-size: 13px; }
+
+    .user-dropdown { position: relative; cursor: pointer; }
+    .dropdown-menu { position: absolute; top: 55px; right: 0; background: white; min-width: 200px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); padding: 0.5rem 0; z-index: 100; display: none; }
+    .dropdown-menu.show { display: block; }
+    .dropdown-menu button, .dropdown-menu a { display: flex; align-items: center; gap: 12px; padding: 10px 18px; background: none; border: none; width: 100%; text-align: left; cursor: pointer; font-family: inherit; text-decoration: none; color: #1e293b; }
+    .dropdown-menu button:hover, .dropdown-menu a:hover { background: #f5f3ef; }
+    .user-pill { display: flex; align-items: center; gap: 8px; padding: 6px 12px; background: #f5f5f5; border-radius: 40px; cursor: pointer; }
+
+    @media (max-width: 768px) {
+      .reservation-modal { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="overlay" id="overlay-main"></div>
+
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-top">
+    <a class="sidebar-logo" href="/">
+      <img src="/images/logo.png" alt="Kitobo Serenity Resort" style="height:44px;width:auto;object-fit:contain;display:block;">
+      <div class="logo-text"><span>Kitobo</span><span>Serenity Resort</span></div>
+    </a>
+    <button class="sidebar-close-btn" id="sidebar-close-btn"><i class="fas fa-times"></i></button>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Dashboard</div>
+    <a href="/dashboard" class="nav-item"><i class="fas fa-tachometer-alt"></i> Overview</a>
+    <div class="nav-section-label">Operations</div>
+    <a href="/reservations" class="nav-item"><i class="fas fa-calendar-alt"></i> Reservations</a>
+    <a href="/housekeeping" class="nav-item"><i class="fas fa-soap"></i> Housekeeping</a>
+    <a href="/maintenance" class="nav-item"><i class="fas fa-toolbox"></i> Maintenance</a>
+    <div class="nav-section-label">POS</div>
+    <a href="/bar" class="nav-item"><i class="fas fa-wine-glass-alt"></i> Bar</a>
+    <a href="/restaurant" class="nav-item"><i class="fas fa-utensils"></i> Restaurant</a>
+    <div class="nav-section-label">Property</div>
+    <a href="/rooms" class="nav-item"><i class="fas fa-building"></i> Rooms View</a>
+    <a href="/rooms-list" class="nav-item"><i class="fas fa-list-ul"></i> Rooms List</a>
+    <div class="nav-section-label">Inventory</div>
+    <a href="/store-main" class="nav-item"><i class="fas fa-store"></i> Main Store</a>
+    <a href="/store-outlets" class="nav-item"><i class="fas fa-truck"></i> Outlets Store</a>
+    <a href="/purchase-orders" class="nav-item"><i class="fas fa-file-invoice"></i> Purchase Orders</a>
+    <a href="/goods-receipt" class="nav-item"><i class="fas fa-clipboard-list"></i> Goods Receipt</a>
+    <div class="nav-section-label">Reports</div>
+    <a href="/reports" class="nav-item"><i class="fas fa-chart-bar"></i> Reservations Report</a>
+    <a href="/maintenance-report" class="nav-item"><i class="fas fa-chart-line"></i> Maintenance Report</a>
+    <a href="/purchase-orders-reports" class="nav-item"><i class="fas fa-file-alt"></i> Purchase Orders Report</a>
+    <a href="/goods-receipt-reports" class="nav-item"><i class="fas fa-stamp"></i> Goods Receipt Report</a>
+    <a href="/store-inventory-reports" class="nav-item"><i class="fas fa-boxes"></i> Store Inventory Report</a>
+    <a href="/sales-report" class="nav-item"><i class="fas fa-receipt"></i> Sales Report</a>
+    <a href="/housekeeping-report" class="nav-item"><i class="fas fa-soap"></i> Housekeeping Report</a>
+    <a href="/expenses-report" class="nav-item"><i class="fas fa-file-invoice-dollar"></i> Expenses Report</a>
+    <a href="/profit-report" class="nav-item"><i class="fas fa-chart-pie"></i> Profit Report</a>
+    <div class="nav-section-label">Finance</div>
+    <a href="/expenses" class="nav-item"><i class="fas fa-wallet"></i> Expenses</a>
+    <div class="nav-section-label">Guests</div>
+    <a href="/guest-database" class="nav-item"><i class="fas fa-id-card"></i> Guest Database</a>
+    <div class="nav-section-label">Admin</div>
+    <a href="/users" class="nav-item"><i class="fas fa-user-shield"></i> User Management</a>
+    <a href="/permissions" class="nav-item"><i class="fas fa-lock"></i> Permissions &amp; Access</a>
+  </nav>
+  <div class="sidebar-footer">
+    <small>Kitobo Serenity Resort</small>
+  </div>
+</aside>
+
+<nav class="navbar">
+  <div class="navbar-left">
+    <button class="hamburger" id="hamburger-btn"><span class="hb-bar"></span><span class="hb-bar"></span><span class="hb-bar"></span></button>
+    <div><div class="page-title">Bar Menu Categories</div><div class="page-subtitle">Manage Bar Menu categories</div></div>
+  </div>
+  <div class="navbar-right">
+    <a href="/store-main" class="btn btn-outline" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px;"><i class="fas fa-arrow-left"></i> Back to Main Store</a>
+    <button class="notif-btn" id="notif-btn"><i class="fas fa-bell"></i><span class="badge" id="notif-badge">0</span></button>
+    <div class="user-dropdown">
+      <div class="user-pill" id="userPill">
+        <div class="user-avatar" id="userAvatar">U</div>
+        <div class="user-info"><span id="userName">Loading...</span><span id="userRole">Loading...</span></div>
+        <i class="fas fa-chevron-down"></i>
+      </div>
+      <div class="dropdown-menu" id="dropdownMenu">
+        <button onclick="openChangePasswordModal()"><i class="fas fa-key"></i> Change Password</button>
+        <a href="/users"><i class="fas fa-users"></i> User Management</a>
+        <hr>
+        <button onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<main class="main-content">
+  <div class="card">
+    <div class="card-header">
+      <span><i class="fas fa-tags" style="color:#c9933a;margin-right:8px;"></i> Bar Menu Categories</span>
+      <button class="btn btn-gold" onclick="openAddCategoryModal()"><i class="fas fa-plus"></i> Add Category</button>
+    </div>
+    <div class="card-body">
+      <table class="data-table">
+        <thead><tr><th>Category Name</th><th>Items</th><th>Actions</th></tr></thead>
+        <tbody id="categories-tbody"><tr><td colspan="3" class="empty-state">Loading...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Notification Panel -->
+  <div class="notification-panel" id="notification-panel">
+    <div class="notification-header">
+      <span><i class="fas fa-bullhorn"></i> Notifications</span>
+      <button id="close-notif-panel"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="empty-notifications"><i class="fas fa-inbox"></i> No new notifications</div>
+  </div>
+</main>
+
+<!-- Add/Edit Category Modal -->
+<div class="reservation-modal-overlay" id="cat-modal-overlay" onclick="closeCategoryModal()"></div>
+<div class="reservation-modal" id="cat-modal">
+  <div class="reservation-modal-header">
+    <h3 id="cat-modal-title"><i class="fas fa-plus"></i> Add Category</h3>
+    <button class="reservation-modal-close" onclick="closeCategoryModal()"><i class="fas fa-times"></i></button>
+  </div>
+  <div class="reservation-modal-body">
+    <form id="cat-form">
+      <input type="hidden" id="cat-id">
+      <div class="form-group">
+        <label>Category Name *</label>
+        <input type="text" id="cat-name" class="form-control" placeholder="e.g. Cocktails" required>
+      </div>
+      <hr class="divider" />
+      <button type="submit" class="btn-success"><i class="fas fa-check-circle"></i> Save Category</button>
+      <button type="button" class="btn btn-outline" style="width:100%;margin-top:10px;" onclick="closeCategoryModal()">Cancel</button>
+    </form>
+  </div>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+
+<script src="../js/api.js"></script>
+<script src="../js/utils.js"></script>
+<script>
+const CATEGORY_TYPE = 'bar';
+let categoriesList = [];
+
+function escapeHtml(str) { if (!str) return ''; return String(str).replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
+
+async function loadCategories() {
+  const tbody = document.getElementById('categories-tbody');
+  try {
+    categoriesList = await apiGet(`/categories?type=${CATEGORY_TYPE}`);
+    renderCategories();
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="3" class="empty-state">Failed to load categories: ${escapeHtml(err.message)}</td></tr>`;
+  }
+}
+
+function renderCategories() {
+  const tbody = document.getElementById('categories-tbody');
+  if (!categoriesList.length) {
+    tbody.innerHTML = '<tr><td colspan="3" class="empty-state">No categories yet. Click "Add Category" to create one.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = categoriesList.map(c => `
+    <tr>
+      <td><strong>${escapeHtml(c.name)}</strong></td>
+      <td><span class="items-badge">${c.items_count || 0} item${c.items_count == 1 ? '' : 's'}</span></td>
+      <td>
+        <button class="btn btn-outline btn-sm" onclick="openEditCategoryModal(${c.id})"><i class="fas fa-edit"></i> Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteCategory(${c.id}, '${escapeHtml(c.name).replace(/'/g, "\\'")}')"><i class="fas fa-trash"></i> Delete</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function openAddCategoryModal() {
+  document.getElementById('cat-id').value = '';
+  document.getElementById('cat-name').value = '';
+  document.getElementById('cat-modal-title').innerHTML = '<i class="fas fa-plus"></i> Add Category';
+  document.getElementById('cat-modal').classList.add('open');
+  document.getElementById('cat-modal-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function openEditCategoryModal(id) {
+  const cat = categoriesList.find(c => c.id === id);
+  if (!cat) return;
+  document.getElementById('cat-id').value = cat.id;
+  document.getElementById('cat-name').value = cat.name;
+  document.getElementById('cat-modal-title').innerHTML = '<i class="fas fa-edit"></i> Edit Category';
+  document.getElementById('cat-modal').classList.add('open');
+  document.getElementById('cat-modal-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeCategoryModal() {
+  document.getElementById('cat-modal').classList.remove('open');
+  document.getElementById('cat-modal-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+  document.getElementById('cat-form').reset();
+}
+
+document.getElementById('cat-form').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const id = document.getElementById('cat-id').value;
+  const name = document.getElementById('cat-name').value.trim();
+  if (!name) return;
+  const btn = e.target.querySelector('button[type="submit"]');
+  btn.disabled = true;
+  try {
+    if (id) {
+      await apiPut(`/categories/${id}`, { name, type: CATEGORY_TYPE });
+      showToast('Category updated!', '<i class="fas fa-check-circle"></i>');
+    } else {
+      await apiPost('/categories', { name, type: CATEGORY_TYPE });
+      showToast('Category added!', '<i class="fas fa-check-circle"></i>');
+    }
+    closeCategoryModal();
+    await loadCategories();
+  } catch (err) {
+    showToast('Error: ' + err.message, '<i class="fas fa-times-circle"></i>');
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+async function deleteCategory(id, name) {
+  if (!confirm(`Delete category "${name}"? Items using it will become uncategorized.`)) return;
+  try {
+    await apiDelete(`/categories/${id}`);
+    showToast('Category deleted', '<i class="fas fa-check-circle"></i>');
+    await loadCategories();
+  } catch (err) {
+    showToast('Error: ' + err.message, '<i class="fas fa-times-circle"></i>');
+  }
+}
+
+// Sidebar toggle
+const hamburger = document.getElementById('hamburger-btn'), sidebar = document.getElementById('sidebar'), overlayMain = document.getElementById('overlay-main');
+const sidebarClose = document.getElementById('sidebar-close-btn');
+if (sidebarClose) sidebarClose.addEventListener('click', () => sidebar.classList.remove('open'));
+hamburger?.addEventListener('click', () => sidebar.classList.toggle('open'));
+overlayMain?.addEventListener('click', () => sidebar.classList.remove('open'));
+
+// Notification panel toggle (static - no live notifications on this page)
+const notifBtn = document.getElementById('notif-btn'), notifPanel = document.getElementById('notification-panel');
+notifBtn?.addEventListener('click', (e) => { e.stopPropagation(); notifPanel.classList.toggle('show'); });
+document.getElementById('close-notif-panel')?.addEventListener('click', (e) => { e.stopPropagation(); notifPanel.classList.remove('show'); });
+document.addEventListener('click', () => notifPanel?.classList.remove('show'));
+
+// User auth + dropdown
+function getCurrentUser() { const u = sessionStorage.getItem('pms_user'); return u ? JSON.parse(u) : null; }
+function logout() { sessionStorage.removeItem('pms_user'); window.location.href = '/'; }
+const currentUser = getCurrentUser();
+if (!currentUser) { window.location.href = '/'; }
+else {
+  document.getElementById('userName').innerText = currentUser.fullName || currentUser.username;
+  document.getElementById('userRole').innerText = currentUser.role ? currentUser.role.charAt(0).toUpperCase() + currentUser.role.slice(1) : 'User';
+  document.getElementById('userAvatar').innerText = (currentUser.fullName || currentUser.username || 'U').charAt(0).toUpperCase();
+}
+const userPill = document.getElementById('userPill'), dropdownMenu = document.getElementById('dropdownMenu');
+userPill?.addEventListener('click', (e) => { e.stopPropagation(); dropdownMenu.classList.toggle('show'); userPill.classList.toggle('active'); });
+document.addEventListener('click', () => dropdownMenu?.classList.remove('show'));
+
+function openChangePasswordModal() {
+  document.getElementById('change-password-modal').classList.add('open');
+  document.getElementById('change-password-modal-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  dropdownMenu?.classList.remove('show');
+}
+function closeChangePasswordModal() {
+  document.getElementById('change-password-modal').classList.remove('open');
+  document.getElementById('change-password-modal-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+  document.getElementById('change-password-form').reset();
+}
+document.getElementById('change-password-form').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const currentPassword = document.getElementById('current-password').value;
+  const newPassword = document.getElementById('new-password').value;
+  const confirmPassword = document.getElementById('confirm-password').value;
+  if (newPassword !== confirmPassword) { showToast('New passwords do not match', '<i class="fas fa-exclamation-triangle"></i>'); return; }
+  if (newPassword.length < 6) { showToast('Password must be at least 6 characters', '<i class="fas fa-exclamation-triangle"></i>'); return; }
+  try {
+    await apiPost('/auth/change-password', { userId: currentUser.id, oldPassword: currentPassword, newPassword: newPassword });
+    showToast('Password changed successfully! Please login again.', '<i class="fas fa-check-circle"></i>');
+    setTimeout(() => { logout(); }, 1500);
+  } catch (err) {
+    showToast('Failed to change password: ' + err.message, '<i class="fas fa-times-circle"></i>');
+  }
+});
+
+window.openAddCategoryModal = openAddCategoryModal;
+window.openEditCategoryModal = openEditCategoryModal;
+window.closeCategoryModal = closeCategoryModal;
+window.deleteCategory = deleteCategory;
+window.openChangePasswordModal = openChangePasswordModal;
+window.closeChangePasswordModal = closeChangePasswordModal;
+window.logout = logout;
+
+loadCategories();
+</script>
+
+<!-- Change Password Modal -->
+<div class="reservation-modal-overlay" id="change-password-modal-overlay" onclick="closeChangePasswordModal()"></div>
+<div class="reservation-modal" id="change-password-modal">
+  <div class="reservation-modal-header">
+    <h3><i class="fas fa-lock"></i> Change Password</h3>
+    <button class="reservation-modal-close" onclick="closeChangePasswordModal()"><i class="fas fa-times"></i></button>
+  </div>
+  <div class="reservation-modal-body">
+    <form id="change-password-form">
+      <div class="form-group">
+        <label>Current Password</label>
+        <input type="password" id="current-password" class="form-control" required>
+      </div>
+      <div class="form-group">
+        <label>New Password (min 6 characters)</label>
+        <input type="password" id="new-password" class="form-control" required>
+      </div>
+      <div class="form-group">
+        <label>Confirm New Password</label>
+        <input type="password" id="confirm-password" class="form-control" required>
+      </div>
+      <hr class="divider" />
+      <button type="submit" class="btn-success"><i class="fas fa-check-circle"></i> Update Password</button>
+      <button type="button" class="btn btn-outline" style="width:100%;margin-top:10px;" onclick="closeChangePasswordModal()">Cancel</button>
+    </form>
+  </div>
+</div>
+
+<script src="../js/permissions.js"></script>
+</body>
+</html>

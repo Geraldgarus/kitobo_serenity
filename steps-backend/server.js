@@ -47,6 +47,28 @@ async function ensurePaymentColumns() {
       ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50);
     `);
     await pool.query(`
+      CREATE TABLE IF NOT EXISTS categories (
+        id         SERIAL PRIMARY KEY,
+        name       VARCHAR(200) NOT NULL,
+        type       VARCHAR(20) NOT NULL DEFAULT 'store',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(name, type)
+      )
+    `);
+    const seedCategories = {
+      store:      ['Beer', 'Gins', 'Wine', 'Whisky', 'Spirits', 'Soft Drinks', 'Kitchen', 'Housekeeping'],
+      bar:        ['Beer', 'Gins', 'Wine', 'Whisky', 'Spirits', 'Cocktails', 'Mocktails', 'Soft Drinks', 'Fresh Juice', 'Water', 'Other'],
+      restaurant: ['Soup', 'Salad', 'Stew', 'Vegetables', 'Burger and Sandwiches', 'Side Dishes', 'Dessert', 'Pasta', 'Snacks and Bites', 'Fresh Drinks'],
+    };
+    for (const [type, names] of Object.entries(seedCategories)) {
+      for (const name of names) {
+        await pool.query(
+          'INSERT INTO categories (name, type) VALUES ($1, $2) ON CONFLICT (name, type) DO NOTHING',
+          [name, type]
+        );
+      }
+    }
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS menu_items (
         id           SERIAL PRIMARY KEY,
         name         VARCHAR(200) NOT NULL,
@@ -206,8 +228,8 @@ const pages = [
   'store-housekeeping', 'store-kitchen', 'store-public', 'users', 'users1',
   'activity-logs', 'register', 'back-office', 'index2', 'purchase-orders', 'goods-receipt',
   'purchase-orders-reports', 'goods-receipt-reports', 'store-inventory-reports', 
-  'point-of-sale', 'bar', 'restaurant', 'sales-report',  'staff-activities', 'staff-activities-report','add-reservation','guest-database','maintenance','daily-activities', 'expenditures', 'expenses', 'expenses-report', 'profit-report', 'daily-activities-report','financial-report',  'maintenance-report', 'housekeeping-report', 'permissions', 'booking'
-
+  'point-of-sale', 'bar', 'restaurant', 'sales-report',  'staff-activities', 'staff-activities-report','add-reservation','guest-database','maintenance','daily-activities', 'expenditures', 'expenses', 'expenses-report', 'profit-report', 'daily-activities-report','financial-report',  'maintenance-report', 'housekeeping-report', 'permissions', 'booking',
+  'store-categories', 'bar-menu-categories', 'restaurant-menu-categories'
 ];
 
 // Create routes for each page without .html extension
@@ -3128,15 +3150,21 @@ app.delete('/api/laundry/:id', async (req, res) => {
 // CATEGORIES API
 // ============================================================
 
-// GET all categories
+// GET all categories (optionally filtered by ?type=store|bar|restaurant)
 app.get('/api/categories', async (req, res) => {
+  const { type } = req.query;
   try {
     const { rows } = await pool.query(`
-      SELECT c.*, 
-        (SELECT COUNT(*) FROM store_items WHERE category = c.name) as items_count
+      SELECT c.*,
+        CASE c.type
+          WHEN 'bar' THEN (SELECT COUNT(*) FROM bar_menu_items WHERE category = c.name)
+          WHEN 'restaurant' THEN (SELECT COUNT(*) FROM menu_items WHERE category = c.name)
+          ELSE (SELECT COUNT(*) FROM store_items WHERE category = c.name)
+        END as items_count
       FROM categories c
+      WHERE $1::text IS NULL OR c.type = $1
       ORDER BY c.name
-    `);
+    `, [type || null]);
     res.json(rows);
   } catch (err) {
     console.error('Error fetching categories:', err);
@@ -3193,22 +3221,24 @@ app.delete('/api/categories/:id', async (req, res) => {
   try {
     // First check if category has any items
     const categoryCheck = await pool.query(
-      'SELECT name FROM categories WHERE id = $1',
+      'SELECT name, type FROM categories WHERE id = $1',
       [id]
     );
     if (categoryCheck.rows.length === 0) {
       return res.status(404).json({ error: 'Category not found' });
     }
-    
-    const categoryName = categoryCheck.rows[0].name;
-    
-    // Update items with this category to NULL or a default?
-    // Set to NULL (will show as uncategorized)
-    await pool.query(
-      'UPDATE store_items SET category = NULL WHERE category = $1',
-      [categoryName]
-    );
-    
+
+    const { name: categoryName, type: categoryType } = categoryCheck.rows[0];
+
+    // Uncategorize any items still using this category, in the table matching its type
+    if (categoryType === 'bar') {
+      await pool.query('UPDATE bar_menu_items SET category = NULL WHERE category = $1', [categoryName]);
+    } else if (categoryType === 'restaurant') {
+      await pool.query('UPDATE menu_items SET category = NULL WHERE category = $1', [categoryName]);
+    } else {
+      await pool.query('UPDATE store_items SET category = NULL WHERE category = $1', [categoryName]);
+    }
+
     // Delete the category
     const { rowCount } = await pool.query('DELETE FROM categories WHERE id = $1', [id]);
     if (rowCount === 0) {

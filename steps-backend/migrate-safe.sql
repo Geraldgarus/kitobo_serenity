@@ -1077,3 +1077,18 @@ SELECT '✅ maintenance_records.expense_id column added!' as status;
 -- ─── Payment method on purchase_orders (set when goods are received) ──────
 ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50);
 SELECT '✅ purchase_orders.payment_method column added!' as status;
+
+-- ─── Categories table (Store Inventory / Bar Menu / Restaurant Menu) ──────
+CREATE TABLE IF NOT EXISTS categories (
+  id         SERIAL PRIMARY KEY,
+  name       VARCHAR(200) NOT NULL,
+  type       VARCHAR(20) NOT NULL DEFAULT 'store',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(name, type)
+);
+INSERT INTO categories (name, type) VALUES
+  ('Beer','store'),('Gins','store'),('Wine','store'),('Whisky','store'),('Spirits','store'),('Soft Drinks','store'),('Kitchen','store'),('Housekeeping','store'),
+  ('Beer','bar'),('Gins','bar'),('Wine','bar'),('Whisky','bar'),('Spirits','bar'),('Cocktails','bar'),('Mocktails','bar'),('Soft Drinks','bar'),('Fresh Juice','bar'),('Water','bar'),('Other','bar'),
+  ('Soup','restaurant'),('Salad','restaurant'),('Stew','restaurant'),('Vegetables','restaurant'),('Burger and Sandwiches','restaurant'),('Side Dishes','restaurant'),('Dessert','restaurant'),('Pasta','restaurant'),('Snacks and Bites','restaurant'),('Fresh Drinks','restaurant')
+ON CONFLICT (name, type) DO NOTHING;
+SELECT '✅ categories table created and seeded!' as status;
