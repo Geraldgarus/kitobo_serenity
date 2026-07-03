@@ -853,12 +853,31 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')closePOSChoo
         </td>
         <td style="padding:10px 8px;border-bottom:1px solid #f1f5f9;text-align:right;font-weight:700;">${fmtTSH(o.total_amount)}</td>
         <td style="padding:10px 8px;border-bottom:1px solid #f1f5f9;text-align:center;white-space:nowrap;">
+          <button onclick="viewOrderItems(${o.id})" title="View Items" style="background:#f1f5f9;color:#1a2340;border:none;border-radius:6px;padding:6px 10px;cursor:pointer;font-size:12px;margin-right:4px;"><i class="fas fa-eye"></i></button>
           <button onclick="reprintOrder(${o.id})" title="Reprint Receipt" style="background:#1a2340;color:#fff;border:none;border-radius:6px;padding:6px 10px;cursor:pointer;font-size:12px;margin-right:4px;"><i class="fas fa-print"></i></button>
           ${status !== 'paid' ? `<button onclick="settleOrder(${o.id})" title="Settle Payment" style="background:#10b981;color:#fff;border:none;border-radius:6px;padding:6px 10px;cursor:pointer;font-size:12px;"><i class="fas fa-hand-holding-usd"></i> Settle</button>` : ''}
         </td>
       </tr>`;
     }).join('');
   }
+
+  function viewOrderItems(id) {
+    const o = ordersModalCache.find(x => x.id === id);
+    if (!o) { showToast('Order not found', 'error'); return; }
+    document.getElementById('view-items-order-number').textContent = '#' + o.order_number;
+    const items = o.items || [];
+    const tbody = document.getElementById('view-items-tbody');
+    tbody.innerHTML = items.length ? items.map(i => `
+      <tr>
+        <td style="padding:8px;border-bottom:1px solid #f1f5f9;">${escapeHtml(i.item_name)}</td>
+        <td style="padding:8px;border-bottom:1px solid #f1f5f9;text-align:center;">${parseFloat(i.quantity) || 0}</td>
+        <td style="padding:8px;border-bottom:1px solid #f1f5f9;text-align:right;">${fmtTSH(i.unit_price)}</td>
+        <td style="padding:8px;border-bottom:1px solid #f1f5f9;text-align:right;font-weight:600;">${fmtTSH(i.total_price)}</td>
+      </tr>`).join('') : '<tr><td colspan="4" style="text-align:center;padding:20px;color:#94a3b8;">No items recorded for this order</td></tr>';
+    document.getElementById('view-items-total').textContent = fmtTSH(o.total_amount);
+    document.getElementById('view-items-modal-overlay').style.display = 'flex';
+  }
+  function closeViewItemsModal() { document.getElementById('view-items-modal-overlay').style.display = 'none'; }
 
   function reprintOrder(id) {
     const o = ordersModalCache.find(x => x.id === id);
@@ -917,7 +936,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')closePOSChoo
     }
   }
 
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeOrdersModal(); closeSettleModal(); } });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeOrdersModal(); closeSettleModal(); closeViewItemsModal(); } });
   window.openOrdersModal = openOrdersModal;
   window.closeOrdersModal = closeOrdersModal;
   window.clearOrdersFilter = clearOrdersFilter;
@@ -927,7 +946,34 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')closePOSChoo
   window.submitSettle = submitSettle;
   window.reprintOrder = reprintOrder;
   window.settleOrder = settleOrder;
+  window.viewOrderItems = viewOrderItems;
+  window.closeViewItemsModal = closeViewItemsModal;
 </script>
+
+<!-- View Items Modal -->
+<div id="view-items-modal-overlay" onclick="if(event.target===this)closeViewItemsModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:10000;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:#fff;border-radius:16px;max-width:480px;width:100%;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 24px 64px rgba(0,0,0,0.3);overflow:hidden;">
+    <div style="padding:18px 22px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+      <div style="font-size:16px;font-weight:700;color:#1e293b;"><i class="fas fa-eye" style="color:#c9933a;margin-right:8px;"></i>Order <span id="view-items-order-number">—</span> Items</div>
+      <button onclick="closeViewItemsModal()" style="background:none;border:none;font-size:18px;cursor:pointer;color:#64748b;"><i class="fas fa-times"></i></button>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:0 22px;">
+      <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead><tr style="text-align:left;color:#64748b;font-size:11px;text-transform:uppercase;">
+          <th style="padding:10px 8px;border-bottom:1px solid #e2e8f0;">Item</th>
+          <th style="padding:10px 8px;border-bottom:1px solid #e2e8f0;text-align:center;">Qty</th>
+          <th style="padding:10px 8px;border-bottom:1px solid #e2e8f0;text-align:right;">Price</th>
+          <th style="padding:10px 8px;border-bottom:1px solid #e2e8f0;text-align:right;">Total</th>
+        </tr></thead>
+        <tbody id="view-items-tbody"></tbody>
+      </table>
+    </div>
+    <div style="padding:14px 22px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
+      <span style="font-weight:600;color:#64748b;">Order Total</span>
+      <span id="view-items-total" style="font-size:16px;font-weight:800;color:#1a2340;">—</span>
+    </div>
+  </div>
+</div>
 
 <!-- Settle Payment Modal -->
 <div id="settle-modal-overlay" onclick="if(event.target===this)closeSettleModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:10000;align-items:center;justify-content:center;padding:20px;">
