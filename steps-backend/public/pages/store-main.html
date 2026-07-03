@@ -703,17 +703,9 @@
       <div class="form-group"><label>Item Name *</label><input type="text" id="item-name" class="form-control" required></div>
       <div class="form-group">
         <label>Category *</label>
-        <div style="display:flex;gap:8px;align-items:stretch;">
-          <select id="item-category" class="form-control" required data-cat-type="store" style="flex:1;">
-            <option value="">Select category</option>
-          </select>
-          <button type="button" class="btn btn-gold" onclick="showNewCategoryInput('item-category')" title="Add new category" style="padding:10px 16px !important;font-size:14px !important;min-height:auto !important;white-space:nowrap;border-radius:8px !important;"><i class="fas fa-plus"></i></button>
-        </div>
-        <div class="new-category-row" style="display:none;gap:8px;margin-top:10px;">
-          <input type="text" class="form-control new-category-input" placeholder="Enter new category name" style="flex:1;font-size:14px;padding:10px 12px;" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmNewCategory(this);}">
-          <button type="button" class="btn btn-gold" onclick="confirmNewCategory(this)" style="padding:10px 18px !important;font-size:14px !important;min-height:auto !important;white-space:nowrap;border-radius:8px !important;">Add</button>
-          <button type="button" class="btn btn-outline" onclick="cancelNewCategory(this)" style="padding:10px 14px !important;font-size:14px !important;min-height:auto !important;border-radius:8px !important;"><i class="fas fa-times"></i></button>
-        </div>
+        <select id="item-category" class="form-control" required data-cat-type="store">
+          <option value="">Select category</option>
+        </select>
       </div>
       <div class="form-group"><label>Unit Price (TSH per unit)</label><input type="number" id="item-unit-price" class="form-control" placeholder="Price per kg/litre/unit"></div>
       <div class="form-group"><label>Unit of Measurement</label><select id="item-unit" class="form-control" required><option value="kg">kg</option>
@@ -764,16 +756,8 @@
       <div class="form-group"><label>Item Name</label><input type="text" id="edit-item-name" class="form-control" required></div>
       <div class="form-group">
         <label>Category</label>
-        <div style="display:flex;gap:8px;align-items:stretch;">
-          <select id="edit-item-category" class="form-control" required data-cat-type="store" style="flex:1;">
-          </select>
-          <button type="button" class="btn btn-gold" onclick="showNewCategoryInput('edit-item-category')" title="Add new category" style="padding:10px 16px !important;font-size:14px !important;min-height:auto !important;white-space:nowrap;border-radius:8px !important;"><i class="fas fa-plus"></i></button>
-        </div>
-        <div class="new-category-row" style="display:none;gap:8px;margin-top:10px;">
-          <input type="text" class="form-control new-category-input" placeholder="Enter new category name" style="flex:1;font-size:14px;padding:10px 12px;" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmNewCategory(this);}">
-          <button type="button" class="btn btn-gold" onclick="confirmNewCategory(this)" style="padding:10px 18px !important;font-size:14px !important;min-height:auto !important;white-space:nowrap;border-radius:8px !important;">Add</button>
-          <button type="button" class="btn btn-outline" onclick="cancelNewCategory(this)" style="padding:10px 14px !important;font-size:14px !important;min-height:auto !important;border-radius:8px !important;"><i class="fas fa-times"></i></button>
-        </div>
+        <select id="edit-item-category" class="form-control" required data-cat-type="store">
+        </select>
       </div>
       <div class="form-group"><label>Unit Price (TSH per unit)</label><input type="number" id="edit-item-unit-price" class="form-control" placeholder="Price per kg/litre/unit"></div>
       <div class="form-group"><label>Unit of Measurement</label><select id="edit-item-unit" class="form-control" required><option value="kg">kg</option>
@@ -1468,7 +1452,6 @@ for (var i = 0; i < filtered.length; i++) {
 
   function openAddItemModal() {
     loadCategoryOptions('item-category', 'store');
-    document.getElementById('item-category').closest('.form-group').querySelector('.new-category-row').style.display = 'none';
     document.getElementById('add-item-modal').classList.add('open');
     document.getElementById('add-item-modal-overlay').classList.add('open');
     document.body.style.overflow = 'hidden';
@@ -1565,7 +1548,6 @@ for (var i = 0; i < filtered.length; i++) {
     var item = storeItems.find(function(i) { return i.id === id; });
     if (!item) return;
     await loadCategoryOptions('edit-item-category', 'store', item.category);
-    document.getElementById('edit-item-category').closest('.form-group').querySelector('.new-category-row').style.display = 'none';
     document.getElementById('edit-item-id').value = id;
     document.getElementById('edit-item-name').value = item.name;
     document.getElementById('edit-item-unit-price').value = item.cost;
@@ -1992,17 +1974,9 @@ window.closeChangePasswordModal = closeChangePasswordModal;
       </div>
       <div class="form-group">
         <label>Category *</label>
-        <div style="display:flex;gap:8px;align-items:stretch;">
-          <select id="menu-item-category" class="form-control" required data-cat-type="restaurant" style="flex:1;">
-            <option value="">-- Select Category --</option>
-          </select>
-          <button type="button" class="btn btn-gold" onclick="showNewCategoryInput('menu-item-category')" title="Add new category" style="padding:10px 16px !important;font-size:14px !important;min-height:auto !important;white-space:nowrap;border-radius:8px !important;"><i class="fas fa-plus"></i></button>
-        </div>
-        <div class="new-category-row" style="display:none;gap:8px;margin-top:10px;">
-          <input type="text" class="form-control new-category-input" placeholder="Enter new category name" style="flex:1;font-size:14px;padding:10px 12px;" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmNewCategory(this);}">
-          <button type="button" class="btn btn-gold" onclick="confirmNewCategory(this)" style="padding:10px 18px !important;font-size:14px !important;min-height:auto !important;white-space:nowrap;border-radius:8px !important;">Add</button>
-          <button type="button" class="btn btn-outline" onclick="cancelNewCategory(this)" style="padding:10px 14px !important;font-size:14px !important;min-height:auto !important;border-radius:8px !important;"><i class="fas fa-times"></i></button>
-        </div>
+        <select id="menu-item-category" class="form-control" required data-cat-type="restaurant">
+          <option value="">-- Select Category --</option>
+        </select>
       </div>
       <div class="form-group">
         <label>Price (TSH) *</label>
@@ -2089,60 +2063,11 @@ async function loadCategoryOptions(selectId, type, selectedValue) {
   }
 }
 
-function showNewCategoryInput(selectId) {
-  const select = document.getElementById(selectId);
-  const wrapper = select.closest('.form-group').querySelector('.new-category-row');
-  if (!wrapper) return;
-  wrapper.style.display = 'flex';
-  const input = wrapper.querySelector('.new-category-input');
-  input.value = '';
-  input.focus();
-}
-
-async function confirmNewCategory(el) {
-  const wrapper = el.closest('.new-category-row');
-  const select = wrapper.closest('.form-group').querySelector('select');
-  const input = wrapper.querySelector('.new-category-input');
-  const name = input.value.trim();
-  if (!name) { input.focus(); return; }
-  const type = select.dataset.catType || 'store';
-  const addBtn = wrapper.querySelector('.btn-gold');
-  if (addBtn) { addBtn.disabled = true; }
-  try {
-    let categoryName = name;
-    try {
-      const cat = await apiPost('/categories', { name, type });
-      categoryName = cat.name;
-    } catch (err) {
-      if (!(err.message && err.message.includes('already exists'))) throw err;
-    }
-    let opt = [...select.options].find(o => o.value.toLowerCase() === categoryName.toLowerCase());
-    if (!opt) {
-      opt = document.createElement('option');
-      opt.value = categoryName;
-      opt.textContent = categoryName;
-      select.appendChild(opt);
-    }
-    select.value = opt.value;
-    wrapper.style.display = 'none';
-  } catch (err) {
-    showToast('Failed to add category: ' + err.message, '<i class="fas fa-times-circle"></i>');
-  } finally {
-    if (addBtn) { addBtn.disabled = false; }
-  }
-}
-
-function cancelNewCategory(el) {
-  const wrapper = el.closest('.new-category-row');
-  wrapper.style.display = 'none';
-}
-
 async function openAddMenuModal() {
   document.getElementById('menu-item-id').value = '';
   document.getElementById('menu-item-name').value = '';
   document.getElementById('menu-item-price').value = '';
   await loadCategoryOptions('menu-item-category', 'restaurant');
-  document.getElementById('menu-item-category').closest('.form-group').querySelector('.new-category-row').style.display = 'none';
   document.getElementById('menu-modal-title').innerHTML = '<i class="fas fa-plus"></i> Add Menu Item';
   document.getElementById('menu-modal').classList.add('open');
   document.getElementById('menu-modal-overlay').classList.add('open');
@@ -2155,7 +2080,6 @@ async function openEditMenuModal(id) {
   document.getElementById('menu-item-id').value = item.id;
   document.getElementById('menu-item-name').value = item.name;
   await loadCategoryOptions('menu-item-category', 'restaurant', item.category);
-  document.getElementById('menu-item-category').closest('.form-group').querySelector('.new-category-row').style.display = 'none';
   document.getElementById('menu-item-price').value = item.price;
   document.getElementById('menu-modal-title').innerHTML = '<i class="fas fa-edit"></i> Edit Menu Item';
   document.getElementById('menu-modal').classList.add('open');
@@ -2359,17 +2283,9 @@ document.querySelectorAll('.tab-btn[data-tab="menu"]').forEach(btn => {
       </div>
       <div class="form-group">
         <label>Category *</label>
-        <div style="display:flex;gap:8px;align-items:stretch;">
-          <select id="bar-menu-item-category" class="form-control" required data-cat-type="bar" style="flex:1;">
-            <option value="">-- Select Category --</option>
-          </select>
-          <button type="button" class="btn btn-gold" onclick="showNewCategoryInput('bar-menu-item-category')" title="Add new category" style="padding:10px 16px !important;font-size:14px !important;min-height:auto !important;white-space:nowrap;border-radius:8px !important;"><i class="fas fa-plus"></i></button>
-        </div>
-        <div class="new-category-row" style="display:none;gap:8px;margin-top:10px;">
-          <input type="text" class="form-control new-category-input" placeholder="Enter new category name" style="flex:1;font-size:14px;padding:10px 12px;" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmNewCategory(this);}">
-          <button type="button" class="btn btn-gold" onclick="confirmNewCategory(this)" style="padding:10px 18px !important;font-size:14px !important;min-height:auto !important;white-space:nowrap;border-radius:8px !important;">Add</button>
-          <button type="button" class="btn btn-outline" onclick="cancelNewCategory(this)" style="padding:10px 14px !important;font-size:14px !important;min-height:auto !important;border-radius:8px !important;"><i class="fas fa-times"></i></button>
-        </div>
+        <select id="bar-menu-item-category" class="form-control" required data-cat-type="bar">
+          <option value="">-- Select Category --</option>
+        </select>
       </div>
       <div class="form-group">
         <label>Price (TSH) *</label>
@@ -2514,7 +2430,6 @@ async function openAddBarMenuModal() {
   document.getElementById('bar-menu-item-name').value = '';
   document.getElementById('bar-menu-item-price').value = '';
   await loadCategoryOptions('bar-menu-item-category', 'bar');
-  document.getElementById('bar-menu-item-category').closest('.form-group').querySelector('.new-category-row').style.display = 'none';
   document.getElementById('bar-menu-modal-title').innerHTML = '<i class="fas fa-plus"></i> Add Bar Item';
   document.getElementById('bar-menu-modal').classList.add('open');
   document.getElementById('bar-menu-modal-overlay').classList.add('open');
@@ -2527,7 +2442,6 @@ async function openEditBarMenuModal(id) {
   document.getElementById('bar-menu-item-id').value = item.id;
   document.getElementById('bar-menu-item-name').value = item.name;
   await loadCategoryOptions('bar-menu-item-category', 'bar', item.category);
-  document.getElementById('bar-menu-item-category').closest('.form-group').querySelector('.new-category-row').style.display = 'none';
   document.getElementById('bar-menu-item-price').value = item.price;
   document.getElementById('bar-menu-modal-title').innerHTML = '<i class="fas fa-edit"></i> Edit Bar Item';
   document.getElementById('bar-menu-modal').classList.add('open');
