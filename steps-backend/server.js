@@ -3032,8 +3032,11 @@ app.put('/api/sales/:id/settle', async (req, res) => {
     if (!existing.rows.length) return res.status(404).json({ error: 'Sale not found' });
 
     const totalAmt  = parseFloat(existing.rows[0].total_amount) || 0;
-    const splitList = Array.isArray(payments) ? payments.filter(p => p && (parseFloat(p.amount) || 0) > 0) : [];
-    const paid      = splitList.length ? splitList.reduce((s, p) => s + (parseFloat(p.amount) || 0), 0) : Math.max(0, parseFloat(amount_paid));
+    const hasPayments = Array.isArray(payments);
+    const splitList = hasPayments ? payments.filter(p => p && (parseFloat(p.amount) || 0) > 0) : [];
+    // An explicit (possibly empty) `payments` array means "this is the full breakdown" —
+    // an empty array legitimately means 0 paid, so don't fall back to amount_paid in that case.
+    const paid      = hasPayments ? splitList.reduce((s, p) => s + (parseFloat(p.amount) || 0), 0) : Math.max(0, parseFloat(amount_paid));
     if (isNaN(paid)) return res.status(400).json({ error: 'amount_paid is required' });
     const balance   = Math.max(0, totalAmt - paid);
     const status    = paid <= 0 ? 'pending' : (balance > 0 ? 'partial' : 'paid');
