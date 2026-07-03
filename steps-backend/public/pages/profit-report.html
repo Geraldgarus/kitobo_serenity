@@ -647,11 +647,9 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('userRole').innerText   = user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'User';
   document.getElementById('userAvatar').innerText = (user.fullName || user.username || 'U').charAt(0).toUpperCase();
 
-  // Default to the current month so the report doesn't fetch all-time data by default
-  const now = new Date();
-  const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-  const today = now.toISOString().split('T')[0];
-  document.getElementById('filter-from').value = firstOfMonth;
+  // Default to today so the report doesn't fetch all-time data by default
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('filter-from').value = today;
   document.getElementById('filter-to').value   = today;
 
   loadData();
