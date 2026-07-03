@@ -371,6 +371,45 @@
 
   function escapeHtml(str) { if (!str) return ''; return String(str).replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
   function fmtTSH(v) { return 'TSh ' + (v || 0).toLocaleString(); }
+
+  const PM_META = {
+    cash:          { label: 'Cash',          icon: 'money-bill-wave', color: '#16a34a', emoji: '💵' },
+    bank_transfer: { label: 'Bank Transfer', icon: 'university',      color: '#6366f1', emoji: '🏦' },
+    nbc:           { label: 'NBC',           icon: 'university',      color: '#1d4ed8', emoji: '🏦' },
+    nmb:           { label: 'NMB',           icon: 'university',      color: '#7c3aed', emoji: '🏦' },
+    crdb:          { label: 'CRDB',          icon: 'university',      color: '#059669', emoji: '🏦' },
+    mpesa:         { label: 'M-Pesa',        icon: 'mobile-alt',      color: '#dc2626', emoji: '📱' },
+    tigo_pesa:     { label: 'Tigo Pesa',     icon: 'mobile-alt',      color: '#0891b2', emoji: '📱' },
+    airtel_money:  { label: 'Airtel Money',  icon: 'mobile-alt',      color: '#ea580c', emoji: '📱' },
+    halopesa:      { label: 'HaloPesa',      icon: 'mobile-alt',      color: '#f59e0b', emoji: '📱' },
+    cheque:        { label: 'Cheque',        icon: 'pen',             color: '#6366f1', emoji: '📝' },
+    other:         { label: 'Other',         icon: 'ellipsis-h',      color: '#94a3b8', emoji: '💰' },
+  };
+  function pmMeta(method) {
+    const key = (method || 'cash').toLowerCase();
+    return PM_META[key] || { label: method || 'Cash', icon: 'question-circle', color: '#64748b', emoji: '💰' };
+  }
+  // Split sales attribute each breakdown line's amount to its own method bucket
+  // instead of lumping everything under a generic "split" entry.
+  function buildPaymentSummary(data) {
+    const summary = {};
+    data.forEach(sale => {
+      if (sale.payment_method === 'split' && Array.isArray(sale.payment_breakdown) && sale.payment_breakdown.length) {
+        sale.payment_breakdown.forEach(p => {
+          const key = (p.method || 'other').toLowerCase();
+          if (!summary[key]) summary[key] = { count: 0, total: 0 };
+          summary[key].count++;
+          summary[key].total += parseFloat(p.amount) || 0;
+        });
+      } else {
+        const key = (sale.payment_method || 'cash').toLowerCase();
+        if (!summary[key]) summary[key] = { count: 0, total: 0 };
+        summary[key].count++;
+        summary[key].total += sale.total || 0;
+      }
+    });
+    return summary;
+  }
   function showToast(msg, type = 'success') {
     const toast = document.getElementById('toast-container');
     toast.innerHTML = `<div style="background:${type === 'error' ? '#ef4444' : '#10b981'};color:white;padding:12px 20px;border-radius:40px;margin-bottom:8px;">${msg}</div>`;
@@ -407,7 +446,8 @@ async function loadSalesReport() {
         date: order.order_date,
         total: order.total_amount,
         pos_type: order.pos_type || '',
-        payment_method: order.payment_method || 'Cash',
+        payment_method: order.payment_method || 'cash',
+        payment_breakdown: order.payment_breakdown || null,
         payment_status: order.payment_status || 'paid',
         amount_paid: order.amount_paid,
         balance: order.balance,
@@ -452,12 +492,22 @@ async function loadSalesReport() {
           : '<span class="pos-badge unknown">—</span>';
       const status = sale.payment_status || 'paid';
       const [bg, fg, label] = statusBadge[status] || statusBadge.paid;
+      let pmCell;
+      if (sale.payment_method === 'split' && Array.isArray(sale.payment_breakdown) && sale.payment_breakdown.length) {
+        pmCell = sale.payment_breakdown.map(p => {
+          const m = pmMeta(p.method);
+          return `<div>${escapeHtml(m.label)}: ${fmtTSH(p.amount)}</div>`;
+        }).join('');
+      } else {
+        const m = pmMeta(sale.payment_method);
+        pmCell = `<span style="display:inline-flex;align-items:center;gap:5px;"><i class="fas fa-${m.icon}"></i> ${escapeHtml(m.label)}</span>`;
+      }
       html += `
         <tr>
           <td>${formattedDate}</td>
           <td><strong>${escapeHtml(sale.order_number)}</strong></td>
           <td>${posLabel}</td>
-          <td><span style="display:inline-flex;align-items:center;gap:5px;"><i class="fas fa-${sale.payment_method === 'Cash' ? 'money-bill-wave' : sale.payment_method === 'Card' ? 'credit-card' : ['Mpesa','TigoPesa','AirtelMoney','HaloPesa'].includes(sale.payment_method) ? 'mobile-alt' : 'university'}"></i> ${escapeHtml(sale.payment_method || 'Cash')}</span></td>
+          <td style="font-size:12px;">${pmCell}</td>
           <td>
             <span style="padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:${bg};color:${fg};">${label}</span>
             ${status !== 'paid' ? `<div style="font-size:10px;color:#94a3b8;margin-top:2px;">Bal: ${fmtTSH(sale.balance)}</div>` : ''}
@@ -522,32 +572,7 @@ async function loadSalesReport() {
   }
 
   function updatePaymentSummary() {
-    const methodIcons = {
-      'Cash':        'money-bill-wave',
-      'Card':        'credit-card',
-      'Mpesa':       'mobile-alt',
-      'TigoPesa':    'mobile-alt',
-      'AirtelMoney': 'mobile-alt',
-      'NMB':         'university',
-      'NBC':         'university',
-    };
-    const methodColors = {
-      'Cash':        '#16a34a',
-      'Card':        '#2563eb',
-      'Mpesa':       '#dc2626',
-      'TigoPesa':    '#0891b2',
-      'AirtelMoney': '#ea580c',
-      'NMB':         '#7c3aed',
-      'NBC':         '#c9933a',
-    };
-
-    const summary = {};
-    salesData.forEach(sale => {
-      const method = sale.payment_method || 'Cash';
-      if (!summary[method]) summary[method] = { count: 0, total: 0 };
-      summary[method].count++;
-      summary[method].total += sale.total || 0;
-    });
+    const summary = buildPaymentSummary(salesData);
 
     const container = document.getElementById('payment-method-summary');
     if (Object.keys(summary).length === 0) {
@@ -558,15 +583,14 @@ async function loadSalesReport() {
     container.innerHTML = Object.entries(summary)
       .sort((a, b) => b[1].total - a[1].total)
       .map(([method, data]) => {
-        const icon = methodIcons[method] || 'money-bill-wave';
-        const color = methodColors[method] || '#64748b';
+        const m = pmMeta(method);
         return `
-          <div style="background:#f8fafc;border-radius:14px;padding:16px;border-left:4px solid ${color};display:flex;flex-direction:column;gap:6px;">
-            <div style="display:flex;align-items:center;gap:8px;font-weight:700;color:${color};font-size:13px;">
-              <i class="fas fa-${icon}"></i> ${method}
+          <div style="background:#f8fafc;border-radius:14px;padding:16px;border-left:4px solid ${m.color};display:flex;flex-direction:column;gap:6px;">
+            <div style="display:flex;align-items:center;gap:8px;font-weight:700;color:${m.color};font-size:13px;">
+              <i class="fas fa-${m.icon}"></i> ${escapeHtml(m.label)}
             </div>
             <div style="font-size:18px;font-weight:800;color:#1e293b;">${fmtTSH(data.total)}</div>
-            <div style="font-size:11px;color:#64748b;">${data.count} order${data.count !== 1 ? 's' : ''}</div>
+            <div style="font-size:11px;color:#64748b;">${data.count} payment${data.count !== 1 ? 's' : ''}</div>
           </div>`;
       }).join('');
   }
@@ -686,8 +710,11 @@ async function loadSalesReport() {
       const totalItems = sale.items.reduce((sum, i) => sum + i.quantity, 0);
       const saleDate = new Date(sale.date).toLocaleDateString();
       const posLabel = sale.pos_type || 'N/A';
-      csv += `"${saleDate}","${sale.order_number}","${posLabel}","${sale.payment_method || 'Cash'}","${sale.cashier}",${totalItems},${sale.total}\n`;
-      
+      const pmText = sale.payment_method === 'split' && Array.isArray(sale.payment_breakdown) && sale.payment_breakdown.length
+        ? 'Split (' + sale.payment_breakdown.map(p => `${pmMeta(p.method).label}: ${p.amount}`).join('; ') + ')'
+        : pmMeta(sale.payment_method).label;
+      csv += `"${saleDate}","${sale.order_number}","${posLabel}","${pmText}","${sale.cashier}",${totalItems},${sale.total}\n`;
+
       sale.items.forEach(item => {
         csv += `,,,"  - ${item.name}: ${item.quantity} x ${item.price} = ${item.total}",\n`;
       });
@@ -707,24 +734,19 @@ async function loadSalesReport() {
     const fromDate = document.getElementById('filter-from').value || 'Start';
     const toDate = document.getElementById('filter-to').value || 'End';
 
-    // Build payment method summary HTML
-    const methodIcons = { 'Cash':'💵', 'Card':'💳', 'Mpesa':'📱', 'TigoPesa':'📱', 'AirtelMoney':'📱', 'NMB':'🏦', 'NBC':'🏦' };
-    const methodColors = { 'Cash':'#16a34a','Card':'#2563eb','Mpesa':'#dc2626','TigoPesa':'#0891b2','AirtelMoney':'#ea580c','NMB':'#7c3aed','NBC':'#c9933a' };
-    const summary = {};
-    salesData.forEach(sale => {
-      const method = sale.payment_method || 'Cash';
-      if (!summary[method]) summary[method] = { count: 0, total: 0 };
-      summary[method].count++;
-      summary[method].total += sale.total || 0;
-    });
-    const paymentSummaryHtml = Object.entries(summary).sort((a,b) => b[1].total - a[1].total).map(([method, data]) => `
-      <div style="background:#f8fafc;border-radius:10px;padding:12px 16px;border-left:4px solid ${methodColors[method]||'#64748b'};display:flex;justify-content:space-between;align-items:center;">
-        <div style="font-weight:700;color:${methodColors[method]||'#64748b'};font-size:13px;">${methodIcons[method]||'💰'} ${method}</div>
+    // Build payment method summary HTML (split sales attributed per breakdown line)
+    const summary = buildPaymentSummary(salesData);
+    const paymentSummaryHtml = Object.entries(summary).sort((a,b) => b[1].total - a[1].total).map(([method, data]) => {
+      const m = pmMeta(method);
+      return `
+      <div style="background:#f8fafc;border-radius:10px;padding:12px 16px;border-left:4px solid ${m.color};display:flex;justify-content:space-between;align-items:center;">
+        <div style="font-weight:700;color:${m.color};font-size:13px;">${m.emoji} ${escapeHtml(m.label)}</div>
         <div style="text-align:right;">
           <div style="font-weight:800;font-size:15px;color:#1e293b;">${fmtTSH(data.total)}</div>
-          <div style="font-size:11px;color:#64748b;">${data.count} order${data.count!==1?'s':''}</div>
+          <div style="font-size:11px;color:#64748b;">${data.count} payment${data.count!==1?'s':''}</div>
         </div>
-      </div>`).join('');
+      </div>`;
+    }).join('');
 
     const statsHtml = `
       <div style="display:flex;gap:16px;margin-bottom:20px;flex-wrap:wrap;">
