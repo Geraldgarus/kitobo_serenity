@@ -337,6 +337,25 @@
     </div>
   </div>
 
+  <!-- PAYMENTS BY METHOD -->
+  <div class="table-card" style="margin-bottom:24px;">
+    <div class="table-header">
+      <h3><i class="fas fa-credit-card"></i> Payments by Method</h3>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Payment Method</th>
+            <th style="text-align:center;">Records</th>
+            <th>Total Collected (TSh)</th>
+          </tr>
+        </thead>
+        <tbody id="pm-tbody"><tr><td colspan="3" style="text-align:center;padding:30px;color:#94a3b8;">Loading...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
   <!-- DATA TABLE -->
   <div class="table-card">
     <div class="table-header">
@@ -398,6 +417,48 @@
   // ===== HELPERS =====
   function fmtTSH(v) { return 'TSh ' + (parseFloat(v) || 0).toLocaleString(); }
   function escapeHtml(str) { if (!str) return ''; return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+  function pmInfo(raw) {
+    const key = (raw || '').toString().trim().toLowerCase().replace(/[\s-]+/g, '_');
+    const map = {
+      cash:          { label: 'Cash',                   icon: 'money-bill-wave' },
+      card:          { label: 'Card (Visa/Mastercard)', icon: 'credit-card' },
+      bank_transfer: { label: 'Bank Transfer',           icon: 'university' },
+      nbc:           { label: 'NBC',                     icon: 'university' },
+      nmb:           { label: 'NMB',                     icon: 'university' },
+      crdb:          { label: 'CRDB',                    icon: 'university' },
+      mpesa:         { label: 'M-Pesa',                  icon: 'mobile-alt' },
+      tigo_pesa:     { label: 'Tigo Pesa',                icon: 'mobile-alt' },
+      airtel_money:  { label: 'Airtel Money',             icon: 'mobile-alt' },
+      halopesa:      { label: 'HaloPesa',                 icon: 'mobile-alt' },
+      cheque:        { label: 'Cheque',                   icon: 'pen' },
+      other:         { label: 'Other',                    icon: 'ellipsis-h' },
+    };
+    return map[key] || { label: raw ? String(raw) : 'Not specified', icon: 'question-circle' };
+  }
+  function renderPaymentsByMethod(data) {
+    const tbody = document.getElementById('pm-tbody');
+    if (!tbody) return;
+    if (!data.length) {
+      tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:30px;color:#94a3b8;">No records for selected filters</td></tr>';
+      return;
+    }
+    const totals = {};
+    data.forEach(r => {
+      const key = (r.payment_method || '').toString().trim().toLowerCase().replace(/[\s-]+/g, '_') || '_none';
+      if (!totals[key]) totals[key] = { raw: r.payment_method, count: 0, amount: 0 };
+      totals[key].count += 1;
+      totals[key].amount += parseFloat(r.amount_paid || 0);
+    });
+    const rows = Object.values(totals).sort((a, b) => b.amount - a.amount);
+    tbody.innerHTML = rows.map(row => {
+      const info = pmInfo(row.raw);
+      return `<tr>
+        <td><i class="fas fa-${info.icon}" style="color:#c9933a;margin-right:6px;"></i>${info.label}</td>
+        <td style="text-align:center;">${row.count}</td>
+        <td style="font-weight:600;color:#10b981;">${fmtTSH(row.amount)}</td>
+      </tr>`;
+    }).join('');
+  }
   function showToast(msg, type='success') {
     const t = document.getElementById('toast-container');
     const d = document.createElement('div'); d.className = `toast ${type}`; d.textContent = msg;
@@ -425,6 +486,7 @@
       const filtered = hk ? reportData.filter(r => (r.housekeeper_name || '').toLowerCase().includes(hk)) : reportData;
       renderStats(filtered);
       renderChart(filtered);
+      renderPaymentsByMethod(filtered);
       renderTable(filtered);
     } catch(err) {
       showToast('Failed to load report: ' + err.message, 'error');
