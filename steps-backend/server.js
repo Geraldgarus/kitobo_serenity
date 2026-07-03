@@ -44,6 +44,7 @@ async function ensurePaymentColumns() {
       ALTER TABLE sales_orders ADD COLUMN IF NOT EXISTS payment_status VARCHAR(20) DEFAULT 'paid';
       ALTER TABLE sales_orders ADD COLUMN IF NOT EXISTS amount_paid NUMERIC DEFAULT 0;
       ALTER TABLE sales_orders ADD COLUMN IF NOT EXISTS balance NUMERIC DEFAULT 0;
+      ALTER TABLE sales_orders ADD COLUMN IF NOT EXISTS payment_breakdown JSONB;
       UPDATE sales_orders SET amount_paid = total_amount WHERE payment_status = 'paid' AND amount_paid = 0;
     `);
     await pool.query(`
@@ -2893,28 +2894,33 @@ app.get('/api/purchase-orders/:id/items', async (req, res) => {
 
 // POST /api/sales - Save a completed sale
 app.post('/api/sales', async (req, res) => {
-  const { items, total_amount, cashier_id, cashier_name, pos_type, payment_method, waiter_name, payment_status, amount_paid } = req.body;
+  const { items, total_amount, cashier_id, cashier_name, pos_type, payment_method, waiter_name, amount_paid, payments } = req.body;
 
   if (!items || items.length === 0) {
     return res.status(400).json({ error: 'No items in sale' });
   }
 
-  const totalAmt = parseFloat(total_amount) || 0;
-  const paid     = payment_status === 'pending'
+  const totalAmt  = parseFloat(total_amount) || 0;
+  // amount_paid, when provided, is authoritative — status is always derived from it vs the total
+  // (omit it entirely to mean "paid in full", e.g. for older/simple callers).
+  const paid      = (amount_paid !== undefined && amount_paid !== null && amount_paid !== '')
     ? Math.max(0, parseFloat(amount_paid) || 0)
     : totalAmt;
-  const balance  = Math.max(0, totalAmt - paid);
-  const status   = paid <= 0 ? 'pending' : (balance > 0 ? 'partial' : 'paid');
+  const balance   = Math.max(0, totalAmt - paid);
+  const status    = paid <= 0 ? 'pending' : (balance > 0 ? 'partial' : 'paid');
+  const splitList = Array.isArray(payments) ? payments.filter(p => p && (parseFloat(p.amount) || 0) > 0) : [];
+  const method    = splitList.length > 1 ? 'split' : (splitList[0]?.method || payment_method || 'Cash');
+  const breakdown = splitList.length ? JSON.stringify(splitList) : null;
 
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
 
     const orderResult = await client.query(`
-      INSERT INTO sales_orders (cashier_id, cashier_name, total_amount, status, order_date, pos_type, payment_method, waiter_name, payment_status, amount_paid, balance)
-      VALUES ($1, $2, $3, 'completed', CURRENT_TIMESTAMP, $4, $5, $6, $7, $8, $9)
+      INSERT INTO sales_orders (cashier_id, cashier_name, total_amount, status, order_date, pos_type, payment_method, waiter_name, payment_status, amount_paid, balance, payment_breakdown)
+      VALUES ($1, $2, $3, 'completed', CURRENT_TIMESTAMP, $4, $5, $6, $7, $8, $9, $10)
       RETURNING id, order_number
-    `, [cashier_id || null, cashier_name, total_amount, pos_type || null, payment_method || 'Cash', waiter_name || null, status, paid, balance]);
+    `, [cashier_id || null, cashier_name, total_amount, pos_type || null, method, waiter_name || null, status, paid, balance, breakdown]);
     
     const saleId = orderResult.rows[0].id;
     const orderNumber = orderResult.rows[0].order_number;
@@ -2962,7 +2968,7 @@ app.get('/api/sales', async (req, res) => {
         SELECT
           so.id, so.order_number, so.cashier_name, so.waiter_name, so.total_amount,
           so.order_date, so.status, so.pos_type, so.payment_method,
-          so.payment_status, so.amount_paid, so.balance
+          so.payment_status, so.amount_paid, so.balance, so.payment_breakdown
         FROM sales_orders so
         ${where}
         ORDER BY so.order_date DESC
@@ -2974,7 +2980,7 @@ app.get('/api/sales', async (req, res) => {
       SELECT
         so.id, so.order_number, so.cashier_name, so.waiter_name, so.total_amount,
         so.order_date, so.status, so.pos_type, so.payment_method,
-        so.payment_status, so.amount_paid, so.balance,
+        so.payment_status, so.amount_paid, so.balance, so.payment_breakdown,
         COALESCE(json_agg(
           json_build_object(
             'item_name', si.item_name,
@@ -2996,17 +3002,23 @@ app.get('/api/sales', async (req, res) => {
   }
 });
 
-// DELETE /api/sales/:id - Delete a POS sale order
+// DELETE /api/sales/:id - Delete a POS sale order and its items
 app.delete('/api/sales/:id', async (req, res) => {
   const { id } = req.params;
+  const client = await pool.connect();
   try {
-    await pool.query('DELETE FROM sales_items WHERE sale_id = $1', [id]);
-    const { rowCount } = await pool.query('DELETE FROM sales_orders WHERE id = $1', [id]);
-    if (!rowCount) return res.status(404).json({ error: 'Sale not found' });
-    res.json({ success: true });
+    await client.query('BEGIN');
+    await client.query('DELETE FROM sales_items WHERE sale_id = $1', [id]);
+    const { rowCount } = await client.query('DELETE FROM sales_orders WHERE id = $1', [id]);
+    if (rowCount === 0) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'Sale not found' }); }
+    await client.query('COMMIT');
+    res.json({ success: true, message: 'Sale deleted successfully' });
   } catch (err) {
+    await client.query('ROLLBACK');
     console.error('DELETE /api/sales/:id error:', err);
     res.status(500).json({ error: err.message });
+  } finally {
+    client.release();
   }
 });
 
@@ -3014,21 +3026,23 @@ app.delete('/api/sales/:id', async (req, res) => {
 // Status is derived automatically: fully paid, partially paid (with remaining balance), or still pending.
 app.put('/api/sales/:id/settle', async (req, res) => {
   const { id } = req.params;
-  const { payment_method, amount_paid } = req.body;
+  const { payment_method, amount_paid, payments } = req.body;
   try {
     const existing = await pool.query('SELECT total_amount, payment_method FROM sales_orders WHERE id = $1', [id]);
     if (!existing.rows.length) return res.status(404).json({ error: 'Sale not found' });
 
-    const totalAmt = parseFloat(existing.rows[0].total_amount) || 0;
-    const paid     = Math.max(0, parseFloat(amount_paid));
+    const totalAmt  = parseFloat(existing.rows[0].total_amount) || 0;
+    const splitList = Array.isArray(payments) ? payments.filter(p => p && (parseFloat(p.amount) || 0) > 0) : [];
+    const paid      = splitList.length ? splitList.reduce((s, p) => s + (parseFloat(p.amount) || 0), 0) : Math.max(0, parseFloat(amount_paid));
     if (isNaN(paid)) return res.status(400).json({ error: 'amount_paid is required' });
-    const balance  = Math.max(0, totalAmt - paid);
-    const status   = paid <= 0 ? 'pending' : (balance > 0 ? 'partial' : 'paid');
-    const method   = payment_method || existing.rows[0].payment_method;
+    const balance   = Math.max(0, totalAmt - paid);
+    const status    = paid <= 0 ? 'pending' : (balance > 0 ? 'partial' : 'paid');
+    const method    = splitList.length > 1 ? 'split' : (splitList[0]?.method || payment_method || existing.rows[0].payment_method);
+    const breakdown = splitList.length ? JSON.stringify(splitList) : null;
 
     const { rows } = await pool.query(
-      `UPDATE sales_orders SET payment_status = $1, amount_paid = $2, balance = $3, payment_method = $4 WHERE id = $5 RETURNING *`,
-      [status, paid, balance, method, id]
+      `UPDATE sales_orders SET payment_status = $1, amount_paid = $2, balance = $3, payment_method = $4, payment_breakdown = $5 WHERE id = $6 RETURNING *`,
+      [status, paid, balance, method, breakdown, id]
     );
     res.json(rows[0]);
   } catch (err) {
@@ -3119,28 +3133,6 @@ app.get('/api/sales/top-products', async (req, res) => {
   } catch (err) {
     console.error('Error fetching top products:', err);
     res.status(500).json({ error: err.message });
-  }
-});
-
-
-
-// DELETE /api/sales/:id - Delete a sales order and its items
-app.delete('/api/sales/:id', async (req, res) => {
-  const { id } = req.params;
-  const client = await pool.connect();
-  try {
-    await client.query('BEGIN');
-    await client.query('DELETE FROM sales_items WHERE sale_id = $1', [id]);
-    const { rowCount } = await client.query('DELETE FROM sales_orders WHERE id = $1', [id]);
-    if (rowCount === 0) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'Sale not found' }); }
-    await client.query('COMMIT');
-    res.json({ message: 'Sale deleted successfully' });
-  } catch (err) {
-    await client.query('ROLLBACK');
-    console.error('Delete sale error:', err);
-    res.status(500).json({ error: err.message });
-  } finally {
-    client.release();
   }
 });
 

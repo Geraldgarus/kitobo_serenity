@@ -1101,4 +1101,8 @@ ALTER TABLE sales_orders ADD COLUMN IF NOT EXISTS amount_paid NUMERIC DEFAULT 0;
 ALTER TABLE sales_orders ADD COLUMN IF NOT EXISTS balance NUMERIC DEFAULT 0;
 UPDATE sales_orders SET amount_paid = total_amount WHERE payment_status = 'paid' AND amount_paid = 0;
 SELECT '✅ sales_orders payment_status/amount_paid/balance columns added!' as status;
+
+-- ─── Split payment breakdown on sales_orders (Bar/Restaurant POS Orders) ────
+ALTER TABLE sales_orders ADD COLUMN IF NOT EXISTS payment_breakdown JSONB;
+SELECT '✅ sales_orders.payment_breakdown column added!' as status;
 SELECT '✅ categories table created and seeded!' as status;

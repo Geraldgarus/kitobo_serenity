@@ -214,23 +214,7 @@
       </div>
 
       <div class="cart-footer">
-        <div style="display:flex; gap:12px; padding:8px 0 12px 0; align-items:flex-end;">
-          <div style="flex:1.2; min-width:0;">
-            <label style="font-size:12px;font-weight:600;color:#64748b;display:block;margin-bottom:4px;"><i class="fas fa-credit-card"></i> Payment Method</label>
-            <select id="bar-payment-method" class="form-control">
-              <option value="cash">Cash</option>
-              <option value="bank_transfer">Bank Transfer</option>
-              <option value="nbc">NBC</option>
-              <option value="nmb">NMB</option>
-              <option value="crdb">CRDB</option>
-              <option value="mpesa">M-Pesa</option>
-              <option value="tigo_pesa">Tigo Pesa</option>
-              <option value="airtel_money">Airtel Money</option>
-              <option value="halopesa">HaloPesa</option>
-              <option value="cheque">Cheque</option>
-              <option value="other">Other</option>
-            </select>
-          </div>
+        <div style="display:flex; gap:12px; padding:8px 0 10px 0; align-items:flex-end;">
           <div style="flex:1; min-width:0;">
             <label style="font-size:12px;font-weight:600;color:#64748b;display:block;margin-bottom:4px;"><i class="fas fa-user-tie"></i> Waiter</label>
             <input type="text" id="bar-waiter-name" class="form-control" placeholder="Waiter's name" autocomplete="off">
@@ -240,14 +224,14 @@
             <div style="font-size:18px;font-weight:700;color:#1a2340;padding:10px 0;" id="cart-total">TSh 0</div>
           </div>
         </div>
-        <div style="display:flex;align-items:center;gap:14px;padding-bottom:10px;flex-wrap:wrap;">
-          <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#64748b;cursor:pointer;">
-            <input type="checkbox" id="bar-pay-later" onchange="toggleBarPayLater()" style="width:15px;height:15px;cursor:pointer;">
-            <i class="fas fa-clock"></i> Pay Later (unpaid order)
-          </label>
-          <div id="bar-deposit-wrap" style="display:none;flex:1;min-width:150px;">
-            <input type="number" id="bar-deposit" class="form-control" placeholder="Deposit paid now (optional)" min="0" style="padding:7px 12px;font-size:12px;">
+        <div style="padding-bottom:10px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <label style="font-size:12px;font-weight:600;color:#64748b;"><i class="fas fa-credit-card"></i> Payment(s)</label>
+            <button type="button" onclick="addBarPaymentRow()" style="background:none;border:none;color:#c9933a;font-size:12px;font-weight:600;cursor:pointer;"><i class="fas fa-plus"></i> Split Payment</button>
           </div>
+          <div id="bar-payment-rows"></div>
+          <div style="font-size:10px;color:#94a3b8;margin-top:2px;">Leave amount blank to charge the full total via that method, or enter 0 for Pay Later (unpaid).</div>
+          <div id="bar-payment-summary" style="font-size:12px;font-weight:700;margin-top:6px;"></div>
         </div>
         <div class="action-buttons">
           <button class="btn-save" onclick="saveCurrentOrder()"><i class="fas fa-check-circle"></i> Confirm Payment</button>
@@ -572,21 +556,67 @@
     totalSpan.innerText = fmtTSH(grandTotal);
   }
 
-  function toggleBarPayLater() {
-    const payLater = document.getElementById('bar-pay-later').checked;
-    document.getElementById('bar-deposit-wrap').style.display = payLater ? 'block' : 'none';
-    if (!payLater) document.getElementById('bar-deposit').value = '';
+  function barPaymentOptionsHtml(selected) {
+    return PAYMENT_METHOD_OPTS_BAR.map(p => `<option value="${p.value}"${p.value === selected ? ' selected' : ''}>${escapeHtml(p.label)}</option>`).join('');
+  }
+  function addBarPaymentRow(method, amount) {
+    const container = document.getElementById('bar-payment-rows');
+    const row = document.createElement('div');
+    row.className = 'bar-pay-row';
+    row.style.cssText = 'display:flex;gap:8px;margin-bottom:6px;';
+    row.innerHTML = `
+      <select class="bar-pay-method form-control" style="flex:1.3;padding:8px 10px;font-size:13px;">${barPaymentOptionsHtml(method || 'cash')}</select>
+      <input type="number" class="bar-pay-amount form-control" style="flex:1;padding:8px 10px;font-size:13px;" min="0" placeholder="Full amount" value="${amount !== undefined && amount !== null ? amount : ''}">
+      <button type="button" title="Remove payment" style="background:#fee2e2;color:#ef4444;border:none;border-radius:8px;width:34px;cursor:pointer;flex-shrink:0;"><i class="fas fa-times"></i></button>
+    `;
+    row.querySelector('.bar-pay-amount').addEventListener('input', updateBarPaymentSummary);
+    row.querySelector('.bar-pay-method').addEventListener('change', updateBarPaymentSummary);
+    row.querySelector('button').addEventListener('click', () => {
+      if (document.querySelectorAll('#bar-payment-rows .bar-pay-row').length <= 1) { showToast('At least one payment method is required', 'error'); return; }
+      row.remove(); updateBarPaymentSummary();
+    });
+    container.appendChild(row);
+    updateBarPaymentSummary();
+  }
+  function resetBarPaymentRows() {
+    document.getElementById('bar-payment-rows').innerHTML = '';
+    addBarPaymentRow('cash');
+  }
+  function getBarPayments(total) {
+    const rowsEls = [...document.querySelectorAll('#bar-payment-rows .bar-pay-row')];
+    const raw = rowsEls.map(r => ({ method: r.querySelector('.bar-pay-method').value, raw: r.querySelector('.bar-pay-amount').value.trim() }));
+    const filledSum = raw.reduce((s, r) => s + (r.raw !== '' ? (parseFloat(r.raw) || 0) : 0), 0);
+    let autoUsed = false;
+    return raw.map(r => {
+      if (r.raw === '') {
+        if (!autoUsed) { autoUsed = true; return { method: r.method, amount: Math.max(0, total - filledSum) }; }
+        return { method: r.method, amount: 0 };
+      }
+      return { method: r.method, amount: parseFloat(r.raw) || 0 };
+    });
+  }
+  function updateBarPaymentSummary() {
+    const order = getCurrentOrder();
+    const total = order ? order.total : 0;
+    const payments = getBarPayments(total);
+    const paid = payments.reduce((s, p) => s + p.amount, 0);
+    const balance = Math.max(0, total - paid);
+    const el = document.getElementById('bar-payment-summary');
+    if (!el) return;
+    if (paid <= 0) { el.textContent = 'Pending — nothing collected yet'; el.style.color = '#991b1b'; }
+    else if (paid > total) { el.textContent = `Entered ${fmtTSH(paid)} exceeds order total ${fmtTSH(total)}`; el.style.color = '#ef4444'; }
+    else if (balance > 0) { el.textContent = `Partial — collecting ${fmtTSH(paid)} of ${fmtTSH(total)} (Balance ${fmtTSH(balance)})`; el.style.color = '#854d0e'; }
+    else { el.textContent = `Fully Paid — ${fmtTSH(paid)}`; el.style.color = '#166534'; }
   }
 
   async function saveCurrentOrder() {
     const order = getCurrentOrder();
     if (!order || order.items.length === 0) { showToast('No items in order', '<i class="fas fa-exclamation-triangle"></i>'); return; }
-    const paymentMethod = document.getElementById('bar-payment-method').value;
     const waiterName = document.getElementById('bar-waiter-name').value.trim();
     if (!waiterName) { showToast('Please enter the waiter\'s name', '<i class="fas fa-exclamation-triangle"></i>'); return; }
-    const payLater = document.getElementById('bar-pay-later').checked;
-    const paymentStatus = payLater ? 'pending' : 'paid';
-    const amountPaid = payLater ? (parseFloat(document.getElementById('bar-deposit').value) || 0) : order.total;
+    const payments = getBarPayments(order.total).filter(p => p.amount > 0);
+    const amountPaid = payments.reduce((s, p) => s + p.amount, 0);
+    const paymentMethod = payments.length > 1 ? 'split' : (payments[0]?.method || 'cash');
     const btn = document.querySelector('.btn-save');
     if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...'; }
     try {
@@ -621,8 +651,8 @@
         waiter_name: waiterName,
         pos_type: 'bar',
         payment_method: paymentMethod,
-        payment_status: paymentStatus,
-        amount_paid: amountPaid
+        amount_paid: amountPaid,
+        payments: payments
       };
       const result = await apiPost('/api/sales', saleData);
       const receiptData = {
@@ -638,12 +668,13 @@
       orders = orders.filter(o => o.id !== order.id);
       currentOrderId = orders.length > 0 ? orders[0].id : null;
       document.getElementById('bar-waiter-name').value = '';
-      document.getElementById('bar-pay-later').checked = false;
-      toggleBarPayLater();
+      resetBarPaymentRows();
       await loadItems();
       renderOrderTabs(); renderCurrentOrder();
-      const statusMsg = paymentStatus === 'pending' ? ` (marked Pending — balance ${fmtTSH(order.total - amountPaid)})` : '';
-      showToast(`Order #${order.orderNumber} saved — ${fmtTSH(receiptData.total)} via ${paymentMethod}${statusMsg}.`, '<i class="fas fa-check-circle"></i>');
+      const balance = Math.max(0, order.total - amountPaid);
+      const methodMsg = payments.length > 1 ? `split across ${payments.length} methods` : `via ${paymentMethod}`;
+      const statusMsg = amountPaid <= 0 ? ' (marked Pending)' : balance > 0 ? ` (Partial — balance ${fmtTSH(balance)})` : '';
+      showToast(`Order #${order.orderNumber} saved — ${fmtTSH(receiptData.total)} ${methodMsg}${statusMsg}.`, '<i class="fas fa-check-circle"></i>');
       if (confirm('Print receipt?')) printReceipt(receiptData);
     } catch (err) {
       console.error('Save error:', err);
@@ -728,7 +759,7 @@
   window.switchToOrder = switchToOrder;
   window.deleteOrder = deleteOrder;
   window.selectCategory = selectCategory;
-  window.toggleBarPayLater = toggleBarPayLater;
+  window.addBarPaymentRow = addBarPaymentRow;
 </script>
 
 <!-- POS Chooser Modal -->
@@ -838,15 +869,23 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')closePOSChoo
     tbody.innerHTML = rows.map(o => {
       const status = o.payment_status || 'paid';
       const [bg, fg, label] = badgeStyle[status] || badgeStyle.paid;
-      const pmOpt = PAYMENT_METHOD_OPTS_BAR.find(p => p.value === (o.payment_method || '').toLowerCase());
-      const pmLabel = pmOpt ? pmOpt.label : (o.payment_method || '—');
+      let pmCell;
+      if (o.payment_method === 'split' && Array.isArray(o.payment_breakdown) && o.payment_breakdown.length) {
+        pmCell = o.payment_breakdown.map(p => {
+          const opt = PAYMENT_METHOD_OPTS_BAR.find(x => x.value === (p.method || '').toLowerCase());
+          return `<div>${escapeHtml(opt ? opt.label : p.method)}: ${fmtTSH(p.amount)}</div>`;
+        }).join('');
+      } else {
+        const pmOpt = PAYMENT_METHOD_OPTS_BAR.find(p => p.value === (o.payment_method || '').toLowerCase());
+        pmCell = escapeHtml(pmOpt ? pmOpt.label : (o.payment_method || '—'));
+      }
       const dt = new Date(o.order_date);
       const dateStr = isNaN(dt) ? '—' : dt.toLocaleDateString() + ' ' + dt.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
       return `<tr>
         <td style="padding:10px 8px;border-bottom:1px solid #f1f5f9;">${dateStr}</td>
         <td style="padding:10px 8px;border-bottom:1px solid #f1f5f9;">#${escapeHtml(String(o.order_number))}</td>
         <td style="padding:10px 8px;border-bottom:1px solid #f1f5f9;">${escapeHtml(o.waiter_name || '—')}</td>
-        <td style="padding:10px 8px;border-bottom:1px solid #f1f5f9;">${escapeHtml(pmLabel)}</td>
+        <td style="padding:10px 8px;border-bottom:1px solid #f1f5f9;font-size:12px;">${pmCell}</td>
         <td style="padding:10px 8px;border-bottom:1px solid #f1f5f9;">
           <span style="padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:${bg};color:${fg};">${label}</span>
           ${status !== 'paid' ? `<div style="font-size:10px;color:#94a3b8;margin-top:2px;">Bal: ${fmtTSH(o.balance)}</div>` : ''}
@@ -917,7 +956,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')closePOSChoo
     document.getElementById('settle-paid-so-far').textContent = fmtTSH(o.amount_paid);
     const sel = document.getElementById('settle-payment-method');
     sel.innerHTML = PAYMENT_METHOD_OPTS_BAR.map(p => `<option value="${p.value}">${escapeHtml(p.label)}</option>`).join('');
-    sel.value = (o.payment_method || 'cash').toLowerCase();
+    sel.value = (o.payment_method && o.payment_method !== 'split' ? o.payment_method : 'cash').toLowerCase();
     document.getElementById('settle-amount-paid').value = o.total_amount;
     updateSettlePreview();
     document.getElementById('settle-modal-overlay').style.display = 'flex';
@@ -1087,82 +1126,8 @@ const PAYMENT_METHOD_OPTS_BAR = [
   { value: 'cheque',        icon: '<i class="fas fa-pen"              style="color:#6366f1;font-size:14px;width:16px;text-align:center"></i>', label: 'Cheque' },
   { value: 'other',         icon: '<i class="fas fa-ellipsis-h"       style="color:#94a3b8;font-size:14px;width:16px;text-align:center"></i>', label: 'Other' },
 ];
-function initPayIconSelectBAR(selectId, opts) {
-  const select = document.getElementById(selectId);
-  if (!select || select.dataset.iselDone) return;
-  select.dataset.iselDone = '1';
-  const wrapper = document.createElement('div');
-  wrapper.style.cssText = 'position:relative;';
-  select.parentNode.insertBefore(wrapper, select);
-  wrapper.appendChild(select);
-  select.style.setProperty('display', 'none', 'important');
-  const trigger = document.createElement('div');
-  trigger.className = 'form-control';
-  trigger.style.cssText = 'display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;';
-  trigger.innerHTML = '<span class="isel-icon" style="width:16px;text-align:center;flex-shrink:0"></span><span class="isel-text" style="flex:1;color:#1e2a3e;font-size:0.9rem"></span><i class="fas fa-chevron-down" style="color:#94a3b8;font-size:11px;transition:transform 0.2s;flex-shrink:0"></i>';
-  const dropdown = document.createElement('div');
-  dropdown.style.cssText = 'display:none;position:fixed;background:white;border:1px solid #c9933a;border-radius:12px;z-index:99999;box-shadow:0 6px 20px rgba(0,0,0,0.15);overflow:hidden;min-width:220px;';
-  opts.forEach(opt => {
-    const div = document.createElement('div');
-    div.dataset.value = opt.value;
-    div.style.cssText = 'display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;font-size:0.88rem;';
-    div.innerHTML = opt.icon + '<span>' + opt.label + '</span>';
-    div.addEventListener('mouseenter', () => { div.style.background = '#f5f3ef'; });
-    div.addEventListener('mouseleave', () => { div.style.background = div._sel ? '#fef9f0' : ''; });
-    dropdown.appendChild(div);
-  });
-  document.body.appendChild(dropdown);
-  wrapper.appendChild(trigger);
-  function positionDropdown() {
-    dropdown.style.visibility = 'hidden';
-    dropdown.style.display = 'block';
-    const r = trigger.getBoundingClientRect();
-    const dropdownHeight = dropdown.offsetHeight;
-    const spaceBelow = window.innerHeight - r.bottom;
-    const spaceAbove = r.top;
-    if (spaceBelow < dropdownHeight + 8 && spaceAbove > spaceBelow) {
-      dropdown.style.top = (r.top - dropdownHeight - 4) + 'px';
-    } else {
-      dropdown.style.top = (r.bottom + 4) + 'px';
-    }
-    dropdown.style.left = r.left + 'px';
-    dropdown.style.width = r.width + 'px';
-    dropdown.style.visibility = '';
-  }
-  function updateDisplay(value) {
-    const opt = opts.find(o => o.value === value) || opts[0];
-    if (!opt) return;
-    trigger.querySelector('.isel-icon').innerHTML = opt.icon;
-    trigger.querySelector('.isel-text').textContent = opt.label;
-    dropdown.querySelectorAll('[data-value]').forEach(el => {
-      const sel = el.dataset.value === value;
-      el._sel = sel;
-      el.style.background = sel ? '#fef9f0' : '';
-      el.style.fontWeight = sel ? '600' : '';
-    });
-  }
-  updateDisplay(select.value);
-  trigger.addEventListener('click', e => {
-    e.stopPropagation();
-    const isOpen = dropdown.style.display === 'block';
-    document.querySelectorAll('[data-isel-open]').forEach(d => { d.style.display = 'none'; delete d.dataset.iselOpen; });
-    if (!isOpen) { positionDropdown(); dropdown.style.display = 'block'; dropdown.dataset.iselOpen = '1'; const ch = trigger.querySelector('.fa-chevron-down'); if (ch) ch.style.transform = 'rotate(180deg)'; }
-    else { const ch = trigger.querySelector('.fa-chevron-down'); if (ch) ch.style.transform = ''; }
-  });
-  document.addEventListener('click', () => {
-    if (dropdown.style.display === 'block') { dropdown.style.display = 'none'; delete dropdown.dataset.iselOpen; const ch = trigger.querySelector('.fa-chevron-down'); if (ch) ch.style.transform = ''; }
-  });
-  const nativeDesc = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value');
-  const nativeSet = nativeDesc.set;
-  dropdown.addEventListener('click', e => {
-    const optEl = e.target.closest('[data-value]'); if (!optEl) return; e.stopPropagation();
-    const val = optEl.dataset.value; nativeSet.call(select, val); select.dispatchEvent(new Event('change', { bubbles: true })); updateDisplay(val);
-    dropdown.style.display = 'none'; delete dropdown.dataset.iselOpen; const ch = trigger.querySelector('.fa-chevron-down'); if (ch) ch.style.transform = '';
-  });
-  Object.defineProperty(select, 'value', { get: () => nativeDesc.get.call(select), set: v => { nativeSet.call(select, v); updateDisplay(v); }, configurable: true });
-}
 document.addEventListener('DOMContentLoaded', function() {
-  initPayIconSelectBAR('bar-payment-method', PAYMENT_METHOD_OPTS_BAR);
+  resetBarPaymentRows();
 });
 </script>
 </body>
