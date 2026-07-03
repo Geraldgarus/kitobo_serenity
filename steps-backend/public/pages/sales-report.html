@@ -287,7 +287,7 @@
     <div style="padding: 20px; border-bottom: 1px solid #e2e8f0;"><h3><i class="fas fa-receipt"></i> POS Sales Details (Bar &amp; Restaurant)</h3></div>
     <div style="overflow-x: auto;">
       <table class="data-table" id="sales-table">
-        <thead><tr><th>Date</th><th>Order #</th><th>POS</th><th>Payment Method</th><th>Cashier</th><th>Items</th><th>Total Amount</th><th>Action</th></tr></thead>
+        <thead><tr><th>Date</th><th>Order #</th><th>POS</th><th>Payment Method</th><th>Waiter</th><th>Items</th><th>Total Amount</th><th>Action</th></tr></thead>
         <tbody id="sales-body"><tr><td colspan="8" class="empty-state">Select a date range and click Apply Filter</td></tr></tbody>
       </table>
     </div>
@@ -423,7 +423,7 @@ async function loadSalesReport() {
       salesData = orders.map(order => ({
         id: order.id,
         order_number: order.order_number,
-        cashier: order.cashier_name,
+        cashier: order.waiter_name || order.cashier_name || '—',
         date: order.order_date,
         total: order.total_amount,
         pos_type: order.pos_type || '',
@@ -706,7 +706,7 @@ async function loadSalesReport() {
   }
   
   function exportToCSV() {
-    let csv = 'Date,Order Number,POS,Payment Method,Cashier,Items Count,Total Amount (TSH)\n';
+    let csv = 'Date,Order Number,POS,Payment Method,Waiter,Items Count,Total Amount (TSH)\n';
 
     salesData.forEach(sale => {
       const totalItems = sale.items.reduce((sum, i) => sum + i.quantity, 0);
