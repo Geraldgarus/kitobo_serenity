@@ -2899,9 +2899,12 @@ app.post('/api/sales', async (req, res) => {
     return res.status(400).json({ error: 'No items in sale' });
   }
 
-  const status = payment_status === 'pending' ? 'pending' : 'paid';
-  const paid   = status === 'pending' ? (parseFloat(amount_paid) || 0) : parseFloat(total_amount) || 0;
-  const balance = Math.max(0, (parseFloat(total_amount) || 0) - paid);
+  const totalAmt = parseFloat(total_amount) || 0;
+  const paid     = payment_status === 'pending'
+    ? Math.max(0, parseFloat(amount_paid) || 0)
+    : totalAmt;
+  const balance  = Math.max(0, totalAmt - paid);
+  const status   = paid <= 0 ? 'pending' : (balance > 0 ? 'partial' : 'paid');
 
   const client = await pool.connect();
   try {
@@ -2991,15 +2994,26 @@ app.delete('/api/sales/:id', async (req, res) => {
   }
 });
 
-// PUT /api/sales/:id/settle - Mark a pending POS order as fully paid
+// PUT /api/sales/:id/settle - Record a payment against a pending/partial POS order.
+// Status is derived automatically: fully paid, partially paid (with remaining balance), or still pending.
 app.put('/api/sales/:id/settle', async (req, res) => {
   const { id } = req.params;
+  const { payment_method, amount_paid } = req.body;
   try {
+    const existing = await pool.query('SELECT total_amount, payment_method FROM sales_orders WHERE id = $1', [id]);
+    if (!existing.rows.length) return res.status(404).json({ error: 'Sale not found' });
+
+    const totalAmt = parseFloat(existing.rows[0].total_amount) || 0;
+    const paid     = Math.max(0, parseFloat(amount_paid));
+    if (isNaN(paid)) return res.status(400).json({ error: 'amount_paid is required' });
+    const balance  = Math.max(0, totalAmt - paid);
+    const status   = paid <= 0 ? 'pending' : (balance > 0 ? 'partial' : 'paid');
+    const method   = payment_method || existing.rows[0].payment_method;
+
     const { rows } = await pool.query(
-      `UPDATE sales_orders SET payment_status = 'paid', amount_paid = total_amount, balance = 0 WHERE id = $1 RETURNING *`,
-      [id]
+      `UPDATE sales_orders SET payment_status = $1, amount_paid = $2, balance = $3, payment_method = $4 WHERE id = $5 RETURNING *`,
+      [status, paid, balance, method, id]
     );
-    if (!rows.length) return res.status(404).json({ error: 'Sale not found' });
     res.json(rows[0]);
   } catch (err) {
     console.error('PUT /api/sales/:id/settle error:', err);
