@@ -872,13 +872,13 @@ app.delete('/api/reservations/:id', async (req, res) => {
 // ════════════════════════════════════════════════════════════════════════════
 
 // GET /api/reports/summary?from=&to=
-// Counts and revenue are attributed to booking date (created_at), not stay dates.
+// A reservation is included if its stay (checkin..checkout) overlaps the from/to range.
 app.get('/api/reports/summary', async (req, res) => {
   const { from, to } = req.query;
   const conditions = [];
   const values     = [];
-  if (from) { values.push(from); conditions.push(`r.created_at::date >= $${values.length}::date`); }
-  if (to)   { values.push(to);   conditions.push(`r.created_at::date <= $${values.length}::date`); }
+  if (from) { values.push(from); conditions.push(`r.checkout >= $${values.length}::date`); }
+  if (to)   { values.push(to);   conditions.push(`r.checkin <= $${values.length}::date`); }
   const where = conditions.length ? 'WHERE ' + conditions.join(' AND ') : '';
 
   try {
@@ -930,7 +930,7 @@ app.get('/api/reports/summary', async (req, res) => {
 });
 
 // GET /api/reports/reservations?from=&to=
-// Revenue is attributed to booking date (created_at), NOT spread across stay nights
+// A reservation is included if its stay (checkin..checkout) overlaps the from/to range.
 app.get('/api/reports/reservations', async (req, res) => {
   const { from, to } = req.query;
   let query = `
