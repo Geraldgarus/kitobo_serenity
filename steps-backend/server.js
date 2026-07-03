@@ -4109,9 +4109,11 @@ app.delete('/api/expenses/:id', async (req, res) => {
 app.get('/api/reports/profit-summary', async (req, res) => {
   const { from, to } = req.query;
 
+  // Stay-date overlap: a reservation counts if its checkin..checkout range
+  // overlaps the filter range, so e.g. a 2-4 Jul stay is included when filtering 3-4 Jul.
   const resParams = []; let resWhere = 'WHERE 1=1'; let rp = 1;
-  if (from) { resWhere += ` AND created_at::date >= $${rp++}::date`; resParams.push(from); }
-  if (to)   { resWhere += ` AND created_at::date <= $${rp++}::date`; resParams.push(to); }
+  if (from) { resWhere += ` AND checkout >= $${rp++}::date`; resParams.push(from); }
+  if (to)   { resWhere += ` AND checkin <= $${rp++}::date`; resParams.push(to); }
 
   const salesParams = []; let salesWhere = 'WHERE 1=1'; let sp = 1;
   if (from) { salesWhere += ` AND order_date >= $${sp++}::date`; salesParams.push(from); }
