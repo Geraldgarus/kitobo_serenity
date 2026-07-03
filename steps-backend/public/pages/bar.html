@@ -227,10 +227,13 @@
         <div style="padding-bottom:10px;">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
             <label style="font-size:12px;font-weight:600;color:#64748b;"><i class="fas fa-credit-card"></i> Payment(s)</label>
-            <button type="button" onclick="addBarPaymentRow()" style="background:none;border:none;color:#c9933a;font-size:12px;font-weight:600;cursor:pointer;"><i class="fas fa-plus"></i> Split Payment</button>
+            <div style="display:flex;gap:16px;">
+              <button type="button" onclick="setBarPayLater()" style="background:none;border:none;color:#991b1b;font-size:12px;font-weight:600;cursor:pointer;"><i class="fas fa-clock"></i> Pay Later</button>
+              <button type="button" onclick="addBarPaymentRow()" style="background:none;border:none;color:#c9933a;font-size:12px;font-weight:600;cursor:pointer;"><i class="fas fa-plus"></i> Split Payment</button>
+            </div>
           </div>
           <div id="bar-payment-rows"></div>
-          <div style="font-size:10px;color:#94a3b8;margin-top:2px;">Leave amount blank to charge the full total via that method, or enter 0 for Pay Later (unpaid).</div>
+          <div style="font-size:10px;color:#94a3b8;margin-top:2px;">Leave amount blank to charge the full total via that method.</div>
           <div id="bar-payment-summary" style="font-size:12px;font-weight:700;margin-top:6px;"></div>
         </div>
         <div class="action-buttons">
@@ -582,6 +585,10 @@
     document.getElementById('bar-payment-rows').innerHTML = '';
     addBarPaymentRow('cash');
   }
+  function setBarPayLater() {
+    document.getElementById('bar-payment-rows').innerHTML = '';
+    addBarPaymentRow('cash', 0);
+  }
   function getBarPayments(total) {
     const rowsEls = [...document.querySelectorAll('#bar-payment-rows .bar-pay-row')];
     const raw = rowsEls.map(r => ({ method: r.querySelector('.bar-pay-method').value, raw: r.querySelector('.bar-pay-amount').value.trim() }));
@@ -760,6 +767,7 @@
   window.deleteOrder = deleteOrder;
   window.selectCategory = selectCategory;
   window.addBarPaymentRow = addBarPaymentRow;
+  window.setBarPayLater = setBarPayLater;
 </script>
 
 <!-- POS Chooser Modal -->

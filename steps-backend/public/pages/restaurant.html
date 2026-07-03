@@ -227,10 +227,13 @@
         <div style="padding-bottom:10px;">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
             <label style="font-size:12px;font-weight:600;color:#64748b;"><i class="fas fa-credit-card"></i> Payment(s)</label>
-            <button type="button" onclick="addRestaurantPaymentRow()" style="background:none;border:none;color:#d97706;font-size:12px;font-weight:600;cursor:pointer;"><i class="fas fa-plus"></i> Split Payment</button>
+            <div style="display:flex;gap:16px;">
+              <button type="button" onclick="setRestaurantPayLater()" style="background:none;border:none;color:#991b1b;font-size:12px;font-weight:600;cursor:pointer;"><i class="fas fa-clock"></i> Pay Later</button>
+              <button type="button" onclick="addRestaurantPaymentRow()" style="background:none;border:none;color:#d97706;font-size:12px;font-weight:600;cursor:pointer;"><i class="fas fa-plus"></i> Split Payment</button>
+            </div>
           </div>
           <div id="restaurant-payment-rows"></div>
-          <div style="font-size:10px;color:#94a3b8;margin-top:2px;">Leave amount blank to charge the full total via that method, or enter 0 for Pay Later (unpaid).</div>
+          <div style="font-size:10px;color:#94a3b8;margin-top:2px;">Leave amount blank to charge the full total via that method.</div>
           <div id="restaurant-payment-summary" style="font-size:12px;font-weight:700;margin-top:6px;"></div>
         </div>
         <div class="action-buttons">
@@ -588,6 +591,10 @@
     document.getElementById('restaurant-payment-rows').innerHTML = '';
     addRestaurantPaymentRow('cash');
   }
+  function setRestaurantPayLater() {
+    document.getElementById('restaurant-payment-rows').innerHTML = '';
+    addRestaurantPaymentRow('cash', 0);
+  }
   function getRestaurantPayments(total) {
     const rowsEls = [...document.querySelectorAll('#restaurant-payment-rows .restaurant-pay-row')];
     const raw = rowsEls.map(r => ({ method: r.querySelector('.restaurant-pay-method').value, raw: r.querySelector('.restaurant-pay-amount').value.trim() }));
@@ -747,6 +754,7 @@
   window.deleteOrder = deleteOrder;
   window.selectCategory = selectCategory;
   window.addRestaurantPaymentRow = addRestaurantPaymentRow;
+  window.setRestaurantPayLater = setRestaurantPayLater;
 </script>
 
 <!-- POS Chooser Modal -->
