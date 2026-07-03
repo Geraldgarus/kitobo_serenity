@@ -561,6 +561,83 @@
   function barPaymentOptionsHtml(selected) {
     return '<option value="">-Select Payment-</option>' + PAYMENT_METHOD_OPTS_BAR.map(p => `<option value="${p.value}"${p.value === selected ? ' selected' : ''}>${escapeHtml(p.label)}</option>`).join('');
   }
+  // Converts a plain <select> into an icon+label dropdown (native <option> can't hold icons).
+  // Reused for every payment-method select created dynamically at checkout and in Settle.
+  function initPayIconSelect(select, baseOpts) {
+    if (!select || select.dataset.iselDone) return;
+    select.dataset.iselDone = '1';
+    const opts = [{ value: '', icon: '<i class="fas fa-credit-card" style="color:#94a3b8;font-size:14px;width:16px;text-align:center"></i>', label: '-Select Payment-' }].concat(baseOpts);
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = 'position:relative;flex:' + (select.style.flex || '1') + ';';
+    select.parentNode.insertBefore(wrapper, select);
+    wrapper.appendChild(select);
+    select.style.setProperty('display', 'none', 'important');
+    const trigger = document.createElement('div');
+    trigger.className = 'form-control';
+    trigger.style.cssText = 'display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;padding:8px 10px;font-size:13px;';
+    trigger.innerHTML = '<span class="isel-icon" style="width:16px;text-align:center;flex-shrink:0"></span><span class="isel-text" style="flex:1;color:#1e2a3e;"></span><i class="fas fa-chevron-down" style="color:#94a3b8;font-size:11px;transition:transform 0.2s;flex-shrink:0"></i>';
+    const dropdown = document.createElement('div');
+    dropdown.style.cssText = 'display:none;position:fixed;background:white;border:1px solid #c9933a;border-radius:12px;z-index:99999;box-shadow:0 6px 20px rgba(0,0,0,0.15);overflow-y:auto;max-height:280px;min-width:200px;';
+    opts.forEach(opt => {
+      const div = document.createElement('div');
+      div.dataset.value = opt.value;
+      div.style.cssText = 'display:flex;align-items:center;gap:10px;padding:9px 12px;cursor:pointer;font-size:0.85rem;';
+      div.innerHTML = opt.icon + '<span>' + opt.label + '</span>';
+      div.addEventListener('mouseenter', () => { div.style.background = '#f5f3ef'; });
+      div.addEventListener('mouseleave', () => { div.style.background = div._sel ? '#fef9f0' : ''; });
+      dropdown.appendChild(div);
+    });
+    document.body.appendChild(dropdown);
+    select._iselDropdown = dropdown;
+    wrapper.appendChild(trigger);
+    function positionDropdown() {
+      dropdown.style.visibility = 'hidden';
+      dropdown.style.display = 'block';
+      const r = trigger.getBoundingClientRect();
+      const dropdownHeight = dropdown.offsetHeight;
+      const spaceBelow = window.innerHeight - r.bottom;
+      const spaceAbove = r.top;
+      if (spaceBelow < dropdownHeight + 8 && spaceAbove > spaceBelow) {
+        dropdown.style.top = (r.top - dropdownHeight - 4) + 'px';
+      } else {
+        dropdown.style.top = (r.bottom + 4) + 'px';
+      }
+      dropdown.style.left = r.left + 'px';
+      dropdown.style.width = Math.max(r.width, 200) + 'px';
+      dropdown.style.visibility = '';
+    }
+    function updateDisplay(value) {
+      const opt = opts.find(o => o.value === value) || opts[0];
+      if (!opt) return;
+      trigger.querySelector('.isel-icon').innerHTML = opt.icon;
+      trigger.querySelector('.isel-text').textContent = opt.label;
+      dropdown.querySelectorAll('[data-value]').forEach(el => {
+        const sel = el.dataset.value === value;
+        el._sel = sel;
+        el.style.background = sel ? '#fef9f0' : '';
+        el.style.fontWeight = sel ? '600' : '';
+      });
+    }
+    updateDisplay(select.value);
+    trigger.addEventListener('click', e => {
+      e.stopPropagation();
+      const isOpen = dropdown.style.display === 'block';
+      document.querySelectorAll('[data-isel-open]').forEach(d => { d.style.display = 'none'; delete d.dataset.iselOpen; });
+      if (!isOpen) { positionDropdown(); dropdown.style.display = 'block'; dropdown.dataset.iselOpen = '1'; const ch = trigger.querySelector('.fa-chevron-down'); if (ch) ch.style.transform = 'rotate(180deg)'; }
+      else { const ch = trigger.querySelector('.fa-chevron-down'); if (ch) ch.style.transform = ''; }
+    });
+    document.addEventListener('click', () => {
+      if (dropdown.style.display === 'block') { dropdown.style.display = 'none'; delete dropdown.dataset.iselOpen; const ch = trigger.querySelector('.fa-chevron-down'); if (ch) ch.style.transform = ''; }
+    });
+    const nativeDesc = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value');
+    const nativeSet = nativeDesc.set;
+    dropdown.addEventListener('click', e => {
+      const optEl = e.target.closest('[data-value]'); if (!optEl) return; e.stopPropagation();
+      const val = optEl.dataset.value; nativeSet.call(select, val); select.dispatchEvent(new Event('change', { bubbles: true })); updateDisplay(val);
+      dropdown.style.display = 'none'; delete dropdown.dataset.iselOpen; const ch = trigger.querySelector('.fa-chevron-down'); if (ch) ch.style.transform = '';
+    });
+    Object.defineProperty(select, 'value', { get: () => nativeDesc.get.call(select), set: v => { nativeSet.call(select, v); updateDisplay(v); }, configurable: true });
+  }
   function addBarPaymentRow(method, amount) {
     const container = document.getElementById('bar-payment-rows');
     const row = document.createElement('div');
@@ -571,21 +648,29 @@
       <input type="number" class="bar-pay-amount form-control" style="flex:1;padding:8px 10px;font-size:13px;" min="0" placeholder="Full amount" value="${amount !== undefined && amount !== null ? amount : ''}">
       <button type="button" title="Remove payment" style="background:#fee2e2;color:#ef4444;border:none;border-radius:8px;width:34px;cursor:pointer;flex-shrink:0;"><i class="fas fa-times"></i></button>
     `;
+    const methodSelect = row.querySelector('.bar-pay-method');
+    methodSelect.addEventListener('change', updateBarPaymentSummary);
     row.querySelector('.bar-pay-amount').addEventListener('input', updateBarPaymentSummary);
-    row.querySelector('.bar-pay-method').addEventListener('change', updateBarPaymentSummary);
     row.querySelector('button').addEventListener('click', () => {
       if (document.querySelectorAll('#bar-payment-rows .bar-pay-row').length <= 1) { showToast('At least one payment method is required', 'error'); return; }
+      if (methodSelect._iselDropdown) methodSelect._iselDropdown.remove();
       row.remove(); updateBarPaymentSummary();
     });
     container.appendChild(row);
+    initPayIconSelect(methodSelect, PAYMENT_METHOD_OPTS_BAR);
     updateBarPaymentSummary();
   }
+  function clearPaymentRows(containerId) {
+    const container = document.getElementById(containerId);
+    container.querySelectorAll('select').forEach(sel => { if (sel._iselDropdown) sel._iselDropdown.remove(); });
+    container.innerHTML = '';
+  }
   function resetBarPaymentRows() {
-    document.getElementById('bar-payment-rows').innerHTML = '';
+    clearPaymentRows('bar-payment-rows');
     addBarPaymentRow('');
   }
   function setBarPayLater() {
-    document.getElementById('bar-payment-rows').innerHTML = '';
+    clearPaymentRows('bar-payment-rows');
     addBarPaymentRow('', 0);
   }
   function getBarPayments(total) {
@@ -969,13 +1054,16 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')closePOSChoo
       <input type="number" class="settle-pay-amount form-control" style="flex:1;padding:8px 10px;font-size:13px;" min="0" placeholder="Amount" value="${amount !== undefined && amount !== null ? amount : ''}">
       <button type="button" title="Remove payment" style="background:#fee2e2;color:#ef4444;border:none;border-radius:8px;width:34px;cursor:pointer;flex-shrink:0;"><i class="fas fa-times"></i></button>
     `;
+    const methodSelect = row.querySelector('.settle-pay-method');
+    methodSelect.addEventListener('change', updateSettlePreview);
     row.querySelector('.settle-pay-amount').addEventListener('input', updateSettlePreview);
-    row.querySelector('.settle-pay-method').addEventListener('change', updateSettlePreview);
     row.querySelector('button').addEventListener('click', () => {
       if (document.querySelectorAll('#settle-payment-rows .settle-pay-row').length <= 1) { showToast('At least one payment method is required', 'error'); return; }
+      if (methodSelect._iselDropdown) methodSelect._iselDropdown.remove();
       row.remove(); updateSettlePreview();
     });
     container.appendChild(row);
+    initPayIconSelect(methodSelect, PAYMENT_METHOD_OPTS_BAR);
     updateSettlePreview();
   }
   function getSettlePayments() {
@@ -991,7 +1079,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')closePOSChoo
     document.getElementById('settle-order-number').textContent = '#' + o.order_number;
     document.getElementById('settle-total').textContent = fmtTSH(o.total_amount);
     document.getElementById('settle-paid-so-far').textContent = fmtTSH(o.amount_paid);
-    document.getElementById('settle-payment-rows').innerHTML = '';
+    clearPaymentRows('settle-payment-rows');
     if (o.payment_method === 'split' && Array.isArray(o.payment_breakdown) && o.payment_breakdown.length) {
       o.payment_breakdown.forEach(p => addSettlePaymentRow(p.method, p.amount));
     } else {
