@@ -236,7 +236,7 @@
           <div id="restaurant-payment-summary" style="font-size:12px;font-weight:700;margin-top:6px;"></div>
         </div>
         <div class="action-buttons">
-          <button class="btn-save" onclick="saveCurrentOrder()"><i class="fas fa-check-circle"></i> Confirm Payment</button>
+          <button class="btn-save" onclick="saveCurrentOrder()"><i class="fas fa-check-circle"></i> Confirm Order</button>
           <button class="btn-print" onclick="printCurrentOrder()"><i class="fas fa-print"></i> Print Receipt</button>
           <button class="btn-cancel" onclick="clearCurrentOrder()"><i class="fas fa-times"></i> Cancel Order</button>
         </div>
@@ -760,7 +760,7 @@
       console.error('Save error:', err);
       showToast('Payment failed: ' + err.message, '<i class="fas fa-times-circle"></i>');
     } finally {
-      if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-check-circle"></i> Confirm Payment'; }
+      if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-check-circle"></i> Confirm Order'; }
     }
   }
 
