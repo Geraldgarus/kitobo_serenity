@@ -1094,4 +1094,11 @@ INSERT INTO categories (name, type) VALUES
   ('Water','expense'),('Electricity','expense'),('Internet','expense'),('Salary','expense'),('Maintenance','expense'),('Office Supplies','expense'),('Marketing and Advertising','expense'),('Other','expense'),
   ('bar','purchase_order'),('kitchen','purchase_order'),('housekeeping','purchase_order'),('other','purchase_order')
 ON CONFLICT (name, type) DO NOTHING;
+
+-- ─── Payment status / pay-later on sales_orders (Bar/Restaurant POS Orders) ─
+ALTER TABLE sales_orders ADD COLUMN IF NOT EXISTS payment_status VARCHAR(20) DEFAULT 'paid';
+ALTER TABLE sales_orders ADD COLUMN IF NOT EXISTS amount_paid NUMERIC DEFAULT 0;
+ALTER TABLE sales_orders ADD COLUMN IF NOT EXISTS balance NUMERIC DEFAULT 0;
+UPDATE sales_orders SET amount_paid = total_amount WHERE payment_status = 'paid' AND amount_paid = 0;
+SELECT '✅ sales_orders payment_status/amount_paid/balance columns added!' as status;
 SELECT '✅ categories table created and seeded!' as status;

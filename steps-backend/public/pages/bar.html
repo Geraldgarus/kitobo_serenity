@@ -160,6 +160,7 @@
     <div><div class="page-title"><i class="fas fa-wine-glass-alt" style="color:#7c3aed;margin-right:8px;"></i>Bar POS</div><div class="page-subtitle">Multi-Order Management</div></div>
   </div>
   <div class="navbar-right">
+        <button class="pos-navbar-btn" onclick="openOrdersModal()" title="View Orders"><i class="fas fa-receipt"></i> Orders</button>
         <button class="pos-navbar-btn" onclick="openPOSChooser()" title="Point of Sale"><i class="fas fa-cash-register"></i> POS</button>
     <button class="notif-btn" id="notif-btn"><i class="fas fa-bell"></i><span class="badge" id="notif-badge" style="display:none;">0</span></button>
     <div class="user-dropdown">
@@ -237,6 +238,15 @@
           <div style="flex:1; min-width:0; text-align:right;">
             <label style="font-size:12px;font-weight:600;color:#64748b;display:block;margin-bottom:4px;">Total Amount</label>
             <div style="font-size:18px;font-weight:700;color:#1a2340;padding:10px 0;" id="cart-total">TSh 0</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:14px;padding-bottom:10px;flex-wrap:wrap;">
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#64748b;cursor:pointer;">
+            <input type="checkbox" id="bar-pay-later" onchange="toggleBarPayLater()" style="width:15px;height:15px;cursor:pointer;">
+            <i class="fas fa-clock"></i> Pay Later (unpaid order)
+          </label>
+          <div id="bar-deposit-wrap" style="display:none;flex:1;min-width:150px;">
+            <input type="number" id="bar-deposit" class="form-control" placeholder="Deposit paid now (optional)" min="0" style="padding:7px 12px;font-size:12px;">
           </div>
         </div>
         <div class="action-buttons">
@@ -562,12 +572,21 @@
     totalSpan.innerText = fmtTSH(grandTotal);
   }
 
+  function toggleBarPayLater() {
+    const payLater = document.getElementById('bar-pay-later').checked;
+    document.getElementById('bar-deposit-wrap').style.display = payLater ? 'block' : 'none';
+    if (!payLater) document.getElementById('bar-deposit').value = '';
+  }
+
   async function saveCurrentOrder() {
     const order = getCurrentOrder();
     if (!order || order.items.length === 0) { showToast('No items in order', '<i class="fas fa-exclamation-triangle"></i>'); return; }
     const paymentMethod = document.getElementById('bar-payment-method').value;
     const waiterName = document.getElementById('bar-waiter-name').value.trim();
     if (!waiterName) { showToast('Please enter the waiter\'s name', '<i class="fas fa-exclamation-triangle"></i>'); return; }
+    const payLater = document.getElementById('bar-pay-later').checked;
+    const paymentStatus = payLater ? 'pending' : 'paid';
+    const amountPaid = payLater ? (parseFloat(document.getElementById('bar-deposit').value) || 0) : order.total;
     const btn = document.querySelector('.btn-save');
     if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...'; }
     try {
@@ -601,7 +620,9 @@
         cashier_name: currentUser.fullName || currentUser.username,
         waiter_name: waiterName,
         pos_type: 'bar',
-        payment_method: paymentMethod
+        payment_method: paymentMethod,
+        payment_status: paymentStatus,
+        amount_paid: amountPaid
       };
       const result = await apiPost('/api/sales', saleData);
       const receiptData = {
@@ -617,9 +638,12 @@
       orders = orders.filter(o => o.id !== order.id);
       currentOrderId = orders.length > 0 ? orders[0].id : null;
       document.getElementById('bar-waiter-name').value = '';
+      document.getElementById('bar-pay-later').checked = false;
+      toggleBarPayLater();
       await loadItems();
       renderOrderTabs(); renderCurrentOrder();
-      showToast(`Payment confirmed! Order #${order.orderNumber} — ${fmtTSH(receiptData.total)} via ${paymentMethod}.`, '<i class="fas fa-check-circle"></i>');
+      const statusMsg = paymentStatus === 'pending' ? ` (marked Pending — balance ${fmtTSH(order.total - amountPaid)})` : '';
+      showToast(`Order #${order.orderNumber} saved — ${fmtTSH(receiptData.total)} via ${paymentMethod}${statusMsg}.`, '<i class="fas fa-check-circle"></i>');
       if (confirm('Print receipt?')) printReceipt(receiptData);
     } catch (err) {
       console.error('Save error:', err);
@@ -704,6 +728,7 @@
   window.switchToOrder = switchToOrder;
   window.deleteOrder = deleteOrder;
   window.selectCategory = selectCategory;
+  window.toggleBarPayLater = toggleBarPayLater;
 </script>
 
 <!-- POS Chooser Modal -->
@@ -730,6 +755,141 @@
 function openPOSChooser(){var o=document.getElementById('pos-chooser-overlay');if(o){o.style.display='flex';}}
 function closePOSChooser(){var o=document.getElementById('pos-chooser-overlay');if(o){o.style.display='none';}}
 document.addEventListener('keydown',function(e){if(e.key==='Escape')closePOSChooser();});
+</script>
+
+<!-- Orders Modal -->
+<div id="orders-modal-overlay" onclick="if(event.target===this)closeOrdersModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:#fff;border-radius:18px;max-width:1050px;width:100%;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 24px 64px rgba(0,0,0,0.28);overflow:hidden;">
+    <div style="padding:18px 24px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+      <div style="font-size:18px;font-weight:700;color:#1e293b;"><i class="fas fa-receipt" style="color:#c9933a;margin-right:8px;"></i>Bar Orders</div>
+      <button onclick="closeOrdersModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#64748b;"><i class="fas fa-times"></i></button>
+    </div>
+    <div style="padding:14px 24px;border-bottom:1px solid #e2e8f0;display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;flex-shrink:0;">
+      <div><label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px;">From Date</label><input type="date" id="orders-from" style="padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;"></div>
+      <div><label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px;">To Date</label><input type="date" id="orders-to" style="padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;"></div>
+      <div><label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px;">Status</label>
+        <select id="orders-status-filter" style="padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;">
+          <option value="">All</option><option value="paid">Paid</option><option value="pending">Pending</option>
+        </select>
+      </div>
+      <button onclick="loadOrdersModal()" style="padding:9px 20px;background:#c9933a;color:#1a2340;border:none;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;"><i class="fas fa-search"></i> Apply</button>
+      <button onclick="clearOrdersFilter()" style="padding:9px 20px;background:#f1f5f9;color:#64748b;border:none;border-radius:8px;font-size:13px;cursor:pointer;"><i class="fas fa-times"></i> Clear</button>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:0 24px;">
+      <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead><tr style="text-align:left;color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:.4px;">
+          <th style="padding:10px 8px;border-bottom:1px solid #e2e8f0;">Date</th>
+          <th style="padding:10px 8px;border-bottom:1px solid #e2e8f0;">Order #</th>
+          <th style="padding:10px 8px;border-bottom:1px solid #e2e8f0;">Waiter</th>
+          <th style="padding:10px 8px;border-bottom:1px solid #e2e8f0;">Payment Method</th>
+          <th style="padding:10px 8px;border-bottom:1px solid #e2e8f0;">Status</th>
+          <th style="padding:10px 8px;border-bottom:1px solid #e2e8f0;text-align:right;">Total</th>
+          <th style="padding:10px 8px;border-bottom:1px solid #e2e8f0;text-align:center;">Actions</th>
+        </tr></thead>
+        <tbody id="orders-modal-tbody"><tr><td colspan="7" style="text-align:center;padding:30px;color:#94a3b8;">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<script>
+  let ordersModalCache = [];
+
+  function openOrdersModal() {
+    const fromEl = document.getElementById('orders-from');
+    const toEl   = document.getElementById('orders-to');
+    if (!fromEl.value && !toEl.value) {
+      const today = new Date().toISOString().split('T')[0];
+      fromEl.value = today; toEl.value = today;
+    }
+    document.getElementById('orders-modal-overlay').style.display = 'flex';
+    loadOrdersModal();
+  }
+  function closeOrdersModal() { document.getElementById('orders-modal-overlay').style.display = 'none'; }
+  function clearOrdersFilter() {
+    document.getElementById('orders-from').value = '';
+    document.getElementById('orders-to').value = '';
+    document.getElementById('orders-status-filter').value = '';
+    loadOrdersModal();
+  }
+
+  async function loadOrdersModal() {
+    const from = document.getElementById('orders-from').value;
+    const to   = document.getElementById('orders-to').value;
+    const tbody = document.getElementById('orders-modal-tbody');
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:#94a3b8;">Loading…</td></tr>';
+    try {
+      const params = new URLSearchParams({ pos_type: 'bar' });
+      if (from) params.set('from', from);
+      if (to)   params.set('to', to);
+      ordersModalCache = await apiGet(`/api/sales?${params.toString()}`);
+      renderOrdersModal();
+    } catch (err) {
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:30px;color:#ef4444;">Failed to load orders: ${escapeHtml(err.message)}</td></tr>`;
+    }
+  }
+
+  function renderOrdersModal() {
+    const statusFilter = document.getElementById('orders-status-filter').value;
+    const tbody = document.getElementById('orders-modal-tbody');
+    let rows = ordersModalCache;
+    if (statusFilter) rows = rows.filter(o => (o.payment_status || 'paid') === statusFilter);
+    if (!rows.length) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:#94a3b8;">No orders found for this filter</td></tr>'; return; }
+    tbody.innerHTML = rows.map(o => {
+      const isPaid = (o.payment_status || 'paid') === 'paid';
+      const pmOpt = PAYMENT_METHOD_OPTS_BAR.find(p => p.value === (o.payment_method || '').toLowerCase());
+      const pmLabel = pmOpt ? pmOpt.label : (o.payment_method || '—');
+      const dt = new Date(o.order_date);
+      const dateStr = isNaN(dt) ? '—' : dt.toLocaleDateString() + ' ' + dt.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+      return `<tr>
+        <td style="padding:10px 8px;border-bottom:1px solid #f1f5f9;">${dateStr}</td>
+        <td style="padding:10px 8px;border-bottom:1px solid #f1f5f9;">#${escapeHtml(String(o.order_number))}</td>
+        <td style="padding:10px 8px;border-bottom:1px solid #f1f5f9;">${escapeHtml(o.waiter_name || '—')}</td>
+        <td style="padding:10px 8px;border-bottom:1px solid #f1f5f9;">${escapeHtml(pmLabel)}</td>
+        <td style="padding:10px 8px;border-bottom:1px solid #f1f5f9;">
+          <span style="padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:${isPaid ? '#dcfce7' : '#fef9c3'};color:${isPaid ? '#166534' : '#854d0e'};">${isPaid ? 'Paid' : 'Pending'}</span>
+        </td>
+        <td style="padding:10px 8px;border-bottom:1px solid #f1f5f9;text-align:right;font-weight:700;">${fmtTSH(o.total_amount)}</td>
+        <td style="padding:10px 8px;border-bottom:1px solid #f1f5f9;text-align:center;white-space:nowrap;">
+          <button onclick="reprintOrder(${o.id})" title="Reprint Receipt" style="background:#1a2340;color:#fff;border:none;border-radius:6px;padding:6px 10px;cursor:pointer;font-size:12px;margin-right:4px;"><i class="fas fa-print"></i></button>
+          ${!isPaid ? `<button onclick="settleOrder(${o.id})" title="Mark as Paid" style="background:#10b981;color:#fff;border:none;border-radius:6px;padding:6px 10px;cursor:pointer;font-size:12px;"><i class="fas fa-check"></i> Settle</button>` : ''}
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  function reprintOrder(id) {
+    const o = ordersModalCache.find(x => x.id === id);
+    if (!o) { showToast('Order not found', 'error'); return; }
+    const receiptData = {
+      orderNumber: o.order_number,
+      date: (() => { const d = new Date(o.order_date); return isNaN(d) ? o.order_date : d.toLocaleString(); })(),
+      waiter: o.waiter_name || '-',
+      items: (o.items || []).map(i => ({ name: i.item_name, quantity: parseFloat(i.quantity) || 0, price: parseFloat(i.unit_price) || 0, total: parseFloat(i.total_price) || 0 })),
+      total: parseFloat(o.total_amount) || 0,
+      pos_type: 'Bar',
+      payment_method: o.payment_method
+    };
+    printReceipt(receiptData);
+  }
+
+  async function settleOrder(id) {
+    if (!confirm('Mark this order as fully paid?')) return;
+    try {
+      await apiPut(`/api/sales/${id}/settle`, {});
+      showToast('Order marked as paid', '<i class="fas fa-check-circle"></i>');
+      loadOrdersModal();
+    } catch (err) {
+      showToast('Failed to settle order: ' + err.message, 'error');
+    }
+  }
+
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeOrdersModal(); });
+  window.openOrdersModal = openOrdersModal;
+  window.closeOrdersModal = closeOrdersModal;
+  window.clearOrdersFilter = clearOrdersFilter;
+  window.loadOrdersModal = loadOrdersModal;
+  window.reprintOrder = reprintOrder;
+  window.settleOrder = settleOrder;
 </script>
 <!-- Change Password Modal -->
 <div class="reservation-modal-overlay" id="cp-overlay" onclick="closeChangePasswordModal()"></div>

@@ -41,6 +41,10 @@ async function ensurePaymentColumns() {
       ALTER TABLE sales_orders ADD COLUMN IF NOT EXISTS pos_type VARCHAR(50);
       ALTER TABLE sales_orders ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50) DEFAULT 'Cash';
       ALTER TABLE sales_orders ADD COLUMN IF NOT EXISTS waiter_name VARCHAR(200);
+      ALTER TABLE sales_orders ADD COLUMN IF NOT EXISTS payment_status VARCHAR(20) DEFAULT 'paid';
+      ALTER TABLE sales_orders ADD COLUMN IF NOT EXISTS amount_paid NUMERIC DEFAULT 0;
+      ALTER TABLE sales_orders ADD COLUMN IF NOT EXISTS balance NUMERIC DEFAULT 0;
+      UPDATE sales_orders SET amount_paid = total_amount WHERE payment_status = 'paid' AND amount_paid = 0;
     `);
     await pool.query(`
       ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS category VARCHAR(100) DEFAULT 'other';
@@ -2889,21 +2893,25 @@ app.get('/api/purchase-orders/:id/items', async (req, res) => {
 
 // POST /api/sales - Save a completed sale
 app.post('/api/sales', async (req, res) => {
-  const { items, total_amount, cashier_id, cashier_name, pos_type, payment_method, waiter_name } = req.body;
+  const { items, total_amount, cashier_id, cashier_name, pos_type, payment_method, waiter_name, payment_status, amount_paid } = req.body;
 
   if (!items || items.length === 0) {
     return res.status(400).json({ error: 'No items in sale' });
   }
+
+  const status = payment_status === 'pending' ? 'pending' : 'paid';
+  const paid   = status === 'pending' ? (parseFloat(amount_paid) || 0) : parseFloat(total_amount) || 0;
+  const balance = Math.max(0, (parseFloat(total_amount) || 0) - paid);
 
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
 
     const orderResult = await client.query(`
-      INSERT INTO sales_orders (cashier_id, cashier_name, total_amount, status, order_date, pos_type, payment_method, waiter_name)
-      VALUES ($1, $2, $3, 'completed', CURRENT_TIMESTAMP, $4, $5, $6)
+      INSERT INTO sales_orders (cashier_id, cashier_name, total_amount, status, order_date, pos_type, payment_method, waiter_name, payment_status, amount_paid, balance)
+      VALUES ($1, $2, $3, 'completed', CURRENT_TIMESTAMP, $4, $5, $6, $7, $8, $9)
       RETURNING id, order_number
-    `, [cashier_id || null, cashier_name, total_amount, pos_type || null, payment_method || 'Cash', waiter_name || null]);
+    `, [cashier_id || null, cashier_name, total_amount, pos_type || null, payment_method || 'Cash', waiter_name || null, status, paid, balance]);
     
     const saleId = orderResult.rows[0].id;
     const orderNumber = orderResult.rows[0].order_number;
@@ -2947,6 +2955,7 @@ app.get('/api/sales', async (req, res) => {
       SELECT
         so.id, so.order_number, so.cashier_name, so.waiter_name, so.total_amount,
         so.order_date, so.status, so.pos_type, so.payment_method,
+        so.payment_status, so.amount_paid, so.balance,
         COALESCE(json_agg(
           json_build_object(
             'item_name', si.item_name,
@@ -2978,6 +2987,22 @@ app.delete('/api/sales/:id', async (req, res) => {
     res.json({ success: true });
   } catch (err) {
     console.error('DELETE /api/sales/:id error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT /api/sales/:id/settle - Mark a pending POS order as fully paid
+app.put('/api/sales/:id/settle', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const { rows } = await pool.query(
+      `UPDATE sales_orders SET payment_status = 'paid', amount_paid = total_amount, balance = 0 WHERE id = $1 RETURNING *`,
+      [id]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Sale not found' });
+    res.json(rows[0]);
+  } catch (err) {
+    console.error('PUT /api/sales/:id/settle error:', err);
     res.status(500).json({ error: err.message });
   }
 });
