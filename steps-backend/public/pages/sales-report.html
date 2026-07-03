@@ -250,13 +250,39 @@
     <div style="padding: 20px; border-bottom: 1px solid #e2e8f0;"><h3><i class="fas fa-receipt"></i> POS Sales Details (Bar &amp; Restaurant)</h3></div>
     <div style="overflow-x: auto;">
       <table class="data-table" id="sales-table">
-        <thead><tr><th>Date</th><th>Order #</th><th>POS</th><th>Payment Method</th><th>Waiter</th><th>Items</th><th>Total Amount</th><th>Action</th></tr></thead>
-        <tbody id="sales-body"><tr><td colspan="8" class="empty-state">Select a date range and click Apply Filter</td></tr></tbody>
+        <thead><tr><th>Date</th><th>Order #</th><th>POS</th><th>Payment Method</th><th>Status</th><th>Waiter</th><th>Items</th><th>Total Amount</th><th>Action</th></tr></thead>
+        <tbody id="sales-body"><tr><td colspan="9" class="empty-state">Select a date range and click Apply Filter</td></tr></tbody>
       </table>
     </div>
   </div>
 
 </main>
+
+<!-- View Items Modal -->
+<div id="view-items-modal-overlay" onclick="if(event.target===this)closeViewItemsModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:10000;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:#fff;border-radius:16px;max-width:480px;width:100%;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 24px 64px rgba(0,0,0,0.3);overflow:hidden;">
+    <div style="padding:18px 22px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+      <div style="font-size:16px;font-weight:700;color:#1e293b;"><i class="fas fa-eye" style="color:#c9933a;margin-right:8px;"></i>Order <span id="view-items-order-number">—</span> Items</div>
+      <button onclick="closeViewItemsModal()" style="background:none;border:none;font-size:18px;cursor:pointer;color:#64748b;"><i class="fas fa-times"></i></button>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:0 22px;">
+      <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead><tr style="text-align:left;color:#64748b;font-size:11px;text-transform:uppercase;">
+          <th style="padding:10px 8px;border-bottom:1px solid #e2e8f0;">Item</th>
+          <th style="padding:10px 8px;border-bottom:1px solid #e2e8f0;text-align:center;">Qty</th>
+          <th style="padding:10px 8px;border-bottom:1px solid #e2e8f0;text-align:right;">Price</th>
+          <th style="padding:10px 8px;border-bottom:1px solid #e2e8f0;text-align:right;">Total</th>
+        </tr></thead>
+        <tbody id="view-items-tbody"></tbody>
+      </table>
+    </div>
+    <div style="padding:14px 22px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
+      <span style="font-weight:600;color:#64748b;">Order Total</span>
+      <span id="view-items-total" style="font-size:16px;font-weight:800;color:#1a2340;">—</span>
+    </div>
+  </div>
+</div>
+
 <div class="toast-container" id="toast-container"></div>
 
 <!-- Notification Panel -->
@@ -382,6 +408,9 @@ async function loadSalesReport() {
         total: order.total_amount,
         pos_type: order.pos_type || '',
         payment_method: order.payment_method || 'Cash',
+        payment_status: order.payment_status || 'paid',
+        amount_paid: order.amount_paid,
+        balance: order.balance,
         items: (order.items || []).map(item => ({
           name: item.item_name,
           quantity: parseFloat(item.quantity),
@@ -398,7 +427,7 @@ async function loadSalesReport() {
     } catch (err) {
       console.error('Error loading sales:', err);
       showToast('Failed to load sales data: ' + err.message, 'error');
-      document.getElementById('sales-body').innerHTML = '<tr><td colspan="7" class="empty-state">Error loading sales data</td></tr>';
+      document.getElementById('sales-body').innerHTML = '<tr><td colspan="9" class="empty-state">Error loading sales data</td></tr>';
     }
   }
 
@@ -406,10 +435,11 @@ async function loadSalesReport() {
   function renderTable() {
     const tbody = document.getElementById('sales-body');
     if (!salesData.length) {
-      tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No sales records found for selected date range</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="9" class="empty-state">No sales records found for selected date range</td></tr>';
       return;
     }
 
+    const statusBadge = { paid: ['#dcfce7','#166534','Paid'], partial: ['#fef9c3','#854d0e','Partial'], pending: ['#fee2e2','#991b1b','Pending'] };
     let html = '';
     salesData.forEach(sale => {
       const totalItems = sale.items.reduce((sum, i) => sum + i.quantity, 0);
@@ -420,21 +450,49 @@ async function loadSalesReport() {
         : sale.pos_type === 'restaurant'
           ? '<span class="pos-badge restaurant"><i class="fas fa-utensils"></i> Restaurant</span>'
           : '<span class="pos-badge unknown">—</span>';
+      const status = sale.payment_status || 'paid';
+      const [bg, fg, label] = statusBadge[status] || statusBadge.paid;
       html += `
         <tr>
           <td>${formattedDate}</td>
           <td><strong>${escapeHtml(sale.order_number)}</strong></td>
           <td>${posLabel}</td>
           <td><span style="display:inline-flex;align-items:center;gap:5px;"><i class="fas fa-${sale.payment_method === 'Cash' ? 'money-bill-wave' : sale.payment_method === 'Card' ? 'credit-card' : ['Mpesa','TigoPesa','AirtelMoney','HaloPesa'].includes(sale.payment_method) ? 'mobile-alt' : 'university'}"></i> ${escapeHtml(sale.payment_method || 'Cash')}</span></td>
+          <td>
+            <span style="padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:${bg};color:${fg};">${label}</span>
+            ${status !== 'paid' ? `<div style="font-size:10px;color:#94a3b8;margin-top:2px;">Bal: ${fmtTSH(sale.balance)}</div>` : ''}
+          </td>
           <td>${escapeHtml(sale.cashier)}</td>
           <td>${totalItems} units</td>
           <td>${fmtTSH(sale.total)}</td>
-          <td><button onclick="deleteSale(${sale.id}, '${escapeHtml(sale.order_number)}')" style="background:#ef4444;color:white;border:none;padding:5px 12px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;"><i class="fas fa-trash"></i> Delete</button></td>
+          <td style="white-space:nowrap;">
+            <button onclick="viewSaleItems(${sale.id})" title="View Items" style="background:#f1f5f9;color:#1a2340;border:none;padding:5px 9px;border-radius:8px;cursor:pointer;font-size:12px;margin-right:4px;"><i class="fas fa-eye"></i></button>
+            <button onclick="deleteSale(${sale.id}, '${escapeHtml(sale.order_number)}')" style="background:#ef4444;color:white;border:none;padding:5px 12px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;"><i class="fas fa-trash"></i> Delete</button>
+          </td>
         </tr>
       `;
     });
     tbody.innerHTML = html;
   }
+
+  function viewSaleItems(id) {
+    const sale = salesData.find(s => s.id === id);
+    if (!sale) { showToast('Order not found', 'error'); return; }
+    document.getElementById('view-items-order-number').textContent = '#' + sale.order_number;
+    const items = sale.items || [];
+    const tbody = document.getElementById('view-items-tbody');
+    tbody.innerHTML = items.length ? items.map(i => `
+      <tr>
+        <td style="padding:8px;border-bottom:1px solid #f1f5f9;">${escapeHtml(i.name)}</td>
+        <td style="padding:8px;border-bottom:1px solid #f1f5f9;text-align:center;">${i.quantity || 0}</td>
+        <td style="padding:8px;border-bottom:1px solid #f1f5f9;text-align:right;">${fmtTSH(i.price)}</td>
+        <td style="padding:8px;border-bottom:1px solid #f1f5f9;text-align:right;font-weight:600;">${fmtTSH(i.total)}</td>
+      </tr>`).join('') : '<tr><td colspan="4" style="text-align:center;padding:20px;color:#94a3b8;">No items recorded for this order</td></tr>';
+    document.getElementById('view-items-total').textContent = fmtTSH(sale.total);
+    document.getElementById('view-items-modal-overlay').style.display = 'flex';
+  }
+  function closeViewItemsModal() { document.getElementById('view-items-modal-overlay').style.display = 'none'; }
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeViewItemsModal(); });
   
   async function deleteSale(id, orderNumber) {
     if (!confirm(`Delete Order #${orderNumber}? This cannot be undone.`)) return;
