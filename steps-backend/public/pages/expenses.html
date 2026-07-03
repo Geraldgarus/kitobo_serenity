@@ -223,7 +223,10 @@
       <div id="form-section" class="form-section">
         <div class="form-header">
           <h3 id="form-title"><i class="fas fa-plus"></i> New Expense</h3>
-          <button class="btn btn-outline btn-sm" onclick="cancelForm()"><i class="fas fa-times"></i> Cancel</button>
+          <div style="display:flex;gap:8px;">
+            <a href="/expense-categories" class="btn btn-outline btn-sm" style="text-decoration:none;"><i class="fas fa-tags"></i> Manage Categories</a>
+            <button class="btn btn-outline btn-sm" onclick="cancelForm()"><i class="fas fa-times"></i> Cancel</button>
+          </div>
         </div>
         <form id="expense-form">
           <div class="form-group-row">
@@ -241,14 +244,6 @@
               <label><i class="fas fa-folder-open"></i> Category <span style="color:#ef4444">*</span></label>
               <select id="expense-category" class="form-control" required>
                 <option value="">Select Category</option>
-                <option value="Water">Water</option>
-                <option value="Electricity">Electricity</option>
-                <option value="Internet">Internet</option>
-                <option value="Salary">Salary</option>
-                <option value="Maintenance">Maintenance</option>
-                <option value="Office Supplies">Office Supplies</option>
-                <option value="Marketing and Advertising">Marketing and Advertising</option>
-                <option value="Other">Other</option>
               </select>
             </div>
             <div class="form-group">
@@ -338,6 +333,34 @@
 // ── State ────────────────────────────────────────────────────
 let expenses = [], currentEditId = null;
 
+async function loadCategoryOptions(selectId, type, selectedValue) {
+  const select = document.getElementById(selectId);
+  if (!select) return;
+  const placeholder = select.querySelector('option[value=""]');
+  try {
+    const cats = await apiGet(`/categories?type=${encodeURIComponent(type)}`);
+    select.innerHTML = '';
+    select.appendChild(placeholder || Object.assign(document.createElement('option'), { value: '', textContent: 'Select Category' }));
+    cats.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.name;
+      opt.textContent = c.name;
+      select.appendChild(opt);
+    });
+  } catch (err) {
+    console.error('Failed to load categories:', err);
+  }
+  if (selectedValue) {
+    if (![...select.options].some(o => o.value === selectedValue)) {
+      const opt = document.createElement('option');
+      opt.value = selectedValue;
+      opt.textContent = selectedValue;
+      select.appendChild(opt);
+    }
+    select.value = selectedValue;
+  }
+}
+
 // ── Helpers ──────────────────────────────────────────────────
 function fmtTSH(v) { return 'TSh ' + (parseInt(v) || 0).toLocaleString(); }
 function isoDate(d) { return d.toISOString().split('T')[0]; }
@@ -363,7 +386,7 @@ function showForm() {
   document.getElementById('form-title').innerHTML = '<i class="fas fa-plus"></i> New Expense';
   document.getElementById('expense-date').value = isoDate(new Date());
   document.getElementById('expense-number').value = 'EXP-' + Date.now();
-  document.getElementById('expense-category').value = '';
+  loadCategoryOptions('expense-category', 'expense');
   document.getElementById('expense-amount').value = '';
   document.getElementById('expense-description').value = '';
   document.getElementById('expense-payment-method').value = 'cash';
@@ -582,7 +605,7 @@ async function openEdit(id) {
     document.getElementById('form-title').innerHTML = '<i class="fas fa-edit"></i> Edit Expense';
     document.getElementById('expense-date').value = exp.expense_date ? exp.expense_date.split('T')[0] : '';
     document.getElementById('expense-number').value = exp.expense_number || '';
-    document.getElementById('expense-category').value = exp.category || '';
+    await loadCategoryOptions('expense-category', 'expense', exp.category || '');
     document.getElementById('expense-amount').value = exp.amount || '';
     document.getElementById('expense-description').value = exp.description || '';
     document.getElementById('expense-payment-method').value = exp.payment_method || 'cash';

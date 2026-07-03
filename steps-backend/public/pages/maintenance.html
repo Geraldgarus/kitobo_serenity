@@ -201,7 +201,7 @@
 
     <div class="maintenance-right">
       <div id="form-section" class="form-section">
-        <div class="form-header"><h3><i class="fas fa-plus"></i> New Maintenance Record</h3><button class="btn btn-outline btn-sm" onclick="cancelForm()">Cancel</button></div>
+        <div class="form-header"><h3><i class="fas fa-plus"></i> New Maintenance Record</h3><div style="display:flex;gap:8px;"><a href="/maintenance-repair-types" class="btn btn-outline btn-sm" style="text-decoration:none;"><i class="fas fa-tags"></i> Manage Repair Types</a><button class="btn btn-outline btn-sm" onclick="cancelForm()">Cancel</button></div></div>
         <form id="maintenance-form">
           <div class="form-group-row">
             <div class="form-group"><label><i class="fas fa-hashtag"></i> Record Number</label><input type="text" id="task-number" class="form-control" readonly></div>
@@ -213,20 +213,6 @@
             <div class="form-group"><label><i class="fas fa-wrench"></i> Repair Type</label>
               <select id="item-type" class="form-control" required>
                 <option value="">Select Repair Type</option>
-                
-                
-                <option value="HVAC">HVAC</option>
-                <option value="Carpenter">Carpenter</option>
-                <option value="Painter">Painter</option>
-                <option value="Welder">Welder</option>
-                <option value="Electrician">Electrician</option>
-                <option value="Plumber">Plumber</option>
-                <option value="Mason">Mason</option>
-                <option value="Gardener">Gardener</option>
-                <option value="Furniture">Furniture</option>
-                <option value="Appliance">Appliance</option>
-                <option value="Building">Building</option>
-                <option value="Other">Other</option>
               </select>
             </div>
             <div class="form-group"><label><i class="fas fa-tag"></i> Item Name</label><input type="text" id="item-name" class="form-control" placeholder="e.g., Air Conditioner, Refrigerator, Toilet" required></div>
@@ -293,6 +279,34 @@
 <script>
 let tasks = [], toolsList = [], currentEditId = null, currentViewTask = null, notifications = [];
 
+async function loadCategoryOptions(selectId, type, selectedValue) {
+  const select = document.getElementById(selectId);
+  if (!select) return;
+  const placeholder = select.querySelector('option[value=""]');
+  try {
+    const cats = await apiGet(`/categories?type=${encodeURIComponent(type)}`);
+    select.innerHTML = '';
+    select.appendChild(placeholder || Object.assign(document.createElement('option'), { value: '', textContent: 'Select' }));
+    cats.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.name;
+      opt.textContent = c.name;
+      select.appendChild(opt);
+    });
+  } catch (err) {
+    console.error('Failed to load categories:', err);
+  }
+  if (selectedValue) {
+    if (![...select.options].some(o => o.value === selectedValue)) {
+      const opt = document.createElement('option');
+      opt.value = selectedValue;
+      opt.textContent = selectedValue;
+      select.appendChild(opt);
+    }
+    select.value = selectedValue;
+  }
+}
+
 function addToolField() {
   toolsList.push({ id: Date.now(), name: '', cost: 0 });
   renderToolsList();
@@ -321,7 +335,7 @@ function showForm() {
   document.getElementById('task-number').value = 'MT-' + Date.now();
   document.getElementById('technician-name').value = '';
   document.getElementById('contact-number').value = '';
-  document.getElementById('item-type').value = '';
+  loadCategoryOptions('item-type', 'maintenance');
   document.getElementById('item-name').value = '';
   document.getElementById('description').value = '';
   document.getElementById('labour-cost').value = '0';
@@ -444,7 +458,7 @@ async function openEditTask(id) {
     document.getElementById('task-number').value = task.task_number || task.taskNumber || '';
     document.getElementById('technician-name').value = task.technician_name || task.technicianName || '';
     document.getElementById('contact-number').value = task.contact_number || task.contactNumber || '';
-    document.getElementById('item-type').value = task.repair_type || task.repairType || '';
+    await loadCategoryOptions('item-type', 'maintenance', task.repair_type || task.repairType || '');
     document.getElementById('item-name').value = task.item_name || task.itemName || '';
     document.getElementById('description').value = task.description || '';
     document.getElementById('labour-cost').value = task.labour_cost || 0;

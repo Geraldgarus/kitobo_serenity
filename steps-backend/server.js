@@ -56,9 +56,12 @@ async function ensurePaymentColumns() {
       )
     `);
     const seedCategories = {
-      store:      ['Beer', 'Gins', 'Wine', 'Whisky', 'Spirits', 'Soft Drinks', 'Kitchen', 'Housekeeping'],
-      bar:        ['Beer', 'Gins', 'Wine', 'Whisky', 'Spirits', 'Cocktails', 'Mocktails', 'Soft Drinks', 'Fresh Juice', 'Water', 'Other'],
-      restaurant: ['Soup', 'Salad', 'Stew', 'Vegetables', 'Burger and Sandwiches', 'Side Dishes', 'Dessert', 'Pasta', 'Snacks and Bites', 'Fresh Drinks'],
+      store:           ['Beer', 'Gins', 'Wine', 'Whisky', 'Spirits', 'Soft Drinks', 'Kitchen', 'Housekeeping'],
+      bar:             ['Beer', 'Gins', 'Wine', 'Whisky', 'Spirits', 'Cocktails', 'Mocktails', 'Soft Drinks', 'Fresh Juice', 'Water', 'Other'],
+      restaurant:      ['Soup', 'Salad', 'Stew', 'Vegetables', 'Burger and Sandwiches', 'Side Dishes', 'Dessert', 'Pasta', 'Snacks and Bites', 'Fresh Drinks'],
+      maintenance:     ['HVAC', 'Carpenter', 'Painter', 'Welder', 'Electrician', 'Plumber', 'Mason', 'Gardener', 'Furniture', 'Appliance', 'Building', 'Other'],
+      expense:         ['Water', 'Electricity', 'Internet', 'Salary', 'Maintenance', 'Office Supplies', 'Marketing and Advertising', 'Other'],
+      purchase_order:  ['bar', 'kitchen', 'housekeeping', 'other'],
     };
     for (const [type, names] of Object.entries(seedCategories)) {
       for (const name of names) {
@@ -229,7 +232,8 @@ const pages = [
   'activity-logs', 'register', 'back-office', 'index2', 'purchase-orders', 'goods-receipt',
   'purchase-orders-reports', 'goods-receipt-reports', 'store-inventory-reports', 
   'point-of-sale', 'bar', 'restaurant', 'sales-report',  'staff-activities', 'staff-activities-report','add-reservation','guest-database','maintenance','daily-activities', 'expenditures', 'expenses', 'expenses-report', 'profit-report', 'daily-activities-report','financial-report',  'maintenance-report', 'housekeeping-report', 'permissions', 'booking',
-  'store-categories', 'bar-menu-categories', 'restaurant-menu-categories'
+  'store-categories', 'bar-menu-categories', 'restaurant-menu-categories',
+  'maintenance-repair-types', 'expense-categories', 'purchase-order-categories'
 ];
 
 // Create routes for each page without .html extension
@@ -3159,6 +3163,9 @@ app.get('/api/categories', async (req, res) => {
         CASE c.type
           WHEN 'bar' THEN (SELECT COUNT(*) FROM bar_menu_items WHERE category = c.name)
           WHEN 'restaurant' THEN (SELECT COUNT(*) FROM menu_items WHERE category = c.name)
+          WHEN 'maintenance' THEN (SELECT COUNT(*) FROM maintenance_records WHERE repair_type = c.name)
+          WHEN 'expense' THEN (SELECT COUNT(*) FROM expenses WHERE category = c.name)
+          WHEN 'purchase_order' THEN (SELECT COUNT(*) FROM purchase_orders WHERE category = c.name)
           ELSE (SELECT COUNT(*) FROM store_items WHERE category = c.name)
         END as items_count
       FROM categories c
@@ -3230,11 +3237,18 @@ app.delete('/api/categories/:id', async (req, res) => {
 
     const { name: categoryName, type: categoryType } = categoryCheck.rows[0];
 
-    // Uncategorize any items still using this category, in the table matching its type
+    // Uncategorize any items still using this category, in the table matching its type.
+    // maintenance_records.repair_type and expenses.category are NOT NULL, so those fall back to 'Other' instead.
     if (categoryType === 'bar') {
       await pool.query('UPDATE bar_menu_items SET category = NULL WHERE category = $1', [categoryName]);
     } else if (categoryType === 'restaurant') {
       await pool.query('UPDATE menu_items SET category = NULL WHERE category = $1', [categoryName]);
+    } else if (categoryType === 'maintenance') {
+      await pool.query('UPDATE maintenance_records SET repair_type = $1 WHERE repair_type = $2', ['Other', categoryName]);
+    } else if (categoryType === 'expense') {
+      await pool.query('UPDATE expenses SET category = $1 WHERE category = $2', ['Other', categoryName]);
+    } else if (categoryType === 'purchase_order') {
+      await pool.query('UPDATE purchase_orders SET category = $1 WHERE category = $2', ['other', categoryName]);
     } else {
       await pool.query('UPDATE store_items SET category = NULL WHERE category = $1', [categoryName]);
     }

@@ -1089,6 +1089,9 @@ CREATE TABLE IF NOT EXISTS categories (
 INSERT INTO categories (name, type) VALUES
   ('Beer','store'),('Gins','store'),('Wine','store'),('Whisky','store'),('Spirits','store'),('Soft Drinks','store'),('Kitchen','store'),('Housekeeping','store'),
   ('Beer','bar'),('Gins','bar'),('Wine','bar'),('Whisky','bar'),('Spirits','bar'),('Cocktails','bar'),('Mocktails','bar'),('Soft Drinks','bar'),('Fresh Juice','bar'),('Water','bar'),('Other','bar'),
-  ('Soup','restaurant'),('Salad','restaurant'),('Stew','restaurant'),('Vegetables','restaurant'),('Burger and Sandwiches','restaurant'),('Side Dishes','restaurant'),('Dessert','restaurant'),('Pasta','restaurant'),('Snacks and Bites','restaurant'),('Fresh Drinks','restaurant')
+  ('Soup','restaurant'),('Salad','restaurant'),('Stew','restaurant'),('Vegetables','restaurant'),('Burger and Sandwiches','restaurant'),('Side Dishes','restaurant'),('Dessert','restaurant'),('Pasta','restaurant'),('Snacks and Bites','restaurant'),('Fresh Drinks','restaurant'),
+  ('HVAC','maintenance'),('Carpenter','maintenance'),('Painter','maintenance'),('Welder','maintenance'),('Electrician','maintenance'),('Plumber','maintenance'),('Mason','maintenance'),('Gardener','maintenance'),('Furniture','maintenance'),('Appliance','maintenance'),('Building','maintenance'),('Other','maintenance'),
+  ('Water','expense'),('Electricity','expense'),('Internet','expense'),('Salary','expense'),('Maintenance','expense'),('Office Supplies','expense'),('Marketing and Advertising','expense'),('Other','expense'),
+  ('bar','purchase_order'),('kitchen','purchase_order'),('housekeeping','purchase_order'),('other','purchase_order')
 ON CONFLICT (name, type) DO NOTHING;
 SELECT '✅ categories table created and seeded!' as status;

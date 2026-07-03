@@ -10,7 +10,7 @@
     housekeeping: { type: 'allow', pages: ['housekeeping', 'store-outlets'] },
     bar:          { type: 'allow', pages: ['bar', 'restaurant', 'point-of-sale', 'store-outlets'] },
     restaurant:   { type: 'allow', pages: ['bar', 'restaurant', 'point-of-sale', 'store-outlets'] },
-    store:        { type: 'allow', pages: ['store-main', 'store-outlets', 'purchase-orders', 'goods-receipt', 'store-categories', 'bar-menu-categories', 'restaurant-menu-categories'] }
+    store:        { type: 'allow', pages: ['store-main', 'store-outlets', 'purchase-orders', 'goods-receipt', 'store-categories', 'bar-menu-categories', 'restaurant-menu-categories', 'purchase-order-categories'] }
   };
 
   var PUBLIC_PAGES  = ['', 'login', 'register'];
