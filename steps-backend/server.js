@@ -2944,7 +2944,7 @@ app.post('/api/sales', async (req, res) => {
 
 // GET /api/sales - Get sales with items in a single query
 app.get('/api/sales', async (req, res) => {
-  const { from, to, pos_type } = req.query;
+  const { from, to, pos_type, light } = req.query;
   let where = 'WHERE 1=1';
   const params = [];
   let paramCount = 1;
@@ -2954,6 +2954,22 @@ app.get('/api/sales', async (req, res) => {
   if (pos_type) { where += ` AND so.pos_type = $${paramCount++}`; params.push(pos_type); }
 
   try {
+    // light=1 skips the sales_items join/aggregation for list/summary views that
+    // don't need per-item detail (e.g. Orders Summary) — items are fetched on
+    // demand per order via GET /api/sales/:id/items instead.
+    if (light) {
+      const { rows } = await pool.query(`
+        SELECT
+          so.id, so.order_number, so.cashier_name, so.waiter_name, so.total_amount,
+          so.order_date, so.status, so.pos_type, so.payment_method,
+          so.payment_status, so.amount_paid, so.balance
+        FROM sales_orders so
+        ${where}
+        ORDER BY so.order_date DESC
+      `, params);
+      return res.json(rows);
+    }
+
     const { rows } = await pool.query(`
       SELECT
         so.id, so.order_number, so.cashier_name, so.waiter_name, so.total_amount,

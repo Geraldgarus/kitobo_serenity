@@ -805,7 +805,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')closePOSChoo
     const tbody = document.getElementById('orders-modal-tbody');
     tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:#94a3b8;">Loading…</td></tr>';
     try {
-      const params = new URLSearchParams({ pos_type: 'restaurant' });
+      const params = new URLSearchParams({ pos_type: 'restaurant', light: '1' });
       if (from) params.set('from', from);
       if (to)   params.set('to', to);
       ordersModalCache = await apiGet(`/api/sales?${params.toString()}`);
@@ -848,32 +848,45 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')closePOSChoo
     }).join('');
   }
 
-  function viewOrderItems(id) {
+  async function ensureOrderItems(o) {
+    if (!o.items) o.items = await apiGet(`/api/sales/${o.id}/items`);
+    return o.items;
+  }
+
+  async function viewOrderItems(id) {
     const o = ordersModalCache.find(x => x.id === id);
     if (!o) { showToast('Order not found', 'error'); return; }
     document.getElementById('view-items-order-number').textContent = '#' + o.order_number;
-    const items = o.items || [];
-    const tbody = document.getElementById('view-items-tbody');
-    tbody.innerHTML = items.length ? items.map(i => `
-      <tr>
-        <td style="padding:8px;border-bottom:1px solid #f1f5f9;">${escapeHtml(i.item_name)}</td>
-        <td style="padding:8px;border-bottom:1px solid #f1f5f9;text-align:center;">${parseFloat(i.quantity) || 0}</td>
-        <td style="padding:8px;border-bottom:1px solid #f1f5f9;text-align:right;">${fmtTSH(i.unit_price)}</td>
-        <td style="padding:8px;border-bottom:1px solid #f1f5f9;text-align:right;font-weight:600;">${fmtTSH(i.total_price)}</td>
-      </tr>`).join('') : '<tr><td colspan="4" style="text-align:center;padding:20px;color:#94a3b8;">No items recorded for this order</td></tr>';
     document.getElementById('view-items-total').textContent = fmtTSH(o.total_amount);
+    const tbody = document.getElementById('view-items-tbody');
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;color:#94a3b8;">Loading…</td></tr>';
     document.getElementById('view-items-modal-overlay').style.display = 'flex';
+    try {
+      const items = await ensureOrderItems(o);
+      tbody.innerHTML = items.length ? items.map(i => `
+        <tr>
+          <td style="padding:8px;border-bottom:1px solid #f1f5f9;">${escapeHtml(i.item_name)}</td>
+          <td style="padding:8px;border-bottom:1px solid #f1f5f9;text-align:center;">${parseFloat(i.quantity) || 0}</td>
+          <td style="padding:8px;border-bottom:1px solid #f1f5f9;text-align:right;">${fmtTSH(i.unit_price)}</td>
+          <td style="padding:8px;border-bottom:1px solid #f1f5f9;text-align:right;font-weight:600;">${fmtTSH(i.total_price)}</td>
+        </tr>`).join('') : '<tr><td colspan="4" style="text-align:center;padding:20px;color:#94a3b8;">No items recorded for this order</td></tr>';
+    } catch (err) {
+      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:20px;color:#ef4444;">Failed to load items: ${escapeHtml(err.message)}</td></tr>`;
+    }
   }
   function closeViewItemsModal() { document.getElementById('view-items-modal-overlay').style.display = 'none'; }
 
-  function reprintOrder(id) {
+  async function reprintOrder(id) {
     const o = ordersModalCache.find(x => x.id === id);
     if (!o) { showToast('Order not found', 'error'); return; }
+    let items;
+    try { items = await ensureOrderItems(o); }
+    catch (err) { showToast('Failed to load items: ' + err.message, 'error'); return; }
     const receiptData = {
       orderNumber: o.order_number,
       date: (() => { const d = new Date(o.order_date); return isNaN(d) ? o.order_date : d.toLocaleString(); })(),
       waiter: o.waiter_name || '-',
-      items: (o.items || []).map(i => ({ name: i.item_name, quantity: parseFloat(i.quantity) || 0, price: parseFloat(i.unit_price) || 0, total: parseFloat(i.total_price) || 0 })),
+      items: items.map(i => ({ name: i.item_name, quantity: parseFloat(i.quantity) || 0, price: parseFloat(i.unit_price) || 0, total: parseFloat(i.total_price) || 0 })),
       total: parseFloat(o.total_amount) || 0,
       pos_type: 'Restaurant',
       payment_method: o.payment_method
