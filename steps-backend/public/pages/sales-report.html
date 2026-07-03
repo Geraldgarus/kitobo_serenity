@@ -221,43 +221,6 @@
     <button class="btn-print" onclick="printReport()"><i class="fas fa-print"></i> Print Report</button>
   </div>
 
-  <!-- ── Combined Revenue Summary ── -->
-  <div id="combined-summary" style="margin-bottom:24px;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.07);">
-    <div style="background:linear-gradient(135deg,#1a2340 0%,#2d3f6b 100%);padding:14px 24px;display:flex;align-items:center;gap:10px;">
-      <i class="fas fa-coins" style="color:#c9933a;font-size:16px;"></i>
-      <span style="color:#fff;font-size:14px;font-weight:700;letter-spacing:0.02em;">Combined Revenue Summary</span>
-      <span id="combined-period" style="color:rgba(255,255,255,0.55);font-size:12px;margin-left:auto;"></span>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1px 1.3fr;align-items:stretch;padding:0;">
-      <div style="padding:18px 22px;border-right:1px solid #f1f5f9;">
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#7c3aed;margin-bottom:6px;"><i class="fas fa-wine-glass-alt" style="margin-right:5px;"></i>Bar Sales</div>
-        <div id="combined-bar" style="font-size:20px;font-weight:700;color:#1e293b;">—</div>
-        <div id="combined-bar-orders" style="font-size:11px;color:#94a3b8;margin-top:2px;">— orders</div>
-      </div>
-      <div style="padding:18px 22px;border-right:1px solid #f1f5f9;">
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#d97706;margin-bottom:6px;"><i class="fas fa-utensils" style="margin-right:5px;"></i>Restaurant Sales</div>
-        <div id="combined-restaurant" style="font-size:20px;font-weight:700;color:#1e293b;">—</div>
-        <div id="combined-rest-orders" style="font-size:11px;color:#94a3b8;margin-top:2px;">— orders</div>
-      </div>
-      <div style="padding:18px 22px;border-right:1px solid #f1f5f9;">
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#3b82f6;margin-bottom:6px;"><i class="fas fa-calendar-check" style="margin-right:5px;"></i>Reservation Revenue</div>
-        <div id="combined-res" style="font-size:20px;font-weight:700;color:#1e293b;">—</div>
-        <div id="combined-res-count" style="font-size:11px;color:#94a3b8;margin-top:2px;">— bookings</div>
-      </div>
-      <div style="padding:18px 22px;border-right:1px solid #f1f5f9;">
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#0d9488;margin-bottom:6px;"><i class="fas fa-soap" style="margin-right:5px;"></i>Housekeeping/Laundry</div>
-        <div id="combined-laundry" style="font-size:20px;font-weight:700;color:#1e293b;">—</div>
-        <div id="combined-laundry-count" style="font-size:11px;color:#94a3b8;margin-top:2px;">— records</div>
-      </div>
-      <div style="background:#f1f5f9;"></div>
-      <div style="padding:18px 26px;background:#fffbf4;">
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#c9933a;margin-bottom:6px;"><i class="fas fa-trophy" style="margin-right:5px;"></i>Grand Total</div>
-        <div id="combined-total" style="font-size:26px;font-weight:800;color:#c9933a;">—</div>
-        <div style="font-size:11px;color:#94a3b8;margin-top:2px;">POS + Reservations + Laundry combined</div>
-      </div>
-    </div>
-  </div>
-
   <div class="stats-row">
     <div class="stat-card"><div class="stat-label">Total POS Orders</div><div class="stat-value" id="stat-orders">—</div><div class="stat-sub">completed sales</div></div>
     <div class="stat-card"><div class="stat-label">Total Items Sold</div><div class="stat-value" id="stat-items">—</div><div class="stat-sub">units sold</div></div>
@@ -409,16 +372,7 @@ async function loadSalesReport() {
   const url = `/api/sales?${params.toString()}`;
 
   try {
-      // Fetch POS sales, reservation revenue, and laundry revenue in parallel
-      const resParams = new URLSearchParams();
-      if (fromDate) resParams.set('from', fromDate);
-      if (toDate) resParams.set('to', toDate);
-
-      const [orders, resData, laundryData] = await Promise.all([
-        apiGet(url),
-        apiGet(`/api/reports/reservations?${resParams.toString()}`).catch(() => []),
-        apiGet(`/api/laundry?${resParams.toString()}`).catch(() => [])
-      ]);
+      const orders = await apiGet(url);
 
       salesData = orders.map(order => ({
         id: order.id,
@@ -440,50 +394,12 @@ async function loadSalesReport() {
       updateStats();
       updateBestSellers();
       updateChart();
-      renderCombinedSummary(resData, laundryData, fromDate, toDate);
       showToast(`Loaded ${salesData.length} sales records`);
     } catch (err) {
       console.error('Error loading sales:', err);
       showToast('Failed to load sales data: ' + err.message, 'error');
       document.getElementById('sales-body').innerHTML = '<tr><td colspan="7" class="empty-state">Error loading sales data</td></tr>';
     }
-  }
-
-  function renderCombinedSummary(resData, laundryData, fromDate, toDate) {
-    const barOrders   = salesData.filter(s => (s.pos_type || '').toLowerCase() === 'bar');
-    const restOrders  = salesData.filter(s => (s.pos_type || '').toLowerCase() === 'restaurant');
-    const barRevenue  = barOrders.reduce((sum, s) => sum + (s.total || 0), 0);
-    const restRevenue = restOrders.reduce((sum, s) => sum + (s.total || 0), 0);
-    const posTotal    = barRevenue + restRevenue;
-
-    // Reservation revenue: sum total_amount (or amount_paid) field
-    const resRevenue = Array.isArray(resData)
-      ? resData.reduce((sum, r) => sum + (parseFloat(r.total_amount || r.amount_paid || r.total || 0)), 0)
-      : 0;
-    const resCount = Array.isArray(resData) ? resData.length : 0;
-
-    // Housekeeping/Laundry revenue: sum billed price
-    const laundryRevenue = Array.isArray(laundryData)
-      ? laundryData.reduce((sum, r) => sum + parseFloat(r.price || 0), 0)
-      : 0;
-    const laundryCount = Array.isArray(laundryData) ? laundryData.length : 0;
-
-    const grandTotal = posTotal + resRevenue + laundryRevenue;
-
-    const period = fromDate && toDate
-      ? `${fromDate} → ${toDate}`
-      : fromDate ? `From ${fromDate}` : toDate ? `Up to ${toDate}` : 'All time';
-
-    document.getElementById('combined-period').innerText = period;
-    document.getElementById('combined-bar').innerText = fmtTSH(barRevenue);
-    document.getElementById('combined-bar-orders').innerText = barOrders.length + ' order' + (barOrders.length !== 1 ? 's' : '');
-    document.getElementById('combined-restaurant').innerText = fmtTSH(restRevenue);
-    document.getElementById('combined-rest-orders').innerText = restOrders.length + ' order' + (restOrders.length !== 1 ? 's' : '');
-    document.getElementById('combined-res').innerText = fmtTSH(resRevenue);
-    document.getElementById('combined-res-count').innerText = resCount + ' booking' + (resCount !== 1 ? 's' : '');
-    document.getElementById('combined-laundry').innerText = fmtTSH(laundryRevenue);
-    document.getElementById('combined-laundry-count').innerText = laundryCount + ' record' + (laundryCount !== 1 ? 's' : '');
-    document.getElementById('combined-total').innerText = fmtTSH(grandTotal);
   }
 
 
