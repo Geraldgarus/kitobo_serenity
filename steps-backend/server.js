@@ -4105,21 +4105,41 @@ app.delete('/api/expenses/:id', async (req, res) => {
   }
 });
 
-// GET /api/reports/profit-summary — all-time totals for profit report
+// GET /api/reports/profit-summary — date-filtered totals for profit report
 app.get('/api/reports/profit-summary', async (req, res) => {
+  const { from, to } = req.query;
+
+  const resParams = []; let resWhere = 'WHERE 1=1'; let rp = 1;
+  if (from) { resWhere += ` AND created_at::date >= $${rp++}::date`; resParams.push(from); }
+  if (to)   { resWhere += ` AND created_at::date <= $${rp++}::date`; resParams.push(to); }
+
+  const salesParams = []; let salesWhere = 'WHERE 1=1'; let sp = 1;
+  if (from) { salesWhere += ` AND order_date >= $${sp++}::date`; salesParams.push(from); }
+  if (to)   { salesWhere += ` AND order_date < ($${sp++}::date + INTERVAL '1 day')`; salesParams.push(to); }
+
+  const laundryParams = []; let laundryWhere = 'WHERE 1=1'; let lp = 1;
+  if (from) { laundryWhere += ` AND service_date >= $${lp++}::date`; laundryParams.push(from); }
+  if (to)   { laundryWhere += ` AND service_date < ($${lp++}::date + INTERVAL '1 day')`; laundryParams.push(to); }
+
+  const expParams = []; let expWhere = 'WHERE 1=1'; let ep = 1;
+  if (from) { expWhere += ` AND expense_date >= $${ep++}::date`; expParams.push(from); }
+  if (to)   { expWhere += ` AND expense_date <= $${ep++}::date`; expParams.push(to); }
+
   try {
-    const [reservations, bar, restaurant, expenses] = await Promise.all([
-      pool.query(`SELECT COALESCE(SUM(total), 0)::int AS total, COUNT(*)::int AS count FROM reservations`),
-      pool.query(`SELECT COALESCE(SUM(total_amount), 0)::int AS total, COUNT(*)::int AS count FROM sales_orders WHERE LOWER(pos_type) = 'bar'`),
-      pool.query(`SELECT COALESCE(SUM(total_amount), 0)::int AS total, COUNT(*)::int AS count FROM sales_orders WHERE LOWER(pos_type) = 'restaurant'`),
-      pool.query(`SELECT COALESCE(SUM(amount), 0)::int AS total, COUNT(*)::int AS count FROM expenses`),
+    const [reservations, bar, restaurant, laundry, expenses] = await Promise.all([
+      pool.query(`SELECT COALESCE(SUM(total), 0)::int AS total, COUNT(*)::int AS count FROM reservations ${resWhere}`, resParams),
+      pool.query(`SELECT COALESCE(SUM(total_amount), 0)::int AS total, COUNT(*)::int AS count FROM sales_orders ${salesWhere} AND LOWER(pos_type) = 'bar'`, salesParams),
+      pool.query(`SELECT COALESCE(SUM(total_amount), 0)::int AS total, COUNT(*)::int AS count FROM sales_orders ${salesWhere} AND LOWER(pos_type) = 'restaurant'`, salesParams),
+      pool.query(`SELECT COALESCE(SUM(price), 0)::int AS total, COUNT(*)::int AS count FROM laundry_services ${laundryWhere}`, laundryParams),
+      pool.query(`SELECT COALESCE(SUM(amount), 0)::int AS total, COUNT(*)::int AS count FROM expenses ${expWhere}`, expParams),
     ]);
 
     const reservationRevenue  = reservations.rows[0].total;
     const barRevenue          = bar.rows[0].total;
     const restaurantRevenue   = restaurant.rows[0].total;
+    const housekeepingRevenue = laundry.rows[0].total;
     const totalExpenses       = expenses.rows[0].total;
-    const totalSales          = reservationRevenue + barRevenue + restaurantRevenue;
+    const totalSales          = reservationRevenue + barRevenue + restaurantRevenue + housekeepingRevenue;
     const profit              = totalSales - totalExpenses;
 
     res.json({
@@ -4129,6 +4149,8 @@ app.get('/api/reports/profit-summary', async (req, res) => {
       barCount: bar.rows[0].count,
       restaurantRevenue,
       restaurantCount: restaurant.rows[0].count,
+      housekeepingRevenue,
+      housekeepingCount: laundry.rows[0].count,
       totalSales,
       totalExpenses,
       expenseCount: expenses.rows[0].count,

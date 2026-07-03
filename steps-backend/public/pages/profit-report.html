@@ -61,10 +61,19 @@
     /* ── Main ── */
     .main-content { padding: 24px; max-width: 1100px; margin: 0 auto; }
 
+    /* ── Filter bar ── */
+    .filter-bar { background: white; border: 1px solid #e2e8f0; border-radius: 16px; padding: 16px 20px; margin-bottom: 24px; display: flex; align-items: flex-end; flex-wrap: wrap; gap: 12px; }
+    .filter-group { display: flex; flex-direction: column; gap: 4px; }
+    .filter-group label { font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: .5px; }
+    .filter-group input { padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13px; color: #334155; background: white; min-width: 140px; }
+    .filter-actions { display: flex; gap: 10px; margin-left: auto; flex-wrap: wrap; }
+    .period-label { font-size: 12px; color: #64748b; margin-bottom: 4px; }
+
     /* ── Print bar ── */
     .action-bar { display: flex; justify-content: flex-end; gap: 12px; margin-bottom: 24px; }
     .btn-print { background: #1e2a3e; color: white; border: none; padding: 10px 26px; border-radius: 40px; cursor: pointer; font-weight: 500; font-size: 13px; }
     .btn-refresh { background: white; color: #1e2a3e; border: 1.5px solid #e2e8f0; padding: 10px 22px; border-radius: 40px; cursor: pointer; font-size: 13px; }
+    .btn-clear { background: white; color: #64748b; border: 1.5px solid #e2e8f0; padding: 10px 22px; border-radius: 40px; cursor: pointer; font-size: 13px; }
 
     /* ── Revenue cards row ── */
     .section-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #64748b; margin-bottom: 14px; padding-left: 2px; }
@@ -73,6 +82,7 @@
     .rev-card.reservation { border-top-color: #3b82f6; }
     .rev-card.restaurant  { border-top-color: #f59e0b; }
     .rev-card.bar         { border-top-color: #8b5cf6; }
+    .rev-card.housekeeping { border-top-color: #0d9488; }
     .rev-card.total-sales { border-top-color: #10b981; background: linear-gradient(135deg,#f0fdf4,#ecfdf5); }
     .rev-card .card-icon  { position: absolute; top: 18px; right: 20px; font-size: 28px; opacity: 0.12; }
     .rev-card .card-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; margin-bottom: 8px; }
@@ -138,6 +148,9 @@
     /* ── Mobile Responsiveness ── */
     @media (max-width: 768px) {
       .main-content { padding: 12px; max-width: 100%; }
+      .filter-bar { flex-direction: column; align-items: stretch; }
+      .filter-group input { min-width: unset; width: 100%; }
+      .filter-actions { margin-left: 0; }
       .action-bar { flex-wrap: wrap; gap: 8px; }
       .btn-print, .btn-refresh { flex: 1; text-align: center; padding: 10px 14px; }
       .cards-row { gap: 10px; }
@@ -169,7 +182,7 @@
 
     /* ── Print ── */
     @media print {
-      .sidebar, .navbar, .action-bar, .overlay, .toast-container { display: none !important; }
+      .sidebar, .navbar, .action-bar, .filter-bar, .overlay, .toast-container { display: none !important; }
       .main-content { padding: 0; max-width: 100%; }
       body { background: white; }
       .rev-card, .big-card, .summary-card, .gauge-card { box-shadow: none; border: 1px solid #e2e8f0 !important; break-inside: avoid; }
@@ -241,7 +254,7 @@
     <button class="hamburger" id="hamburger-btn"><span class="hb-bar"></span><span class="hb-bar"></span><span class="hb-bar"></span></button>
     <div>
       <div class="page-title">Profit Report</div>
-      <div class="page-subtitle">All-time revenue, expenses &amp; net profit</div>
+      <div class="page-subtitle" id="page-subtitle">Revenue, expenses &amp; net profit for selected period</div>
     </div>
   </div>
   <div class="navbar-right">
@@ -275,14 +288,19 @@
     </div>
   </div>
 
-  <!-- Action bar -->
-  <div class="action-bar">
-    <button class="btn-refresh" onclick="loadData()"><i class="fas fa-sync-alt"></i> Refresh</button>
-    <button class="btn-print" onclick="printReport()"><i class="fas fa-print"></i> Print Report</button>
+  <!-- Filter bar -->
+  <div class="filter-bar">
+    <div class="filter-group"><label>From Date</label><input type="date" id="filter-from"></div>
+    <div class="filter-group"><label>To Date</label><input type="date" id="filter-to"></div>
+    <div class="filter-actions">
+      <button class="btn-refresh" onclick="loadData()"><i class="fas fa-search"></i> Apply Filter</button>
+      <button class="btn-clear" onclick="clearFilters()"><i class="fas fa-times"></i> Clear</button>
+      <button class="btn-print" onclick="printReport()"><i class="fas fa-print"></i> Print Report</button>
+    </div>
   </div>
 
   <!-- Revenue sources -->
-  <div class="section-title"><i class="fas fa-arrow-circle-up" style="color:#10b981;margin-right:6px;"></i> Revenue Sources</div>
+  <div class="section-title"><i class="fas fa-arrow-circle-up" style="color:#10b981;margin-right:6px;"></i> Revenue Sources <span id="period-label" style="text-transform:none;font-weight:500;color:#94a3b8;"></span></div>
   <div class="cards-row">
     <div class="rev-card reservation">
       <i class="fas fa-bed card-icon"></i>
@@ -301,6 +319,12 @@
       <div class="card-label">Bar Sales</div>
       <div class="card-value" id="rev-bar">—</div>
       <div class="card-sub" id="rev-bar-count">— orders</div>
+    </div>
+    <div class="rev-card housekeeping">
+      <i class="fas fa-soap card-icon"></i>
+      <div class="card-label">Housekeeping / Laundry</div>
+      <div class="card-value" id="rev-housekeeping">—</div>
+      <div class="card-sub" id="rev-housekeeping-count">— records</div>
     </div>
     <div class="rev-card total-sales">
       <i class="fas fa-coins card-icon"></i>
@@ -406,10 +430,17 @@ function showToast(msg, type) {
 
 async function loadData() {
   try {
-    const d = await apiGet('/reports/profit-summary');
+    const from = document.getElementById('filter-from').value;
+    const to   = document.getElementById('filter-to').value;
+    const params = new URLSearchParams();
+    if (from) params.set('from', from);
+    if (to)   params.set('to', to);
+    const qs = params.toString();
+    const d = await apiGet('/reports/profit-summary' + (qs ? '?' + qs : ''));
     renderCards(d);
     renderGauge(d);
     renderTable(d);
+    renderPeriodLabel(from, to);
     document.getElementById('print-date').textContent = new Date().toLocaleString();
     // Notify if business is running at a loss
     if (d.profit < 0) {
@@ -420,6 +451,23 @@ async function loadData() {
   }
 }
 
+function renderPeriodLabel(from, to) {
+  let text;
+  if (from && to && from === to)   text = `(${from})`;
+  else if (from && to)             text = `(${from} to ${to})`;
+  else if (from)                   text = `(from ${from})`;
+  else if (to)                     text = `(up to ${to})`;
+  else                             text = '(all time)';
+  document.getElementById('period-label').textContent = text;
+  document.getElementById('page-subtitle').textContent = 'Revenue, expenses & net profit ' + (from || to ? 'for ' + text : '(all time)');
+}
+
+function clearFilters() {
+  document.getElementById('filter-from').value = '';
+  document.getElementById('filter-to').value   = '';
+  loadData();
+}
+
 function renderCards(d) {
   document.getElementById('rev-reservations').textContent       = fmtTSH(d.reservationRevenue);
   document.getElementById('rev-reservations-count').textContent = d.reservationCount + ' booking' + (d.reservationCount !== 1 ? 's' : '');
@@ -427,6 +475,8 @@ function renderCards(d) {
   document.getElementById('rev-restaurant-count').textContent   = d.restaurantCount + ' order' + (d.restaurantCount !== 1 ? 's' : '');
   document.getElementById('rev-bar').textContent                = fmtTSH(d.barRevenue);
   document.getElementById('rev-bar-count').textContent          = d.barCount + ' order' + (d.barCount !== 1 ? 's' : '');
+  document.getElementById('rev-housekeeping').textContent       = fmtTSH(d.housekeepingRevenue);
+  document.getElementById('rev-housekeeping-count').textContent = d.housekeepingCount + ' record' + (d.housekeepingCount !== 1 ? 's' : '');
   document.getElementById('rev-total').textContent              = fmtTSH(d.totalSales);
   document.getElementById('exp-total').textContent              = fmtTSH(d.totalExpenses);
   document.getElementById('exp-count').textContent              = d.expenseCount + ' expense record' + (d.expenseCount !== 1 ? 's' : '');
@@ -442,13 +492,13 @@ function renderCards(d) {
 }
 
 function renderGauge(d) {
-  const max = Math.max(d.reservationRevenue, d.restaurantRevenue, d.barRevenue, d.totalExpenses, 1);
   const rows = [
-    { label: 'Reservations',    value: d.reservationRevenue, color: '#3b82f6' },
-    { label: 'Restaurant',      value: d.restaurantRevenue,  color: '#f59e0b' },
-    { label: 'Bar',             value: d.barRevenue,         color: '#8b5cf6' },
-    { label: 'Total Revenue',   value: d.totalSales,         color: '#10b981' },
-    { label: 'Total Expenses',  value: d.totalExpenses,      color: '#ef4444' },
+    { label: 'Reservations',    value: d.reservationRevenue,  color: '#3b82f6' },
+    { label: 'Restaurant',      value: d.restaurantRevenue,   color: '#f59e0b' },
+    { label: 'Bar',             value: d.barRevenue,          color: '#8b5cf6' },
+    { label: 'Housekeeping',    value: d.housekeepingRevenue, color: '#0d9488' },
+    { label: 'Total Revenue',   value: d.totalSales,          color: '#10b981' },
+    { label: 'Total Expenses',  value: d.totalExpenses,       color: '#ef4444' },
   ];
   const maxVal = Math.max(...rows.map(r => r.value), 1);
   document.getElementById('gauge-rows').innerHTML = rows.map(r => `
@@ -485,6 +535,12 @@ function renderTable(d) {
       <td style="color:#64748b;">${d.barCount} orders</td>
       <td class="amount-green">${fmtTSH(d.barRevenue)}</td>
       <td style="color:#64748b;">${pct(d.barRevenue, rev)}%</td>
+    </tr>
+    <tr>
+      <td><span class="row-icon" style="background:#ccfbf1;color:#0d9488;"><i class="fas fa-soap"></i></span> Housekeeping / Laundry</td>
+      <td style="color:#64748b;">${d.housekeepingCount} records</td>
+      <td class="amount-green">${fmtTSH(d.housekeepingRevenue)}</td>
+      <td style="color:#64748b;">${pct(d.housekeepingRevenue, rev)}%</td>
     </tr>
     <tr class="row-total">
       <td><span class="row-icon" style="background:#d1fae5;color:#10b981;"><i class="fas fa-coins"></i></span> <strong>Total Revenue</strong></td>
@@ -590,6 +646,13 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('userName').innerText   = user.fullName || user.username;
   document.getElementById('userRole').innerText   = user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'User';
   document.getElementById('userAvatar').innerText = (user.fullName || user.username || 'U').charAt(0).toUpperCase();
+
+  // Default to the current month so the report doesn't fetch all-time data by default
+  const now = new Date();
+  const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+  const today = now.toISOString().split('T')[0];
+  document.getElementById('filter-from').value = firstOfMonth;
+  document.getElementById('filter-to').value   = today;
 
   loadData();
 
