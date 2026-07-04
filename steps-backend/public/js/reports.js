@@ -142,7 +142,7 @@ function renderReservationRevenue(data) {
   renderPaymentsByMethod(data);
 
   if (!data || !data.length) {
-    if (tbody) tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:30px;color:#94a3b8;">No reservation bookings for selected date range</td></tr>';
+    if (tbody) tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;padding:30px;color:#94a3b8;">No reservation bookings for selected date range</td></tr>';
     if (elCount) elCount.innerText = '0';
     if (elTotal) elTotal.innerText = fmtTSH(0);
     if (elPaid)  elPaid.innerText  = fmtTSH(0);
@@ -179,6 +179,7 @@ function renderReservationRevenue(data) {
       <td style="font-weight:600;">${fmtTSH(r.total)}</td>
       <td style="color:#10b981;font-weight:600;">${fmtTSH(r.amountPaid)}</td>
       <td style="color:${r.balance > 0 ? '#ef4444' : '#64748b'};font-weight:600;">${fmtTSH(r.balance)}</td>
+      <td>${esc(r.bookedBy)}</td>
     </tr>`;
   }).join('');
 }
@@ -215,6 +216,7 @@ async function generatePrintReport() {
         <td style="text-align:right;color:#10b981;">${fmtTSH(r.amountPaid || 0)}</td>
         <td style="text-align:right;color:${(r.balance||0) > 0 ? '#ef4444' : '#64748b'};">${fmtTSH(r.balance || 0)}</td>
         <td style="text-align:center;"><span style="background:${statusBg};color:${statusColor};padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;">${statusLabel}</span></td>
+        <td>${r.bookedBy || '—'}</td>
       </tr>`;
     }).join('');
 
@@ -266,9 +268,10 @@ async function generatePrintReport() {
           <th class="right" style="width:13%;">Paid (TSH)</th>
           <th class="right" style="width:13%;">Balance (TSH)</th>
           <th class="center" style="width:9%;">Status</th>
+          <th style="width:9%;">User</th>
         </tr>
       </thead>
-      <tbody>${resRows || '<tr><td colspan="10" style="text-align:center;color:#9ca3af;padding:20px">No reservations in this period</td></tr>'}</tbody>
+      <tbody>${resRows || '<tr><td colspan="11" style="text-align:center;color:#9ca3af;padding:20px">No reservations in this period</td></tr>'}</tbody>
     </table>
     <div class="footer"><span>Kitobo Serenity Resort &middot; Confidential</span><span>Page 1</span></div>
     <script>window.onload=function(){setTimeout(function(){window.print();},400);};<\/script>
