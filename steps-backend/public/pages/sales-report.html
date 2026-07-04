@@ -518,8 +518,7 @@ async function loadSalesReport() {
           <td>${totalItems} units</td>
           <td>${fmtTSH(sale.total)}</td>
           <td style="white-space:nowrap;">
-            <button onclick="viewSaleItems(${sale.id})" title="View Items" style="background:#f1f5f9;color:#1a2340;border:none;padding:5px 9px;border-radius:8px;cursor:pointer;font-size:12px;margin-right:4px;"><i class="fas fa-eye"></i></button>
-            <button onclick="deleteSale(${sale.id}, '${escapeHtml(sale.order_number)}')" style="background:#ef4444;color:white;border:none;padding:5px 12px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;"><i class="fas fa-trash"></i> Delete</button>
+            <button onclick="viewSaleItems(${sale.id})" title="View Items" style="background:#f1f5f9;color:#1a2340;border:none;padding:5px 9px;border-radius:8px;cursor:pointer;font-size:12px;"><i class="fas fa-eye"></i></button>
           </td>
         </tr>
       `;
@@ -545,20 +544,6 @@ async function loadSalesReport() {
   }
   function closeViewItemsModal() { document.getElementById('view-items-modal-overlay').style.display = 'none'; }
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeViewItemsModal(); });
-  
-  async function deleteSale(id, orderNumber) {
-    if (!confirm(`Delete Order #${orderNumber}? This cannot be undone.`)) return;
-    try {
-      const res = await fetch(API_BASE + `/api/sales/${id}`, { method: 'DELETE', headers: _authHeaders() });
-      if (!res.ok) throw new Error(await res.text());
-      showToast('Sale deleted successfully', '<i class="fas fa-check-circle"></i>');
-      salesData = salesData.filter(s => s.id !== id);
-      renderTable();
-      updateStats();
-    } catch (err) {
-      showToast('Delete failed: ' + err.message, '<i class="fas fa-times-circle"></i>');
-    }
-  }
 
   function updateStats() {
     const totalOrders = salesData.length;
