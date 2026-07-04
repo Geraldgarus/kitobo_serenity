@@ -250,8 +250,8 @@
     <div style="padding: 20px; border-bottom: 1px solid #e2e8f0;"><h3><i class="fas fa-receipt"></i> POS Sales Details (Bar &amp; Restaurant)</h3></div>
     <div style="overflow-x: auto;">
       <table class="data-table" id="sales-table">
-        <thead><tr><th>Date</th><th>Order #</th><th>POS</th><th>Payment Method</th><th>Status</th><th>Waiter</th><th>Items</th><th>Total Amount</th><th>Action</th></tr></thead>
-        <tbody id="sales-body"><tr><td colspan="9" class="empty-state">Select a date range and click Apply Filter</td></tr></tbody>
+        <thead><tr><th>Date</th><th>Order #</th><th>POS</th><th>Payment Method</th><th>Status</th><th>Waiter</th><th>User</th><th>Items</th><th>Total Amount</th><th>Action</th></tr></thead>
+        <tbody id="sales-body"><tr><td colspan="10" class="empty-state">Select a date range and click Apply Filter</td></tr></tbody>
       </table>
     </div>
   </div>
@@ -443,6 +443,7 @@ async function loadSalesReport() {
         id: order.id,
         order_number: order.order_number,
         cashier: order.waiter_name || order.cashier_name || '—',
+        user: order.cashier_name || '—',
         date: order.order_date,
         total: order.total_amount,
         pos_type: order.pos_type || '',
@@ -467,7 +468,7 @@ async function loadSalesReport() {
     } catch (err) {
       console.error('Error loading sales:', err);
       showToast('Failed to load sales data: ' + err.message, 'error');
-      document.getElementById('sales-body').innerHTML = '<tr><td colspan="9" class="empty-state">Error loading sales data</td></tr>';
+      document.getElementById('sales-body').innerHTML = '<tr><td colspan="10" class="empty-state">Error loading sales data</td></tr>';
     }
   }
 
@@ -475,7 +476,7 @@ async function loadSalesReport() {
   function renderTable() {
     const tbody = document.getElementById('sales-body');
     if (!salesData.length) {
-      tbody.innerHTML = '<tr><td colspan="9" class="empty-state">No sales records found for selected date range</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="10" class="empty-state">No sales records found for selected date range</td></tr>';
       return;
     }
 
@@ -513,6 +514,7 @@ async function loadSalesReport() {
             ${status !== 'paid' ? `<div style="font-size:10px;color:#94a3b8;margin-top:2px;">Bal: ${fmtTSH(sale.balance)}</div>` : ''}
           </td>
           <td>${escapeHtml(sale.cashier)}</td>
+          <td>${escapeHtml(sale.user)}</td>
           <td>${totalItems} units</td>
           <td>${fmtTSH(sale.total)}</td>
           <td style="white-space:nowrap;">
@@ -704,7 +706,7 @@ async function loadSalesReport() {
   }
   
   function exportToCSV() {
-    let csv = 'Date,Order Number,POS,Payment Method,Waiter,Items Count,Total Amount (TSH)\n';
+    let csv = 'Date,Order Number,POS,Payment Method,Waiter,User,Items Count,Total Amount (TSH)\n';
 
     salesData.forEach(sale => {
       const totalItems = sale.items.reduce((sum, i) => sum + i.quantity, 0);
@@ -713,7 +715,7 @@ async function loadSalesReport() {
       const pmText = sale.payment_method === 'split' && Array.isArray(sale.payment_breakdown) && sale.payment_breakdown.length
         ? 'Split (' + sale.payment_breakdown.map(p => `${pmMeta(p.method).label}: ${p.amount}`).join('; ') + ')'
         : pmMeta(sale.payment_method).label;
-      csv += `"${saleDate}","${sale.order_number}","${posLabel}","${pmText}","${sale.cashier}",${totalItems},${sale.total}\n`;
+      csv += `"${saleDate}","${sale.order_number}","${posLabel}","${pmText}","${sale.cashier}","${sale.user}",${totalItems},${sale.total}\n`;
 
       sale.items.forEach(item => {
         csv += `,,,"  - ${item.name}: ${item.quantity} x ${item.price} = ${item.total}",\n`;
