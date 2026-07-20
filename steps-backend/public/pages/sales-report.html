@@ -420,6 +420,7 @@
   function _authHeaders() { const t = _getToken(); return { 'Content-Type': 'application/json', ...(t && { 'Authorization': 'Bearer ' + t }) }; }
   function _checkAuth(res) { if (res.status === 401 || res.status === 403) { sessionStorage.clear(); window.location.href = '/login'; throw new Error('Session expired'); } return res; }
   async function apiGet(url) { const res = _checkAuth(await fetch(API_BASE + url, { headers: _authHeaders() })); if (!res.ok) throw new Error(await res.text()); return res.json(); }
+  async function apiDelete(url) { const res = _checkAuth(await fetch(API_BASE + url, { method: 'DELETE', headers: _authHeaders() })); if (!res.ok) throw new Error(await res.text()); return res.json(); }
 
   // Load sales from Database with proper date filtering
 async function loadSalesReport() {
@@ -519,6 +520,7 @@ async function loadSalesReport() {
           <td>${fmtTSH(sale.total)}</td>
           <td style="white-space:nowrap;">
             <button onclick="viewSaleItems(${sale.id})" title="View Items" style="background:#f1f5f9;color:#1a2340;border:none;padding:5px 9px;border-radius:8px;cursor:pointer;font-size:12px;"><i class="fas fa-eye"></i></button>
+            <button onclick="deleteSale(${sale.id}, '${escapeHtml(sale.order_number)}')" title="Delete Sale" style="background:#fee2e2;color:#dc2626;border:none;padding:5px 9px;border-radius:8px;cursor:pointer;font-size:12px;margin-left:4px;"><i class="fas fa-trash"></i></button>
           </td>
         </tr>
       `;
@@ -544,6 +546,21 @@ async function loadSalesReport() {
   }
   function closeViewItemsModal() { document.getElementById('view-items-modal-overlay').style.display = 'none'; }
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeViewItemsModal(); });
+
+  async function deleteSale(id, orderNumber) {
+    if (!confirm(`Delete order #${orderNumber}? This cannot be undone.`)) return;
+    try {
+      await apiDelete(`/api/sales/${id}`);
+      salesData = salesData.filter(s => s.id !== id);
+      renderTable();
+      updateStats();
+      updateBestSellers();
+      updateChart();
+      showToast('Sale deleted successfully');
+    } catch (err) {
+      showToast('Failed to delete sale: ' + err.message, 'error');
+    }
+  }
 
   function updateStats() {
     const totalOrders = salesData.length;
