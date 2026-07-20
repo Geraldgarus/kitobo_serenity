@@ -100,10 +100,13 @@
   .btn-print:hover { background: #111827; }
 
   /* ---- STATS ROW ---- */
-  .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
-  .stat-card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; min-width: 0; overflow: hidden; }
+  /* flex-wrap (not a grid that squishes tracks) so a card never gets
+     narrower than min-width — it wraps to the next row instead, which
+     keeps the full number readable. */
+  .stats-row { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 24px; }
+  .stat-card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; flex: 1 1 190px; min-width: 190px; }
   .stat-label { font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; }
-  .stat-value { font-size: 26px; font-weight: 700; color: #1e293b; white-space: nowrap; overflow: hidden; }
+  .stat-value { font-size: 22px; font-weight: 700; color: #1e293b; line-height: 1.25; }
   .stat-sub { font-size: 11px; color: #94a3b8; margin-top: 4px; }
 
   /* ---- CHART ROW ---- */
@@ -162,10 +165,10 @@
     .print-header .ph-center h1 { font-size: 22px; font-weight: 700; color: #1a2340; font-family: Georgia, serif; margin: 0; }
     .print-header .ph-center p { font-size: 12px; color: #64748b; margin: 4px 0 0; }
 
-    .stat-card { box-shadow: none; border: 1px solid #e2e8f0; break-inside: avoid; padding: 10px 12px; min-width: 0; overflow: hidden; }
-    .stats-row { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; margin-bottom: 16px; }
-    .stat-label { font-size: 9px; margin-bottom: 4px; white-space: normal; }
-    .stat-value { font-size: 15px; }
+    .stat-card { box-shadow: none; border: 1px solid #e2e8f0; break-inside: avoid; padding: 10px 12px; flex-basis: 130px; min-width: 130px; }
+    .stats-row { gap: 8px; margin-bottom: 16px; }
+    .stat-label { font-size: 9px; margin-bottom: 4px; }
+    .stat-value { font-size: 14px; }
     .stat-sub { font-size: 9px; }
     .table-card { border: 1px solid #e2e8f0; box-shadow: none; }
     .data-table th {
@@ -514,27 +517,7 @@
     document.getElementById('stat-collected').innerText = fmtTSH(collected);
     document.getElementById('stat-balance').innerText = fmtTSH(revenue - collected);
     document.getElementById('stat-pending').innerText = pending;
-    fitAllStatValues();
   }
-
-  // Scales a stat value down (never clipping digits) so the full number
-  // always fits on one line inside its card, however narrow.
-  function fitStatValue(el) {
-    if (!el) return;
-    el.style.transform = '';
-    el.style.transformOrigin = 'left center';
-    const naturalWidth = el.scrollWidth;
-    const available = el.clientWidth;
-    if (naturalWidth > available && available > 0) {
-      const scale = available / naturalWidth;
-      el.style.transform = `scale(${scale})`;
-    }
-  }
-  function fitAllStatValues() {
-    document.querySelectorAll('.stat-value').forEach(fitStatValue);
-  }
-  window.addEventListener('resize', () => fitAllStatValues());
-  window.addEventListener('beforeprint', () => fitAllStatValues());
 
   function renderChart(data) {
     // Count each service type
