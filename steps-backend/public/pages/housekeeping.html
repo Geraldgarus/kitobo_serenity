@@ -796,7 +796,7 @@
       </div>
       <div class="form-group">
         <label>Payment Status</label>
-        <select id="l-status">
+        <select id="l-status" onchange="onLaundryStatusChange()">
           <option value="pending">Pending</option>
           <option value="partial">Partial Payment</option>
           <option value="paid">Fully Paid</option>
@@ -1680,10 +1680,28 @@ async function clearMaintenance(apartmentId, aptName) {
     else statusSel.value = 'partial';
   }
 
+  function onLaundryStatusChange() {
+    const statusSel = document.getElementById('l-status');
+    const priceEl = document.getElementById('l-price');
+    const paidEl = document.getElementById('l-amount-paid');
+    if (!statusSel || !priceEl || !paidEl) return;
+    if (statusSel.value === 'paid') {
+      const price = parseFloat(priceEl.value) || 0;
+      const paid = parseFloat(paidEl.value) || 0;
+      if (paid <= 0) paidEl.value = price;
+    }
+  }
+
   async function saveLaundryService() {
     const id = document.getElementById('edit-laundry-id').value;
     const selectedServices = [...document.querySelectorAll('#services-checkboxes input[type=checkbox]:checked')]
       .map(cb => cb.value).join(', ');
+    const price = parseFloat(document.getElementById('l-price').value) || 0;
+    let amountPaid = document.getElementById('l-amount-paid').value;
+    const paymentStatus = document.getElementById('l-status').value;
+    if (paymentStatus === 'paid' && (parseFloat(amountPaid) || 0) <= 0) {
+      amountPaid = price;
+    }
     const payload = {
       room_number: document.getElementById('l-room').value.trim(),
       housekeeper_name: document.getElementById('l-housekeeper').value.trim(),
@@ -1691,9 +1709,9 @@ async function clearMaintenance(apartmentId, aptName) {
       services: selectedServices,
       service_date: document.getElementById('l-date').value,
       price: document.getElementById('l-price').value,
-      amount_paid: document.getElementById('l-amount-paid').value,
+      amount_paid: amountPaid,
       payment_method: document.getElementById('l-payment-method').value,
-      payment_status: document.getElementById('l-status').value,
+      payment_status: paymentStatus,
       notes: document.getElementById('l-notes').value.trim()
     };
     if (!payload.room_number || !payload.housekeeper_name) {
