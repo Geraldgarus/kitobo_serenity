@@ -103,7 +103,7 @@
   .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
   .stat-card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; min-width: 0; overflow: hidden; }
   .stat-label { font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; }
-  .stat-value { font-size: 26px; font-weight: 700; color: #1e293b; overflow-wrap: break-word; word-break: break-word; }
+  .stat-value { font-size: 26px; font-weight: 700; color: #1e293b; white-space: nowrap; overflow: hidden; }
   .stat-sub { font-size: 11px; color: #94a3b8; margin-top: 4px; }
 
   /* ---- CHART ROW ---- */
@@ -165,7 +165,7 @@
     .stat-card { box-shadow: none; border: 1px solid #e2e8f0; break-inside: avoid; padding: 10px 12px; min-width: 0; overflow: hidden; }
     .stats-row { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; margin-bottom: 16px; }
     .stat-label { font-size: 9px; margin-bottom: 4px; white-space: normal; }
-    .stat-value { font-size: 15px; white-space: normal; overflow-wrap: break-word; word-break: break-word; }
+    .stat-value { font-size: 15px; }
     .stat-sub { font-size: 9px; }
     .table-card { border: 1px solid #e2e8f0; box-shadow: none; }
     .data-table th {
@@ -514,7 +514,26 @@
     document.getElementById('stat-collected').innerText = fmtTSH(collected);
     document.getElementById('stat-balance').innerText = fmtTSH(revenue - collected);
     document.getElementById('stat-pending').innerText = pending;
+    fitAllStatValues();
   }
+
+  // Shrinks a stat value's font size until it fits on one line instead of
+  // wrapping or overflowing into neighboring cards.
+  function fitStatValue(el) {
+    if (!el) return;
+    el.style.fontSize = '';
+    const minFont = 11;
+    let fontSize = parseFloat(getComputedStyle(el).fontSize);
+    while (el.scrollWidth > el.clientWidth && fontSize > minFont) {
+      fontSize -= 1;
+      el.style.fontSize = fontSize + 'px';
+    }
+  }
+  function fitAllStatValues() {
+    document.querySelectorAll('.stat-value').forEach(fitStatValue);
+  }
+  window.addEventListener('resize', () => fitAllStatValues());
+  window.addEventListener('beforeprint', () => fitAllStatValues());
 
   function renderChart(data) {
     // Count each service type
