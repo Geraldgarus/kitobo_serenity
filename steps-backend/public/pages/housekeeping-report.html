@@ -517,16 +517,17 @@
     fitAllStatValues();
   }
 
-  // Shrinks a stat value's font size until it fits on one line instead of
-  // wrapping or overflowing into neighboring cards.
+  // Scales a stat value down (never clipping digits) so the full number
+  // always fits on one line inside its card, however narrow.
   function fitStatValue(el) {
     if (!el) return;
-    el.style.fontSize = '';
-    const minFont = 11;
-    let fontSize = parseFloat(getComputedStyle(el).fontSize);
-    while (el.scrollWidth > el.clientWidth && fontSize > minFont) {
-      fontSize -= 1;
-      el.style.fontSize = fontSize + 'px';
+    el.style.transform = '';
+    el.style.transformOrigin = 'left center';
+    const naturalWidth = el.scrollWidth;
+    const available = el.clientWidth;
+    if (naturalWidth > available && available > 0) {
+      const scale = available / naturalWidth;
+      el.style.transform = `scale(${scale})`;
     }
   }
   function fitAllStatValues() {
