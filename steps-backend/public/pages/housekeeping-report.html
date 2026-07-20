@@ -162,8 +162,11 @@
     .print-header .ph-center h1 { font-size: 22px; font-weight: 700; color: #1a2340; font-family: Georgia, serif; margin: 0; }
     .print-header .ph-center p { font-size: 12px; color: #64748b; margin: 4px 0 0; }
 
-    .stat-card { box-shadow: none; border: 1px solid #e2e8f0; break-inside: avoid; }
-    .stats-row { gap: 10px; margin-bottom: 16px; }
+    .stat-card { box-shadow: none; border: 1px solid #e2e8f0; break-inside: avoid; padding: 10px 12px; min-width: 0; overflow: hidden; }
+    .stats-row { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; margin-bottom: 16px; }
+    .stat-label { font-size: 9px; margin-bottom: 4px; white-space: normal; }
+    .stat-value { font-size: 15px; white-space: normal; overflow-wrap: break-word; word-break: break-word; }
+    .stat-sub { font-size: 9px; }
     .table-card { border: 1px solid #e2e8f0; box-shadow: none; }
     .data-table th {
       background: #1a2340 !important;
