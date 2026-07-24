@@ -891,10 +891,11 @@ app.get('/api/reports/summary', async (req, res) => {
   try {
     const { rows: summary } = await pool.query(`
       SELECT
-        COUNT(*)::int                                        AS total_reservations,
-        COALESCE(SUM(total), 0)::int                         AS total_revenue,
-        COALESCE(AVG(checkout - checkin), 0)::numeric(6,2)  AS avg_stay_nights,
-        COALESCE(SUM(checkout - checkin), 0)::int            AS total_nights
+        COUNT(*)::int                                                              AS total_reservations,
+        COALESCE(SUM(total) FILTER (WHERE COALESCE(currency, 'TSH') <> 'USD'), 0)::int AS total_revenue_tsh,
+        COALESCE(SUM(total) FILTER (WHERE currency = 'USD'), 0)::int                AS total_revenue_usd,
+        COALESCE(AVG(checkout - checkin), 0)::numeric(6,2)                          AS avg_stay_nights,
+        COALESCE(SUM(checkout - checkin), 0)::int                                  AS total_nights
       FROM reservations r
       ${where}
     `, values);
@@ -902,9 +903,10 @@ app.get('/api/reports/summary', async (req, res) => {
     const { rows: byApt } = await pool.query(`
       SELECT
         a.id, a.name, a.type, a.color, a.emoji, a.rate_per_night,
-        COUNT(r.id)::int                                     AS bookings,
-        COALESCE(SUM(r.checkout - r.checkin), 0)::int        AS nights,
-        COALESCE(SUM(r.total), 0)::int                       AS revenue
+        COUNT(r.id)::int                                                                   AS bookings,
+        COALESCE(SUM(r.checkout - r.checkin), 0)::int                                      AS nights,
+        COALESCE(SUM(r.total) FILTER (WHERE COALESCE(r.currency, 'TSH') <> 'USD'), 0)::int AS revenue_tsh,
+        COALESCE(SUM(r.total) FILTER (WHERE r.currency = 'USD'), 0)::int                   AS revenue_usd
       FROM apartments a
       LEFT JOIN reservations r ON r.apt_id = a.id
         ${conditions.length ? 'AND ' + conditions.join(' AND ') : ''}
@@ -915,9 +917,10 @@ app.get('/api/reports/summary', async (req, res) => {
     res.json({
       summary: {
         totalReservations: summary[0].total_reservations,
-        totalRevenue:      summary[0].total_revenue,
-        avgStayNights:     parseFloat(summary[0].avg_stay_nights),
-        totalNights:       summary[0].total_nights,
+        totalRevenueTSH:    summary[0].total_revenue_tsh,
+        totalRevenueUSD:    summary[0].total_revenue_usd,
+        avgStayNights:      parseFloat(summary[0].avg_stay_nights),
+        totalNights:        summary[0].total_nights,
       },
       byApartment: byApt.map(r => ({
         id:           r.id,
@@ -928,7 +931,8 @@ app.get('/api/reports/summary', async (req, res) => {
         ratePerNight: r.rate_per_night,
         bookings:     r.bookings,
         nights:       r.nights,
-        revenue:      r.revenue,
+        revenueTSH:   r.revenue_tsh,
+        revenueUSD:   r.revenue_usd,
       })),
     });
   } catch (err) {
@@ -946,7 +950,7 @@ app.get('/api/reports/reservations', async (req, res) => {
       TO_CHAR(r.checkin, 'YYYY-MM-DD')   AS checkin,
       TO_CHAR(r.checkout, 'YYYY-MM-DD')  AS checkout,
       (r.checkout - r.checkin)            AS nights,
-      r.total, r.amount_paid, r.balance,
+      r.total, r.amount_paid, r.balance, r.currency,
       r.payment_method, r.payment_status,
       r.booked_by,
       TO_CHAR(r.created_at, 'YYYY-MM-DD HH24:MI') AS booked_at,
@@ -978,6 +982,7 @@ app.get('/api/reports/reservations', async (req, res) => {
       total:         parseInt(row.total) || 0,
       amountPaid:    parseInt(row.amount_paid) || 0,
       balance:       parseInt(row.balance) || 0,
+      currency:      row.currency || 'TSH',
       paymentMethod: row.payment_method || '—',
       paymentStatus: row.payment_status || 'unpaid',
       bookedBy:      row.booked_by || 'system',

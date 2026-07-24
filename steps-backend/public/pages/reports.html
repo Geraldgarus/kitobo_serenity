@@ -317,9 +317,9 @@
             <th>Nights</th>
             <th>Payment</th>
             <th>Status</th>
-            <th>Total (TSH)</th>
-            <th>Paid (TSH)</th>
-            <th>Balance (TSH)</th>
+            <th>Total</th>
+            <th>Paid</th>
+            <th>Balance</th>
             <th>User</th>
           </tr>
         </thead>
@@ -341,7 +341,7 @@
           <tr>
             <th>Payment Method</th>
             <th style="text-align:center;">Bookings</th>
-            <th>Total Collected (TSH)</th>
+            <th>Total Collected</th>
           </tr>
         </thead>
         <tbody id="rpt-pm-body">
@@ -352,13 +352,13 @@
   </div>
 
   <div class="reports-grid" style="margin-top:20px;">
-    <div class="card"><div class="card-header"><span class="card-title">Revenue by Room (TSH)</span></div><div class="card-body"><div class="mini-bar-chart" id="revenue-chart"></div></div></div>
+    <div class="card"><div class="card-header"><span class="card-title">Revenue by Room</span></div><div class="card-body"><div class="mini-bar-chart" id="revenue-chart"></div></div></div>
     <div class="card"><div class="card-header"><span class="card-title">Overall Occupancy Rate</span></div><div class="card-body"><div style="text-align:center;margin-bottom:20px"><div style="font-size:56px;font-weight:800;color:var(--navy);font-family:'Playfair Display',serif" id="occ-rate">—</div><div style="color:var(--gray-400);font-size:13px">occupancy for selected period</div></div><div style="height:12px;background:var(--gray-100);border-radius:8px;overflow:hidden"><div id="occ-bar" style="height:100%;background:var(--green);border-radius:8px;width:0%;transition:width 0.8s ease"></div></div><div style="display:flex;justify-content:space-between;margin-top:6px;font-size:11px;color:var(--gray-300)"><span>0%</span><span>50%</span><span>100%</span></div></div></div>
   </div>
 
   <div class="card" style="margin-top:20px">
     <div class="card-header"><span class="card-title">Reservations by Room</span></div>
-    <div style="overflow-x:auto"><table class="data-table"><thead><tr><th>Room</th><th>Bookings</th><th>Total Nights</th><th>Total Revenue</th></tr></thead><tbody id="rpt-apt-table"></tbody></table></div>
+    <div style="overflow-x:auto"><table class="data-table"><thead><tr><th>Room</th><th>Bookings</th><th>Total Nights</th><th>Revenue (TSh)</th><th>Revenue (USD)</th></tr></thead><tbody id="rpt-apt-table"></tbody></table></div>
   </div>
 
   <!-- Notification Panel -->

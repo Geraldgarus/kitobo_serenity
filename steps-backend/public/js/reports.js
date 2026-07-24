@@ -1,4 +1,23 @@
 ﻿// Reports specific functions
+
+// Currency-aware amount formatter, matching the one used on the
+// reservations/dashboard pages — a reservation can be booked in
+// either TSh or USD, so reports must never assume one currency.
+function fmtAmount(n, currency) {
+  return currency === 'USD' ? '$' + Math.round(n || 0).toLocaleString() : fmtTSH(n);
+}
+
+// Aggregate figures (totals across many reservations) can span both
+// currencies at once, so they can't be summed into one number —
+// show each currency's total side by side instead, omitting a
+// currency entirely when it has nothing booked in it.
+function fmtBreakdown(tshAmount, usdAmount) {
+  const parts = [];
+  if (tshAmount) parts.push(fmtTSH(tshAmount));
+  if (usdAmount) parts.push('$' + Math.round(usdAmount).toLocaleString());
+  return parts.length ? parts.join(' + ') : fmtTSH(0);
+}
+
 async function loadAndRenderReports() {
   const fromEl = document.getElementById('rpt-from');
   const toEl = document.getElementById('rpt-to');
@@ -47,13 +66,17 @@ function clearReportFilter() {
 }
 
 function renderReportData(summary, filteredRes, fromVal, toVal) {
-  const { totalReservations, totalRevenue, avgStayNights, totalNights } = summary.summary;
+  const { totalReservations, totalRevenueTSH, totalRevenueUSD, avgStayNights, totalNights } = summary.summary;
   const byApt = summary.byApartment;
 
-  const maxRev = Math.max(...byApt.map(a => a.revenue), 1);
-  document.getElementById('revenue-chart').innerHTML = byApt.map(a =>
-    `<div class="mini-bar-row"><div class="mini-bar-label">${a.name}</div><div class="mini-bar-track"><div class="mini-bar-fill" style="width:${(a.revenue / maxRev * 100).toFixed(1)}%;background:${a.color}"></div></div><div class="mini-bar-val">${a.revenue > 0 ? (a.revenue / 1000).toFixed(0) + 'K' : '—'}</div></div>`
-  ).join('');
+  // The mini bar chart plots one unit of length, so it's driven by TSh
+  // revenue (the primary currency) with any USD revenue noted alongside.
+  const maxRev = Math.max(...byApt.map(a => a.revenueTSH), 1);
+  document.getElementById('revenue-chart').innerHTML = byApt.map(a => {
+    const usdNote = a.revenueUSD > 0 ? ` + $${Math.round(a.revenueUSD).toLocaleString()}` : '';
+    const valLabel = a.revenueTSH > 0 ? (a.revenueTSH / 1000).toFixed(0) + 'K' + usdNote : (usdNote ? usdNote.replace(/^ \+ /, '') : '—');
+    return `<div class="mini-bar-row"><div class="mini-bar-label">${a.name}</div><div class="mini-bar-track"><div class="mini-bar-fill" style="width:${(a.revenueTSH / maxRev * 100).toFixed(1)}%;background:${a.color}"></div></div><div class="mini-bar-val">${valLabel}</div></div>`;
+  }).join('');
 
   const periodDays = fromVal && toVal ? Math.max(1, daysBetween(fromVal, toVal)) : 30;
   const totalOccDays = byApt.reduce((s, a) => s + a.nights, 0);
@@ -63,7 +86,7 @@ function renderReportData(summary, filteredRes, fromVal, toVal) {
   document.getElementById('occ-bar').style.width = occ + '%';
 
   document.getElementById('rpt-total-res').textContent = totalReservations;
-  document.getElementById('rpt-total-rev').textContent = fmtTSH(totalRevenue);
+  document.getElementById('rpt-total-rev').textContent = fmtBreakdown(totalRevenueTSH, totalRevenueUSD);
   document.getElementById('rpt-avg-stay').textContent = avgStayNights ? avgStayNights.toFixed(1) + ' nights' : '—';
 
   const today = isoDate(new Date());
@@ -76,7 +99,8 @@ function renderReportData(summary, filteredRes, fromVal, toVal) {
       <td><span style="display:inline-flex;align-items:center;gap:8px"><span style="width:10px;height:10px;border-radius:50%;background:${a.color};display:inline-block"></span><strong>${a.name}</strong></span></td>
       <td>${a.bookings}</td>
       <td>${a.nights}</td>
-      <td><strong>${a.revenue > 0 ? fmtTSH(a.revenue) : '—'}</strong></td>
+      <td><strong>${a.revenueTSH > 0 ? fmtTSH(a.revenueTSH) : '—'}</strong></td>
+      <td><strong>${a.revenueUSD > 0 ? '$' + Math.round(a.revenueUSD).toLocaleString() : '—'}</strong></td>
     </tr>`).join('');
   }
 
@@ -117,17 +141,18 @@ function renderPaymentsByMethod(data) {
   const totals = {};
   data.forEach(r => {
     const key = (r.paymentMethod || '').toString().trim().toLowerCase().replace(/[\s-]+/g, '_') || '_none';
-    if (!totals[key]) totals[key] = { raw: r.paymentMethod, count: 0, amount: 0 };
+    if (!totals[key]) totals[key] = { raw: r.paymentMethod, count: 0, amountTSH: 0, amountUSD: 0 };
     totals[key].count += 1;
-    totals[key].amount += (r.amountPaid || 0);
+    if (r.currency === 'USD') totals[key].amountUSD += (r.amountPaid || 0);
+    else totals[key].amountTSH += (r.amountPaid || 0);
   });
-  const rows = Object.values(totals).sort((a, b) => b.amount - a.amount);
+  const rows = Object.values(totals).sort((a, b) => (b.amountTSH + b.amountUSD) - (a.amountTSH + a.amountUSD));
   tbody.innerHTML = rows.map(row => {
     const info = pmInfo(row.raw);
     return `<tr>
       <td><i class="fas fa-${info.icon}" style="color:#c9933a;margin-right:6px;"></i>${info.label}</td>
       <td style="text-align:center;">${row.count}</td>
-      <td style="font-weight:600;color:#10b981;">${fmtTSH(row.amount)}</td>
+      <td style="font-weight:600;color:#10b981;">${fmtBreakdown(row.amountTSH, row.amountUSD)}</td>
     </tr>`;
   }).join('');
 }
@@ -150,13 +175,17 @@ function renderReservationRevenue(data) {
     return;
   }
 
-  const totalCharged = data.reduce((s, r) => s + r.total, 0);
-  const totalPaid    = data.reduce((s, r) => s + r.amountPaid, 0);
-  const totalBal     = data.reduce((s, r) => s + r.balance, 0);
+  const isUSD = r => r.currency === 'USD';
+  const totalChargedTSH = data.filter(r => !isUSD(r)).reduce((s, r) => s + r.total, 0);
+  const totalChargedUSD = data.filter(isUSD).reduce((s, r) => s + r.total, 0);
+  const totalPaidTSH    = data.filter(r => !isUSD(r)).reduce((s, r) => s + r.amountPaid, 0);
+  const totalPaidUSD    = data.filter(isUSD).reduce((s, r) => s + r.amountPaid, 0);
+  const totalBalTSH     = data.filter(r => !isUSD(r)).reduce((s, r) => s + r.balance, 0);
+  const totalBalUSD     = data.filter(isUSD).reduce((s, r) => s + r.balance, 0);
   if (elCount) elCount.innerText = data.length;
-  if (elTotal) elTotal.innerText = fmtTSH(totalCharged);
-  if (elPaid)  elPaid.innerText  = fmtTSH(totalPaid);
-  if (elBal)   elBal.innerText   = fmtTSH(totalBal);
+  if (elTotal) elTotal.innerText = fmtBreakdown(totalChargedTSH, totalChargedUSD);
+  if (elPaid)  elPaid.innerText  = fmtBreakdown(totalPaidTSH, totalPaidUSD);
+  if (elBal)   elBal.innerText   = fmtBreakdown(totalBalTSH, totalBalUSD);
 
   if (!tbody) return;
   tbody.innerHTML = data.map(r => {
@@ -176,9 +205,9 @@ function renderReservationRevenue(data) {
       <td style="text-align:center;">${r.nights}</td>
       <td><i class="fas fa-${pm.icon}" style="margin-right:4px;"></i>${esc(pm.label)}</td>
       <td>${statusBadge}</td>
-      <td style="font-weight:600;">${fmtTSH(r.total)}</td>
-      <td style="color:#10b981;font-weight:600;">${fmtTSH(r.amountPaid)}</td>
-      <td style="color:${r.balance > 0 ? '#ef4444' : '#64748b'};font-weight:600;">${fmtTSH(r.balance)}</td>
+      <td style="font-weight:600;">${fmtAmount(r.total, r.currency)}</td>
+      <td style="color:#10b981;font-weight:600;">${fmtAmount(r.amountPaid, r.currency)}</td>
+      <td style="color:${r.balance > 0 ? '#ef4444' : '#64748b'};font-weight:600;">${fmtAmount(r.balance, r.currency)}</td>
       <td>${esc(r.bookedBy)}</td>
     </tr>`;
   }).join('');
@@ -199,7 +228,7 @@ async function generatePrintReport() {
     const s = summary.summary;
     const byApt = summary.byApartment;
 
-    const aptRows = byApt.map(a => `<tr><td>${a.name}</td><td>${a.bookings}</td><td>${a.nights}</td><td><strong>${a.revenue > 0 ? fmtTSH(a.revenue) : '—'}</strong></td></tr>`).join('');
+    const aptRows = byApt.map(a => `<tr><td>${a.name}</td><td>${a.bookings}</td><td>${a.nights}</td><td><strong>${a.revenueTSH > 0 ? fmtTSH(a.revenueTSH) : '—'}</strong></td><td><strong>${a.revenueUSD > 0 ? '$' + Math.round(a.revenueUSD).toLocaleString() : '—'}</strong></td></tr>`).join('');
 
     const resRows = filtered.map((r, i) => {
       const statusColor = r.paymentStatus === 'paid' ? '#166534' : r.paymentStatus === 'partial' ? '#92400e' : '#991b1b';
@@ -212,9 +241,9 @@ async function generatePrintReport() {
         <td style="white-space:nowrap;">${fmtDate(r.checkin)}</td>
         <td style="white-space:nowrap;">${fmtDate(r.checkout)}</td>
         <td style="text-align:center;"><strong>${r.nights}</strong></td>
-        <td style="text-align:right;">${fmtTSH(r.total)}</td>
-        <td style="text-align:right;color:#10b981;">${fmtTSH(r.amountPaid || 0)}</td>
-        <td style="text-align:right;color:${(r.balance||0) > 0 ? '#ef4444' : '#64748b'};">${fmtTSH(r.balance || 0)}</td>
+        <td style="text-align:right;">${fmtAmount(r.total, r.currency)}</td>
+        <td style="text-align:right;color:#10b981;">${fmtAmount(r.amountPaid || 0, r.currency)}</td>
+        <td style="text-align:right;color:${(r.balance||0) > 0 ? '#ef4444' : '#64748b'};">${fmtAmount(r.balance || 0, r.currency)}</td>
         <td style="text-align:center;"><span style="background:${statusBg};color:${statusColor};padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;">${statusLabel}</span></td>
         <td>${r.bookedBy || '—'}</td>
       </tr>`;
@@ -252,8 +281,8 @@ async function generatePrintReport() {
       <img src="${logoSrc}" class="header-logo" alt="Logo">
       <div class="header-center"><h1>Kitobo Serenity Resort</h1><p>Reservations Report &middot; Dar es Salaam, Tanzania</p><p style="font-size:11px;color:#9ca3af;margin-top:2px;">Period: ${periodLabel} &nbsp;&middot;&nbsp; Generated: ${new Date().toLocaleString('en-GB')}</p></div>
     </div>
-    <div class="summary-grid"><div class="summary-box"><div class="label">Total Reservations</div><div class="value">${s.totalReservations}</div></div><div class="summary-box"><div class="label">Total Revenue</div><div class="value" style="font-size:15px">${fmtTSH(s.totalRevenue)}</div></div><div class="summary-box"><div class="label">Total Nights Sold</div><div class="value">${s.totalNights}</div></div><div class="summary-box"><div class="label">Avg. Stay</div><div class="value">${s.avgStayNights ? s.avgStayNights.toFixed(1) : '—'} nts</div></div></div>
-    <h2>Revenue by Room</h2><table><thead><tr><th>Room</th><th>Bookings</th><th>Nights</th><th>Revenue</th></tr></thead><tbody>${aptRows}</tbody></table>
+    <div class="summary-grid"><div class="summary-box"><div class="label">Total Reservations</div><div class="value">${s.totalReservations}</div></div><div class="summary-box"><div class="label">Total Revenue</div><div class="value" style="font-size:15px">${fmtBreakdown(s.totalRevenueTSH, s.totalRevenueUSD)}</div></div><div class="summary-box"><div class="label">Total Nights Sold</div><div class="value">${s.totalNights}</div></div><div class="summary-box"><div class="label">Avg. Stay</div><div class="value">${s.avgStayNights ? s.avgStayNights.toFixed(1) : '—'} nts</div></div></div>
+    <h2>Revenue by Room</h2><table><thead><tr><th>Room</th><th>Bookings</th><th>Nights</th><th>Revenue (TSh)</th><th>Revenue (USD)</th></tr></thead><tbody>${aptRows}</tbody></table>
     <h2>Reservation Detail (${filtered.length} records)</h2>
     <table>
       <thead>
@@ -264,9 +293,9 @@ async function generatePrintReport() {
           <th class="center" style="width:10%;">Check-in</th>
           <th class="center" style="width:10%;">Check-out</th>
           <th class="center" style="width:6%;">Nights</th>
-          <th class="right" style="width:13%;">Total (TSH)</th>
-          <th class="right" style="width:13%;">Paid (TSH)</th>
-          <th class="right" style="width:13%;">Balance (TSH)</th>
+          <th class="right" style="width:13%;">Total</th>
+          <th class="right" style="width:13%;">Paid</th>
+          <th class="right" style="width:13%;">Balance</th>
           <th class="center" style="width:9%;">Status</th>
           <th style="width:9%;">User</th>
         </tr>
