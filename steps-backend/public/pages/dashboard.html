@@ -1146,7 +1146,11 @@ function fmtAmount(n, currency) {
 function updatePriceLabel(type) {
   const currency = document.getElementById(`${type}-f-currency`)?.value || 'TSH';
   const suffix = currency === 'USD' ? 'USD' : 'TSh';
-  const step = currency === 'USD' ? '0.01' : '1000';
+  // step is only a spinner-increment hint, not a rounding rule — TSh
+  // amounts don't have to land on a multiple of 1000, so use step 1
+  // (any whole shilling) instead of 1000, which blocked real amounts
+  // like 45,500 or a quick test value like 45.
+  const step = currency === 'USD' ? '0.01' : '1';
 
   const label = document.getElementById(`${type}-f-price-label`);
   if (label) label.innerHTML = `<i class="fas fa-dollar-sign"></i> Price per Night (${suffix})`;
@@ -1241,11 +1245,13 @@ editUpdateRate = function() {
 function enableCustomTotal(type) {
   const customArea = document.getElementById(`${type}-custom-area`);
   const currentTotal = parseFloat(document.getElementById(`${type}-f-total-hidden`).value) || 0;
-  
+  const currency = document.getElementById(`${type}-f-currency`)?.value || 'TSH';
+  const step = currency === 'USD' ? '0.01' : '1';
+
   customArea.style.display = 'block';
   customArea.innerHTML = `
     <div class="custom-rate-edit">
-      <input type="number" id="${type}-custom-input" value="${currentTotal}" step="1000" min="0" placeholder="Enter total amount in TSH">
+      <input type="number" id="${type}-custom-input" value="${currentTotal}" step="${step}" min="0" placeholder="Enter total amount">
       <button class="btn-custom-apply" onclick="applyCustomTotal('${type}')">Apply</button>
       <button class="btn-custom-cancel" onclick="cancelCustomTotal('${type}')">Cancel</button>
     </div>
