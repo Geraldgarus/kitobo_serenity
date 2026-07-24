@@ -791,7 +791,7 @@
       </div>
       <div class="form-group-row cols-2">
         <div class="form-group">
-          <label><i class="fas fa-dollar-sign"></i> Amount Paid (TSH)</label>
+          <label id="modal-f-amount-paid-label"><i class="fas fa-dollar-sign"></i> Amount Paid (TSh)</label>
           <input type="number" id="modal-f-amount-paid" class="form-control" value="0" min="0" step="1000" />
         </div>
         <div class="form-group">
@@ -977,7 +977,7 @@
       </div>
       <div class="form-group-row cols-2">
         <div class="form-group">
-          <label><i class="fas fa-dollar-sign"></i> Amount Paid (TSH)</label>
+          <label id="edit-f-amount-paid-label"><i class="fas fa-dollar-sign"></i> Amount Paid (TSh)</label>
           <input type="number" id="edit-f-amount-paid" class="form-control" value="0" min="0" step="1000" />
         </div>
         <div class="form-group">
@@ -1370,10 +1370,18 @@ function fmtAmount(n, currency) {
 
 function updatePriceLabel(type) {
   const currency = document.getElementById(`${type}-f-currency`)?.value || 'TSH';
+  const suffix = currency === 'USD' ? 'USD' : 'TSh';
+  const step = currency === 'USD' ? '0.01' : '1000';
+
   const label = document.getElementById(`${type}-f-price-label`);
-  if (label) label.innerHTML = `<i class="fas fa-dollar-sign"></i> Price per Night (${currency === 'USD' ? 'USD' : 'TSh'})`;
+  if (label) label.innerHTML = `<i class="fas fa-dollar-sign"></i> Price per Night (${suffix})`;
   const priceInput = document.getElementById(`${type}-f-price-per-night`);
-  if (priceInput) priceInput.step = currency === 'USD' ? '0.01' : '1000';
+  if (priceInput) priceInput.step = step;
+
+  const paidLabel = document.getElementById(`${type}-f-amount-paid-label`);
+  if (paidLabel) paidLabel.innerHTML = `<i class="fas fa-dollar-sign"></i> Amount Paid (${suffix})`;
+  const paidInput = document.getElementById(`${type}-f-amount-paid`);
+  if (paidInput) paidInput.step = step;
 }
 
 function modalUpdateRate() {
