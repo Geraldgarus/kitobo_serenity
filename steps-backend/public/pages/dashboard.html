@@ -828,9 +828,10 @@
         <div class="form-group"><label><i class="fas fa-calendar-alt"></i> Check-in Date</label><input type="date" id="modal-f-checkin" class="form-control" required /></div>
         <div class="form-group"><label><i class="fas fa-calendar-alt"></i> Check-out Date</label><input type="date" id="modal-f-checkout" class="form-control" required /></div>
       </div>
-      <div class="form-group-row" style="grid-template-columns:1fr 1fr 1fr">
+      <div class="form-group-row" style="grid-template-columns:1fr 0.7fr 1fr 1fr">
         <div class="form-group"><label><i class="fas fa-hotel"></i> Room</label><select id="modal-f-apt" class="form-control" required><option value="">Select Room</option></select></div>
-        <div class="form-group"><label><i class="fas fa-dollar-sign"></i> Price per Night (TSH)</label><input type="number" id="modal-f-price-per-night" class="form-control" min="0" step="1000" placeholder="Enter price per night" oninput="modalUpdateRate()" /></div>
+        <div class="form-group"><label><i class="fas fa-money-bill-wave"></i> Currency</label><select id="modal-f-currency" class="form-control" onchange="modalUpdateRate()"><option value="TSH">TSh</option><option value="USD">USD ($)</option></select></div>
+        <div class="form-group"><label id="modal-f-price-label"><i class="fas fa-dollar-sign"></i> Price per Night (TSh)</label><input type="number" id="modal-f-price-per-night" class="form-control" min="0" step="1000" placeholder="Enter price per night" oninput="modalUpdateRate()" /></div>
         <div class="form-group"><label><i class="fas fa-utensils"></i> Rate Type</label><select id="modal-f-ratetype" class="form-control"><option value="Bed and Breakfast">Bed &amp; Breakfast</option><option value="Half Body">Half Body</option><option value="Full Body">Full Body</option></select></div>
       </div>
       <div class="form-group-row" style="grid-template-columns:1fr 1fr 1.2fr">
@@ -954,9 +955,10 @@
         <div class="form-group"><label><i class="fas fa-calendar-alt"></i> Check-in Date</label><input type="date" id="edit-f-checkin" class="form-control" required /></div>
         <div class="form-group"><label><i class="fas fa-calendar-alt"></i> Check-out Date</label><input type="date" id="edit-f-checkout" class="form-control" required /></div>
       </div>
-      <div class="form-group-row" style="grid-template-columns:1fr 1fr 1fr">
+      <div class="form-group-row" style="grid-template-columns:1fr 0.7fr 1fr 1fr">
         <div class="form-group"><label><i class="fas fa-hotel"></i> Room</label><select id="edit-f-apt" class="form-control" required><option value="">Select Room</option></select></div>
-        <div class="form-group"><label><i class="fas fa-dollar-sign"></i> Price per Night (TSH)</label><input type="number" id="edit-f-price-per-night" class="form-control" min="0" step="1000" placeholder="Enter price per night" oninput="editUpdateRate()" /></div>
+        <div class="form-group"><label><i class="fas fa-money-bill-wave"></i> Currency</label><select id="edit-f-currency" class="form-control" onchange="editUpdateRate()"><option value="TSH">TSh</option><option value="USD">USD ($)</option></select></div>
+        <div class="form-group"><label id="edit-f-price-label"><i class="fas fa-dollar-sign"></i> Price per Night (TSh)</label><input type="number" id="edit-f-price-per-night" class="form-control" min="0" step="1000" placeholder="Enter price per night" oninput="editUpdateRate()" /></div>
         <div class="form-group"><label><i class="fas fa-utensils"></i> Rate Type</label><select id="edit-f-ratetype" class="form-control"><option value="Bed and Breakfast">Bed &amp; Breakfast</option><option value="Half Body">Half Body</option><option value="Full Body">Full Body</option></select></div>
       </div>
       <div class="form-group-row" style="grid-template-columns:1fr 1fr 1.2fr">
@@ -1134,25 +1136,41 @@
 // PAYMENT HANDLING FUNCTIONS - ADD THIS ENTIRE BLOCK
 // ============================================================
 
+// Currency-aware amount formatter — TSh amounts use the shared fmtTSH(),
+// USD amounts get a $ prefix. Used wherever a reservation total/balance
+// is previewed, since a reservation can now be booked in either currency.
+function fmtAmount(n, currency) {
+  return currency === 'USD' ? '$' + Math.round(n || 0).toLocaleString() : fmtTSH(n);
+}
+
+function updatePriceLabel(type) {
+  const currency = document.getElementById(`${type}-f-currency`)?.value || 'TSH';
+  const label = document.getElementById(`${type}-f-price-label`);
+  if (label) label.innerHTML = `<i class="fas fa-dollar-sign"></i> Price per Night (${currency === 'USD' ? 'USD' : 'TSh'})`;
+  const priceInput = document.getElementById(`${type}-f-price-per-night`);
+  if (priceInput) priceInput.step = currency === 'USD' ? '0.01' : '1000';
+}
+
 function updateBalance(type) {
   const totalField = document.getElementById(`${type}-f-total-hidden`);
   const amountPaidField = document.getElementById(`${type}-f-amount-paid`);
   const balanceDisplay = document.getElementById(`${type}-f-balance`);
   const paymentStatusSelect = document.getElementById(`${type}-f-payment-status`);
-  
+
   if (!totalField || !amountPaidField || !balanceDisplay) return;
-  
+
   const total = parseFloat(totalField.value) || 0;
   let amountPaid = parseFloat(amountPaidField.value) || 0;
-  
+
   // Don't allow amount paid to exceed total
   if (amountPaid > total) {
     amountPaid = total;
     amountPaidField.value = total;
   }
-  
+
   const balance = total - amountPaid;
-  balanceDisplay.innerHTML = fmtTSH(balance);
+  const currency = document.getElementById(`${type}-f-currency`)?.value || 'TSH';
+  balanceDisplay.innerHTML = fmtAmount(balance, currency);
   
   if (paymentStatusSelect) {
     if (balance <= 0) {
@@ -1266,20 +1284,21 @@ function applyCustomTotal(type) {
   
   // Calculate nightly rate based on custom total
   const nightlyRate = Math.round(customTotal / nights);
-  
+  const currency = document.getElementById(`${type}-f-currency`)?.value || 'TSH';
+
   // Store the custom total
   document.getElementById(`${type}-f-total-hidden`).value = customTotal;
-  document.getElementById(`${type}-f-total`).innerHTML = fmtTSH(customTotal);
+  document.getElementById(`${type}-f-total`).innerHTML = fmtAmount(customTotal, currency);
   const useCustomEl = document.getElementById(`${type}-use-custom-total`);
   if (useCustomEl) useCustomEl.value = '1';
-  
+
   // Hide the custom area
   const customArea = document.getElementById(`${type}-custom-area`);
   customArea.style.display = 'none';
   customArea.innerHTML = '';
-  
-  showToast(`<i class="fas fa-check-circle"></i> Custom total applied! Nightly rate: ${fmtTSH(nightlyRate)}`, 'success');
-  console.log(`Custom Total: ${fmtTSH(customTotal)} | Nights: ${nights} | Nightly Rate: ${fmtTSH(nightlyRate)}`);
+
+  showToast(`<i class="fas fa-check-circle"></i> Custom total applied! Nightly rate: ${fmtAmount(nightlyRate, currency)}`, 'success');
+  console.log(`Custom Total: ${fmtAmount(customTotal, currency)} | Nights: ${nights} | Nightly Rate: ${fmtAmount(nightlyRate, currency)}`);
 }
 
 // OVERRIDE modalUpdateRate to respect custom total
@@ -2168,9 +2187,11 @@ function modalStepperChange(id, delta) {
 }
 
 function modalUpdateRate() {
+  updatePriceLabel('modal');
   const pricePerNight = parseFloat(document.getElementById('modal-f-price-per-night')?.value) || 0;
   const checkin = document.getElementById('modal-f-checkin')?.value;
   const checkout = document.getElementById('modal-f-checkout')?.value;
+  const currency = document.getElementById('modal-f-currency')?.value || 'TSH';
 
   if (!pricePerNight || !checkin || !checkout) {
     document.getElementById('modal-f-total').innerHTML = '—';
@@ -2181,7 +2202,7 @@ function modalUpdateRate() {
   const nights = daysBetween(checkin, checkout);
   const total = Math.round(pricePerNight * nights);
 
-  document.getElementById('modal-f-total').innerHTML = total > 0 ? fmtTSH(total) : '—';
+  document.getElementById('modal-f-total').innerHTML = total > 0 ? fmtAmount(total, currency) : '—';
   document.getElementById('modal-f-total-hidden').value = total;
 }
 
@@ -2274,28 +2295,30 @@ async function initEditForm(reservationId) {
     document.getElementById('edit-f-adults').value = reservation.adults;
     document.getElementById('edit-f-children').value = reservation.children;
 
-    // Set price per night from saved total / nights
+    // Set currency and price per night from saved total / nights
+    document.getElementById('edit-f-currency').value = reservation.currency || 'TSH';
+    updatePriceLabel('edit');
     const savedTotal = reservation.total || 0;
     const savedNights = Math.max(1, daysBetween(isoDate(reservation.checkin), isoDate(reservation.checkout)));
     const savedPricePerNight = savedNights > 0 ? Math.round(savedTotal / savedNights) : 0;
     document.getElementById('edit-f-price-per-night').value = savedPricePerNight || '';
     document.getElementById('edit-f-ratetype').value = reservation.rateType || 'Bed and Breakfast';
     document.getElementById('edit-f-total-hidden').value = savedTotal;
-    document.getElementById('edit-f-total').innerHTML = fmtTSH(savedTotal);
-    
+    document.getElementById('edit-f-total').innerHTML = fmtAmount(savedTotal, reservation.currency || 'TSH');
+
     // Set payment fields from database
     const savedAmountPaid = reservation.amountPaid || 0;
     const savedPaymentStatus = reservation.paymentStatus || 'unpaid';
     const savedPaymentMethod = reservation.paymentMethod || '';
-    
+
     document.getElementById('edit-f-amount-paid').value = savedAmountPaid;
     document.getElementById('edit-f-payment-status').value = savedPaymentStatus;
     document.getElementById('edit-f-payment-method').value = savedPaymentMethod;
-    
+
     // Calculate and display balance
     const balance = savedTotal - savedAmountPaid;
     const balanceDisplay = document.getElementById('edit-f-balance');
-    if (balanceDisplay) balanceDisplay.innerHTML = fmtTSH(balance);
+    if (balanceDisplay) balanceDisplay.innerHTML = fmtAmount(balance, reservation.currency || 'TSH');
 
     // Wire up real-time balance calculation for the edit form
     initPaymentListeners('edit');
@@ -2314,9 +2337,11 @@ function editStepperChange(id, delta) {
 }
 
 function editUpdateRate() {
+  updatePriceLabel('edit');
   const pricePerNight = parseFloat(document.getElementById('edit-f-price-per-night')?.value) || 0;
   const checkin = document.getElementById('edit-f-checkin')?.value;
   const checkout = document.getElementById('edit-f-checkout')?.value;
+  const currency = document.getElementById('edit-f-currency')?.value || 'TSH';
 
   if (!pricePerNight || !checkin || !checkout) {
     document.getElementById('edit-f-total').textContent = '—';
@@ -2327,13 +2352,13 @@ function editUpdateRate() {
   const nights = Math.max(0, daysBetween(checkin, checkout));
   const total = Math.round(pricePerNight * nights);
 
-  document.getElementById('edit-f-total').innerHTML = total > 0 ? fmtTSH(total) : '—';
+  document.getElementById('edit-f-total').innerHTML = total > 0 ? fmtAmount(total, currency) : '—';
   document.getElementById('edit-f-total-hidden').value = total;
 
   const amountPaid = parseFloat(document.getElementById('edit-f-amount-paid')?.value) || 0;
   const balance = total - amountPaid;
   const balanceDisplay = document.getElementById('edit-f-balance');
-  if (balanceDisplay) balanceDisplay.innerHTML = fmtTSH(balance);
+  if (balanceDisplay) balanceDisplay.innerHTML = fmtAmount(balance, currency);
 
   const paymentStatusField = document.getElementById('edit-f-payment-status');
   if (paymentStatusField) {
@@ -2421,6 +2446,7 @@ document.getElementById('edit-form-modal')?.addEventListener('submit', async fun
     children: parseInt(document.getElementById('edit-f-children').value),
     rateType: document.getElementById('edit-f-ratetype').value,
     pricePerNight: parseFloat(document.getElementById('edit-f-price-per-night').value) || 0,
+    currency: document.getElementById('edit-f-currency').value,
     total: finalTotal,
     userId: currentUser.id,
     username: currentUser.fullName || currentUser.username,
@@ -2577,6 +2603,7 @@ document.getElementById('reservation-form-modal')?.addEventListener('submit', as
     children: parseInt(document.getElementById('modal-f-children').value),
     rateType: document.getElementById('modal-f-ratetype').value,
     pricePerNight: parseFloat(document.getElementById('modal-f-price-per-night').value) || 0,
+    currency: document.getElementById('modal-f-currency').value,
     total: finalTotal,
     identification: document.getElementById('modal-f-identification').value,
     idType: document.getElementById('modal-f-id-type').value,

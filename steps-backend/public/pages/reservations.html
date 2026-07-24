@@ -1372,6 +1372,8 @@ function updatePriceLabel(type) {
   const currency = document.getElementById(`${type}-f-currency`)?.value || 'TSH';
   const label = document.getElementById(`${type}-f-price-label`);
   if (label) label.innerHTML = `<i class="fas fa-dollar-sign"></i> Price per Night (${currency === 'USD' ? 'USD' : 'TSh'})`;
+  const priceInput = document.getElementById(`${type}-f-price-per-night`);
+  if (priceInput) priceInput.step = currency === 'USD' ? '0.01' : '1000';
 }
 
 function modalUpdateRate() {

@@ -270,7 +270,7 @@ async function openDetail(resId) {
     if (res.paymentStatus === 'paid') {
       paymentBadge = '<span style="background:#d1fae5; color:#065f46; padding:4px 12px; border-radius:20px; font-size:12px;"><i class="fas fa-check-circle"></i> Paid in Full</span>';
     } else if (res.paymentStatus === 'partial') {
-      paymentBadge = `<span style="background:#fef3c7; color:#d97706; padding:4px 12px; border-radius:20px; font-size:12px;"><i class="fas fa-circle" style="color:#f59e0b"></i> Partial Payment (Due: ${fmtTSH(res.balance || 0)})</span>`;
+      paymentBadge = `<span style="background:#fef3c7; color:#d97706; padding:4px 12px; border-radius:20px; font-size:12px;"><i class="fas fa-circle" style="color:#f59e0b"></i> Partial Payment (Due: ${fmtAmount(res.balance || 0, res.currency)})</span>`;
     } else {
       paymentBadge = '<span style="background:#fee2e2; color:#dc2626; padding:4px 12px; border-radius:20px; font-size:12px;"><i class="fas fa-times-circle"></i> Unpaid</span>';
     }
@@ -301,11 +301,11 @@ async function openDetail(resId) {
             <div>${paymentBadge}</div>
           </div>
           <div class="detail-row"><div class="detail-icon"><i class="fas fa-credit-card"></i></div><div><div class="detail-label">Payment Method</div><div class="detail-value">${escapeHtml(res.paymentMethod || '—')}</div></div></div>
-          <div class="detail-row"><div class="detail-icon"><i class="fas fa-dollar-sign"></i></div><div><div class="detail-label">Amount Paid</div><div class="detail-value">${fmtTSH(res.amountPaid || 0)}</div></div></div>
-          <div class="detail-row"><div class="detail-icon"><i class="fas fa-balance-scale"></i></div><div><div class="detail-label">Balance Due</div><div class="detail-value">${fmtTSH(res.balance || 0)}</div></div></div>
+          <div class="detail-row"><div class="detail-icon"><i class="fas fa-dollar-sign"></i></div><div><div class="detail-label">Amount Paid</div><div class="detail-value">${fmtAmount(res.amountPaid || 0, res.currency)}</div></div></div>
+          <div class="detail-row"><div class="detail-icon"><i class="fas fa-balance-scale"></i></div><div><div class="detail-label">Balance Due</div><div class="detail-value">${fmtAmount(res.balance || 0, res.currency)}</div></div></div>
         </div>
-        
-        <div class="detail-total"><span>Total Rate</span><span>${fmtTSH(res.total)}</span></div>
+
+        <div class="detail-total"><span>Total Rate</span><span>${fmtAmount(res.total, res.currency)}</span></div>
         ${isActive ? `<div style="margin-top:16px;padding:12px;background:#e8f5e9;border-radius:8px;text-align:center;"><i class="fas fa-circle" style="color:#22c55e"></i> Currently staying - Checkout at 11:00 AM</div>` : `<div style="margin-top:16px;padding:12px;background:#f5f5f5;border-radius:8px;text-align:center;"><i class="fas fa-check-circle"></i> Reservation completed</div>`}
       `;
     }
@@ -350,11 +350,11 @@ async function checkoutReservation() {
   const nightsNew = daysBetween(selectedReservation.checkin, today);
   const pricePerNight = selectedReservation.total / nightsOriginal;
   const newTotal = Math.round(pricePerNight * nightsNew);
-  if (!confirm(`Checkout ${selectedReservation.guest} today?\nOriginal total: ${fmtTSH(selectedReservation.total)}\nNew total: ${fmtTSH(newTotal)}`)) return;
+  if (!confirm(`Checkout ${selectedReservation.guest} today?\nOriginal total: ${fmtAmount(selectedReservation.total, selectedReservation.currency)}\nNew total: ${fmtAmount(newTotal, selectedReservation.currency)}`)) return;
   try {
     const payload = { ...selectedReservation, checkout: today, total: newTotal };
     await apiPut(`/reservations/${selectedReservation.id}`, payload);
-    showToast(`<i class="fas fa-check-circle"></i> ${selectedReservation.guest} checked out! New total: ${fmtTSH(newTotal)}`, '<i class="fas fa-door-open"></i>');
+    showToast(`<i class="fas fa-check-circle"></i> ${selectedReservation.guest} checked out! New total: ${fmtAmount(newTotal, selectedReservation.currency)}`, '<i class="fas fa-door-open"></i>');
     closeDetailPanel();
     await loadAndRenderDashboard();
   } catch (err) {
