@@ -727,9 +727,10 @@
         </div>
       </div>
       
-      <div class="form-group-row" style="grid-template-columns:1fr 1fr 1fr">
+      <div class="form-group-row" style="grid-template-columns:1fr 0.7fr 1fr 1fr">
         <div class="form-group"><label><i class="fas fa-hotel"></i> Room</label><select id="modal-f-apt" class="form-control" required><option value="">Select Room</option></select></div>
-        <div class="form-group"><label><i class="fas fa-dollar-sign"></i> Price per Night (TSH)</label><input type="number" id="modal-f-price-per-night" class="form-control" min="0" step="1000" placeholder="Enter price per night" oninput="modalUpdateRate()" /></div>
+        <div class="form-group"><label><i class="fas fa-money-bill-wave"></i> Currency</label><select id="modal-f-currency" class="form-control" onchange="modalUpdateRate()"><option value="TSH">TSh</option><option value="USD">USD ($)</option></select></div>
+        <div class="form-group"><label id="modal-f-price-label"><i class="fas fa-dollar-sign"></i> Price per Night (TSh)</label><input type="number" id="modal-f-price-per-night" class="form-control" min="0" step="1000" placeholder="Enter price per night" oninput="modalUpdateRate()" /></div>
         <div class="form-group"><label><i class="fas fa-utensils"></i> Rate Type</label><select id="modal-f-ratetype" class="form-control"><option value="Bed and Breakfast">Bed &amp; Breakfast</option><option value="Half Body">Half Body</option><option value="Full Body">Full Body</option></select></div>
       </div>
 
@@ -887,7 +888,7 @@
         </div>
       </div>
       
-      <div class="form-group-row" style="grid-template-columns:1fr 1fr 1fr">
+      <div class="form-group-row" style="grid-template-columns:1fr 0.7fr 1fr 1fr">
         <div class="form-group">
           <label><i class="fas fa-hotel"></i> Room</label>
           <select id="edit-f-apt" class="form-control" required>
@@ -895,7 +896,14 @@
           </select>
         </div>
         <div class="form-group">
-          <label><i class="fas fa-dollar-sign"></i> Price per Night (TSH)</label>
+          <label><i class="fas fa-money-bill-wave"></i> Currency</label>
+          <select id="edit-f-currency" class="form-control" onchange="editUpdateRate()">
+            <option value="TSH">TSh</option>
+            <option value="USD">USD ($)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label id="edit-f-price-label"><i class="fas fa-dollar-sign"></i> Price per Night (TSh)</label>
           <input type="number" id="edit-f-price-per-night" class="form-control" min="0" step="1000" placeholder="Enter price per night" oninput="editUpdateRate()" />
         </div>
         <div class="form-group">
@@ -1122,7 +1130,14 @@ function printReservation() {
     if (!str) return '—';
     return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
-  
+
+  // Check the reservation's own currency and format amounts accordingly.
+  const isUSD = res.currency === 'USD';
+  function fmtPrintAmount(n) {
+    const v = Math.round(n || 0).toLocaleString();
+    return isUSD ? `$${v}` : `TSh ${v}`;
+  }
+
   const printWindow = window.open('', '_blank', 'width=800,height=600');
   if (!printWindow) {
     showToast('Please allow popups to print', '<i class="fas fa-exclamation-triangle"></i>');
@@ -1136,36 +1151,42 @@ function printReservation() {
       <title>Reservation #${res.id} - ${safeEscape(res.guest)}</title>
       <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
       <style>
+        @page { size: A4; margin: 8mm; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Inter', sans-serif; padding: 30px; background: #f1f5f9; color: #1e293b; }
-        .print-container { max-width: 800px; margin: 0 auto; background: white; border-radius: 20px; overflow: hidden; }
-        .header { text-align: center; padding: 30px; background: #1e2a3e; color: white; }
-        .header h1 { font-family: 'Playfair Display', serif; font-size: 26px; margin-bottom: 5px; }
-        .content { padding: 30px; }
-        .info-grid { display: flex; gap: 20px; margin-bottom: 25px; background: #f8fafc; padding: 20px; border-radius: 12px; }
+        body { font-family: 'Inter', sans-serif; padding: 18px; background: #f1f5f9; color: #1e293b; font-size: 13px; }
+        .print-container { max-width: 800px; margin: 0 auto; background: white; border-radius: 14px; overflow: hidden; }
+        .header { text-align: center; padding: 14px 20px; background: #1e2a3e; color: white; }
+        .header h1 { font-family: 'Playfair Display', serif; font-size: 20px; margin-bottom: 2px; }
+        .content { padding: 16px 22px; }
+        .info-grid { display: flex; gap: 16px; margin-bottom: 14px; background: #f8fafc; padding: 12px 16px; border-radius: 10px; }
         .info-item { flex: 1; }
-        .info-label { font-size: 10px; font-weight: 600; text-transform: uppercase; color: #64748b; }
-        .info-value { font-size: 15px; font-weight: 600; }
-        .guest-details { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 20px; }
-        .guest-item { display: flex; gap: 10px; }
-        .guest-icon { width: 32px; height: 32px; background: #f1f5f9; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
-        .guest-label { font-size: 10px; font-weight: 600; text-transform: uppercase; color: #64748b; }
-        .guest-value { font-size: 13px; font-weight: 600; }
-        .stay-section { border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; margin-bottom: 20px; }
-        .section-header { background: #f8fafc; padding: 14px 20px; border-bottom: 1px solid #e2e8f0; }
-        .section-title { font-size: 16px; font-weight: 700; }
-        .stay-details { padding: 20px; }
-        .stay-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f1f5f9; }
-        .total-section { background: #fef3c7; border-radius: 12px; padding: 15px 20px; }
+        .info-label { font-size: 9px; font-weight: 600; text-transform: uppercase; color: #64748b; }
+        .info-value { font-size: 13px; font-weight: 600; }
+        .guest-details { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 14px 16px; border: 1px solid #e2e8f0; border-radius: 10px; margin-bottom: 12px; }
+        .guest-item { display: flex; gap: 8px; }
+        .guest-icon { width: 24px; height: 24px; background: #f1f5f9; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 11px; }
+        .guest-label { font-size: 9px; font-weight: 600; text-transform: uppercase; color: #64748b; }
+        .guest-value { font-size: 12px; font-weight: 600; }
+        .stay-section { border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; margin-bottom: 12px; }
+        .section-header { background: #f8fafc; padding: 8px 16px; border-bottom: 1px solid #e2e8f0; }
+        .section-title { font-size: 13px; font-weight: 700; }
+        .stay-details { padding: 8px 16px; }
+        .stay-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #f1f5f9; }
+        .total-section { background: #fef3c7; padding: 10px 16px; }
         .total-row { display: flex; justify-content: space-between; align-items: center; }
-        .total-amount { font-size: 22px; font-weight: 800; color: #c9933a; }
-        .payment-section { border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; margin-bottom: 20px; }
-        .payment-row { display: flex; justify-content: space-between; padding: 10px 20px; border-bottom: 1px solid #f1f5f9; }
-        .badge-paid { background: #d1fae5; color: #065f46; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 700; }
-        .badge-partial { background: #fef3c7; color: #d97706; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 700; }
-        .badge-unpaid { background: #fee2e2; color: #dc2626; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 700; }
-        .footer { background: #f8fafc; padding: 20px; text-align: center; border-top: 1px solid #e2e8f0; }
-        @media print { body { background: white; padding: 0; } .header, .total-section { print-color-adjust: exact; } }
+        .total-amount { font-size: 17px; font-weight: 800; color: #c9933a; }
+        .payment-section { border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; margin-bottom: 12px; }
+        .payment-row { display: flex; justify-content: space-between; padding: 6px 16px; border-bottom: 1px solid #f1f5f9; }
+        .badge-paid { background: #d1fae5; color: #065f46; padding: 2px 9px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+        .badge-partial { background: #fef3c7; color: #d97706; padding: 2px 9px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+        .badge-unpaid { background: #fee2e2; color: #dc2626; padding: 2px 9px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+        .footer { background: #f8fafc; padding: 10px; text-align: center; border-top: 1px solid #e2e8f0; font-size: 11px; }
+        .footer p { margin: 2px 0; }
+        @media print {
+          body { background: white; padding: 0; }
+          .header, .total-section { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+          .print-container { border-radius: 0; }
+        }
       </style>
     </head>
     <body>
@@ -1204,7 +1225,7 @@ function printReservation() {
               <div class="stay-row"><span class="stay-label">Nights</span><span class="stay-value">${nights} night${nights !== 1 ? 's' : ''}</span></div>
               <div class="stay-row"><span class="stay-label">Guests</span><span class="stay-value">${res.adults || 1} Adult(s), ${res.children || 0} Child(ren)</span></div>
             </div>
-            <div class="total-section"><div class="total-row"><span class="total-label">Total Amount</span><span class="total-amount">TSh ${(res.total || 0).toLocaleString()}</span></div></div>
+            <div class="total-section"><div class="total-row"><span class="total-label">Total Amount</span><span class="total-amount">${fmtPrintAmount(res.total)}</span></div></div>
           </div>
 
           <div class="payment-section">
@@ -1214,13 +1235,13 @@ function printReservation() {
               res.paymentStatus === 'partial' ? '<span class="badge-partial">Partial Payment</span>' :
               '<span class="badge-unpaid">Not Yet Paid</span>'
             }</span></div>
-            <div class="payment-row"><span>Amount Paid</span><span style="font-weight:700;color:#065f46;">TSh ${(res.amountPaid || 0).toLocaleString()}</span></div>
-            <div class="payment-row"><span>Balance Due</span><span style="font-weight:700;color:#dc2626;">TSh ${Math.max(0, (res.total || 0) - (res.amountPaid || 0)).toLocaleString()}</span></div>
+            <div class="payment-row"><span>Amount Paid</span><span style="font-weight:700;color:#065f46;">${fmtPrintAmount(res.amountPaid)}</span></div>
+            <div class="payment-row"><span>Balance Due</span><span style="font-weight:700;color:#dc2626;">${fmtPrintAmount(Math.max(0, (res.total || 0) - (res.amountPaid || 0)))}</span></div>
           </div>
         </div>
         <div class="footer">
           <p>Thank you for choosing Kitobo Serenity Resort</p>
-          <p>Dar es Salaam, Tanzania | +255 655 860 808</p>
+          <p>Arusha, Tanzania | 0665500118 / 0790500168</p>
           <p>Printed: ${new Date().toLocaleString()}</p>
         </div>
       </div>
@@ -1340,10 +1361,25 @@ function modalStepperChange(id, delta) {
   if (inp) { inp.value = Math.max(parseInt(inp.min||0), Math.min(parseInt(inp.max||999), parseInt(inp.value)+delta)); modalUpdateRate(); }
 }
 
+// Currency-aware amount formatter — TSh amounts use the shared fmtTSH(),
+// USD amounts get a $ prefix. Used everywhere a reservation total/balance
+// is previewed, since a reservation can now be booked in either currency.
+function fmtAmount(n, currency) {
+  return currency === 'USD' ? '$' + Math.round(n || 0).toLocaleString() : fmtTSH(n);
+}
+
+function updatePriceLabel(type) {
+  const currency = document.getElementById(`${type}-f-currency`)?.value || 'TSH';
+  const label = document.getElementById(`${type}-f-price-label`);
+  if (label) label.innerHTML = `<i class="fas fa-dollar-sign"></i> Price per Night (${currency === 'USD' ? 'USD' : 'TSh'})`;
+}
+
 function modalUpdateRate() {
+  updatePriceLabel('modal');
   const pricePerNight = parseFloat(document.getElementById('modal-f-price-per-night')?.value) || 0;
   const checkin  = document.getElementById('modal-f-checkin')?.value;
   const checkout = document.getElementById('modal-f-checkout')?.value;
+  const currency = document.getElementById('modal-f-currency')?.value || 'TSH';
   if (!pricePerNight || !checkin || !checkout) {
     document.getElementById('modal-f-total').innerHTML = '—';
     document.getElementById('modal-f-total-hidden').value = 0;
@@ -1352,7 +1388,7 @@ function modalUpdateRate() {
   }
   const nights = daysBetween(checkin, checkout);
   const total  = Math.round(pricePerNight * nights);
-  document.getElementById('modal-f-total').innerHTML = total > 0 ? fmtTSH(total) : '—';
+  document.getElementById('modal-f-total').innerHTML = total > 0 ? fmtAmount(total, currency) : '—';
   document.getElementById('modal-f-total-hidden').value = total;
   setTimeout(() => updateBalance('modal'), 100);
 }
@@ -1382,7 +1418,8 @@ function updateBalance(type) {
   let   paid  = parseFloat(paidFld.value)  || 0;
   if (paid > total) { paid = total; paidFld.value = total; }
   const balance = total - paid;
-  balanceEl.innerHTML = fmtTSH(balance);
+  const currency = document.getElementById(`${type}-f-currency`)?.value || 'TSH';
+  balanceEl.innerHTML = fmtAmount(balance, currency);
   if (statusSel) {
     if (balance <= 0)  statusSel.value = 'paid';
     else if (paid > 0) statusSel.value = 'partial';
@@ -1416,7 +1453,7 @@ function enableCustomTotal(type) {
   const cur = parseFloat(document.getElementById(`${type}-f-total-hidden`).value) || 0;
   ca.style.display = 'block';
   ca.innerHTML = `<div class="custom-rate-edit">
-    <input type="number" id="${type}-custom-input" value="${cur}" step="1000" min="0" placeholder="Enter total in TSH">
+    <input type="number" id="${type}-custom-input" value="${cur}" step="1000" min="0" placeholder="Enter total amount">
     <button class="btn-custom-apply" onclick="applyCustomTotal('${type}')">Apply</button>
     <button class="btn-custom-cancel" onclick="cancelCustomTotal('${type}')">Cancel</button>
   </div>`;
@@ -1437,13 +1474,14 @@ function applyCustomTotal(type) {
   if (!checkin || !checkout) { showToast('Please select dates first', '<i class="fas fa-exclamation-triangle"></i>'); return; }
   const nights = daysBetween(checkin, checkout);
   if (nights <= 0) { showToast('Invalid date range', '<i class="fas fa-exclamation-triangle"></i>'); return; }
+  const currency = document.getElementById(`${type}-f-currency`)?.value || 'TSH';
   document.getElementById(`${type}-f-total-hidden`).value = val;
-  document.getElementById(`${type}-f-total`).innerHTML = fmtTSH(val);
+  document.getElementById(`${type}-f-total`).innerHTML = fmtAmount(val, currency);
   const customEl = document.getElementById(`${type}-use-custom-total`);
   if (customEl) customEl.value = '1';
   const ca = document.getElementById(`${type}-custom-area`);
   ca.style.display = 'none'; ca.innerHTML = '';
-  showToast(`Custom total applied: ${fmtTSH(val)}`, '<i class="fas fa-check-circle"></i>');
+  showToast(`Custom total applied: ${fmtAmount(val, currency)}`, '<i class="fas fa-check-circle"></i>');
 }
 
 function resetCustomTotal(type) {
@@ -1649,6 +1687,7 @@ document.getElementById('reservation-form-modal')?.addEventListener('submit', as
     adults:         parseInt(document.getElementById('modal-f-adults').value),
     children:       parseInt(document.getElementById('modal-f-children').value),
     rateType:       document.getElementById('modal-f-ratetype').value,
+    currency:       document.getElementById('modal-f-currency').value,
     pricePerNight:  parseFloat(document.getElementById('modal-f-price-per-night').value) || 0,
     total:          finalTotal,
     identification: document.getElementById('modal-f-identification').value,
@@ -1680,11 +1719,13 @@ document.getElementById('reservation-form-modal')?.addEventListener('submit', as
 // EDIT RESERVATION MODAL
 // ============================================================
 function editUpdateRate() {
+  updatePriceLabel('edit');
   const useCustom = document.getElementById('edit-use-custom-total')?.value;
   if (useCustom === '1') return;
   const pricePerNight = parseFloat(document.getElementById('edit-f-price-per-night')?.value) || 0;
   const checkin  = document.getElementById('edit-f-checkin')?.value;
   const checkout = document.getElementById('edit-f-checkout')?.value;
+  const currency = document.getElementById('edit-f-currency')?.value || 'TSH';
   if (!pricePerNight || !checkin || !checkout) {
     document.getElementById('edit-f-total').textContent = '—';
     document.getElementById('edit-f-total-hidden').value = 0;
@@ -1693,7 +1734,7 @@ function editUpdateRate() {
   }
   const nights = Math.max(0, daysBetween(checkin, checkout));
   const total  = Math.round(pricePerNight * nights);
-  document.getElementById('edit-f-total').innerHTML = total > 0 ? fmtTSH(total) : '—';
+  document.getElementById('edit-f-total').innerHTML = total > 0 ? fmtAmount(total, currency) : '—';
   document.getElementById('edit-f-total-hidden').value = total;
   setTimeout(() => updateBalance('edit'), 100);
 }
@@ -1744,18 +1785,20 @@ async function initEditForm(reservationId) {
     document.getElementById('edit-f-adults').value    = reservation.adults;
     document.getElementById('edit-f-children').value  = reservation.children;
     document.getElementById('edit-f-ratetype').value  = reservation.rateType || 'Bed and Breakfast';
+    document.getElementById('edit-f-currency').value  = reservation.currency || 'TSH';
+    updatePriceLabel('edit');
     const savedTotal  = reservation.total || 0;
     const savedNights = Math.max(1, daysBetween(isoDate(reservation.checkin), isoDate(reservation.checkout)));
     const savedPPN    = reservation.pricePerNight || Math.round(savedTotal / savedNights);
     document.getElementById('edit-f-price-per-night').value = savedPPN || '';
     document.getElementById('edit-f-total-hidden').value    = savedTotal;
-    document.getElementById('edit-f-total').innerHTML       = fmtTSH(savedTotal);
+    document.getElementById('edit-f-total').innerHTML       = fmtAmount(savedTotal, reservation.currency || 'TSH');
     const savedPaid = reservation.amountPaid || 0;
     document.getElementById('edit-f-amount-paid').value     = savedPaid;
     document.getElementById('edit-f-payment-status').value  = reservation.paymentStatus || 'unpaid';
     document.getElementById('edit-f-payment-method').value  = reservation.paymentMethod || '';
     const balanceEl = document.getElementById('edit-f-balance');
-    if (balanceEl) balanceEl.innerHTML = fmtTSH(savedTotal - savedPaid);
+    if (balanceEl) balanceEl.innerHTML = fmtAmount(savedTotal - savedPaid, reservation.currency || 'TSH');
     initPaymentListeners('edit');
     addResetListeners('edit');
   } catch (err) {
@@ -1818,6 +1861,7 @@ document.getElementById('edit-form-modal')?.addEventListener('submit', async fun
     adults:         parseInt(document.getElementById('edit-f-adults').value),
     children:       parseInt(document.getElementById('edit-f-children').value),
     rateType:       document.getElementById('edit-f-ratetype').value,
+    currency:       document.getElementById('edit-f-currency').value,
     pricePerNight:  parseFloat(document.getElementById('edit-f-price-per-night').value) || 0,
     total:          forcedTotal,
     userId:         currentUser?.id,
