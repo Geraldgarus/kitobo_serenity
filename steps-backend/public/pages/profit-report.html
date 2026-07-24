@@ -285,6 +285,7 @@
       <h1>Kitobo Serenity Resort</h1>
       <p>Profit Report &middot; Dar es Salaam, Tanzania</p>
       <p style="font-size:11px;color:#94a3b8;">Generated: <span id="print-date"></span></p>
+      <p id="print-rate-note" style="font-size:11px;color:#94a3b8;"></p>
     </div>
   </div>
 
@@ -292,12 +293,17 @@
   <div class="filter-bar">
     <div class="filter-group"><label>From Date</label><input type="date" id="filter-from"></div>
     <div class="filter-group"><label>To Date</label><input type="date" id="filter-to"></div>
+    <div class="filter-group">
+      <label><i class="fas fa-exchange-alt"></i> USD &rarr; TSh Rate</label>
+      <input type="number" id="filter-rate" min="0" step="1" placeholder="e.g. 2700" style="min-width:110px;">
+    </div>
     <div class="filter-actions">
       <button class="btn-refresh" onclick="loadData()"><i class="fas fa-search"></i> Apply Filter</button>
       <button class="btn-clear" onclick="clearFilters()"><i class="fas fa-times"></i> Clear</button>
       <button class="btn-print" onclick="printReport()"><i class="fas fa-print"></i> Print Report</button>
     </div>
   </div>
+  <div id="usd-rate-note" style="display:none;font-size:12px;color:#94a3b8;margin:-14px 0 24px;padding-left:2px;"></div>
 
   <!-- Revenue sources -->
   <div class="section-title"><i class="fas fa-arrow-circle-up" style="color:#10b981;margin-right:6px;"></i> Revenue Sources <span id="period-label" style="text-transform:none;font-weight:500;color:#94a3b8;"></span></div>
@@ -428,6 +434,50 @@ function showToast(msg, type) {
   setTimeout(() => c.innerHTML = '', 3000);
 }
 
+const RATE_KEY = 'kitobo_usd_rate';
+let lastData = null;
+
+function getRate() {
+  return parseFloat(document.getElementById('filter-rate').value) || 0;
+}
+
+// Reservation revenue can be booked in TSh or USD, and there's no
+// authoritative exchange rate stored anywhere, so the user enters
+// today's rate here and every figure derived from it (totals, profit,
+// the gauge, the summary table) is recomputed from that rate — never
+// from a blended sum of two currencies.
+function computeDerived(d, rate) {
+  const hasUSD    = d.reservationRevenueUSD > 0;
+  const rateValid = rate > 0;
+  const reservationRevenue = d.reservationRevenueTSH + (rateValid ? d.reservationRevenueUSD * rate : 0);
+  const totalSales = reservationRevenue + d.barRevenue + d.restaurantRevenue + d.housekeepingRevenue;
+  const profit = totalSales - d.totalExpenses;
+  return { ...d, reservationRevenue, totalSales, profit, hasUSD, rateValid, rate };
+}
+
+function recompute() {
+  if (!lastData) return;
+  const rate = getRate();
+  localStorage.setItem(RATE_KEY, rate || '');
+  const d = computeDerived(lastData, rate);
+
+  const note = document.getElementById('usd-rate-note');
+  if (d.hasUSD && !d.rateValid) {
+    note.style.display = 'block';
+    note.innerHTML = `<i class="fas fa-exclamation-triangle" style="color:#f59e0b;"></i> $${d.reservationRevenueUSD.toLocaleString()} in USD reservations is <strong>excluded</strong> from totals below — enter a USD &rarr; TSh exchange rate to include it.`;
+  } else if (d.hasUSD && d.rateValid) {
+    note.style.display = 'block';
+    note.innerHTML = `<i class="fas fa-info-circle"></i> $${d.reservationRevenueUSD.toLocaleString()} in USD reservations converted at ${d.rate.toLocaleString()} TSh/USD = ${fmtTSH(d.reservationRevenueUSD * d.rate)}.`;
+  } else {
+    note.style.display = 'none';
+  }
+
+  renderCards(d);
+  renderGauge(d);
+  renderTable(d);
+  return d;
+}
+
 async function loadData() {
   try {
     const from = document.getElementById('filter-from').value;
@@ -436,10 +486,8 @@ async function loadData() {
     if (from) params.set('from', from);
     if (to)   params.set('to', to);
     const qs = params.toString();
-    const d = await apiGet('/reports/profit-summary' + (qs ? '?' + qs : ''));
-    renderCards(d);
-    renderGauge(d);
-    renderTable(d);
+    lastData = await apiGet('/reports/profit-summary' + (qs ? '?' + qs : ''));
+    const d = recompute();
     renderPeriodLabel(from, to);
     document.getElementById('print-date').textContent = new Date().toLocaleString();
     // Notify if business is running at a loss
@@ -470,7 +518,8 @@ function clearFilters() {
 
 function renderCards(d) {
   document.getElementById('rev-reservations').textContent       = fmtTSH(d.reservationRevenue);
-  document.getElementById('rev-reservations-count').textContent = d.reservationCount + ' booking' + (d.reservationCount !== 1 ? 's' : '');
+  document.getElementById('rev-reservations-count').textContent = d.reservationCount + ' booking' + (d.reservationCount !== 1 ? 's' : '')
+    + (d.hasUSD ? ` (incl. $${d.reservationRevenueUSD.toLocaleString()})` : '');
   document.getElementById('rev-restaurant').textContent         = fmtTSH(d.restaurantRevenue);
   document.getElementById('rev-restaurant-count').textContent   = d.restaurantCount + ' order' + (d.restaurantCount !== 1 ? 's' : '');
   document.getElementById('rev-bar').textContent                = fmtTSH(d.barRevenue);
@@ -519,7 +568,7 @@ function renderTable(d) {
 
   document.getElementById('summary-tbody').innerHTML = `
     <tr>
-      <td><span class="row-icon" style="background:#dbeafe;color:#3b82f6;"><i class="fas fa-bed"></i></span> Reservations Revenue</td>
+      <td><span class="row-icon" style="background:#dbeafe;color:#3b82f6;"><i class="fas fa-bed"></i></span> Reservations Revenue${d.hasUSD ? ` <span style="font-size:11px;color:#94a3b8;font-weight:400;">(incl. $${d.reservationRevenueUSD.toLocaleString()}${d.rateValid ? ' @ ' + d.rate.toLocaleString() : ', rate not set'})</span>` : ''}</td>
       <td style="color:#64748b;">${d.reservationCount} bookings</td>
       <td class="amount-blue">${fmtTSH(d.reservationRevenue)}</td>
       <td style="color:#64748b;">${pct(d.reservationRevenue, rev)}%</td>
@@ -566,6 +615,13 @@ function renderTable(d) {
 function printReport() {
   const pd = document.getElementById('print-date');
   if (pd) pd.textContent = new Date().toLocaleString('en-GB');
+  const rn = document.getElementById('print-rate-note');
+  if (rn && lastData) {
+    const rate = getRate();
+    rn.textContent = lastData.reservationRevenueUSD > 0
+      ? (rate > 0 ? `USD reservations converted at ${rate.toLocaleString()} TSh/USD` : 'USD reservations excluded — no exchange rate was entered')
+      : '';
+  }
   window.print();
 }
 
@@ -651,6 +707,12 @@ document.addEventListener('DOMContentLoaded', function() {
   const today = new Date().toISOString().split('T')[0];
   document.getElementById('filter-from').value = today;
   document.getElementById('filter-to').value   = today;
+
+  // Restore the last exchange rate the user entered (per browser), so it
+  // doesn't need to be re-typed every time the report is opened.
+  const savedRate = localStorage.getItem(RATE_KEY);
+  if (savedRate) document.getElementById('filter-rate').value = savedRate;
+  document.getElementById('filter-rate')?.addEventListener('input', recompute);
 
   loadData();
 

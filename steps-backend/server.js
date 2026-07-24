@@ -4189,23 +4189,33 @@ app.get('/api/reports/profit-summary', async (req, res) => {
 
   try {
     const [reservations, bar, restaurant, laundry, expenses] = await Promise.all([
-      pool.query(`SELECT COALESCE(SUM(total), 0)::int AS total, COUNT(*)::int AS count FROM reservations ${resWhere}`, resParams),
+      pool.query(`
+        SELECT
+          COALESCE(SUM(total) FILTER (WHERE COALESCE(currency, 'TSH') <> 'USD'), 0)::int AS total_tsh,
+          COALESCE(SUM(total) FILTER (WHERE currency = 'USD'), 0)::int                    AS total_usd,
+          COUNT(*)::int                                                                   AS count
+        FROM reservations ${resWhere}
+      `, resParams),
       pool.query(`SELECT COALESCE(SUM(total_amount), 0)::int AS total, COUNT(*)::int AS count FROM sales_orders ${salesWhere} AND LOWER(pos_type) = 'bar'`, salesParams),
       pool.query(`SELECT COALESCE(SUM(total_amount), 0)::int AS total, COUNT(*)::int AS count FROM sales_orders ${salesWhere} AND LOWER(pos_type) = 'restaurant'`, salesParams),
       pool.query(`SELECT COALESCE(SUM(price), 0)::int AS total, COUNT(*)::int AS count FROM laundry_services ${laundryWhere}`, laundryParams),
       pool.query(`SELECT COALESCE(SUM(amount), 0)::int AS total, COUNT(*)::int AS count FROM expenses ${expWhere}`, expParams),
     ]);
 
-    const reservationRevenue  = reservations.rows[0].total;
+    // Reservation revenue can be booked in TSh or USD, and this endpoint has no
+    // authoritative exchange rate to convert USD with — that conversion happens
+    // client-side (the profit report lets the user enter today's rate), so we
+    // report the two currencies separately rather than mixing them into one sum.
+    const reservationRevenueTSH = reservations.rows[0].total_tsh;
+    const reservationRevenueUSD = reservations.rows[0].total_usd;
     const barRevenue          = bar.rows[0].total;
     const restaurantRevenue   = restaurant.rows[0].total;
     const housekeepingRevenue = laundry.rows[0].total;
     const totalExpenses       = expenses.rows[0].total;
-    const totalSales          = reservationRevenue + barRevenue + restaurantRevenue + housekeepingRevenue;
-    const profit              = totalSales - totalExpenses;
 
     res.json({
-      reservationRevenue,
+      reservationRevenueTSH,
+      reservationRevenueUSD,
       reservationCount: reservations.rows[0].count,
       barRevenue,
       barCount: bar.rows[0].count,
@@ -4213,10 +4223,8 @@ app.get('/api/reports/profit-summary', async (req, res) => {
       restaurantCount: restaurant.rows[0].count,
       housekeepingRevenue,
       housekeepingCount: laundry.rows[0].count,
-      totalSales,
       totalExpenses,
       expenseCount: expenses.rows[0].count,
-      profit,
     });
   } catch (err) {
     console.error('Profit summary error:', err);
