@@ -2617,7 +2617,9 @@ document.getElementById('reservation-form-modal')?.addEventListener('submit', as
     idType: document.getElementById('modal-f-id-type').value,
     amountPaid: parseFloat(document.getElementById('modal-f-amount-paid').value) || 0,
     paymentMethod: document.getElementById('modal-f-payment-method').value,
-    paymentStatus: document.getElementById('modal-f-payment-status').value
+    paymentStatus: document.getElementById('modal-f-payment-status').value,
+    userId: currentUser?.id || null,
+    username: currentUser?.fullName || currentUser?.username || 'system'
   };
 
   try {
